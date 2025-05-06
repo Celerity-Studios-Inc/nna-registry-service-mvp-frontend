@@ -2,6 +2,8 @@
 
 Frontend application for the Neural Network Architecture (NNA) Registry Service.
 
+[![Deployed on Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-black?style=for-the-badge&logo=vercel)](https://registry-service-frontend.vercel.app)
+
 ## Production Deployment
 
 The production site is deployed at: [registry-service-frontend.vercel.app](https://registry-service-frontend.vercel.app)
