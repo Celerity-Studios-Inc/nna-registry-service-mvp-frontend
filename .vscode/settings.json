@@ -1,0 +1,11 @@
+{
+  "editor.formatOnSave": true,
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": true
+  },
+  "typescript.tsdk": "node_modules/typescript/lib",
+  "files.autoSave": "afterDelay",
+  "files.autoSaveDelay": 1000,
+  "eslint.validate": ["javascript", "typescript", "javascriptreact", "typescriptreact"],
+  "editor.defaultFormatter": "esbenp.prettier-vscode"
+} 

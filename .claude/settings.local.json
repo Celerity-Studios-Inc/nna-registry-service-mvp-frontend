@@ -1,0 +1,24 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(grep:*)",
+      "Bash(tsc:*)",
+      "Bash(mkdir:*)",
+      "Bash(npm run build:*)",
+      "Bash(npm start)",
+      "Bash(npm install:*)",
+      "Bash(PORT=3001 npm start)",
+      "Bash(curl:*)",
+      "Bash(git add:*)",
+      "Bash(git push:*)",
+      "Bash(find:*)",
+      "Bash(cat:*)",
+      "Bash(git commit:*)",
+      "Bash(vercel:*)",
+      "Bash(chmod:*)",
+      "Bash(git checkout:*)",
+      "Bash(git merge:*)"
+    ],
+    "deny": []
+  }
+}
