@@ -17,7 +17,8 @@
       "Bash(vercel:*)",
       "Bash(chmod:*)",
       "Bash(git checkout:*)",
-      "Bash(git merge:*)"
+      "Bash(git merge:*)",
+      "Bash(rm:*)"
     ],
     "deny": []
   }
