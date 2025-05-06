@@ -1,5 +1,5 @@
 import React, { createContext, useState, ReactNode, useEffect } from 'react';
-import authService from '../services/api/auth.service';
+import authService from '../api/authService';
 
 export interface User {
   id: string;
@@ -14,7 +14,11 @@ export interface AuthContextType {
   loading: boolean;
   error: string | null;
   login: (email: string, password: string) => Promise<void>;
-  register: (username: string, email: string, password: string) => Promise<void>;
+  register: (
+    username: string,
+    email: string,
+    password: string
+  ) => Promise<void>;
   logout: () => void;
   isAdmin: boolean;
 }
@@ -32,22 +36,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
 
-  // Check for existing session on component mount
   useEffect(() => {
     const checkAuthentication = async () => {
       try {
         setLoading(true);
         const token = localStorage.getItem('accessToken');
-        
         if (token) {
-          // Verify token and get user data
           try {
             const userData = await authService.getCurrentUser();
             setUser(userData);
             setIsAuthenticated(true);
             setIsAdmin(userData.role === 'admin');
           } catch (err) {
-            // Token is invalid or expired
             localStorage.removeItem('accessToken');
             setIsAuthenticated(false);
             setUser(null);
@@ -60,7 +60,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         setLoading(false);
       }
     };
-
     checkAuthentication();
   }, []);
 
@@ -68,12 +67,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       setLoading(true);
       setError(null);
-      
-      const { user: userData, token } = await authService.login(email, password);
-      
-      // Store token in localStorage
+      const { user: userData, token } = await authService.login(
+        email,
+        password
+      );
       localStorage.setItem('accessToken', token);
-      
       setUser(userData);
       setIsAuthenticated(true);
       setIsAdmin(userData.role === 'admin');
@@ -85,16 +83,20 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
-  const register = async (username: string, email: string, password: string): Promise<void> => {
+  const register = async (
+    username: string,
+    email: string,
+    password: string
+  ): Promise<void> => {
     try {
       setLoading(true);
       setError(null);
-
-      const { user: userData, token } = await authService.register(username, email, password);
-      
-      // Store token in localStorage
+      const { user: userData, token } = await authService.register(
+        username,
+        email,
+        password
+      );
       localStorage.setItem('accessToken', token);
-      
       setUser(userData);
       setIsAuthenticated(true);
       setIsAdmin(userData.role === 'admin');
@@ -123,7 +125,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         login,
         register,
         logout,
-        isAdmin
+        isAdmin,
       }}
     >
       {children}

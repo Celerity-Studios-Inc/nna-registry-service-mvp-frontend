@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   Box,
   Typography,
@@ -6,11 +6,9 @@ import {
   Divider,
   Button,
   IconButton,
-  LinearProgress,
   Grid,
   Alert,
   Chip,
-  Tooltip,
   Stack,
 } from '@mui/material';
 import {
@@ -19,7 +17,6 @@ import {
   Replay as RetryIcon,
 } from '@mui/icons-material';
 import { FileUploadResponse } from '../../types/asset.types';
-import assetService from '../../services/api/asset.service';
 import FileUploader from '../common/FileUploader';
 import FilePreview from '../common/FilePreview';
 
@@ -110,15 +107,17 @@ const FileUpload: React.FC<FileUploadProps> = ({
 }) => {
   // Adjust maxFiles based on asset type
   const effectiveMaxFiles =
-    layerCode && (layerCode.includes('.set') || layerCode === 'T' || layerCode === 'P') ? 5 : 1;
+    layerCode &&
+    (layerCode.includes('.set') || layerCode === 'T' || layerCode === 'P')
+      ? 5
+      : 1;
   const [files, setFiles] = useState<File[]>(initialFiles);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [uploadedFiles, setUploadedFiles] = useState<FileUploadResponse[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [uploadState, setUploadState] = useState<'idle' | 'uploading' | 'success' | 'error'>(
-    'idle'
+  const [retryQueue, setRetryQueue] = useState<{ file: File; error: string }[]>(
+    []
   );
-  const [retryQueue, setRetryQueue] = useState<{ file: File; error: string }[]>([]);
 
   // Use layer-specific file types if none provided
   const accept = acceptedFileTypes || getAcceptedFileTypesByLayer(layerCode);
@@ -158,8 +157,6 @@ const FileUpload: React.FC<FileUploadProps> = ({
   const handleUploadComplete = useCallback(
     (fileId: string, fileData: FileUploadResponse) => {
       setUploadedFiles(prev => [...prev, fileData]);
-      setUploadState('success');
-
       if (onUploadComplete) {
         onUploadComplete(fileId, fileData);
       }
@@ -177,10 +174,12 @@ const FileUpload: React.FC<FileUploadProps> = ({
       });
 
       if (failedFile) {
-        setRetryQueue(prev => [...prev, { file: failedFile, error: errorMessage }]);
+        setRetryQueue(prev => [
+          ...prev,
+          { file: failedFile, error: errorMessage },
+        ]);
       }
 
-      setUploadState('error');
       setError(`Upload failed: ${errorMessage}`);
 
       if (onUploadError) {
@@ -192,8 +191,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
 
   // Adapter for FileUploader which expects a different signature
   const handleFileUploaderError = useCallback(
-    (file: File, error: string) => {
-      const fileId = file.name; // Use filename as a fallback ID
+    (fileId: string, error: string) => {
       handleUploadError(fileId, error);
     },
     [handleUploadError]
@@ -212,7 +210,6 @@ const FileUpload: React.FC<FileUploadProps> = ({
     }
 
     setError(null);
-    setUploadState('idle');
   };
 
   // Handle removal of a file from the retry queue
@@ -223,7 +220,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
     if (retryQueue.length === 1) {
       setError(null);
       if (files.length > 0) {
-        setUploadState('idle');
+        setError(null);
       }
     }
   };
@@ -233,7 +230,6 @@ const FileUpload: React.FC<FileUploadProps> = ({
     setFiles([]);
     setRetryQueue([]);
     setError(null);
-    setUploadState('idle');
     setSelectedFile(null);
     setUploadedFiles([]);
     onFilesChange([]);
@@ -245,7 +241,10 @@ const FileUpload: React.FC<FileUploadProps> = ({
         Upload Files
       </Typography>
       <Typography variant="body2" color="text.secondary" paragraph>
-        {layerCode && layerCode !== 'P' && layerCode !== 'T' && !layerCode.includes('.set')
+        {layerCode &&
+        layerCode !== 'P' &&
+        layerCode !== 'T' &&
+        !layerCode.includes('.set')
           ? 'Upload a single file for your asset. Only one file is allowed per individual asset.'
           : `Upload one or more files for your asset. ${
               effectiveMaxFiles > 1
@@ -282,7 +281,11 @@ const FileUpload: React.FC<FileUploadProps> = ({
                 severity="warning"
                 action={
                   <Box>
-                    <IconButton size="small" onClick={() => handleRetry(item.file)} color="inherit">
+                    <IconButton
+                      size="small"
+                      onClick={() => handleRetry(item.file)}
+                      color="inherit"
+                    >
                       <RetryIcon />
                     </IconButton>
                     <IconButton
@@ -295,7 +298,9 @@ const FileUpload: React.FC<FileUploadProps> = ({
                   </Box>
                 }
               >
-                <Typography variant="body2">Failed to upload: {item.file.name}</Typography>
+                <Typography variant="body2">
+                  Failed to upload: {item.file.name}
+                </Typography>
                 <Typography variant="caption">{item.error}</Typography>
               </Alert>
             ))}
@@ -305,10 +310,19 @@ const FileUpload: React.FC<FileUploadProps> = ({
 
       {/* File status summary */}
       {files.length > 0 && (
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            mb: 2,
+          }}
+        >
           <Box>
             <Chip
-              label={`${files.length} file${files.length > 1 ? 's' : ''} selected`}
+              label={`${files.length} file${
+                files.length > 1 ? 's' : ''
+              } selected`}
               color="primary"
               size="small"
               sx={{ mr: 1 }}
@@ -322,7 +336,11 @@ const FileUpload: React.FC<FileUploadProps> = ({
               />
             )}
             {retryQueue.length > 0 && (
-              <Chip label={`${retryQueue.length} failed`} color="error" size="small" />
+              <Chip
+                label={`${retryQueue.length} failed`}
+                color="error"
+                size="small"
+              />
             )}
           </Box>
           <Button
@@ -346,24 +364,24 @@ const FileUpload: React.FC<FileUploadProps> = ({
             options={options}
             maxFiles={effectiveMaxFiles}
             initialFiles={initialFiles}
-            onFilesUploaded={responses => {
+            onFilesUploaded={(responses: FileUploadResponse[]) => {
               setUploadedFiles(prev => [...prev, ...responses]);
               if (onUploadComplete) {
-                responses.forEach(response => {
-                  onUploadComplete(response.id, response);
+                responses.forEach((response: FileUploadResponse) => {
+                  onUploadComplete(response.filename, response);
                 });
               }
             }}
             onFilesAdded={handleFileSelect}
-            onFileRemoved={file => {
+            onFileRemoved={(file: File) => {
               setFiles(prev => prev.filter(f => f !== file));
               if (selectedFile === file) {
                 setSelectedFile(files.length > 1 ? files[0] : null);
               }
               onFilesChange(files.filter(f => f !== file));
             }}
-            onAllUploadsComplete={responses => {
-              setUploadState('success');
+            onAllUploadsComplete={(responses: FileUploadResponse[]) => {
+              setError(null);
             }}
             onUploadProgress={onUploadProgress}
             onUploadComplete={handleUploadComplete}
@@ -412,7 +430,9 @@ const FileUpload: React.FC<FileUploadProps> = ({
               >
                 <UploadIcon sx={{ fontSize: 64, mb: 2, opacity: 0.5 }} />
                 <Typography variant="body2" align="center">
-                  {files.length > 0 ? 'Select a file to preview' : 'No files uploaded yet'}
+                  {files.length > 0
+                    ? 'Select a file to preview'
+                    : 'No files uploaded yet'}
                 </Typography>
               </Box>
             )}
@@ -433,7 +453,8 @@ const FileUpload: React.FC<FileUploadProps> = ({
                   sx={{
                     p: 1,
                     cursor: 'pointer',
-                    borderColor: selectedFile === file ? 'primary.main' : 'transparent',
+                    borderColor:
+                      selectedFile === file ? 'primary.main' : 'transparent',
                     borderWidth: selectedFile === file ? 2 : 0,
                     borderStyle: 'solid',
                   }}
@@ -448,7 +469,11 @@ const FileUpload: React.FC<FileUploadProps> = ({
                     onDelete={() => {
                       setFiles(prev => prev.filter(f => f !== file));
                       if (selectedFile === file) {
-                        setSelectedFile(files.length > 1 ? files.filter(f => f !== file)[0] : null);
+                        setSelectedFile(
+                          files.length > 1
+                            ? files.filter(f => f !== file)[0]
+                            : null
+                        );
                       }
                       onFilesChange(files.filter(f => f !== file));
                     }}

@@ -33,7 +33,11 @@ interface AssetCardProps {
   showActions?: boolean;
 }
 
-const AssetCard: React.FC<AssetCardProps> = ({ asset, onClick, showActions = true }) => {
+const AssetCard: React.FC<AssetCardProps> = ({
+  asset,
+  onClick,
+  showActions = true,
+}) => {
   const theme = useTheme();
 
   // Determine file type for preview
@@ -137,7 +141,9 @@ const AssetCard: React.FC<AssetCardProps> = ({ asset, onClick, showActions = tru
     };
 
     return {
-      icon: layerIcons[asset.layer]?.icon || <DefaultFileIcon sx={{ fontSize: 48 }} />,
+      icon: layerIcons[asset.layer]?.icon || (
+        <DefaultFileIcon sx={{ fontSize: 48 }} />
+      ),
       color: layerIcons[asset.layer]?.color || theme.palette.grey[500],
       previewUrl: null,
     };
@@ -156,7 +162,11 @@ const AssetCard: React.FC<AssetCardProps> = ({ asset, onClick, showActions = tru
 
   // Get taxonomy path
   const getTaxonomyLabel = () => {
-    return taxonomyService.getTaxonomyPath(asset?.layer, asset?.category, asset?.subcategory);
+    return taxonomyService.getTaxonomyPath(
+      asset?.layer,
+      asset?.category,
+      asset?.subcategory
+    );
   };
 
   // Truncate description
@@ -236,7 +246,11 @@ const AssetCard: React.FC<AssetCardProps> = ({ asset, onClick, showActions = tru
             {asset.name}
           </Typography>
 
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 1, fontSize: '0.75rem' }}>
+          <Typography
+            variant="body2"
+            color="text.secondary"
+            sx={{ mb: 1, fontSize: '0.75rem' }}
+          >
             {getTaxonomyLabel()}
           </Typography>
 
@@ -279,7 +293,12 @@ const AssetCard: React.FC<AssetCardProps> = ({ asset, onClick, showActions = tru
       {/* Actions */}
       {showActions && (
         <CardActions>
-          <Button size="small" component={Link} to={`/assets/${asset.id}`} endIcon={<LaunchIcon />}>
+          <Button
+            size="small"
+            component={Link}
+            to={`/assets/${asset.id}`}
+            endIcon={<LaunchIcon />}
+          >
             View Details
           </Button>
         </CardActions>

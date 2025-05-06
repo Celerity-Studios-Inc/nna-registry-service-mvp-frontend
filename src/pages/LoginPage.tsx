@@ -11,7 +11,7 @@ import {
   CircularProgress,
   Alert,
 } from '@mui/material';
-import { useAuth } from '../../hooks/useAuth';
+import { useAuth } from '../hooks/useAuth';
 
 interface LocationState {
   from?: {
@@ -29,40 +29,20 @@ const Login: React.FC = () => {
   const location = useLocation();
 
   // Get the redirect path from location state if available
-  const from = (location.state as LocationState)?.from?.pathname || '/dashboard';
+  const from =
+    (location.state as LocationState)?.from?.pathname || '/dashboard';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    // For demo, we'll always use the demo login
-    await demoLogin();
-  };
-
-  // For demo purposes - simplified login
-  const demoLogin = async () => {
     setIsLoading(true);
     setError(null);
 
     try {
-      // Force the environment variable for mock data
-      // (window as any).process = {
-      //   ...((window as any).process || {}),
-      //   env: {
-      //     ...((window as any).process?.env || {}),
-      //     REACT_APP_USE_MOCK_DATA: 'true',
-      //   },
-      // };
-
-      // Set demo credentials for reference
-      // setEmail('demo@example.com');
-      // setPassword('password');
-
-      // Log in with demo credentials
       await login(email, password);
       navigate(from, { replace: true });
     } catch (err) {
       console.error('Login error:', err);
-      setError('Demo login failed. Please refresh the page and try again.');
+      setError('Login failed. Please check your credentials and try again.');
     } finally {
       setIsLoading(false);
     }
@@ -90,7 +70,12 @@ const Login: React.FC = () => {
           <Typography component="h1" variant="h5" align="center" gutterBottom>
             NNA Registry Service
           </Typography>
-          <Typography variant="subtitle1" align="center" color="text.secondary" sx={{ mb: 3 }}>
+          <Typography
+            variant="subtitle1"
+            align="center"
+            color="text.secondary"
+            sx={{ mb: 3 }}
+          >
             Log in to your account
           </Typography>
 
@@ -133,16 +118,6 @@ const Login: React.FC = () => {
               sx={{ mt: 3, mb: 2 }}
             >
               {isLoading ? <CircularProgress size={24} /> : 'Sign In'}
-            </Button>
-
-            <Button
-              variant="contained"
-              color="success"
-              fullWidth
-              onClick={demoLogin}
-              sx={{ mb: 2 }}
-            >
-              Quick Demo Login
             </Button>
 
             <Box sx={{ mt: 2, textAlign: 'center' }}>

@@ -20,21 +20,28 @@ interface NotificationsContextType {
 // Create context with default values
 export const NotificationsContext = createContext<NotificationsContextType>({
   tasks: [],
-  addTask: () => {},
-  removeTask: () => {},
-  taskCount: 0
+  addTask: () => {
+    /* noop */
+  },
+  removeTask: () => {
+    /* noop */
+  },
+  taskCount: 0,
 });
 
 // Custom hook for using the context
 export const useNotifications = () => useContext(NotificationsContext);
 
 // Generate a unique ID
-const generateId = () => `task-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+const generateId = () =>
+  `task-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
 
 // Provider component
-export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
   const [tasks, setTasks] = useState<Task[]>([]);
-  
+
   // Load tasks from local storage on mount
   useEffect(() => {
     const savedTasks = localStorage.getItem('nna_tasks');
@@ -46,42 +53,43 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
       }
     }
   }, []);
-  
+
   // Save tasks to local storage when they change
   useEffect(() => {
     localStorage.setItem('nna_tasks', JSON.stringify(tasks));
   }, [tasks]);
-  
+
   // Add a new task
   const addTask = (task: Omit<Task, 'id' | 'createdAt'>) => {
     // Check for duplicates
-    const isDuplicate = tasks.some(t => 
-      t.type === task.type && 
-      t.assetId === task.assetId
+    const isDuplicate = tasks.some(
+      t => t.type === task.type && t.assetId === task.assetId
     );
-    
+
     if (!isDuplicate) {
       const newTask: Task = {
         ...task,
         id: generateId(),
-        createdAt: new Date().toISOString()
+        createdAt: new Date().toISOString(),
       };
       setTasks(prevTasks => [...prevTasks, newTask]);
     }
   };
-  
+
   // Remove a task
   const removeTask = (taskId: string) => {
     setTasks(prevTasks => prevTasks.filter(task => task.id !== taskId));
   };
-  
+
   return (
-    <NotificationsContext.Provider value={{
-      tasks,
-      addTask,
-      removeTask,
-      taskCount: tasks.length
-    }}>
+    <NotificationsContext.Provider
+      value={{
+        tasks,
+        addTask,
+        removeTask,
+        taskCount: tasks.length,
+      }}
+    >
       {children}
     </NotificationsContext.Provider>
   );

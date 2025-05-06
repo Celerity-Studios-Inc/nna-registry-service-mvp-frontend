@@ -17,13 +17,16 @@ import { SelectChangeEvent } from '@mui/material/Select';
 import { CategoryOption, SubcategoryOption } from '../../types/taxonomy.types';
 import taxonomyService from '../../api/taxonomyService';
 import NNAAddressPreview from './NNAAddressPreview';
-import { getAlphabeticCode } from '../../api/codeMapping';
-import api from '../../services/api/api';
+import { getAlphabeticCode, convertHFNToMFA } from '../../api/codeMapping';
+// import api from '../../api/api'; // Commented out as we're using the mock implementation
 
 interface TaxonomySelectionProps {
   layerCode: string;
   onCategorySelect: (category: CategoryOption) => void;
-  onSubcategorySelect: (subcategory: SubcategoryOption, isDoubleClick?: boolean) => void;
+  onSubcategorySelect: (
+    subcategory: SubcategoryOption,
+    isDoubleClick?: boolean
+  ) => void;
   selectedCategoryCode?: string;
   subcategoryNumericCode?: string;
   selectedSubcategoryCode?: string;
@@ -73,7 +76,9 @@ const TaxonomySelection: React.FC<TaxonomySelectionProps> = ({
         setCategories(categoryOptions);
         setError(null);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load categories');
+        setError(
+          err instanceof Error ? err.message : 'Failed to load categories'
+        );
       } finally {
         setLoading(false);
       }
@@ -86,13 +91,28 @@ const TaxonomySelection: React.FC<TaxonomySelectionProps> = ({
     try {
       console.log(layerCode, 'layerCode');
 
-      const response = await api.post<{ sequential: string }>('/assets/new/sequential', {
-        layer: layerCode,
-        category: categoryName,
-        subcategory: subcategoryName,
-      });
+      // For development, use the mock implementation in taxonomyService
+      // instead of making the actual API call that results in 404
+      const response = await taxonomyService.getSequentialNumber(
+        layerCode,
+        categoryName || '',
+        subcategoryName || ''
+      );
 
+      setSequential(response.sequential);
+      
+      // Original implementation - uncomment when API is ready
+      /*
+      const response = await api.post<{ sequential: string }>(
+        '/assets/new/sequential',
+        {
+          layer: layerCode,
+          category: categoryName,
+          subcategory: subcategoryName,
+        }
+      );
       setSequential(response.data.sequential);
+      */
     } catch (error) {
       console.log(error);
     }
@@ -117,7 +137,9 @@ const TaxonomySelection: React.FC<TaxonomySelectionProps> = ({
         setSubcategories(subcategoryOptions);
         setError(null);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load subcategories');
+        setError(
+          err instanceof Error ? err.message : 'Failed to load subcategories'
+        );
       } finally {
         setLoading(false);
       }
@@ -139,6 +161,17 @@ const TaxonomySelection: React.FC<TaxonomySelectionProps> = ({
         await fetchSequential();
 
         setIsUnique(true);
+        
+        // Generate and propagate NNA address values when taxonomy is complete
+        if (onNNAAddressChange) {
+          // Get the HFN and MFA values from the NNAAddressPreview component's logic
+          const hfnAddress = `${layerCode}.${selectedCategoryCode}.${selectedSubcategoryCode}.${sequential}`;
+          const mfaAddress = convertHFNToMFA ? convertHFNToMFA(hfnAddress) : `0.${selectedCategoryCode}.${selectedSubcategoryCode}.${sequential}`;
+          const sequentialNum = parseInt(sequential, 10) || 1;
+          
+          console.log(`Sending NNA address change: HFN=${hfnAddress}, MFA=${mfaAddress}, seq=${sequentialNum}`);
+          onNNAAddressChange(hfnAddress, mfaAddress, sequentialNum);
+        }
       } catch (err) {
         console.error('Error checking address uniqueness:', err);
       } finally {
@@ -152,6 +185,7 @@ const TaxonomySelection: React.FC<TaxonomySelectionProps> = ({
     selectedCategoryCode,
     selectedSubcategoryCode,
     sequentialNumber,
+    sequential, // Added sequential as dependency
     onNNAAddressChange,
   ]);
 
@@ -175,7 +209,9 @@ const TaxonomySelection: React.FC<TaxonomySelectionProps> = ({
     const subcategoryCode = event.target.value;
 
     // Find the selected subcategory
-    const selectedSubcategory = subcategories.find(subcat => subcat.code === subcategoryCode);
+    const selectedSubcategory = subcategories.find(
+      subcat => subcat.code === subcategoryCode
+    );
 
     if (selectedSubcategory) {
       // Reset sequential number when subcategory changes
@@ -194,7 +230,8 @@ const TaxonomySelection: React.FC<TaxonomySelectionProps> = ({
         Select Category and Subcategory
       </Typography>
       <Typography variant="body2" color="text.secondary" paragraph>
-        Choose the appropriate category and subcategory for your asset based on the selected layer.
+        Choose the appropriate category and subcategory for your asset based on
+        the selected layer.
       </Typography>
       <Divider sx={{ mb: 3 }} />
 
@@ -238,11 +275,16 @@ const TaxonomySelection: React.FC<TaxonomySelectionProps> = ({
                   <Box sx={{ display: 'flex', alignItems: 'center' }}>
                     <Tooltip title="Human-Friendly Name (3-letter code)">
                       <Chip
-                        label={category.categoryCodeName}
+                        label={category.code}
                         size="small"
                         color="primary"
                         variant="outlined"
-                        sx={{ ml: 1, mr: 1, fontSize: '0.7rem', fontWeight: 'bold' }}
+                        sx={{
+                          ml: 1,
+                          mr: 1,
+                          fontSize: '0.7rem',
+                          fontWeight: 'bold',
+                        }}
                       />
                     </Tooltip>
                     <Tooltip title="Machine-Friendly Address (3-digit code)">
@@ -261,7 +303,10 @@ const TaxonomySelection: React.FC<TaxonomySelectionProps> = ({
           </Select>
         </FormControl>
 
-        <FormControl fullWidth disabled={!selectedCategoryCode || subcategories.length === 0}>
+        <FormControl
+          fullWidth
+          disabled={!selectedCategoryCode || subcategories.length === 0}
+        >
           <InputLabel id="subcategory-select-label">Subcategory</InputLabel>
           <Select
             labelId="subcategory-select-label"
@@ -269,7 +314,9 @@ const TaxonomySelection: React.FC<TaxonomySelectionProps> = ({
             value={selectedSubcategoryCode || ''}
             label="Subcategory"
             onChange={e => handleSubcategoryChange(e, false)}
-            disabled={loading || !selectedCategoryCode || subcategories.length === 0}
+            disabled={
+              loading || !selectedCategoryCode || subcategories.length === 0
+            }
           >
             <MenuItem value="">
               <em>Select a subcategory</em>
@@ -306,11 +353,10 @@ const TaxonomySelection: React.FC<TaxonomySelectionProps> = ({
                     </Tooltip>
                     <Tooltip title="Machine-Friendly Address (3-digit code)">
                       <Chip
-                        label={subcategory.subcategoryCode}
+                        label={subcategory.code}
                         size="small"
                         color="default"
                         variant="outlined"
-                        sx={{ fontSize: '0.7rem' }}
                       />
                     </Tooltip>
                   </Box>
@@ -323,7 +369,11 @@ const TaxonomySelection: React.FC<TaxonomySelectionProps> = ({
         {selectedCategoryCode && selectedSubcategoryCode && (
           <>
             <Box mt={3} p={2} bgcolor="background.default" borderRadius={1}>
-              <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+              <Typography
+                variant="subtitle2"
+                color="text.secondary"
+                gutterBottom
+              >
                 Selected Taxonomy:
               </Typography>
               <Typography>

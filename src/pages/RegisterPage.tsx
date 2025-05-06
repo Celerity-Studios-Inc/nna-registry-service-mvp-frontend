@@ -11,7 +11,7 @@ import {
   CircularProgress,
   Alert,
 } from '@mui/material';
-import { useAuth } from '../../hooks/useAuth';
+import { useAuth } from '../hooks/useAuth';
 
 const Register: React.FC = () => {
   const [username, setUsername] = useState('');
@@ -25,35 +25,30 @@ const Register: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Basic validation
     if (!username || !email || !password) {
       setError('Please fill out all required fields');
       return;
     }
-    
+
     if (password !== confirmPassword) {
       setError('Passwords do not match');
       return;
     }
-    
+
     setError(null);
     setIsLoading(true);
-    
+
     try {
-      // Force mock data for demo
-      (window as any).process = {
-        ...((window as any).process || {}),
-        env: {
-          ...((window as any).process?.env || {}),
-          REACT_APP_USE_MOCK_DATA: 'true',
-        },
-      };
-      
       await register(username, email, password);
       navigate('/dashboard');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Registration failed. Please try again.');
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'Registration failed. Please try again.'
+      );
     } finally {
       setIsLoading(false);
     }
@@ -81,7 +76,12 @@ const Register: React.FC = () => {
           <Typography component="h1" variant="h5" align="center" gutterBottom>
             Create an Account
           </Typography>
-          <Typography variant="subtitle1" align="center" color="text.secondary" sx={{ mb: 3 }}>
+          <Typography
+            variant="subtitle1"
+            align="center"
+            color="text.secondary"
+            sx={{ mb: 3 }}
+          >
             Register to access the NNA Registry Service
           </Typography>
 
@@ -102,7 +102,7 @@ const Register: React.FC = () => {
               autoComplete="username"
               autoFocus
               value={username}
-              onChange={(e) => setUsername(e.target.value)}
+              onChange={e => setUsername(e.target.value)}
             />
             <TextField
               margin="normal"
@@ -113,7 +113,7 @@ const Register: React.FC = () => {
               name="email"
               autoComplete="email"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={e => setEmail(e.target.value)}
             />
             <TextField
               margin="normal"
@@ -125,7 +125,7 @@ const Register: React.FC = () => {
               id="password"
               autoComplete="new-password"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={e => setPassword(e.target.value)}
             />
             <TextField
               margin="normal"
@@ -136,7 +136,7 @@ const Register: React.FC = () => {
               type="password"
               id="confirmPassword"
               value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
+              onChange={e => setConfirmPassword(e.target.value)}
             />
             <Button
               type="submit"
@@ -149,7 +149,7 @@ const Register: React.FC = () => {
             </Button>
             <Box sx={{ mt: 2, textAlign: 'center' }}>
               <Link component={RouterLink} to="/login" variant="body2">
-                {"Already have an account? Sign In"}
+                {'Already have an account? Sign In'}
               </Link>
             </Box>
           </Box>
