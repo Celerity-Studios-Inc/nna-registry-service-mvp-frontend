@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "projectId": "prj_g8fk6xV3KOwCq0jsWKAeNsKFN3Jk",
+  "orgId": "team_ozAhACMFmBlEzqfFTcVohh5d",
+  "github": {
+    "enabled": true,
+    "silent": false,
+    "autoAlias": true
+  }
+}

@@ -1,0 +1,4 @@
+# Vercel deployment ignore file
+node_modules
+.git
+.github
