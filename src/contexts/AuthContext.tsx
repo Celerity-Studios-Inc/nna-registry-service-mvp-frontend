@@ -67,12 +67,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       setLoading(true);
       setError(null);
-      const { user: userData, token } = await authService.login(
+      const { user: userData, accessToken } = await authService.login({
         email,
         password
-      );
-      localStorage.setItem('accessToken', token);
-      setUser(userData);
+      });
+      localStorage.setItem('accessToken', accessToken);
+      setUser({
+        id: userData.id,
+        username: userData.name,
+        email: userData.email,
+        role: userData.role
+      });
       setIsAuthenticated(true);
       setIsAdmin(userData.role === 'admin');
     } catch (err) {
@@ -91,13 +96,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       setLoading(true);
       setError(null);
-      const { user: userData, token } = await authService.register(
-        username,
+      const { user: userData, accessToken } = await authService.register({
+        name: username,
         email,
         password
-      );
-      localStorage.setItem('accessToken', token);
-      setUser(userData);
+      });
+      localStorage.setItem('accessToken', accessToken);
+      setUser({
+        id: userData.id,
+        username: userData.name,
+        email: userData.email,
+        role: userData.role
+      });
       setIsAuthenticated(true);
       setIsAdmin(userData.role === 'admin');
     } catch (err) {

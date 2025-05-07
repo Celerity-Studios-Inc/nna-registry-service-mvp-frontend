@@ -4,8 +4,7 @@ import {
   AssetSearchParams,
   AssetCreateRequest,
   AssetUpdateRequest,
-  FileUpload,
-  FileUploadResponse
+  FileUpload
 } from '../types/asset.types';
 import { ApiResponse, PaginatedResponse } from '../types/api.types';
 
@@ -143,8 +142,8 @@ class AssetService {
           type: "standard",
           description: assetData.description || '',
           layer: assetData.layer,
-          categoryCode: assetData.categoryCode,
-          subcategoryCode: assetData.subcategoryCode,
+          categoryCode: assetData.category || '',
+          subcategoryCode: assetData.subcategory || '',
           category: assetData.category,
           subcategory: assetData.subcategory,
           tags: assetData.tags || [],
@@ -152,7 +151,9 @@ class AssetService {
           status: 'active',
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
-          createdBy: "user@example.com"
+          createdBy: "user@example.com",
+          gcpStorageUrl: `https://storage.googleapis.com/mock-bucket/asset-${Date.now()}`,
+          metadata: assetData.metadata || {}
         };
         
         return mockAsset;
@@ -216,6 +217,46 @@ class AssetService {
     }
 
     return apiParams;
+  }
+
+  /**
+   * Check if a file has been previously registered as an asset
+   */
+  checkDuplicateAsset(file: File): { asset: Asset; confidence: 'high' | 'medium' | 'low' } | null {
+    // Mock implementation for development
+    if (process.env.NODE_ENV !== 'production') {
+      // Simulate a 10% chance of finding a duplicate
+      if (Math.random() < 0.1) {
+        return {
+          asset: {
+            id: `mock-asset-${Date.now()}`,
+            name: 'Similar Asset',
+            friendlyName: 'Similar Asset',
+            nnaAddress: '0.000.000.002',
+            type: 'standard',
+            description: 'A similar asset that was previously registered',
+            layer: 'G',
+            categoryCode: 'CAT1',
+            subcategoryCode: 'SUB1',
+            category: 'Category 1',
+            subcategory: 'Subcategory 1',
+            tags: ['similar', 'duplicate'],
+            files: [],
+            status: 'active',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+            createdBy: 'user@example.com',
+            gcpStorageUrl: `https://storage.googleapis.com/mock-bucket/similar-asset`,
+            metadata: {}
+          },
+          confidence: 'high'
+        };
+      }
+      return null;
+    }
+
+    // Production implementation would go here
+    return null;
   }
 }
 
