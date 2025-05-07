@@ -2,11 +2,9 @@ import axios from 'axios';
 
 // Configuration for API requests
 export const apiConfig = {
-  // Use relative URL for the API when deployed to Vercel with proxy
-  // or absolute URL with environment variable
-  baseURL: process.env.NODE_ENV === 'production' 
-    ? '/api' 
-    : (process.env.REACT_APP_API_URL || 'https://registry.reviz.dev/api'),
+  // Always use relative URL for the API when deployed to avoid CORS issues
+  // This ensures requests go through Vercel's proxy defined in vercel.json
+  baseURL: '/api',
 };
 
 // Create an Axios instance
@@ -15,6 +13,8 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  // Add withCredentials to handle CORS with credentials properly
+  withCredentials: false,
 });
 
 // Add request interceptor to include auth token
@@ -42,6 +42,7 @@ api.interceptors.response.use(
       if (error.response.status === 401) {
         // Clear token and redirect to login if needed
         localStorage.removeItem('accessToken');
+        // Could redirect to login here if needed
         console.log("Authentication required. Redirecting to login...");
       }
       
