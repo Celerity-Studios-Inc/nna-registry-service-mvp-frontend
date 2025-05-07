@@ -34,38 +34,61 @@ jobs:
       - name: Install dependencies
         run: npm ci
         
-      - name: Check for build errors
+      - name: Create production environment file
         run: |
-          echo "Running build check..."
-          # Set CI=false to prevent treating warnings as errors
-          CI=false npm run build || {
-            echo "::error::Build failed! Please check your code for errors."
-            exit 1
-          }
+          echo "REACT_APP_API_URL=/api" > .env.production
+          echo "REACT_APP_USE_MOCK_API=true" >> .env.production
+          cat .env.production
+        
+      - name: Build project
+        run: |
+          echo "Building project..."
+          CI=false npm run build
+          echo "Build completed successfully"
+          
+      - name: Install Vercel CLI
+        run: npm install --global vercel@latest
       
-      - name: Create build artifact for Vercel deployment
+      - name: Pull Vercel Environment Information
+        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+        
+      - name: Deploy to Vercel
+        id: deploy-vercel
         run: |
-          echo "::notice::Creating build artifact for Vercel deployment..."
-          
-          # Create .env file for production build
-          echo "REACT_APP_USE_MOCK_API=true" > .env.production
-          echo "REACT_APP_API_URL=https://registry.reviz.dev/api" >> .env.production
-          
-          # Ensure build directory exists
-          mkdir -p build
-          
-          # Create a deployment package
-          tar -czf build.tar.gz build/ server.js vercel.json package.json
-          
-          echo "::notice::Build artifact created. Download the build.tar.gz file and deploy to Vercel."
-          echo "::notice::Run these commands to deploy manually:"
-          echo "::notice::1. tar -xzf build.tar.gz"
-          echo "::notice::2. vercel login"
-          echo "::notice::3. vercel --prod"
-          
-      - name: Upload build artifact
-        uses: actions/upload-artifact@v3
+          DEPLOYMENT_URL=$(vercel deploy --prod --token=${{ secrets.VERCEL_TOKEN }})
+          echo "deployment_url=$DEPLOYMENT_URL" >> $GITHUB_OUTPUT
+          echo "Deployed to $DEPLOYMENT_URL"
+      
+      - name: Verify deployment
+        run: |
+          if [ -z "${{ steps.deploy-vercel.outputs.deployment_url }}" ]; then
+            echo "::warning::No deployment URL was returned by Vercel, deployment may have failed."
+            exit 1
+          else
+            echo "::notice::Deployment successful! Site is live at ${{ steps.deploy-vercel.outputs.deployment_url }}"
+            echo "Running basic health check..."
+            
+            # Wait a bit for the deployment to stabilize
+            sleep 10
+            
+            # Basic health check
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" "${{ steps.deploy-vercel.outputs.deployment_url }}")
+            if [[ "$STATUS" == "200" || "$STATUS" == "301" || "$STATUS" == "302" ]]; then
+              echo "::notice::Health check passed! Site is responding with status code $STATUS"
+            else
+              echo "::warning::Health check failed! Site responded with status code $STATUS"
+            fi
+          fi
+      
+      - name: Comment on commit
+        uses: actions/github-script@v6
         with:
-          name: vercel-deployment
-          path: build.tar.gz
-          retention-days: 7
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const { issue, repo } = context;
+            github.rest.repos.createCommitComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              commit_sha: context.sha,
+              body: `✅ Deployment complete! Your application is live at: ${{ steps.deploy-vercel.outputs.deployment_url }}`
+            });
