@@ -2,8 +2,9 @@ import axios from 'axios';
 
 // Configuration for API requests
 export const apiConfig = {
-  // Use environment variable for API URL or fall back to default
-  baseURL: process.env.REACT_APP_API_BASE_URL || '/api',
+  // Always use relative URL for the API when deployed to avoid CORS issues
+  // This ensures requests go through Vercel's proxy defined in vercel.json
+  baseURL: '/api',
 };
 
 // Create an Axios instance

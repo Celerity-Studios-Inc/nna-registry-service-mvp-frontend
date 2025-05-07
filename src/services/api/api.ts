@@ -7,5 +7,6 @@ const api = {
 };
 export default api;
 export const apiConfig = {
-  baseURL: 'https://registry.reviz.dev/api'
+  // Use relative URL to ensure requests go through Vercel proxy
+  baseURL: '/api'
 }; 
