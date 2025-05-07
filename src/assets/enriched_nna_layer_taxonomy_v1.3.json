@@ -1,0 +1,2250 @@
+{
+  "scalability_features": {
+    "hierarchical_expansion": {
+      "enabled": true,
+      "description": "Supports nested subcategories for future expansion"
+    },
+    "category_mappings": {
+      "legacy_codes": {
+        "G.014.002": "G.017.003"
+      },
+      "aliases": {
+        "G.POP.SWIFT": "G.POP.TSW"
+      }
+    },
+    "versioning": {
+      "current_version": "v1.3",
+      "previous_versions": ["v1.0", "v1.1", "v1.2"],
+      "deprecated_categories": [
+        {
+          "code": "G.004.007",
+          "deprecated_in": "v1.1",
+          "replaced_by": "G.016.004"
+        }
+      ]
+    }
+  },
+  "G": {
+    "name": "Songs",
+    "categories": {
+      "001": {
+        "code": "POP",
+        "name": "Pop",
+        "subcategories": {
+          "001": { "code": "BAS", "name": "Base" },
+          "002": { "code": "GLB", "name": "Global_Pop" },
+          "003": { "code": "TEN", "name": "Teen_Pop" },
+          "004": { "code": "DNC", "name": "Dance_Pop" },
+          "005": { "code": "ELC", "name": "Electro_Pop" },
+          "006": { "code": "DRM", "name": "Dream_Pop" },
+          "007": { "code": "IND", "name": "Indie_Pop" },
+          "008": { "code": "LAT", "name": "Latin_Pop" },
+          "009": { "code": "SOU", "name": "Soul_Pop" },
+          "010": { "code": "RCK", "name": "Pop_Rock" },
+          "011": { "code": "ALT", "name": "Alt_Pop" },
+          "012": { "code": "TSW", "name": "Swift_Inspired" }
+        }
+      },
+      "002": {
+        "code": "RCK",
+        "name": "Rock",
+        "subcategories": {
+          "001": { "code": "BAS", "name": "Base" },
+          "002": { "code": "CLS", "name": "Classic_Rock" },
+          "003": { "code": "MOD", "name": "Modern_Rock" },
+          "004": { "code": "GRG", "name": "Grunge" },
+          "005": { "code": "PNK", "name": "Punk_Rock" },
+          "006": { "code": "ALR", "name": "Alternative_Rock" },
+          "007": { "code": "PRG", "name": "Progressive_Rock" },
+          "008": { "code": "PSY", "name": "Psychedelic_Rock" },
+          "009": { "code": "FLK", "name": "Folk_Rock" },
+          "010": { "code": "ARN", "name": "Arena_Rock" },
+          "011": { "code": "GAR", "name": "Garage_Rock" },
+          "012": { "code": "BLU", "name": "Blues_Rock" }
+        }
+      },
+      "003": {
+        "code": "HIP",
+        "name": "Hip_Hop",
+        "subcategories": {
+          "001": { "code": "BAS", "name": "Base" },
+          "002": { "code": "CLS", "name": "Classic_Hip_Hop" },
+          "003": { "code": "MOD", "name": "Modern_Hip_Hop" },
+          "004": { "code": "TRP", "name": "Trap" },
+          "005": { "code": "CLD", "name": "Cloud_Rap" },
+          "006": { "code": "DRL", "name": "Drill" },
+          "007": { "code": "CON", "name": "Conscious_Rap" },
+          "008": { "code": "BBP", "name": "Boom_Bap" },
+          "009": { "code": "JZZ", "name": "Jazz_Rap" },
+          "010": { "code": "FNK", "name": "Funk_Rap" },
+          "011": { "code": "PRT", "name": "Party_Rap" }
+        }
+      },
+      "004": {
+        "code": "DNC",
+        "name": "Dance_Electronic",
+        "subcategories": {
+          "001": { "code": "BAS", "name": "Base" },
+          "002": { "code": "HSE", "name": "House" },
+          "003": { "code": "TEC", "name": "Techno" },
+          "004": { "code": "TRN", "name": "Trance" },
+          "005": { "code": "DUB", "name": "Dubstep" },
+          "006": { "code": "FUT", "name": "Future_Bass" },
+          "007": { "code": "TRO", "name": "Tropical_House" },
+          "008": { "code": "PRH", "name": "Progressive_House" },
+          "009": { "code": "DPH", "name": "Deep_House" },
+          "010": { "code": "TCH", "name": "Tech_House" },
+          "011": { "code": "EXP", "name": "Experimental_Electronic" }
+        }
+      },
+      "005": {
+        "code": "DSF",
+        "name": "Disco_Funk",
+        "subcategories": {
+          "001": { "code": "BAS", "name": "Base" },
+          "002": { "code": "DIS", "name": "Disco" },
+          "003": { "code": "FNK", "name": "Funk" },
+          "004": { "code": "NUD", "name": "Nu_Disco" }
+        }
+      },
+      "006": {
+        "code": "RNB",
+        "name": "RnB",
+        "subcategories": {
+          "001": { "code": "BAS", "name": "Base" },
+          "002": { "code": "SOU", "name": "Soul" },
+          "003": { "code": "MOD", "name": "Modern" },
+          "004": { "code": "NEO", "name": "Neo_Soul" },
+          "005": { "code": "GOS", "name": "Gospel" },
+          "006": { "code": "BLU", "name": "Blues" },
+          "007": { "code": "FNK", "name": "Funk" },
+          "008": { "code": "JSU", "name": "Jazz_Soul" },
+          "009": { "code": "URB", "name": "Urban" },
+          "010": { "code": "ALT", "name": "Alternative" },
+          "011": { "code": "FSU", "name": "Future_Soul" }
+        }
+      },
+      "007": {
+        "code": "JZZ",
+        "name": "Jazz",
+        "subcategories": {
+          "001": { "code": "BAS", "name": "Base" },
+          "002": { "code": "CON", "name": "Contemporary_Jazz" },
+          "003": { "code": "TRD", "name": "Traditional_Jazz" },
+          "004": { "code": "SMO", "name": "Smooth_Jazz" },
+          "005": { "code": "AVG", "name": "Avant_Garde_Jazz" },
+          "006": { "code": "FUS", "name": "Jazz_Fusion" },
+          "007": { "code": "NSJ", "name": "Neo_Soul_Jazz" },
+          "008": { "code": "LAT", "name": "Latin_Jazz" },
+          "009": { "code": "COO", "name": "Cool_Jazz" },
+          "010": { "code": "FRE", "name": "Free_Jazz" },
+          "011": { "code": "WLD", "name": "World_Jazz" }
+        }
+      },
+      "008": {
+        "code": "JPO",
+        "name": "J_Pop",
+        "subcategories": {
+          "001": { "code": "BAS", "name": "Base" },
+          "002": { "code": "POP", "name": "Pop" },
+          "003": { "code": "RKF", "name": "Rock_Fusion" },
+          "004": { "code": "ANI", "name": "Anime_Music" },
+          "005": { "code": "ELC", "name": "Electronic" },
+          "006": { "code": "KAW", "name": "Kawaii" },
+          "007": { "code": "ALT", "name": "Alternative" },
+          "008": { "code": "TRD", "name": "Traditional" },
+          "009": { "code": "DNC", "name": "Dance" },
+          "010": { "code": "RET", "name": "Retro" },
+          "011": { "code": "ACO", "name": "Acoustic" }
+        }
+      },
+      "009": {
+        "code": "BOL",
+        "name": "Bollywood",
+        "subcategories": {
+          "001": { "code": "BAS", "name": "Base" },
+          "002": { "code": "PLB", "name": "Playback" },
+          "003": { "code": "PFU", "name": "Pop_Fusion" },
+          "004": { "code": "CLS", "name": "Classical" },
+          "005": { "code": "DNC", "name": "Dance" },
+          "006": { "code": "IFU", "name": "Indie_Fusion" },
+          "007": { "code": "ELC", "name": "Electronic" },
+          "008": { "code": "FLK", "name": "Folk" },
+          "009": { "code": "SFI", "name": "Sufi" },
+          "010": { "code": "RMX", "name": "Remix" },
+          "011": { "code": "GLB", "name": "Global" }
+        }
+      },
+      "010": {
+        "code": "LAT",
+        "name": "Latin",
+        "subcategories": {
+          "001": { "code": "BAS", "name": "Base" },
+          "002": { "code": "REG", "name": "Reggaeton" },
+          "003": { "code": "POP", "name": "Pop" },
+          "004": { "code": "SAL", "name": "Salsa" },
+          "005": { "code": "BCH", "name": "Bachata" },
+          "006": { "code": "RCK", "name": "Rock" },
+          "007": { "code": "TRP", "name": "Trap" },
+          "008": { "code": "MER", "name": "Merengue" },
+          "009": { "code": "JZZ", "name": "Jazz" },
+          "010": { "code": "CUM", "name": "Cumbia" },
+          "011": { "code": "FLM", "name": "Flamenco" }
+        }
+      },
+      "011": {
+        "code": "IND",
+        "name": "Indie",
+        "subcategories": {
+          "001": { "code": "BAS", "name": "Base" },
+          "002": { "code": "RCK", "name": "Rock" },
+          "003": { "code": "POP", "name": "Pop" },
+          "004": { "code": "FLK", "name": "Folk" },
+          "005": { "code": "ELC", "name": "Electronic" },
+          "006": { "code": "HIP", "name": "Hip_Hop" },
+          "007": { "code": "DRM", "name": "Dream" },
+          "008": { "code": "LOF", "name": "Lo_Fi" },
+          "009": { "code": "ART", "name": "Art" },
+          "010": { "code": "PST", "name": "Post" }
+        }
+      },
+      "012": {
+        "code": "ALT",
+        "name": "Alternative",
+        "subcategories": {
+          "001": { "code": "BAS", "name": "Base" },
+          "002": { "code": "RCK", "name": "Rock" },
+          "003": { "code": "POP", "name": "Pop" },
+          "004": { "code": "EXP", "name": "Experimental" },
+          "005": { "code": "DRK", "name": "Dark" },
+          "006": { "code": "MTL", "name": "Metal" },
+          "007": { "code": "IND", "name": "Industrial" },
+          "008": { "code": "ART", "name": "Art" },
+          "009": { "code": "NOI", "name": "Noise" },
+          "010": { "code": "PST", "name": "Post" },
+          "011": { "code": "SHG", "name": "Shoegaze" }
+        }
+      },
+      "013": {
+        "code": "WLD",
+        "name": "World",
+        "subcategories": {
+          "001": { "code": "BAS", "name": "Base" },
+          "002": { "code": "FUS", "name": "Fusion" },
+          "003": { "code": "AFR", "name": "African" },
+          "004": { "code": "IND", "name": "Indian" },
+          "005": { "code": "MDE", "name": "Middle_East" },
+          "006": { "code": "CEL", "name": "Celtic" },
+          "007": { "code": "REG", "name": "Reggae" },
+          "008": { "code": "ASN", "name": "Asian" },
+          "009": { "code": "BAL", "name": "Balkan" },
+          "010": { "code": "MED", "name": "Mediterranean" },
+          "011": { "code": "GLB", "name": "Global" }
+        }
+      },
+      "014": {
+        "code": "RFK",
+        "name": "Regional_Folk",
+        "subcategories": {
+          "001": { "code": "BAS", "name": "Base" },
+          "002": { "code": "TFK", "name": "Traditional_Folk" },
+          "003": { "code": "MFK", "name": "Modern_Folk" },
+          "004": { "code": "CEL", "name": "Celtic" },
+          "005": { "code": "AFR", "name": "African" },
+          "006": { "code": "ASN", "name": "Asian" },
+          "007": { "code": "LAT", "name": "Latin_Folk" },
+          "008": { "code": "MDE", "name": "Middle_Eastern" },
+          "009": { "code": "WFU", "name": "World_Fusion" },
+          "010": { "code": "AMR", "name": "Americana" },
+          "011": { "code": "GLB", "name": "Global_Folk" }
+        }
+      },
+      "015": {
+        "code": "KPO",
+        "name": "K_Pop",
+        "subcategories": {
+          "001": { "code": "BAS", "name": "Base" },
+          "002": { "code": "IBG", "name": "Idol_Boy_Group" },
+          "003": { "code": "IGG", "name": "Idol_Girl_Group" },
+          "004": { "code": "SFS", "name": "Solo_Female_Star" },
+          "005": { "code": "SMS", "name": "Solo_Male_Star" },
+          "006": { "code": "RAP", "name": "Rapper" },
+          "007": { "code": "DNL", "name": "Dance_Leader" },
+          "008": { "code": "VIS", "name": "Visual" },
+          "009": { "code": "VOC", "name": "Vocalist" },
+          "010": { "code": "MAK", "name": "Maknae" }
+        }
+      },
+      "016": {
+        "code": "HYP",
+        "name": "Hyperpop",
+        "subcategories": {
+          "001": { "code": "BAS", "name": "Base" },
+          "002": { "code": "GLT", "name": "Glitchcore" },
+          "003": { "code": "SYN", "name": "Synthpop" }
+        }
+      },
+      "017": {
+        "code": "AFB",
+        "name": "Afrobeats",
+        "subcategories": {
+          "001": { "code": "BAS", "name": "Base" },
+          "002": { "code": "NPO", "name": "Nigerian_Pop" },
+          "003": { "code": "GPO", "name": "Ghanaian_Pop" }
+        }
+      },
+      "018": {
+        "code": "MOD",
+        "name": "Mood_Based",
+        "subcategories": {
+          "001": { "code": "BAS", "name": "Base" },
+          "002": { "code": "HAP", "name": "Happy" },
+          "003": { "code": "SAD", "name": "Sad" },
+          "004": { "code": "ENE", "name": "Energetic" }
+        }
+      },
+      "019": {
+        "code": "BLU",
+        "name": "Blues",
+        "subcategories": {
+          "001": { "code": "BAS", "name": "Base" },
+          "002": { "code": "DLT", "name": "Delta_Blues" },
+          "003": { "code": "CHG", "name": "Chicago_Blues" }
+        }
+      },
+      "020": {
+        "code": "CLS",
+        "name": "Classical",
+        "subcategories": {
+          "001": { "code": "BAS", "name": "Base" },
+          "002": { "code": "ORC", "name": "Orchestral" },
+          "003": { "code": "CHM", "name": "Chamber" }
+        }
+      }
+    },
+    "naming_convention": "[Layer].[CategoryCode].[SubCategoryCode].[Sequential].[Type]",
+    "metadata_fields": {
+      "Training_Set_ID": "Links to the training dataset used for AI processing (e.g., T.P.S.FAC.001.set)",
+      "Source": "Origin of the asset (e.g., 'ReViz', 'User', 'Brand')",
+      "Target_Asset": "The asset being customized or referenced (e.g., S.POP.PNK.001)",
+      "Premium": "Indicates if the asset is premium (branded) (e.g., 'Yes' for B.L.GUC.BAG.001)",
+      "Tags": "Keywords for AlgoRhythm recommendations (e.g., 'Pop', 'Dance', 'Gucci')",
+      "Provenance": "Tracks the asset’s origin and transformations (e.g., 'Created by ReViz, remixed by User123')",
+      "Rights_Split": "Revenue distribution for monetization (e.g., 'IP Holders: 25%, ReViz: 25%, Remixer: 50%')",
+      "Engagement_Metrics": "Social media stats (e.g., {'TikTok_Views': '1.2M', 'Trending': 'Top 10 Weekly'})",
+      "Social_Media_URL": "Reference URL for trends (e.g., 'https://tiktok.com/@music')",
+      "Accessibility_Tags": "Supports inclusive UX (e.g., ['Audio', 'Music'])",
+      "Popularity_Score": "Numerical rating (0-100) based on views, likes, shares",
+      "Trending_Factor": "Growth rate of asset usage over time",
+      "Engagement_Rate": "Percentage of users who interact after viewing",
+      "Creator_Boost": "Engagement multiplier when used by verified creators",
+      "Version": "Asset version (e.g., 'v1', 'v2')",
+      "Deprecated": "Boolean indicating if asset is deprecated",
+      "Replacement": "Reference to replacement asset if deprecated",
+      "License_Expiration": "Date when branded content licenses expire (e.g., '2025-12-31')",
+      "Seasonal_Relevance": "Periods when content is most relevant (e.g., 'Summer', 'Holiday')",
+      "Content_Rating": "Age appropriateness rating (e.g., 'Everyone', 'Teen')",
+      "Cultural_Context": "Cultural significance or origin (e.g., 'Festival', 'Traditional')",
+      "Regional_Popularity": "Regions where asset is most popular (e.g., 'US', 'JP')",
+      "Demographic_Appeal": "Age groups that engage most (e.g., '13-18', '18-24')",
+      "Festival_Relevance": "Associated cultural celebrations (e.g., 'Diwali', 'Carnival')",
+      "Locale": "Geographic area of relevance or origin (e.g., 'US', 'IN')",
+      "Cache_Priority": "Priority for caching strategies ('High', 'Medium', 'Low')",
+      "File_Size": "Size of the asset in MB",
+      "Duration": "Length of the asset in seconds (for time-based assets)",
+      "Resolution": "Visual resolution (for visual assets, e.g., '1920x1080')",
+      "Social_Media_Format": {
+        "TikTok": { "aspect_ratio": "9:16", "max_duration": 60 },
+        "Instagram": { "aspect_ratio": "9:16", "max_duration": 90 },
+        "YouTube": { "aspect_ratio": "16:9", "max_duration": 180 }
+      },
+      "Export_Settings": {
+        "TikTok": { "format": "mp4", "bitrate": "high" },
+        "Instagram": { "format": "mp4", "bitrate": "medium" }
+      },
+      "Hashtags_Suggested": "Suggested hashtags for social sharing (e.g., '#ReVizRemix', '#GucciStyle')"
+    }
+  },
+  "S": {
+    "name": "Stars",
+    "categories": {
+      "001": {
+        "code": "POP",
+        "name": "Pop",
+        "subcategories": {
+          "001": { "code": "BAS", "name": "Base" },
+          "002": { "code": "DIV", "name": "Pop_Diva_Female_Stars" },
+          "003": { "code": "IDF", "name": "Pop_Idol_Female_Stars" },
+          "004": { "code": "LGF", "name": "Pop_Legend_Female_Stars" },
+          "005": { "code": "LGM", "name": "Pop_Legend_Male_Stars" },
+          "006": { "code": "ICM", "name": "Pop_Icon_Male_Stars" },
+          "007": { "code": "HPM", "name": "Pop_Hipster_Male_Stars" },
+          "008": { "code": "GLB", "name": "Global" },
+          "009": { "code": "TEN", "name": "Teen" },
+          "010": { "code": "DNC", "name": "Dance" },
+          "011": { "code": "ELC", "name": "Electro" },
+          "012": { "code": "DRM", "name": "Dream" },
+          "013": { "code": "IND", "name": "Indie" },
+          "014": { "code": "SOU", "name": "Soul" },
+          "015": { "code": "PNK", "name": "Punk" },
+          "016": { "code": "IDP", "name": "Idol_Pop" }
+        }
+      },
+      "002": {
+        "code": "RCK",
+        "name": "Rock",
+        "subcategories": {
+          "001": { "code": "BAS", "name": "Base" },
+          "002": { "code": "RSF", "name": "Rock_Star_Female_Stars" },
+          "003": { "code": "RSM", "name": "Rock_Star_Male_Stars" },
+          "004": { "code": "CLS", "name": "Classic" },
+          "005": { "code": "MOD", "name": "Modern" },
+          "006": { "code": "MTL", "name": "Metal" },
+          "007": { "code": "PNK", "name": "Punk" },
+          "008": { "code": "ALT", "name": "Alternative" },
+          "009": { "code": "GRG", "name": "Grunge" },
+          "010": { "code": "PRG", "name": "Progressive" },
+          "011": { "code": "IND", "name": "Indie" },
+          "012": { "code": "PSY", "name": "Psychedelic" },
+          "013": { "code": "BLU", "name": "Blues" }
+        }
+      },
+      "003": {
+        "code": "HIP",
+        "name": "Hip_Hop",
+        "subcategories": {
+          "001": { "code": "BAS", "name": "Base" },
+          "002": { "code": "HPF", "name": "Hip_Hop_Female_Stars" },
+          "003": { "code": "RAP", "name": "Rap" },
+          "004": { "code": "TRP", "name": "Trap" },
+          "005": { "code": "MCS", "name": "MC" },
+          "006": { "code": "DRL", "name": "Drill" },
+          "007": { "code": "PRD", "name": "Producer" },
+          "008": { "code": "MUM", "name": "Mumble" }
+        }
+      },
+      "004": {
+        "code": "RNB",
+        "name": "RnB",
+        "subcategories": {
+          "001": { "code": "BAS", "name": "Base" },
+          "002": { "code": "SOU", "name": "Soul" },
+          "003": { "code": "MOD", "name": "Modern" },
+          "004": { "code": "NEO", "name": "Neo_Soul" },
+          "005": { "code": "GOS", "name": "Gospel" },
+          "006": { "code": "BLU", "name": "Blues" },
+          "007": { "code": "FNK", "name": "Funk" },
+          "008": { "code": "JSU", "name": "Jazz_Soul" },
+          "009": { "code": "URB", "name": "Urban" },
+          "010": { "code": "ALT", "name": "Alternative" },
+          "011": { "code": "FSU", "name": "Future_Soul" }
+        }
+      },
+      "005": {
+        "code": "DNC",
+        "name": "Dance_Electronic",
+        "subcategories": {
+          "001": { "code": "BAS", "name": "Base" },
+          "002": { "code": "PRD", "name": "Producer" },
+          "003": { "code": "HSE", "name": "House" },
+          "004": { "code": "TEC", "name": "Techno" },
+          "005": { "code": "TRN", "name": "Trance" },
+          "006": { "code": "DUB", "name": "Dubstep" },
+          "007": { "code": "FUT", "name": "Future" },
+          "008": { "code": "DNB", "name": "DnB" },
+          "009": { "code": "AMB", "name": "Ambient" },
+          "010": { "code": "LIV", "name": "Live" },
+          "011": { "code": "EXP", "name": "Experimental" }
+        }
+      },
+      "006": {
+        "code": "LAT",
+        "name": "Latin",
+        "subcategories": {
+          "001": { "code": "BAS", "name": "Base" },
+          "002": { "code": "REG", "name": "Reggaeton" },
+          "003": { "code": "POP", "name": "Pop" },
+          "004": { "code": "SAL", "name": "Salsa" },
+          "005": { "code": "BCH", "name": "Bachata" },
+          "006": { "code": "RCK", "name": "Rock" },
+          "007": { "code": "TRP", "name": "Trap" },
+          "008": { "code": "MER", "name": "Merengue" },
+          "009": { "code": "JZZ", "name": "Jazz" },
+          "010": { "code": "CUM", "name": "Cumbia" },
+          "011": { "code": "FLM", "name": "Flamenco" }
+        }
+      },
+      "007": {
+        "code": "IND",
+        "name": "Indie",
+        "subcategories": {
+          "001": { "code": "BAS", "name": "Base" },
+          "002": { "code": "RCK", "name": "Rock" },
+          "003": { "code": "POP", "name": "Pop" },
+          "004": { "code": "FLK", "name": "Folk" },
+          "005": { "code": "ELC", "name": "Electronic" },
+          "006": { "code": "HIP", "name": "Hip_Hop" },
+          "007": { "code": "DRM", "name": "Dream" },
+          "008": { "code": "LOF", "name": "Lo_Fi" },
+          "009": { "code": "ART", "name": "Art" },
+          "010": { "code": "PST", "name": "Post" }
+        }
+      },
+      "008": {
+        "code": "ALT",
+        "name": "Alternative",
+        "subcategories": {
+          "001": { "code": "BAS", "name": "Base" },
+          "002": { "code": "RCK", "name": "Rock" },
+          "003": { "code": "POP", "name": "Pop" },
+          "004": { "code": "EXP", "name": "Experimental" },
+          "005": { "code": "DRK", "name": "Dark" },
+          "006": { "code": "MTL", "name": "Metal" },
+          "007": { "code": "IND", "name": "Industrial" },
+          "008": { "code": "ART", "name": "Art" },
+          "009": { "code": "NOI", "name": "Noise" },
+          "010": { "code": "PST", "name": "Post" },
+          "011": { "code": "SHG", "name": "Shoegaze" }
+        }
+      },
+      "009": {
+        "code": "WLD",
+        "name": "World",
+        "subcategories": {
+          "001": { "code": "BAS", "name": "Base" },
+          "002": { "code": "FUS", "name": "Fusion" },
+          "003": { "code": "AFR", "name": "African" },
+          "004": { "code": "IND", "name": "Indian" },
+          "005": { "code": "MDE", "name": "Middle_East" },
+          "006": { "code": "CEL", "name": "Celtic" },
+          "007": { "code": "REG", "name": "Reggae" },
+          "008": { "code": "ASN", "name": "Asian" },
+          "009": { "code": "BAL", "name": "Balkan" },
+          "010": { "code": "MED", "name": "Mediterranean" },
+          "011": { "code": "GLB", "name": "Global" }
+        }
+      },
+      "010": {
+        "code": "JZZ",
+        "name": "Jazz",
+        "subcategories": {
+          "001": { "code": "BAS", "name": "Base" },
+          "002": { "code": "CON", "name": "Contemporary" },
+          "003": { "code": "TRD", "name": "Traditional" },
+          "004": { "code": "SMO", "name": "Smooth" },
+          "005": { "code": "EXP", "name": "Experimental" },
+          "006": { "code": "LAT", "name": "Latin" },
+          "007": { "code": "WLD", "name": "World" }
+        }
+      },
+      "011": {
+        "code": "JPO",
+        "name": "J_Pop",
+        "subcategories": {
+          "001": { "code": "BAS", "name": "Base" },
+          "002": { "code": "POP", "name": "Pop" },
+          "003": { "code": "RKF", "name": "Rock_Fusion" },
+          "004": { "code": "ANI", "name": "Anime_Music" },
+          "005": { "code": "ELC", "name": "Electronic" },
+          "006": { "code": "KAW", "name": "Kawaii" },
+          "007": { "code": "ALT", "name": "Alternative" },
+          "008": { "code": "TRD", "name": "Traditional" },
+          "009": { "code": "DNC", "name": "Dance" },
+          "010": { "code": "RET", "name": "Retro" },
+          "011": { "code": "ACO", "name": "Acoustic" }
+        }
+      },
+      "012": {
+        "code": "BOL",
+        "name": "Bollywood",
+        "subcategories": {
+          "001": { "code": "BAS", "name": "Base" },
+          "002": { "code": "PLB", "name": "Playback" },
+          "003": { "code": "PFU", "name": "Pop_Fusion" },
+          "004": { "code": "CLS", "name": "Classical" },
+          "005": { "code": "DNC", "name": "Dance" },
+          "006": { "code": "IFU", "name": "Indie_Fusion" },
+          "007": { "code": "ELC", "name": "Electronic" },
+          "008": { "code": "FLK", "name": "Folk" },
+          "009": { "code": "SFI", "name": "Sufi" },
+          "010": { "code": "RMX", "name": "Remix" },
+          "011": { "code": "GLB", "name": "Global" }
+        }
+      },
+      "013": {
+        "code": "KPO",
+        "name": "K_Pop",
+        "subcategories": {
+          "001": { "code": "BAS", "name": "Base" },
+          "002": { "code": "IBG", "name": "Idol_Boy_Group" },
+          "003": { "code": "IGG", "name": "Idol_Girl_Group" },
+          "004": { "code": "SFS", "name": "Solo_Female_Star" },
+          "005": { "code": "SMS", "name": "Solo_Male_Star" },
+          "006": { "code": "RAP", "name": "Rapper" },
+          "007": { "code": "DNL", "name": "Dance_Leader" },
+          "008": { "code": "VIS", "name": "Visual" },
+          "009": { "code": "VOC", "name": "Vocalist" },
+          "010": { "code": "MAK", "name": "Maknae" }
+        }
+      },
+      "014": {
+        "code": "VAV",
+        "name": "Virtual_Avatars",
+        "subcategories": {
+          "001": { "code": "BAS", "name": "Base" },
+          "002": { "code": "AIG", "name": "AI_Generated_Star" },
+          "003": { "code": "VTB", "name": "VTuber" },
+          "004": { "code": "MTA", "name": "Metaverse_Avatar" },
+          "005": { "code": "CRT", "name": "Cartoon_Star" },
+          "006": { "code": "FAN", "name": "Fantasy_Character" },
+          "007": { "code": "RBT", "name": "Robot_Singer" },
+          "008": { "code": "PIX", "name": "Pixel_Art_Star" }
+        }
+      },
+      "015": {
+        "code": "CUL",
+        "name": "Cultural_Icons",
+        "subcategories": {
+          "001": { "code": "BAS", "name": "Base" },
+          "002": { "code": "AFB", "name": "Afrobeats_Star" },
+          "003": { "code": "BOL", "name": "Bollywood_Legend" },
+          "004": { "code": "LAT", "name": "Latin_Sensation" },
+          "005": { "code": "JPO", "name": "JPop_Celebrity" },
+          "006": { "code": "REG", "name": "Reggaeton_Artist" },
+          "007": { "code": "KAW", "name": "Kawaii_Idol" },
+          "008": { "code": "DES", "name": "Desi_Star" },
+          "009": { "code": "CPO", "name": "Chinese_Pop_Icon" }
+        }
+      },
+      "016": {
+        "code": "FAN",
+        "name": "Fantasy",
+        "subcategories": {
+          "001": { "code": "BAS", "name": "Base" },
+          "002": { "code": "ELF", "name": "Elven_Star" },
+          "003": { "code": "MGC", "name": "Magical_Star" },
+          "004": { "code": "DRG", "name": "Dragon_Warrior" }
+        }
+      }
+    },
+    "naming_convention": "[Layer].[CategoryCode].[SubCategoryCode].[Sequential].[Type]",
+    "metadata_fields": {
+      "Training_Set_ID": "Links to the training dataset used for AI processing (e.g., T.P.S.FAC.001.set)",
+      "Source": "Origin of the asset (e.g., 'ReViz', 'User', 'Brand')",
+      "Target_Asset": "The asset being customized or referenced (e.g., S.POP.PNK.001)",
+      "Premium": "Indicates if the asset is premium (branded) (e.g., 'Yes' for B.L.GUC.BAG.001)",
+      "Tags": "Keywords for AlgoRhythm recommendations (e.g., 'Pop', 'Dance', 'Gucci')",
+      "Provenance": "Tracks the asset’s origin and transformations (e.g., 'Created by ReViz, remixed by User123')",
+      "Rights_Split": "Revenue distribution for monetization (e.g., 'IP Holders: 25%, ReViz: 25%, Remixer: 50%')",
+      "Engagement_Metrics": "Social media stats (e.g., {'TikTok_Views': '1.2M', 'Trending': 'Top 10 Weekly'})",
+      "Social_Media_URL": "Reference URL for trends (e.g., 'https://tiktok.com/@star')",
+      "Accessibility_Tags": "Supports inclusive UX (e.g., ['Visual', 'Avatar'])",
+      "Popularity_Score": "Numerical rating (0-100) based on views, likes, shares",
+      "Trending_Factor": "Growth rate of asset usage over time",
+      "Engagement_Rate": "Percentage of users who interact after viewing",
+      "Creator_Boost": "Engagement multiplier when used by verified creators",
+      "Version": "Asset version (e.g., 'v1', 'v2')",
+      "Deprecated": "Boolean indicating if asset is deprecated",
+      "Replacement": "Reference to replacement asset if deprecated",
+      "License_Expiration": "Date when branded content licenses expire (e.g., '2025-12-31')",
+      "Seasonal_Relevance": "Periods when content is most relevant (e.g., 'Summer', 'Holiday')",
+      "Content_Rating": "Age appropriateness rating (e.g., 'Everyone', 'Teen')",
+      "Cultural_Context": "Cultural significance or origin (e.g., 'Festival', 'Traditional')",
+      "Regional_Popularity": "Regions where asset is most popular (e.g., 'US', 'JP')",
+      "Demographic_Appeal": "Age groups that engage most (e.g., '13-18', '18-24')",
+      "Festival_Relevance": "Associated cultural celebrations (e.g., 'Diwali', 'Carnival')",
+      "Locale": "Geographic area of relevance or origin (e.g., 'US', 'IN')",
+      "Cache_Priority": "Priority for caching strategies ('High', 'Medium', 'Low')",
+      "File_Size": "Size of the asset in MB",
+      "Duration": "Length of the asset in seconds (for time-based assets)",
+      "Resolution": "Visual resolution (for visual assets, e.g., '1920x1080')",
+      "Social_Media_Format": {
+        "TikTok": { "aspect_ratio": "9:16", "max_duration": 60 },
+        "Instagram": { "aspect_ratio": "9:16", "max_duration": 90 },
+        "YouTube": { "aspect_ratio": "16:9", "max_duration": 180 }
+      },
+      "Export_Settings": {
+        "TikTok": { "format": "mp4", "bitrate": "high" },
+        "Instagram": { "format": "mp4", "bitrate": "medium" }
+      },
+      "Hashtags_Suggested": "Suggested hashtags for social sharing (e.g., '#ReVizRemix', '#GucciStyle')"
+    }
+  },
+  "L": {
+    "name": "Looks",
+    "categories": {
+      "001": {
+        "code": "PRF",
+        "name": "Modern_Performance",
+        "subcategories": {
+          "001": { "code": "BAS", "name": "Base" },
+          "002": { "code": "LEO", "name": "Leotard" },
+          "003": { "code": "SEQ", "name": "Sequined" },
+          "004": { "code": "LED", "name": "LED" },
+          "005": { "code": "ATH", "name": "Athletic" },
+          "006": { "code": "MIN", "name": "Minimalist" },
+          "007": { "code": "SPK", "name": "Sparkly_Dress" }
+        }
+      },
+      "002": {
+        "code": "TRD",
+        "name": "Traditional_Attire",
+        "subcategories": {
+          "001": { "code": "BAS", "name": "Base" },
+          "002": { "code": "KIM", "name": "Kimono" },
+          "003": { "code": "SAR", "name": "Sari" },
+          "004": { "code": "KLT", "name": "Kilt" },
+          "005": { "code": "HAN", "name": "Hanbok" },
+          "006": { "code": "CHG", "name": "Cheongsam" }
+        }
+      },
+      "003": {
+        "code": "STG",
+        "name": "Stage_Ready",
+        "subcategories": {
+          "001": { "code": "BAS", "name": "Base" },
+          "002": { "code": "BRF", "name": "Black_Ruffled" },
+          "003": { "code": "RLE", "name": "Red_Leather" },
+          "004": { "code": "GCK", "name": "Gold_Cocktail" },
+          "005": { "code": "WBL", "name": "White_Blouse" },
+          "006": { "code": "CGR", "name": "Casual_Grey" },
+          "007": { "code": "TBZ", "name": "Tailored_Blazer" },
+          "008": { "code": "NEO", "name": "Neon" },
+          "009": { "code": "MTL", "name": "Metallic" }
+        }
+      },
+      "004": {
+        "code": "CAS",
+        "name": "Casual",
+        "subcategories": {
+          "001": { "code": "BAS", "name": "Base" },
+          "002": { "code": "STR", "name": "Streetwear" },
+          "003": { "code": "DNM", "name": "Denim" },
+          "004": { "code": "ATL", "name": "Athleisure" },
+          "005": { "code": "BOH", "name": "Boho" },
+          "006": { "code": "MIN", "name": "Minimal" }
+        }
+      },
+      "005": {
+        "code": "DSG",
+        "name": "Designer",
+        "subcategories": {
+          "001": { "code": "BAS", "name": "Base" },
+          "002": { "code": "COU", "name": "Couture" },
+          "003": { "code": "RUN", "name": "Runway" },
+          "004": { "code": "LUX", "name": "Luxury" },
+          "005": { "code": "HFA", "name": "High_Fashion" },
+          "006": { "code": "BSP", "name": "Bespoke" }
+        }
+      },
+      "006": {
+        "code": "URB",
+        "name": "Urban",
+        "subcategories": {
+          "001": { "code": "BAS", "name": "Base" },
+          "002": { "code": "HIP", "name": "Hip_Hop" },
+          "003": { "code": "GRF", "name": "Graffiti" },
+          "004": { "code": "TEC", "name": "Techwear" },
+          "005": { "code": "SKT", "name": "Skater" },
+          "006": { "code": "PNK", "name": "Punk" }
+        }
+      },
+      "007": {
+        "code": "VIN",
+        "name": "Vintage",
+        "subcategories": {
+          "001": { "code": "BAS", "name": "Base" },
+          "002": { "code": "SIX", "name": "60s" },
+          "003": { "code": "SEV", "name": "70s" },
+          "004": { "code": "EGT", "name": "80s" },
+          "005": { "code": "NIN", "name": "90s" },
+          "006": { "code": "RET", "name": "Retro" }
+        }
+      },
+      "008": {
+        "code": "CUL",
+        "name": "Cultural",
+        "subcategories": {
+          "001": { "code": "BAS", "name": "Base" },
+          "002": { "code": "AFR", "name": "African" },
+          "003": { "code": "IND", "name": "Indian" },
+          "004": { "code": "MDE", "name": "Middle_Eastern" },
+          "005": { "code": "LAT", "name": "Latin" },
+          "006": { "code": "ASN", "name": "Asian" }
+        }
+      },
+      "009": {
+        "code": "FUT",
+        "name": "Futuristic",
+        "subcategories": {
+          "001": { "code": "BAS", "name": "Base" },
+          "002": { "code": "CYB", "name": "Cyberpunk" },
+          "003": { "code": "SPC", "name": "Space" },
+          "004": { "code": "HOL", "name": "Holographic" },
+          "005": { "code": "TEC", "name": "Tech" },
+          "006": { "code": "SCI", "name": "Sci_Fi" }
+        }
+      },
+      "010": {
+        "code": "FAN",
+        "name": "Fantasy",
+        "subcategories": {
+          "001": { "code": "BAS", "name": "Base" },
+          "002": { "code": "MED", "name": "Medieval" },
+          "003": { "code": "FAI", "name": "Fairy" },
+          "004": { "code": "MYT", "name": "Mythical" },
+          "005": { "code": "MAG", "name": "Magical" },
+          "006": { "code": "ELV", "name": "Elven" }
+        }
+      },
+      "011": {
+        "code": "Y2K",
+        "name": "Y2K_Fashion",
+        "subcategories": {
+          "001": { "code": "BAS", "name": "Base" },
+          "002": { "code": "E2K", "name": "Early_2000s" },
+          "003": { "code": "L9T", "name": "Late_90s" },
+          "004": { "code": "MIL", "name": "Millennium" },
+          "005": { "code": "POP", "name": "Pop_Princess" },
+          "006": { "code": "BOY", "name": "Boy_Band" }
+        }
+      },
+      "012": {
+        "code": "SUS",
+        "name": "Sustainable_Fashion",
+        "subcategories": {
+          "001": { "code": "BAS", "name": "Base" },
+          "002": { "code": "UPC", "name": "Upcycled" },
+          "003": { "code": "ECO", "name": "Eco_Friendly" },
+          "004": { "code": "MIN", "name": "Minimalist" },
+          "005": { "code": "NAT", "name": "Natural_Materials" },
+          "006": { "code": "VRE", "name": "Vintage_Reuse" }
+        }
+      },
+      "013": {
+        "code": "DIG",
+        "name": "Digital_Fashion",
+        "subcategories": {
+          "001": { "code": "BAS", "name": "Base" },
+          "002": { "code": "NFT", "name": "NFT_Wearables" },
+          "003": { "code": "DON", "name": "Digital_Only" },
+          "004": { "code": "ARF", "name": "AR_Fashion" },
+          "005": { "code": "VCO", "name": "Virtual_Couture" },
+          "006": { "code": "W3S", "name": "Web3_Style" }
+        }
+      },
+      "014": {
+        "code": "SPO",
+        "name": "Sportswear",
+        "subcategories": {
+          "001": { "code": "BAS", "name": "Base" },
+          "002": { "code": "TRK", "name": "Tracksuit" },
+          "003": { "code": "ATH", "name": "Athletic_Wear" },
+          "004": { "code": "GYM", "name": "Gymwear" }
+        }
+      }
+    },
+    "naming_convention": "[Layer].[CategoryCode].[SubCategoryCode].[Sequential].[Type]",
+    "metadata_fields": {
+      "Training_Set_ID": "Links to the training dataset used for AI processing (e.g., T.P.S.FAC.001.set)",
+      "Source": "Origin of the asset (e.g., 'ReViz', 'User', 'Brand')",
+      "Target_Asset": "The asset being customized or referenced (e.g., S.POP.PNK.001)",
+      "Premium": "Indicates if the asset is premium (branded) (e.g., 'Yes' for B.L.GUC.BAG.001)",
+      "Tags": "Keywords for AlgoRhythm recommendations (e.g., 'Pop', 'Dance', 'Gucci')",
+      "Provenance": "Tracks the asset’s origin and transformations (e.g., 'Created by ReViz, remixed by User123')",
+      "Rights_Split": "Revenue distribution for monetization (e.g., 'IP Holders: 25%, ReViz: 25%, Remixer: 50%')",
+      "Engagement_Metrics": "Social media stats (e.g., {'TikTok_Views': '1.2M', 'Trending': 'Top 10 Weekly'})",
+      "Social_Media_URL": "Reference URL for trends (e.g., 'https://tiktok.com/@fashion')",
+      "Accessibility_Tags": "Supports inclusive UX (e.g., ['Visual', 'Fashion'])",
+      "Popularity_Score": "Numerical rating (0-100) based on views, likes, shares",
+      "Trending_Factor": "Growth rate of asset usage over time",
+      "Engagement_Rate": "Percentage of users who interact after viewing",
+      "Creator_Boost": "Engagement multiplier when used by verified creators",
+      "Version": "Asset version (e.g., 'v1', 'v2')",
+      "Deprecated": "Boolean indicating if asset is deprecated",
+      "Replacement": "Reference to replacement asset if deprecated",
+      "License_Expiration": "Date when branded content licenses expire (e.g., '2025-12-31')",
+      "Seasonal_Relevance": "Periods when content is most relevant (e.g., 'Summer', 'Holiday')",
+      "Content_Rating": "Age appropriateness rating (e.g., 'Everyone', 'Teen')",
+      "Cultural_Context": "Cultural significance or origin (e.g., 'Festival', 'Traditional')",
+      "Regional_Popularity": "Regions where asset is most popular (e.g., 'US', 'JP')",
+      "Demographic_Appeal": "Age groups that engage most (e.g., '13-18', '18-24')",
+      "Festival_Relevance": "Associated cultural celebrations (e.g., 'Diwali', 'Carnival')",
+      "Locale": "Geographic area of relevance or origin (e.g., 'US', 'IN')",
+      "Cache_Priority": "Priority for caching strategies ('High', 'Medium', 'Low')",
+      "File_Size": "Size of the asset in MB",
+      "Duration": "Length of the asset in seconds (for time-based assets)",
+      "Resolution": "Visual resolution (for visual assets, e.g., '1920x1080')",
+      "Social_Media_Format": {
+        "TikTok": { "aspect_ratio": "9:16", "max_duration": 60 },
+        "Instagram": { "aspect_ratio": "9:16", "max_duration": 90 },
+        "YouTube": { "aspect_ratio": "16:9", "max_duration": 180 }
+      },
+      "Export_Settings": {
+        "TikTok": { "format": "mp4", "bitrate": "high" },
+        "Instagram": { "format": "mp4", "bitrate": "medium" }
+      },
+      "Hashtags_Suggested": "Suggested hashtags for social sharing (e.g., '#ReVizRemix', '#GucciStyle')"
+    }
+  },
+  "M": {
+    "name": "Moves",
+    "categories": {
+      "001": {
+        "code": "POP",
+        "name": "Pop_Dance",
+        "subcategories": {
+          "001": { "code": "BAS", "name": "Base" },
+          "002": { "code": "DIS", "name": "Disco" },
+          "003": { "code": "JZF", "name": "Jazz_Funk" },
+          "004": { "code": "HPL", "name": "Hip_Hop_Lite" },
+          "005": { "code": "CNT", "name": "Contemporary_Pop" },
+          "006": { "code": "FRE", "name": "Freestyle_Club" },
+          "007": { "code": "VOG", "name": "Vogue" }
+        }
+      },
+      "002": {
+        "code": "JZZ",
+        "name": "Jazz_Dance",
+        "subcategories": {
+          "001": { "code": "BAS", "name": "Base" },
+          "002": { "code": "JZD", "name": "Jazz_Dance" },
+          "003": { "code": "TAP", "name": "Tap" },
+          "004": { "code": "LND", "name": "Lindy_Hop" },
+          "005": { "code": "BEB", "name": "Bebop" }
+        }
+      },
+      "003": {
+        "code": "HIP",
+        "name": "Hip_Hop_Dance",
+        "subcategories": {
+          "001": { "code": "BAS", "name": "Base" },
+          "002": { "code": "BRK", "name": "Breakdance" },
+          "003": { "code": "POP", "name": "Popping" },
+          "004": { "code": "LCK", "name": "Locking" },
+          "005": { "code": "KRM", "name": "Krumping" },
+          "006": { "code": "HSE", "name": "House" }
+        }
+      },
+      "004": {
+        "code": "LAT",
+        "name": "Latin_Dance",
+        "subcategories": {
+          "001": { "code": "BAS", "name": "Base" },
+          "002": { "code": "SAL", "name": "Salsa" },
+          "003": { "code": "TNG", "name": "Tango" },
+          "004": { "code": "RUM", "name": "Rumba" },
+          "005": { "code": "CHA", "name": "Cha_Cha" },
+          "006": { "code": "BCH", "name": "Bachata" }
+        }
+      },
+      "005": {
+        "code": "EDM",
+        "name": "EDM_Dance",
+        "subcategories": {
+          "001": { "code": "BAS", "name": "Base" },
+          "002": { "code": "HSE", "name": "House" },
+          "003": { "code": "SHF", "name": "Shuffling" },
+          "004": { "code": "DUB", "name": "Dubstep" },
+          "005": { "code": "TRN", "name": "Trance" }
+        }
+      },
+      "006": {
+        "code": "RCK",
+        "name": "Rock_Dance",
+        "subcategories": {
+          "001": { "code": "BAS", "name": "Base" },
+          "002": { "code": "RNR", "name": "Rock_n_Roll" },
+          "003": { "code": "DIS", "name": "Disco" },
+          "004": { "code": "CNT", "name": "Contemporary" }
+        }
+      },
+      "007": {
+        "code": "RNB",
+        "name": "RnB_Dance",
+        "subcategories": {
+          "001": { "code": "BAS", "name": "Base" },
+          "002": { "code": "SMG", "name": "Smooth_Groove" },
+          "003": { "code": "FNK", "name": "Funk" }
+        }
+      },
+      "008": {
+        "code": "BOL",
+        "name": "Bollywood_Dance",
+        "subcategories": {
+          "001": { "code": "BAS", "name": "Base" },
+          "002": { "code": "CLS", "name": "Classical" },
+          "003": { "code": "MOD", "name": "Modern" },
+          "004": { "code": "FUS", "name": "Fusion" }
+        }
+      },
+      "009": {
+        "code": "JPO",
+        "name": "J_Pop_Dance",
+        "subcategories": {
+          "001": { "code": "BAS", "name": "Base" },
+          "002": { "code": "IDL", "name": "Idol_Dance" },
+          "003": { "code": "VSK", "name": "Visual_Kei" },
+          "004": { "code": "KAW", "name": "Kawaii" }
+        }
+      },
+      "010": {
+        "code": "TRD",
+        "name": "Traditional_Dance",
+        "subcategories": {
+          "001": { "code": "BAS", "name": "Base" },
+          "002": { "code": "FLK", "name": "Folk" },
+          "003": { "code": "CUL", "name": "Cultural" }
+        }
+      },
+      "011": {
+        "code": "CNT",
+        "name": "Contemporary_Dance",
+        "subcategories": {
+          "001": { "code": "BAS", "name": "Base" },
+          "002": { "code": "LYR", "name": "Lyrical" },
+          "003": { "code": "MOD", "name": "Modern" }
+        }
+      },
+      "012": {
+        "code": "CLS",
+        "name": "Classic_Choreography",
+        "subcategories": {
+          "001": { "code": "BAS", "name": "Base" },
+          "002": { "code": "BAL", "name": "Ballet" },
+          "003": { "code": "TNG", "name": "Tango" }
+        }
+      },
+      "013": {
+        "code": "STR",
+        "name": "Street_Dance",
+        "subcategories": {
+          "001": { "code": "BAS", "name": "Base" },
+          "002": { "code": "BRK", "name": "Breakdance" },
+          "003": { "code": "POP", "name": "Popping" }
+        }
+      },
+      "014": {
+        "code": "CUL",
+        "name": "Cultural_Dance",
+        "subcategories": {
+          "001": { "code": "BAS", "name": "Base" },
+          "002": { "code": "AFR", "name": "African" },
+          "003": { "code": "IND", "name": "Indian" }
+        }
+      },
+      "015": {
+        "code": "FAN",
+        "name": "Fantasy_Dance",
+        "subcategories": {
+          "001": { "code": "BAS", "name": "Base" },
+          "002": { "code": "MED", "name": "Medieval" },
+          "003": { "code": "FAI", "name": "Fairy" }
+        }
+      },
+      "016": {
+        "code": "MVM",
+        "name": "Movement_Mechanics",
+        "subcategories": {
+          "001": { "code": "BAS", "name": "Base" },
+          "002": { "code": "ISO", "name": "Isolations" },
+          "003": { "code": "WAV", "name": "Waves" },
+          "004": { "code": "FTW", "name": "Footwork" },
+          "005": { "code": "SPN", "name": "Spins" },
+          "006": { "code": "JMP", "name": "Jumps" },
+          "007": { "code": "FLW", "name": "Floor_Work" },
+          "008": { "code": "EXT", "name": "Extensions" },
+          "009": { "code": "BAL", "name": "Balance" },
+          "010": { "code": "CTR", "name": "Contraction_Release" }
+        }
+      },
+      "017": {
+        "code": "SMT",
+        "name": "Social_Media_Trending",
+        "subcategories": {
+          "001": { "code": "BAS", "name": "Base" },
+          "002": { "code": "WOH", "name": "Woah" },
+          "003": { "code": "REN", "name": "Renegade" },
+          "004": { "code": "SAV", "name": "Savage" },
+          "005": { "code": "SSO", "name": "Say_So" },
+          "006": { "code": "SME", "name": "Smeeze" },
+          "007": { "code": "GRD", "name": "GriddyDance" },
+          "008": { "code": "HYP", "name": "HypeMan" },
+          "009": { "code": "SHT", "name": "Shoot" },
+          "010": { "code": "MIL", "name": "Milly_Rock" },
+          "011": { "code": "DOU", "name": "Dougie" },
+          "012": { "code": "CKH", "name": "ChickenHead" }
+        }
+      },
+      "018": {
+        "code": "KPC",
+        "name": "KPop_Choreography",
+        "subcategories": {
+          "001": { "code": "BAS", "name": "Base" },
+          "002": { "code": "PND", "name": "Point_Dance" },
+          "003": { "code": "FRC", "name": "Formation_Change" },
+          "004": { "code": "SHM", "name": "Sharp_Movements" },
+          "005": { "code": "SYG", "name": "Synchronized_Group" },
+          "006": { "code": "FLP", "name": "Floor_Patterns" },
+          "007": { "code": "KLP", "name": "Killing_Part" },
+          "008": { "code": "FNS", "name": "Fan_Service" },
+          "009": { "code": "TUT", "name": "Tutting" },
+          "010": { "code": "VOG", "name": "Vogue_Inspired" }
+        }
+      },
+      "019": {
+        "code": "GLC",
+        "name": "Global_Cultural",
+        "subcategories": {
+          "001": { "code": "BAS", "name": "Base" },
+          "002": { "code": "BHA", "name": "Bharatanatyam" },
+          "003": { "code": "KAT", "name": "Kathak" },
+          "004": { "code": "FLM", "name": "Flamenco" },
+          "005": { "code": "CAP", "name": "Capoeira" },
+          "006": { "code": "HUL", "name": "Hula" },
+          "007": { "code": "LIO", "name": "Lion_Dance" },
+          "008": { "code": "IRS", "name": "Irish_Step" },
+          "009": { "code": "AFT", "name": "African_Tribal" },
+          "010": { "code": "MDE", "name": "Middle_Eastern" },
+          "011": { "code": "POL", "name": "Polynesian" }
+        }
+      },
+      "020": {
+        "code": "MOD",
+        "name": "Mood_Based",
+        "subcategories": {
+          "001": { "code": "BAS", "name": "Base" },
+          "002": { "code": "JOY", "name": "Joyful" },
+          "003": { "code": "MEL", "name": "Melancholic" },
+          "004": { "code": "AGG", "name": "Aggressive" },
+          "005": { "code": "SEN", "name": "Sensual" },
+          "006": { "code": "POW", "name": "Powerful" },
+          "007": { "code": "ETH", "name": "Ethereal" },
+          "008": { "code": "PLA", "name": "Playful" }
+        }
+      },
+      "021": {
+        "code": "TEC",
+        "name": "Technical_Elements",
+        "subcategories": {
+          "001": { "code": "BAS", "name": "Base" },
+          "002": { "code": "TRN", "name": "Turns" },
+          "003": { "code": "LEA", "name": "Leaps" },
+          "004": { "code": "EXT", "name": "Extensions" },
+          "005": { "code": "BAL", "name": "Balances" },
+          "006": { "code": "FLW", "name": "Floorwork" },
+          "007": { "code": "PRT", "name": "Partnering" },
+          "008": { "code": "LFT", "name": "Lifts" },
+          "009": { "code": "INV", "name": "Inversions" }
+        }
+      },
+      "022": {
+        "code": "URB",
+        "name": "Urban_Elements",
+        "subcategories": {
+          "001": { "code": "BAS", "name": "Base" },
+          "002": { "code": "TOP", "name": "Top_Rock" },
+          "003": { "code": "FTW", "name": "Footwork" },
+          "004": { "code": "PWR", "name": "Power_Moves" },
+          "005": { "code": "FRZ", "name": "Freezes" },
+          "006": { "code": "THR", "name": "Threading" },
+          "007": { "code": "WAV", "name": "Waving" },
+          "008": { "code": "GLD", "name": "Gliding" },
+          "009": { "code": "TUT", "name": "Tutting" },
+          "010": { "code": "HIT", "name": "Hitting" }
+        }
+      },
+      "023": {
+        "code": "AFB",
+        "name": "Afrobeats_Dance",
+        "subcategories": {
+          "001": { "code": "BAS", "name": "Base" },
+          "002": { "code": "AZN", "name": "Azonto" },
+          "003": { "code": "SHK", "name": "Shaku_Shaku" },
+          "004": { "code": "AMG", "name": "Amapiano" }
+        }
+      }
+    },
+    "naming_convention": "[Layer].[CategoryCode].[SubCategoryCode].[Sequential].[Type]",
+    "metadata_fields": {
+      "Training_Set_ID": "Links to the training dataset used for AI processing (e.g., T.P.S.FAC.001.set)",
+      "Source": "Origin of the asset (e.g., 'ReViz', 'User', 'Brand')",
+      "Target_Asset": "The asset being customized or referenced (e.g., S.POP.PNK.001)",
+      "Premium": "Indicates if the asset is premium (branded) (e.g., 'Yes' for B.L.GUC.BAG.001)",
+      "Tags": "Keywords for AlgoRhythm recommendations (e.g., 'Pop', 'Dance', 'Gucci')",
+      "Provenance": "Tracks the asset’s origin and transformations (e.g., 'Created by ReViz, remixed by User123')",
+      "Rights_Split": "Revenue distribution for monetization (e.g., 'IP Holders: 25%, ReViz: 25%, Remixer: 50%')",
+      "Engagement_Metrics": "Social media stats (e.g., {'TikTok_Views': '1.2M', 'Trending': 'Top 10 Weekly'})",
+      "Social_Media_URL": "Reference URL for trends (e.g., 'https://tiktok.com/@dance/breakdance')",
+      "Accessibility_Tags": "Supports inclusive UX (e.g., ['Visual', 'Motion'])",
+      "Movement_Speed": "Tempo of movement execution (Slow, Medium, Fast)",
+      "Energy_Level": "Dynamic quality of movement (Low, Medium, High)",
+      "Movement_Plane": "Primary plane of movement (Sagittal, Frontal, Transverse)",
+      "Complexity_Level": "Technical difficulty (Beginner, Intermediate, Advanced)",
+      "Primary_Body_Parts": "List of primary body parts involved (e.g., ['Arms', 'Legs', 'Torso', 'Full Body'])",
+      "Movement_Quality": "Character of movement (Sharp, Fluid, Percussive, Sustained)",
+      "Weight_Transfer": "How weight shifts during movement (e.g., 'Left to Right', 'Forward to Backward')",
+      "Spatial_Pattern": "Movement pattern in space (Linear, Circular, Diagonal)",
+      "Learning_Difficulty": "How challenging to learn (1-5 scale)",
+      "Tutorial_Available": "Boolean indicating if tutorial is available",
+      "Tutorial_Link": "Link to tutorial content for this move (e.g., 'https://reviz.co/tutorials/moves/M.001.002.001')",
+      "Breakdown_Steps": "Array of step-by-step instructions (e.g., ['Step 1: Position arms', 'Step 2: Shift weight'])",
+      "Cultural_Origin": "Origin of the dance movement (e.g., 'African', 'Indian')",
+      "Historical_Context": "Historical background of the movement (e.g., 'Originated in 1980s hip-hop culture')",
+      "Associated_Music": "Music genres typically associated with this move (e.g., 'Hip-Hop', 'Pop')",
+      "Common_Errors": "Typical mistakes made when learning this move (e.g., 'Incorrect weight distribution')",
+      "Preparation_Moves": "Movements that typically precede this one (e.g., 'M.001.001.001')",
+      "Follow_Up_Moves": "Movements that naturally follow this one (e.g., 'M.001.003.001')",
+      "Compatible_Moves": "Other moves that blend well with this one (e.g., 'M.002.001.001')",
+      "Popularity_Score": "Numerical rating (0-100) based on views, likes, shares",
+      "Trending_Factor": "Growth rate of asset usage over time",
+      "Engagement_Rate": "Percentage of users who interact after viewing",
+      "Creator_Boost": "Engagement multiplier when used by verified creators",
+      "Version": "Asset version (e.g., 'v1', 'v2')",
+      "Deprecated": "Boolean indicating if asset is deprecated",
+      "Replacement": "Reference to replacement asset if deprecated",
+      "License_Expiration": "Date when branded content licenses expire (e.g., '2025-12-31')",
+      "Seasonal_Relevance": "Periods when content is most relevant (e.g., 'Summer', 'Holiday')",
+      "Content_Rating": "Age appropriateness rating (e.g., 'Everyone', 'Teen')",
+      "Cultural_Context": "Cultural significance or origin (e.g., 'Festival', 'Traditional')",
+      "Regional_Popularity": "Regions where asset is most popular (e.g., 'US', 'JP')",
+      "Demographic_Appeal": "Age groups that engage most (e.g., '13-18', '18-24')",
+      "Festival_Relevance": "Associated cultural celebrations (e.g., 'Diwali', 'Carnival')",
+      "Locale": "Geographic area of relevance or origin (e.g., 'US', 'IN')",
+      "Cache_Priority": "Priority for caching strategies ('High', 'Medium', 'Low')",
+      "File_Size": "Size of the asset in MB",
+      "Duration": "Length of the asset in seconds (for time-based assets)",
+      "Resolution": "Visual resolution (for visual assets, e.g., '1920x1080')",
+      "Social_Media_Format": {
+        "TikTok": { "aspect_ratio": "9:16", "max_duration": 60 },
+        "Instagram": { "aspect_ratio": "9:16", "max_duration": 90 },
+        "YouTube": { "aspect_ratio": "16:9", "max_duration": 180 }
+      },
+      "Export_Settings": {
+        "TikTok": { "format": "mp4", "bitrate": "high" },
+        "Instagram": { "format": "mp4", "bitrate": "medium" }
+      },
+      "Hashtags_Suggested": "Suggested hashtags for social sharing (e.g., '#ReVizRemix', '#GucciStyle')"
+    }
+  },
+  "W": {
+    "name": "Worlds",
+    "categories": {
+      "001": {
+        "code": "CLB",
+        "name": "Dance_Clubs",
+        "subcategories": {
+          "001": { "code": "BAS", "name": "Base" },
+          "002": { "code": "NEO", "name": "Neon" },
+          "003": { "code": "VIP", "name": "VIP_Lounge" },
+          "004": { "code": "RTF", "name": "Rooftop" },
+          "005": { "code": "UND", "name": "Underground" },
+          "006": { "code": "RET", "name": "Retro" },
+          "007": { "code": "BCH", "name": "Beach_Club" }
+        }
+      },
+      "002": {
+        "code": "STG",
+        "name": "Concert_Stages",
+        "subcategories": {
+          "001": { "code": "BAS", "name": "Base" },
+          "002": { "code": "ARE", "name": "Arena" },
+          "003": { "code": "FES", "name": "Festival" },
+          "004": { "code": "THE", "name": "Theater" },
+          "005": { "code": "OPE", "name": "Open_Air" },
+          "006": { "code": "LED", "name": "LED_Stage" }
+        }
+      },
+      "003": {
+        "code": "URB",
+        "name": "Urban",
+        "subcategories": {
+          "001": { "code": "BAS", "name": "Base" },
+          "002": { "code": "CTY", "name": "City" },
+          "003": { "code": "STR", "name": "Street" },
+          "004": { "code": "SBW", "name": "Subway" },
+          "005": { "code": "SKY", "name": "Skyscraper" },
+          "006": { "code": "MKT", "name": "Market" }
+        }
+      },
+      "004": {
+        "code": "BCH",
+        "name": "Beach",
+        "subcategories": {
+          "001": { "code": "BAS", "name": "Base" },
+          "002": { "code": "TRO", "name": "Tropical" },
+          "003": { "code": "SUN", "name": "Sunset" },
+          "004": { "code": "WAV", "name": "Waves" },
+          "005": { "code": "PAL", "name": "Palm" }
+        }
+      },
+      "005": {
+        "code": "NTL",
+        "name": "Natural",
+        "subcategories": {
+          "001": { "code": "BAS", "name": "Base" },
+          "002": { "code": "FOR", "name": "Forest" },
+          "003": { "code": "MTN", "name": "Mountain" },
+          "004": { "code": "DSR", "name": "Desert" },
+          "005": { "code": "LKE", "name": "Lake" }
+        }
+      },
+      "006": {
+        "code": "FAN",
+        "name": "Fantasy",
+        "subcategories": {
+          "001": { "code": "BAS", "name": "Base" },
+          "002": { "code": "FAI", "name": "Fairy" },
+          "003": { "code": "DRG", "name": "Dragon" },
+          "004": { "code": "MAG", "name": "Magic" },
+          "005": { "code": "ENC", "name": "Enchanted" },
+          "006": { "code": "MYT", "name": "Mythical" }
+        }
+      },
+      "007": {
+        "code": "FUT",
+        "name": "Futuristic",
+        "subcategories": {
+          "001": { "code": "BAS", "name": "Base" },
+          "002": { "code": "CYB", "name": "Cyberpunk" },
+          "003": { "code": "SPC", "name": "Space" },
+          "004": { "code": "HOL", "name": "Holographic" },
+          "005": { "code": "TEC", "name": "Tech" }
+        }
+      },
+      "008": {
+        "code": "VIR",
+        "name": "Virtual",
+        "subcategories": {
+          "001": { "code": "BAS", "name": "Base" },
+          "002": { "code": "MET", "name": "Metaverse" },
+          "003": { "code": "SIM", "name": "Simulation" },
+          "004": { "code": "VRD", "name": "VR_Dreamscape" }
+        }
+      },
+      "009": {
+        "code": "IND",
+        "name": "Industrial",
+        "subcategories": {
+          "001": { "code": "BAS", "name": "Base" },
+          "002": { "code": "FAC", "name": "Factory" },
+          "003": { "code": "WRH", "name": "Warehouse" },
+          "004": { "code": "MCH", "name": "Machine" }
+        }
+      },
+      "010": {
+        "code": "RUR",
+        "name": "Rural",
+        "subcategories": {
+          "001": { "code": "BAS", "name": "Base" },
+          "002": { "code": "FRM", "name": "Farm" },
+          "003": { "code": "FLD", "name": "Field" },
+          "004": { "code": "VIL", "name": "Village" }
+        }
+      },
+      "011": {
+        "code": "HST",
+        "name": "Historical",
+        "subcategories": {
+          "001": { "code": "BAS", "name": "Base" },
+          "002": { "code": "MED", "name": "Medieval" },
+          "003": { "code": "REN", "name": "Renaissance" },
+          "004": { "code": "VIC", "name": "Victorian" }
+        }
+      },
+      "012": {
+        "code": "CUL",
+        "name": "Cultural",
+        "subcategories": {
+          "001": { "code": "BAS", "name": "Base" },
+          "002": { "code": "AFR", "name": "African" },
+          "003": { "code": "ASN", "name": "Asian" },
+          "004": { "code": "LAT", "name": "Latin" }
+        }
+      },
+      "013": {
+        "code": "ABS",
+        "name": "Abstract",
+        "subcategories": {
+          "001": { "code": "BAS", "name": "Base" },
+          "002": { "code": "GEO", "name": "Geometric" },
+          "003": { "code": "SUR", "name": "Surreal" },
+          "004": { "code": "GLT", "name": "Glitch" }
+        }
+      },
+      "014": {
+        "code": "RET",
+        "name": "Retro",
+        "subcategories": {
+          "001": { "code": "BAS", "name": "Base" },
+          "002": { "code": "SIX", "name": "60s" },
+          "003": { "code": "SEV", "name": "70s" },
+          "004": { "code": "EGT", "name": "80s" }
+        }
+      },
+      "015": {
+        "code": "NAT",
+        "name": "Nature",
+        "subcategories": {
+          "001": { "code": "BAS", "name": "Base" },
+          "002": { "code": "FOR", "name": "Forest" },
+          "003": { "code": "MTN", "name": "Mountain" },
+          "004": { "code": "OCE", "name": "Ocean" }
+        }
+      }
+    },
+    "naming_convention": "[Layer].[CategoryCode].[SubCategoryCode].[Sequential].[Type]",
+    "metadata_fields": {
+      "Training_Set_ID": "Links to the training dataset used for AI processing (e.g., T.P.S.FAC.001.set)",
+      "Source": "Origin of the asset (e.g., 'ReViz', 'User', 'Brand')",
+      "Target_Asset": "The asset being customized or referenced (e.g., S.POP.PNK.001)",
+      "Premium": "Indicates if the asset is premium (branded) (e.g., 'Yes' for B.L.GUC.BAG.001)",
+      "Tags": "Keywords for AlgoRhythm recommendations (e.g., 'Pop', 'Dance', 'Gucci')",
+      "Provenance": "Tracks the asset’s origin and transformations (e.g., 'Created by ReViz, remixed by User123')",
+      "Rights_Split": "Revenue distribution for monetization (e.g., 'IP Holders: 25%, ReViz: 25%, Remixer: 50%')",
+      "Engagement_Metrics": "Social media stats (e.g., {'TikTok_Views': '1.2M', 'Trending': 'Top 10 Weekly'})",
+      "Social_Media_URL": "Reference URL for trends (e.g., 'https://tiktok.com/@worlds')",
+      "Accessibility_Tags": "Supports inclusive UX (e.g., ['Visual', 'Background'])",
+      "Popularity_Score": "Numerical rating (0-100) based on views, likes, shares",
+      "Trending_Factor": "Growth rate of asset usage over time",
+      "Engagement_Rate": "Percentage of users who interact after viewing",
+      "Creator_Boost": "Engagement multiplier when used by verified creators",
+      "Version": "Asset version (e.g., 'v1', 'v2')",
+      "Deprecated": "Boolean indicating if asset is deprecated",
+      "Replacement": "Reference to replacement asset if deprecated",
+      "License_Expiration": "Date when branded content licenses expire (e.g., '2025-12-31')",
+      "Seasonal_Relevance": "Periods when content is most relevant (e.g., 'Summer', 'Holiday')",
+      "Content_Rating": "Age appropriateness rating (e.g., 'Everyone', 'Teen')",
+      "Cultural_Context": "Cultural significance or origin (e.g., 'Festival', 'Traditional')",
+      "Regional_Popularity": "Regions where asset is most popular (e.g., 'US', 'JP')",
+      "Demographic_Appeal": "Age groups that engage most (e.g., '13-18', '18-24')",
+      "Festival_Relevance": "Associated cultural celebrations (e.g., 'Diwali', 'Carnival')",
+      "Locale": "Geographic area of relevance or origin (e.g., 'US', 'IN')",
+      "Cache_Priority": "Priority for caching strategies ('High', 'Medium', 'Low')",
+      "File_Size": "Size of the asset in MB",
+      "Duration": "Length of the asset in seconds (for time-based assets)",
+      "Resolution": "Visual resolution (for visual assets, e.g., '1920x1080')",
+      "Social_Media_Format": {
+        "TikTok": { "aspect_ratio": "9:16", "max_duration": 60 },
+        "Instagram": { "aspect_ratio": "9:16", "max_duration": 90 },
+        "YouTube": { "aspect_ratio": "16:9", "max_duration": 180 }
+      },
+      "Export_Settings": {
+        "TikTok": { "format": "mp4", "bitrate": "high" },
+        "Instagram": { "format": "mp4", "bitrate": "medium" }
+      },
+      "Hashtags_Suggested": "Suggested hashtags for social sharing (e.g., '#ReVizRemix', '#GucciStyle')"
+    }
+  },
+  "B": {
+    "name": "Branded",
+    "categories": {
+      "L": {
+        "name": "Look",
+        "subcategories": {
+          "GUC": {
+            "name": "Gucci",
+            "products": {
+              "001": { "code": "BAG", "name": "Bag", "description": "Designer handbags" },
+              "002": { "code": "SHO", "name": "Shoes", "description": "Luxury footwear" },
+              "003": { "code": "DRS", "name": "Dress", "description": "Couture dresses" },
+              "004": { "code": "GLS", "name": "Glasses", "description": "Designer eyewear" }
+            }
+          },
+          "PRD": {
+            "name": "Prada",
+            "products": {
+              "001": { "code": "BAG", "name": "Bag", "description": "Prada handbags" },
+              "002": { "code": "GLS", "name": "Glasses", "description": "Designer eyewear" },
+              "003": { "code": "JKT", "name": "Jacket", "description": "Luxury jackets" }
+            }
+          },
+          "ADI": {
+            "name": "Adidas",
+            "products": {
+              "001": { "code": "SHO", "name": "Shoes", "description": "Adidas shoes" },
+              "002": { "code": "TRK", "name": "Track_Suits", "description": "Track suits" },
+              "003": { "code": "JRS", "name": "Jersey", "description": "Sports jerseys" }
+            }
+          },
+          "BAL": {
+            "name": "Balenciaga",
+            "products": {
+              "001": { "code": "HAT", "name": "Hats", "description": "Designer hats" },
+              "002": { "code": "JKT", "name": "Jackets", "description": "Statement jackets" },
+              "003": { "code": "COL", "name": "Collaborations", "description": "Limited collaborations" }
+            }
+          },
+          "LVU": {
+            "name": "Louis_Vuitton",
+            "products": {
+              "001": { "code": "BAG", "name": "Bag", "description": "Signature bags" },
+              "002": { "code": "SCRF", "name": "Scarf", "description": "Luxury scarves" },
+              "003": { "code": "WLT", "name": "Wallet", "description": "Designer wallets" }
+            }
+          }
+        }
+      },
+      "M": {
+        "name": "Moves",
+        "subcategories": {
+          "NKE": {
+            "name": "Nike",
+            "products": {
+              "001": { "code": "DRP", "name": "Dance_Drop", "description": "Nike-sponsored dance drop" },
+              "002": { "code": "CHR", "name": "Choreography", "description": "Nike-branded dance routine" },
+              "003": { "code": "FTW", "name": "Footwork", "description": "Nike-sponsored footwork" }
+            }
+          }
+        }
+      },
+      "W": {
+        "name": "World",
+        "subcategories": {
+          "COK": {
+            "name": "Coke",
+            "products": {
+              "001": { "code": "BNR", "name": "Banner", "description": "Coke banner on stage" },
+              "002": { "code": "STG", "name": "Stage", "description": "Coke-branded stage" }
+            }
+          }
+        }
+      },
+      "E": {
+        "name": "Events",
+        "subcategories": {
+          "RBL": {
+            "name": "Red_Bull",
+            "products": {
+              "001": { "code": "EVT", "name": "Event_Stages", "description": "Red Bull event stages" },
+              "002": { "code": "SPT", "name": "Sports_Venues", "description": "Red Bull sports venues" }
+            }
+          },
+          "FES": {
+            "name": "Festivals",
+            "products": {
+              "001": { "code": "COA", "name": "Coachella", "description": "Coachella stages" },
+              "002": { "code": "TML", "name": "Tomorrowland", "description": "Tomorrowland themes" }
+            }
+          }
+        }
+      },
+      "S": {
+        "name": "Star",
+        "subcategories": {
+          "RBL": {
+            "name": "Red_Bull",
+            "products": {
+              "001": { "code": "AVT", "name": "Avatar", "description": "Red Bull-sponsored avatar" },
+              "002": { "code": "ICN", "name": "Icon", "description": "Red Bull-branded icon" }
+            }
+          }
+        }
+      }
+    },
+    "naming_convention": "B.[Layer].[Brand].[Product].[Sequential].[Type]",
+    "metadata_fields": {
+      "Training_Set_ID": "Links to the training dataset used for AI processing (e.g., T.B.L.GUC.BAG.001.set)",
+      "Source": "Origin of the asset (e.g., 'Brand')",
+      "Target_Asset": "The asset being customized or referenced (e.g., L.STG.SPK.001)",
+      "Premium": "Indicates if the asset is premium (branded) (e.g., 'Yes')",
+      "Tags": "Keywords for AlgoRhythm recommendations (e.g., 'Fashion', 'Gucci')",
+      "Provenance": "Tracks the asset’s origin and transformations (e.g., 'Licensed by Gucci')",
+      "Rights_Split": "Revenue distribution for monetization (e.g., 'IP Holders: 25%, ReViz: 25%, Remixer: 50%')",
+      "Engagement_Metrics": "Social media stats (e.g., {'TikTok_Views': '1.2M', 'Trending': 'Top 10 Weekly'})",
+      "Social_Media_URL": "Reference URL for trends (e.g., 'https://tiktok.com/@brand')",
+      "Accessibility_Tags": "Supports inclusive UX (e.g., ['Visual', 'Branded'])",
+      "Popularity_Score": "Numerical rating (0-100) based on views, likes, shares",
+      "Trending_Factor": "Growth rate of asset usage over time",
+      "Engagement_Rate": "Percentage of users who interact after viewing",
+      "Creator_Boost": "Engagement multiplier when used by verified creators",
+      "Version": "Asset version (e.g., 'v1', 'v2')",
+      "Deprecated": "Boolean indicating if asset is deprecated",
+      "Replacement": "Reference to replacement asset if deprecated",
+      "License_Expiration": "Date when branded content licenses expire (e.g., '2025-12-31')",
+      "Seasonal_Relevance": "Periods when content is most relevant (e.g., 'Summer', 'Holiday')",
+      "Content_Rating": "Age appropriateness rating (e.g., 'Everyone', 'Teen')",
+      "Cultural_Context": "Cultural significance or origin (e.g., 'Festival', 'Traditional')",
+      "Regional_Popularity": "Regions where asset is most popular (e.g., 'US', 'JP')",
+      "Demographic_Appeal": "Age groups that engage most (e.g., '13-18', '18-24')",
+      "Festival_Relevance": "Associated cultural celebrations (e.g., 'Diwali', 'Carnival')",
+      "Locale": "Geographic area of relevance or origin (e.g., 'US', 'IN')",
+      "Cache_Priority": "Priority for caching strategies ('High', 'Medium', 'Low')",
+      "File_Size": "Size of the asset in MB",
+      "Duration": "Length of the asset in seconds (for time-based assets)",
+      "Resolution": "Visual resolution (for visual assets, e.g., '1920x1080')",
+      "Social_Media_Format": {
+        "TikTok": { "aspect_ratio": "9:16", "max_duration": 60 },
+        "Instagram": { "aspect_ratio": "9:16", "max_duration": 90 },
+        "YouTube": { "aspect_ratio": "16:9", "max_duration": 180 }
+      },
+      "Export_Settings": {
+        "TikTok": { "format": "mp4", "bitrate": "high" },
+        "Instagram": { "format": "mp4", "bitrate": "medium" }
+      },
+      "Hashtags_Suggested": "Suggested hashtags for social sharing (e.g., '#ReVizRemix', '#GucciStyle')"
+    }
+  },
+  "P": {
+    "name": "Personalize",
+    "categories": {
+      "S": {
+        "name": "Star",
+        "subcategories": {
+          "FAC": { "name": "Face" },
+          "VOI": { "name": "Voice" },
+          "BOD": { "name": "Body_Type" },
+          "SKN": { "name": "Skin_Tone" },
+          "HGT": { "name": "Height" },
+          "EXP": { "name": "Expression" },
+          "EYE": { "name": "Eye_Color" }
+        }
+      },
+      "L": {
+        "name": "Look",
+        "subcategories": {
+          "DRS": { "name": "Dress" },
+          "ACC": { "name": "Accessories" },
+          "MKP": { "name": "Makeup" },
+          "HAR": { "name": "Hairstyle" },
+          "TTT": { "name": "Tattoo" },
+          "SHO": { "name": "Shoes" },
+          "JWL": { "name": "Jewelry" }
+        }
+      },
+      "M": {
+        "name": "Moves",
+        "subcategories": {
+          "DNC": { "name": "Dance" },
+          "SIG": { "name": "Signature_Move" },
+          "POS": { "name": "Pose" },
+          "EMO": { "name": "Emotion" },
+          "GES": { "name": "Gesture" },
+          "FTW": { "name": "Footwork" }
+        }
+      },
+      "W": {
+        "name": "World",
+        "subcategories": {
+          "STG": { "name": "Stage" },
+          "LOC": { "name": "Location" },
+          "ROM": { "name": "Room" },
+          "IMG": { "name": "Image_Background" },
+          "VR": { "name": "Virtual_Space" },
+          "OBJ": { "name": "Object" }
+        }
+      }
+    },
+    "naming_convention": "P.[Layer].[Category].[Sequential].[Type]",
+    "metadata_fields": {
+      "Training_Set_ID": "Links to the training dataset used for AI processing (e.g., T.P.S.FAC.001.set)",
+      "Source": "Origin of the asset (e.g., 'User')",
+      "Target_Asset": "The asset being customized or referenced (e.g., S.POP.PNK.001)",
+      "Premium": "Indicates if the asset is premium (branded) (e.g., 'No')",
+      "Tags": "Keywords for AlgoRhythm recommendations (e.g., 'Personalized', 'Face Swap')",
+      "Provenance": "Tracks the asset’s origin and transformations (e.g., 'Uploaded by User123')",
+      "Rights_Split": "Revenue distribution for monetization (e.g., 'IP Holders: 25%, ReViz: 25%, Remixer: 50%')",
+      "Engagement_Metrics": "Social media stats (e.g., {'TikTok_Views': '1.2M', 'Trending': 'Top 10 Weekly'})",
+      "Social_Media_URL": "Reference URL for trends (e.g., 'https://tiktok.com/@user')",
+      "Privacy_Level": "Processing scope (e.g., 'On-Device')",
+      "Accessibility_Tags": "Supports inclusive UX (e.g., ['Visual', 'User-Generated'])",
+      "Popularity_Score": "Numerical rating (0-100) based on views, likes, shares",
+      "Trending_Factor": "Growth rate of asset usage over time",
+      "Engagement_Rate": "Percentage of users who interact after viewing",
+      "Creator_Boost": "Engagement multiplier when used by verified creators",
+      "Version": "Asset version (e.g., 'v1', 'v2')",
+      "Deprecated": "Boolean indicating if asset is deprecated",
+      "Replacement": "Reference to replacement asset if deprecated",
+      "License_Expiration": "Date when branded content licenses expire (e.g., '2025-12-31')",
+      "Seasonal_Relevance": "Periods when content is most relevant (e.g., 'Summer', 'Holiday')",
+      "Content_Rating": "Age appropriateness rating (e.g., 'Everyone', 'Teen')",
+      "Cultural_Context": "Cultural significance or origin (e.g., 'Festival', 'Traditional')",
+      "Regional_Popularity": "Regions where asset is most popular (e.g., 'US', 'JP')",
+      "Demographic_Appeal": "Age groups that engage most (e.g., '13-18', '18-24')",
+      "Festival_Relevance": "Associated cultural celebrations (e.g., 'Diwali', 'Carnival')",
+      "Locale": "Geographic area of relevance or origin (e.g., 'US', 'IN')",
+      "Cache_Priority": "Priority for caching strategies ('High', 'Medium', 'Low')",
+      "File_Size": "Size of the asset in MB",
+      "Duration": "Length of the asset in seconds (for time-based assets)",
+      "Resolution": "Visual resolution (for visual assets, e.g., '1920x1080')",
+      "Social_Media_Format": {
+        "TikTok": { "aspect_ratio": "9:16", "max_duration": 60 },
+        "Instagram": { "aspect_ratio": "9:16", "max_duration": 90 },
+        "YouTube": { "aspect_ratio": "16:9", "max_duration": 180 }
+      },
+      "Export_Settings": {
+        "TikTok": { "format": "mp4", "bitrate": "high" },
+        "Instagram": { "format": "mp4", "bitrate": "medium" }
+      },
+      "Hashtags_Suggested": "Suggested hashtags for social sharing (e.g., '#ReVizRemix', '#GucciStyle')"
+    }
+  },
+  "T": {
+    "name": "Training_Data",
+    "categories": {
+      "001": {
+        "code": "SNG",
+        "name": "Songs",
+        "subcategories": {
+          "001": { "code": "BAS", "name": "Base" },
+          "002": { "code": "TFK", "name": "Traditional_Folk" },
+          "003": { "code": "MFK", "name": "Modern_Folk" },
+          "004": { "code": "CEL", "name": "Celtic" },
+          "005": { "code": "AFR", "name": "African" },
+          "006": { "code": "ASN", "name": "Asian" },
+          "007": { "code": "LAT", "name": "Latin_Folk" },
+          "008": { "code": "MDE", "name": "Middle_Eastern" },
+          "009": { "code": "WFU", "name": "World_Fusion" },
+          "010": { "code": "AMR", "name": "Americana" },
+          "011": { "code": "GLB", "name": "Global_Folk" },
+          "012": { "code": "BLU", "name": "Blues" }
+        }
+      },
+      "002": {
+        "code": "STR",
+        "name": "Stars",
+        "subcategories": {
+          "001": { "code": "BAS", "name": "Base" },
+          "002": { "code": "PLB", "name": "Playback" },
+          "003": { "code": "PFU", "name": "Pop_Fusion" },
+          "004": { "code": "CLS", "name": "Classical" },
+          "005": { "code": "DNC", "name": "Dance" },
+          "006": { "code": "IFU", "name": "Indie_Fusion" },
+          "007": { "code": "ELC", "name": "Electronic" },
+          "008": { "code": "FLK", "name": "Folk" },
+          "009": { "code": "SFI", "name": "Sufi" },
+          "010": { "code": "RMX", "name": "Remix" },
+          "011": { "code": "GLB", "name": "Global" },
+          "012": { "code": "PSY", "name": "Psychedelic" },
+          "013": { "code": "BLU", "name": "Blues" },
+          "014": { "code": "SOU", "name": "Soul" },
+          "015": { "code": "PNK", "name": "Punk" },
+          "016": { "code": "FAN", "name": "Fantasy" }
+        }
+      },
+      "003": {
+        "code": "LOK",
+        "name": "Looks",
+        "subcategories": {
+          "001": { "code": "BAS", "name": "Base" },
+          "002": { "code": "MED", "name": "Medieval" },
+          "003": { "code": "FAI", "name": "Fairy" },
+          "004": { "code": "MYT", "name": "Mythical" },
+          "005": { "code": "MAG", "name": "Magical" },
+          "006": { "code": "ELV", "name": "Elven" },
+          "007": { "code": "BLZ", "name": "Tailored_Blazer" },
+          "008": { "code": "NEO", "name": "Neon" },
+          "009": { "code": "MTL", "name": "Metallic" },
+          "010": { "code": "SPO", "name": "Sportswear" }
+        }
+      },
+      "004": {
+        "code": "MOV",
+        "name": "Moves",
+        "subcategories": {
+          "001": { "code": "BAS", "name": "Base" },
+          "002": { "code": "MED", "name": "Medieval" },
+          "003": { "code": "FAI", "name": "Fairy" },
+          "004": { "code": "CNT", "name": "Contemporary" },
+          "005": { "code": "TRN", "name": "Trance" },
+          "006": { "code": "BCH", "name": "Bachata" },
+          "007": { "code": "AFB", "name": "Afrobeats" }
+        }
+      },
+      "005": {
+        "code": "WLD",
+        "name": "Worlds",
+        "subcategories": {
+          "001": { "code": "BAS", "name": "Base" },
+          "002": { "code": "CTY", "name": "City" },
+          "003": { "code": "STR", "name": "Street" },
+          "004": { "code": "SBW", "name": "Subway" },
+          "005": { "code": "SKY", "name": "Skyscraper" },
+          "006": { "code": "MKT", "name": "Market" },
+          "007": { "code": "NAT", "name": "Nature" }
+        }
+      },
+      "006": {
+        "code": "BRD",
+        "name": "Branded",
+        "subcategories": {
+          "001": { "code": "GUC", "name": "Gucci" },
+          "002": { "code": "LVU", "name": "Louis_Vuitton" },
+          "003": { "code": "NKE", "name": "Nike" }
+        }
+      },
+      "007": {
+        "code": "PRZ",
+        "name": "Personalize",
+        "subcategories": {
+          "001": { "code": "FAC", "name": "Face" },
+          "002": { "code": "VOI", "name": "Voice" },
+          "003": { "code": "DRS", "name": "Dress" }
+        }
+      }
+    },
+    "naming_convention": "T.[Layer].[Category].[SubCategory].[Sequential].set",
+    "metadata_fields": {
+      "Training_Set_ID": "Links to the training dataset used for AI processing (e.g., T.P.S.FAC.001.set)",
+      "Source": "Origin of the asset (e.g., 'ReViz', 'User', 'Brand')",
+      "Target_Asset": "The asset being customized or referenced (e.g., S.POP.PNK.001)",
+      "Premium": "Indicates if the asset is premium (branded) (e.g., 'No')",
+      "Tags": "Keywords for AlgoRhythm recommendations (e.g., 'Training', 'Face Swap')",
+      "Provenance": "Tracks the asset’s origin and transformations (e.g., 'Generated by ReViz')",
+      "Rights_Split": "Revenue distribution for monetization (e.g., 'IP Holders: 25%, ReViz: 25%, Remixer: 50%')",
+      "Engagement_Metrics": "Social media stats (e.g., {'TikTok_Views': '1.2M', 'Trending': 'Top 10 Weekly'})",
+      "Social_Media_URL": "Reference URL for trends (e.g., 'https://tiktok.com/@training')",
+      "Accessibility_Tags": "Supports inclusive UX (e.g., ['Metadata', 'AI'])",
+      "Popularity_Score": "Numerical rating (0-100) based on views, likes, shares",
+      "Trending_Factor": "Growth rate of asset usage over time",
+      "Engagement_Rate": "Percentage of users who interact after viewing",
+      "Creator_Boost": "Engagement multiplier when used by verified creators",
+      "Version": "Asset version (e.g., 'v1', 'v2')",
+      "Deprecated": "Boolean indicating if asset is deprecated",
+      "Replacement": "Reference to replacement asset if deprecated",
+      "License_Expiration": "Date when branded content licenses expire (e.g., '2025-12-31')",
+      "Seasonal_Relevance": "Periods when content is most relevant (e.g., 'Summer', 'Holiday')",
+      "Content_Rating": "Age appropriateness rating (e.g., 'Everyone', 'Teen')",
+      "Cultural_Context": "Cultural significance or origin (e.g., 'Festival', 'Traditional')",
+      "Regional_Popularity": "Regions where asset is most popular (e.g., 'US', 'JP')",
+      "Demographic_Appeal": "Age groups that engage most (e.g., '13-18', '18-24')",
+      "Festival_Relevance": "Associated cultural celebrations (e.g., 'Diwali', 'Carnival')",
+      "Locale": "Geographic area of relevance or origin (e.g., 'US', 'IN')",
+      "Cache_Priority": "Priority for caching strategies ('High', 'Medium', 'Low')",
+      "File_Size": "Size of the asset in MB",
+      "Duration": "Length of the asset in seconds (for time-based assets)",
+      "Resolution": "The resolution of the training dataset assets (e.g., '1920x1080')",
+      "Sample_Size": "Number of samples in the training dataset",
+      "Quality_Score": "Numerical assessment of dataset quality (1-10)",
+      "Purpose": "Specific AI function the dataset trains (e.g., 'Face_Swap', 'Lip_Sync')",
+      "Compatible_Models": "List of AI models compatible with this dataset",
+      "Creation_Date": "When the dataset was created or last updated",
+      "Processing_Requirements": "Computational requirements for training",
+      "Data_Source_Type": "Origin type (e.g., 'Synthetic', 'Real', 'Mixed')",
+      "Training_Parameters": {
+        "Learning_Rate": "Recommended learning rate",
+        "Batch_Size": "Recommended batch size",
+        "Epochs": "Recommended training epochs"
+      },
+      "Social_Media_Format": {
+        "TikTok": { "aspect_ratio": "9:16", "max_duration": 60 },
+        "Instagram": { "aspect_ratio": "9:16", "max_duration": 90 },
+        "YouTube": { "aspect_ratio": "16:9", "max_duration": 180 }
+      },
+      "Export_Settings": {
+        "TikTok": { "format": "mp4", "bitrate": "high" },
+        "Instagram": { "format": "mp4", "bitrate": "medium" }
+      },
+      "Hashtags_Suggested": "Suggested hashtags for social sharing (e.g., '#ReVizRemix', '#GucciStyle')"
+    }
+  },
+  "R": {
+    "name": "Rights",
+    "categories": {
+      "001": {
+        "code": "MVR",
+        "name": "Music_Video_Rights",
+        "subcategories": {
+          "001": { "code": "POP", "name": "Pop_Rights" },
+          "002": { "code": "RCK", "name": "Rock_Rights" },
+          "003": { "code": "HIP", "name": "Hip_Hop_Rights" },
+          "004": { "code": "LAT", "name": "Latin_Rights" },
+          "005": { "code": "JZZ", "name": "Jazz_Rights" }
+        }
+      },
+      "002": {
+        "code": "REG",
+        "name": "Regional_Rights",
+        "subcategories": {
+          "001": { "code": "GLB", "name": "Global" },
+          "002": { "code": "NAM", "name": "North_America" },
+          "003": { "code": "EUR", "name": "Europe" },
+          "004": { "code": "APC", "name": "Asia_Pacific" },
+          "005": { "code": "LAM", "name": "Latin_America" },
+          "006": { "code": "AFR", "name": "Africa" },
+          "007": { "code": "MDE", "name": "Middle_East" },
+          "008": { "code": "ANZ", "name": "Australia_NZ" }
+        }
+      },
+      "003": {
+        "code": "USG",
+        "name": "Usage_Rights",
+        "subcategories": {
+          "001": { "code": "COM", "name": "Commercial" },
+          "002": { "code": "NCM", "name": "Non_Commercial" },
+          "003": { "code": "EDU", "name": "Educational" },
+          "004": { "code": "PER", "name": "Personal" },
+          "005": { "code": "BRD", "name": "Brand_Specific" },
+          "006": { "code": "EDT", "name": "Editorial" }
+        }
+      },
+      "004": {
+        "code": "BRR",
+        "name": "Branded_Rights",
+        "subcategories": {
+          "001": { "code": "LIC", "name": "Licensing" },
+          "002": { "code": "SPN", "name": "Sponsorship" },
+          "003": { "code": "COL", "name": "Collaboration" }
+        }
+      }
+    },
+    "naming_convention": "R.[Category].[Subcategory].[Sequential].[Type]",
+    "metadata_fields": {
+      "Training_Set_ID": "Links to the training dataset used for AI processing (e.g., None for rights)",
+      "Source": "Origin of the asset (e.g., 'ReViz')",
+      "Target_Asset": "The asset being customized or referenced (e.g., C.001.001.001)",
+      "Premium": "Indicates if the asset is premium (branded) (e.g., 'Yes' if includes branded components)",
+      "Tags": "Keywords for AlgoRhythm recommendations (e.g., 'Rights', 'Pop')",
+      "Provenance": "Tracks the asset’s origin and transformations (e.g., 'Generated by Clearity')",
+      "Rights_Split": "Revenue distribution for monetization (e.g., 'IP Holders: 25%, ReViz: 25%, Remixer: 50%')",
+      "Engagement_Metrics": "Social media stats (e.g., {'TikTok_Views': '1.2M', 'Trending': 'Top 10 Weekly'})",
+      "Social_Media_URL": "Reference URL for trends (e.g., 'https://tiktok.com/@rights')",
+      "Accessibility_Tags": "Supports inclusive UX (e.g., ['Metadata', 'Legal'])",
+      "Popularity_Score": "Numerical rating (0-100) based on views, likes, shares",
+      "Trending_Factor": "Growth rate of asset usage over time",
+      "Engagement_Rate": "Percentage of users who interact after viewing",
+      "Creator_Boost": "Engagement multiplier when used by verified creators",
+      "Version": "Asset version (e.g., 'v1', 'v2')",
+      "Deprecated": "Boolean indicating if asset is deprecated",
+      "Replacement": "Reference to replacement asset if deprecated",
+      "License_Expiration": "Date when branded content licenses expire (e.g., '2025-12-31')",
+      "Seasonal_Relevance": "Periods when content is most relevant (e.g., 'Summer', 'Holiday')",
+      "Content_Rating": "Age appropriateness rating (e.g., 'Everyone', 'Teen')",
+      "Cultural_Context": "Cultural significance or origin (e.g., 'Festival', 'Traditional')",
+      "Regional_Popularity": "Regions where asset is most popular (e.g., 'US', 'JP')",
+      "Demographic_Appeal": "Age groups that engage most (e.g., '13-18', '18-24')",
+      "Festival_Relevance": "Associated cultural celebrations (e.g., 'Diwali', 'Carnival')",
+      "Locale": "Geographic area of relevance or origin (e.g., 'US', 'IN')",
+      "Cache_Priority": "Priority for caching strategies ('High', 'Medium', 'Low')",
+      "File_Size": "Size of the asset in MB",
+      "Duration": "Length of the asset in seconds (for time-based assets)",
+      "Resolution": "Visual resolution (for visual assets, e.g., '1920x1080')",
+      "Region": "Geographic region where rights apply (e.g., 'North_America')",
+      "Usage_Restrictions": "Limitations on usage (e.g., 'Non-commercial only')",
+      "Expiration_Date": "When rights expire, if applicable (e.g., '2025-12-31')",
+      "Clearance_Level": "Level of rights clearance (e.g., 'Full', 'Partial')",
+      "Platform_Restrictions": "Platforms where content cannot be shared (e.g., 'YouTube')",
+      "Territory_Exceptions": "Specific regions where usage is prohibited (e.g., 'EU')",
+      "Commercial_Terms": "Terms for commercial usage (e.g., 'Royalty-free')",
+      "Rights_Owner_Contact": "Contact information for rights holders (e.g., 'legal@brand.com')",
+      "Secondary_Rights": "Additional rights beyond primary distribution (e.g., 'Merchandising')",
+      "Social_Media_Format": {
+        "TikTok": { "aspect_ratio": "9:16", "max_duration": 60 },
+        "Instagram": { "aspect_ratio": "9:16", "max_duration": 90 },
+        "YouTube": { "aspect_ratio": "16:9", "max_duration": 180 }
+      },
+      "Export_Settings": {
+        "TikTok": { "format": "mp4", "bitrate": "high" },
+        "Instagram": { "format": "mp4", "bitrate": "medium" }
+      },
+      "Hashtags_Suggested": "Suggested hashtags for social sharing (e.g., '#ReVizRemix', '#GucciStyle')"
+    }
+  },
+  "C": {
+    "name": "Composites",
+    "categories": {
+      "001": {
+        "code": "RMX",
+        "name": "Music_Video_ReMixes",
+        "subcategories": {
+          "001": { "code": "POP", "name": "Pop_ReMixes" },
+          "002": { "code": "RCK", "name": "Rock_ReMixes" },
+          "003": { "code": "HIP", "name": "Hip_Hop_ReMixes" },
+          "004": { "code": "EDM", "name": "EDM_ReMixes" },
+          "005": { "code": "LAT", "name": "Latin_ReMixes" },
+          "006": { "code": "JZZ", "name": "Jazz_ReMixes" }
+        }
+      },
+      "002": {
+        "code": "SLC",
+        "name": "Star_Look_Combinations",
+        "subcategories": {
+          "001": { "code": "POP", "name": "Pop" },
+          "002": { "code": "RCK", "name": "Rock" },
+          "003": { "code": "HIP", "name": "Hip_Hop" },
+          "004": { "code": "JZZ", "name": "Jazz" }
+        }
+      },
+      "003": {
+        "code": "FUL",
+        "name": "Full_Composites",
+        "subcategories": {
+          "001": { "code": "POP", "name": "Pop" },
+          "002": { "code": "RCK", "name": "Rock" },
+          "003": { "code": "LAT", "name": "Latin" },
+          "004": { "code": "AFB", "name": "Afrobeats" }
+        }
+      },
+      "004": {
+        "code": "CMX",
+        "name": "CoMix_Projects",
+        "subcategories": {
+          "001": { "code": "FRG", "name": "Friend_Groups" },
+          "002": { "code": "COL", "name": "Creator_Collabs" },
+          "003": { "code": "BRD", "name": "Brand_Partnerships" }
+        }
+      },
+      "005": {
+        "code": "UGC",
+        "name": "User_Generated",
+        "subcategories": {
+          "001": { "code": "TRN", "name": "Trending" },
+          "002": { "code": "FEA", "name": "Featured" },
+          "003": { "code": "STP", "name": "Staff_Picks" },
+          "004": { "code": "COM", "name": "Community_Favorites" }
+        }
+      },
+      "006": {
+        "code": "BRM",
+        "name": "Branded_ReMixes",
+        "subcategories": {
+          "001": { "code": "FAS", "name": "Fashion" },
+          "002": { "code": "EVT", "name": "Events" },
+          "003": { "code": "SPN", "name": "Sponsorships" }
+        }
+      }
+    },
+    "naming_convention": "C.[Category].[Subcategory].[Sequential]:[Component IDs].[Type]",
+    "metadata_fields": {
+      "Training_Set_ID": "Links to the training dataset used for AI processing (e.g., T.P.S.FAC.001.set)",
+      "Source": "Origin of the asset (e.g., 'ReViz')",
+      "Target_Asset": "The asset being customized or referenced (e.g., None for composites)",
+      "Premium": "Indicates if the asset is premium (branded) (e.g., 'Yes' if includes branded components)",
+      "Tags": "Keywords for AlgoRhythm recommendations (e.g., 'Pop', 'Remix', 'Gucci')",
+      "Provenance": "Tracks the asset’s origin and transformations (e.g., 'Created by ReViz, remixed by User123')",
+      "Rights_Split": "Revenue distribution for monetization (e.g., 'IP Holders: 25%, ReViz: 25%, Remixer: 50%')",
+      "Engagement_Metrics": "Social media stats (e.g., {'TikTok_Views': '1.2M', 'Trending': 'Top 10 Weekly'})",
+      "Social_Media_URL": "Reference URL for trends (e.g., 'https://tiktok.com/@remix')",
+      "Accessibility_Tags": "Supports inclusive UX (e.g., ['Video', 'Remix'])",
+      "Popularity_Score": "Numerical rating (0-100) based on views, likes, shares",
+      "Trending_Factor": "Growth rate of asset usage over time",
+      "Engagement_Rate": "Percentage of users who interact after viewing",
+      "Creator_Boost": "Engagement multiplier when used by verified creators",
+      "Version": "Asset version (e.g., 'v1', 'v2')",
+      "Deprecated": "Boolean indicating if asset is deprecated",
+      "Replacement": "Reference to replacement asset if deprecated",
+      "License_Expiration": "Date when branded content licenses expire (e.g., '2025-12-31')",
+      "Seasonal_Relevance": "Periods when content is most relevant (e.g., 'Summer', 'Holiday')",
+      "Content_Rating": "Age appropriateness rating (e.g., 'Everyone', 'Teen')",
+      "Cultural_Context": "Cultural significance or origin (e.g., 'Festival', 'Traditional')",
+      "Regional_Popularity": "Regions where asset is most popular (e.g., 'US', 'JP')",
+      "Demographic_Appeal": "Age groups that engage most (e.g., '13-18', '18-24')",
+      "Festival_Relevance": "Associated cultural celebrations (e.g., 'Diwali', 'Carnival')",
+      "Locale": "Geographic area of relevance or origin (e.g., 'US', 'IN')",
+      "Cache_Priority": "Priority for caching strategies ('High', 'Medium', 'Low')",
+      "File_Size": "Size of the asset in MB",
+      "Duration": "Length of the asset in seconds (for time-based assets)",
+      "Resolution": "Visual resolution (for visual assets, e.g., '1920x1080')",
+      "Component_Count": "Number of component assets",
+      "Component_Layers": "Types of layers included (e.g., 'G,S,L')",
+      "Creation_Date": "When the composite was created (e.g., '2025-04-06')",
+      "Creator_ID": "ID of the creator (e.g., 'User123')",
+      "Remix_Count": "Number of times this has been remixed",
+      "View_Count": "Number of views",
+      "Like_Count": "Number of likes",
+      "Share_Count": "Number of shares",
+      "Featured": "Boolean indicating if this is featured",
+      "Collaborative": "Boolean indicating if this is a collaborative project",
+      "CoMix_Contributors": "List of contributors for collaborative mixes (e.g., 'User123,User456')",
+      "Social_Media_Format": {
+        "TikTok": { "aspect_ratio": "9:16", "max_duration": 60 },
+        "Instagram": { "aspect_ratio": "9:16", "max_duration": 90 },
+        "YouTube": { "aspect_ratio": "16:9", "max_duration": 180 }
+      },
+      "Export_Settings": {
+        "TikTok": { "format": "mp4", "bitrate": "high" },
+        "Instagram": { "format": "mp4", "bitrate": "medium" }
+      },
+      "Hashtags_Suggested": "Suggested hashtags for social sharing (e.g., '#ReVizRemix', '#GucciStyle')"
+    }
+  },
+  "future_layers": {
+    "E": {
+      "name": "Audio_Effects",
+      "categories": {
+        "001": {
+          "code": "VMD",
+          "name": "Voice_Modulation",
+          "subcategories": {
+            "001": { "code": "BAS", "name": "Base" },
+            "002": { "code": "PIT", "name": "Pitch_Shift" },
+            "003": { "code": "AUT", "name": "Auto_Tune" },
+            "004": { "code": "DEP", "name": "Voice_Deepening" },
+            "005": { "code": "HAR", "name": "Voice_Harmonics" },
+            "006": { "code": "DBL", "name": "Vocal_Doubling" }
+          }
+        },
+        "002": {
+          "code": "SFX",
+          "name": "Sound_Effects",
+          "subcategories": {
+            "001": { "code": "BAS", "name": "Base" },
+            "002": { "code": "REV", "name": "Reverb" },
+            "003": { "code": "ECH", "name": "Echo" },
+            "004": { "code": "DST", "name": "Distortion" },
+            "005": { "code": "CHO", "name": "Chorus" },
+            "006": { "code": "FLN", "name": "Flanger" }
+          }
+        },
+        "003": {
+          "code": "AMB",
+          "name": "Ambience",
+          "subcategories": {
+            "001": { "code": "BAS", "name": "Base" },
+            "002": { "code": "ROM", "name": "Room" },
+            "003": { "code": "HAL", "name": "Hall" },
+            "004": { "code": "STD", "name": "Stadium" },
+            "005": { "code": "OUT", "name": "Outdoor" },
+            "006": { "code": "UND", "name": "Underwater" }
+          }
+        }
+      }
+    },
+    "N": {
+      "name": "Transitions",
+      "categories": {
+        "001": {
+          "code": "VIS",
+          "name": "Visual_Transitions",
+          "subcategories": {
+            "001": { "code": "BAS", "name": "Base" },
+            "002": { "code": "FAD", "name": "Fade" },
+            "003": { "code": "SWP", "name": "Swipe" },
+            "004": { "code": "ZOM", "name": "Zoom" },
+            "005": { "code": "GLT", "name": "Glitch" },
+            "006": { "code": "DIS", "name": "Dissolve" },
+            "007": { "code": "WIP", "name": "Wipe" },
+            "008": { "code": "SPL", "name": "Split" }
+          }
+        },
+        "002": {
+          "code": "AUD",
+          "name": "Audio_Transitions",
+          "subcategories": {
+            "001": { "code": "BAS", "name": "Base" },
+            "002": { "code": "FAD", "name": "Fade" },
+            "003": { "code": "BTM", "name": "Beat_Match" },
+            "004": { "code": "CRF", "name": "Cross_Fade" },
+            "005": { "code": "PBL", "name": "Pitch_Blend" },
+            "006": { "code": "REV", "name": "Reverse" }
+          }
+        },
+        "003": {
+          "code": "SCN",
+          "name": "Scene_Transitions",
+          "subcategories": {
+            "001": { "code": "BAS", "name": "Base" },
+            "002": { "code": "MOR", "name": "Morph" },
+            "003": { "code": "POR", "name": "Portal" },
+            "004": { "code": "TEL", "name": "Teleport" },
+            "005": { "code": "TWP", "name": "Time_Warp" },
+            "006": { "code": "DIM", "name": "Dimensional" }
+          }
+        }
+      }
+    },
+    "A": {
+      "name": "Augmented_Reality",
+      "categories": {
+        "001": {
+          "code": "FAC",
+          "name": "Face_Filters",
+          "subcategories": {
+            "001": { "code": "BAS", "name": "Base" },
+            "002": { "code": "MSK", "name": "Masks" },
+            "003": { "code": "MKP", "name": "Makeup" },
+            "004": { "code": "ACC", "name": "Accessories" },
+            "005": { "code": "CHR", "name": "Character" },
+            "006": { "code": "MOR", "name": "Morphing" }
+          }
+        },
+        "002": {
+          "code": "STK",
+          "name": "Stickers",
+          "subcategories": {
+            "001": { "code": "HRT", "name": "Floating_Hearts" },
+            "002": { "code": "CNF", "name": "Confetti" },
+            "003": { "code": "POP", "name": "Popups" }
+          }
+        },
+        "003": {
+          "code": "BGO",
+          "name": "Background_Overlays",
+          "subcategories": {
+            "001": { "code": "BCH", "name": "Virtual_Beach" },
+            "002": { "code": "CTY", "name": "Neon_City" },
+            "003": { "code": "SPC", "name": "Outer_Space" }
+          }
+        },
+        "004": {
+          "code": "IAR",
+          "name": "Interactive_AR",
+          "subcategories": {
+            "001": { "code": "BAS", "name": "Base" },
+            "002": { "code": "TCH", "name": "Touch_Reactive" },
+            "003": { "code": "MTN", "name": "Motion_Triggered" },
+            "004": { "code": "SND", "name": "Sound_Activated" },
+            "005": { "code": "GES", "name": "Gesture_Controlled" },
+            "006": { "code": "LOC", "name": "Location_Based" }
+          }
+        }
+      }
+    },
+    "F": {
+      "name": "Filters",
+      "categories": {
+        "001": {
+          "code": "CLG",
+          "name": "Color_Grading",
+          "subcategories": {
+            "001": { "code": "BAS", "name": "Base" },
+            "002": { "code": "WRM", "name": "Warm" },
+            "003": { "code": "COL", "name": "Cool" },
+            "004": { "code": "VIN", "name": "Vintage" },
+            "005": { "code": "HIC", "name": "High_Contrast" },
+            "006": { "code": "MON", "name": "Monochrome" }
+          }
+        },
+        "002": {
+          "code": "VFX",
+          "name": "Visual_Effects",
+          "subcategories": {
+            "001": { "code": "BAS", "name": "Base" },
+            "002": { "code": "FLM", "name": "Film_Grain" },
+            "003": { "code": "VHS", "name": "VHS" },
+            "004": { "code": "BLR", "name": "Blur" },
+            "005": { "code": "GLT", "name": "Glitch" },
+            "006": { "code": "PIX", "name": "Pixelate" }
+          }
+        },
+        "003": {
+          "code": "CIN",
+          "name": "Cinematic",
+          "subcategories": {
+            "001": { "code": "BAS", "name": "Base" },
+            "002": { "code": "BLK", "name": "Blockbuster" },
+            "003": { "code": "NOI", "name": "Noir" },
+            "004": { "code": "DOC", "name": "Documentary" },
+            "005": { "code": "HOR", "name": "Horror" },
+            "006": { "code": "FAN", "name": "Fantasy" }
+          }
+        }
+      }
+    },
+    "X": {
+      "name": "Text",
+      "categories": {
+        "001": {
+          "code": "TXT",
+          "name": "Text",
+          "subcategories": {
+            "001": { "code": "LYR", "name": "Lyrics" },
+            "002": { "code": "TTL", "name": "Title" },
+            "003": { "code": "CAP", "name": "Caption" },
+            "004": { "code": "WTM", "name": "Watermark" }
+          }
+        }
+      }
+    }
+  }
+}
