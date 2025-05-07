@@ -17,7 +17,7 @@ import { SelectChangeEvent } from '@mui/material/Select';
 import { CategoryOption, SubcategoryOption } from '../../types/taxonomy.types';
 import taxonomyService from '../../api/taxonomyService';
 import NNAAddressPreview from './NNAAddressPreview';
-import { getAlphabeticCode, convertHFNToMFA } from '../../api/codeMapping';
+import { convertHFNToMFA } from '../../api/codeMapping';
 // import api from '../../api/api'; // Commented out as we're using the mock implementation
 
 interface TaxonomySelectionProps {
@@ -187,6 +187,7 @@ const TaxonomySelection: React.FC<TaxonomySelectionProps> = ({
     sequentialNumber,
     sequential, // Added sequential as dependency
     onNNAAddressChange,
+    fetchSequential, // Added fetchSequential as dependency
   ]);
 
   const handleCategoryChange = (event: SelectChangeEvent<string>) => {
@@ -289,7 +290,7 @@ const TaxonomySelection: React.FC<TaxonomySelectionProps> = ({
                     </Tooltip>
                     <Tooltip title="Machine-Friendly Address (3-digit code)">
                       <Chip
-                        label={category.code}
+                        label={category.numericCode ? category.numericCode.toString().padStart(3, '0') : '???'}
                         size="small"
                         color="default"
                         variant="outlined"
@@ -344,7 +345,7 @@ const TaxonomySelection: React.FC<TaxonomySelectionProps> = ({
                   <Box sx={{ display: 'flex', alignItems: 'center' }}>
                     <Tooltip title="Human-Friendly Name (3-letter code)">
                       <Chip
-                        label={getAlphabeticCode(layerCode, subcategory.code)}
+                        label={subcategory.code}
                         size="small"
                         color="secondary"
                         variant="outlined"
@@ -353,7 +354,7 @@ const TaxonomySelection: React.FC<TaxonomySelectionProps> = ({
                     </Tooltip>
                     <Tooltip title="Machine-Friendly Address (3-digit code)">
                       <Chip
-                        label={subcategory.code}
+                        label={subcategory.numericCode ? subcategory.numericCode.toString().padStart(3, '0') : '???'}
                         size="small"
                         color="default"
                         variant="outlined"
