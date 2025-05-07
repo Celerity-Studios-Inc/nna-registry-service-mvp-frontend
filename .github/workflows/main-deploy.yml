@@ -1,4 +1,4 @@
-name: Deploy Feature Branch to Vercel
+name: Deploy to Vercel Production
 
 on:
   push:
@@ -12,7 +12,6 @@ jobs:
       - uses: actions/checkout@v3
         with:
           fetch-depth: 0
-          ref: feature/dashboard-and-integration  # Pull the feature branch code
 
       - name: Setup Node.js
         uses: actions/setup-node@v3
@@ -23,15 +22,15 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Lint
-        run: npm run lint || echo "Linting skipped"
-
-      - name: Build
-        run: npm run build
-        env:
-          REACT_APP_API_URL: /api
-          
-      - name: Deploy to Vercel (Production)
+      - name: Create production environment file
+        run: |
+          echo "REACT_APP_API_URL=/api" > .env.production
+          echo "REACT_APP_USE_MOCK_API=false" >> .env.production
+        
+      - name: Build project
+        run: CI=false npm run build
+        
+      - name: Deploy to Vercel
         uses: amondnet/vercel-action@v25
         with:
           vercel-token: ${{ secrets.VERCEL_TOKEN }}
