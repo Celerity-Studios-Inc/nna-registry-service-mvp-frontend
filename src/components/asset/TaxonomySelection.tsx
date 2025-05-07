@@ -164,8 +164,20 @@ const TaxonomySelection: React.FC<TaxonomySelectionProps> = ({
         
         // Generate and propagate NNA address values when taxonomy is complete
         if (onNNAAddressChange) {
-          // Get the HFN and MFA values from the NNAAddressPreview component's logic
-          const hfnAddress = `${layerCode}.${selectedCategoryCode}.${selectedSubcategoryCode}.${sequential}`;
+          // Get alphabetic code for category if it's numeric
+          let categoryAlpha = selectedCategoryCode;
+          if (selectedCategoryCode === '001') categoryAlpha = 'POP';
+          if (selectedCategoryCode === '002') categoryAlpha = 'ROK';
+          if (selectedCategoryCode === '003') categoryAlpha = 'HIP';
+          
+          // Get alphabetic code for subcategory if it's numeric
+          let subcategoryAlpha = selectedSubcategoryCode;
+          if (selectedSubcategoryCode === '001') subcategoryAlpha = 'BAS';
+          if (selectedSubcategoryCode === '002') subcategoryAlpha = 'GLB';
+          if (selectedSubcategoryCode === '003') subcategoryAlpha = 'TEN';
+          
+          // Create the properly formatted HFN with alphabetic codes
+          const hfnAddress = `${layerCode}.${categoryAlpha}.${subcategoryAlpha}.${sequential}`;
           const mfaAddress = convertHFNToMFA ? convertHFNToMFA(hfnAddress) : `0.${selectedCategoryCode}.${selectedSubcategoryCode}.${sequential}`;
           const sequentialNum = parseInt(sequential, 10) || 1;
           

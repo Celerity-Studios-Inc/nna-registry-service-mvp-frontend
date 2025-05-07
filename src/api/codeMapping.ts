@@ -127,10 +127,22 @@ export function formatNNAAddress(
   subcategory: string,
   sequential: number | string
 ): string {
+  // Convert numeric category code to alphabetic if needed
+  let categoryAlpha = category;
+  if (category === '001') categoryAlpha = 'POP';
+  if (category === '002') categoryAlpha = 'ROK';
+  if (category === '003') categoryAlpha = 'HIP';
+  
+  // Convert numeric subcategory code to alphabetic if needed
+  let subcategoryAlpha = subcategory;
+  if (subcategory === '001') subcategoryAlpha = 'BAS';
+  if (subcategory === '002') subcategoryAlpha = 'GLB';
+  if (subcategory === '003') subcategoryAlpha = 'TEN';
+  
   // Format sequential as 3 digits
   const formattedSequential = typeof sequential === 'number'
     ? sequential.toString().padStart(3, '0')
     : sequential.padStart(3, '0');
     
-  return `${layer}.${category}.${subcategory}.${formattedSequential}`;
+  return `${layer}.${categoryAlpha}.${subcategoryAlpha}.${formattedSequential}`;
 } 
