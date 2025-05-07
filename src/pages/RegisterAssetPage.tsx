@@ -26,15 +26,19 @@ import TaxonomySelection from '../components/asset/TaxonomySelection';
 import FileUpload from '../components/asset/FileUpload';
 import ReviewSubmit from '../components/asset/ReviewSubmit';
 import TrainingDataCollection from '../components/asset/TrainingDataCollection';
+import { ComponentsForm } from '../components/asset/ComponentsForm';
 
 // Types
 import { LayerOption, CategoryOption, SubcategoryOption } from '../types/taxonomy.types';
 import { FileUploadResponse, Asset } from '../types/asset.types';
 
 // Define the steps in the registration process
-const getSteps = (isTrainingLayer: boolean) => {
+const getSteps = (isTrainingLayer: boolean, isCompositeLayer: boolean) => {
   if (isTrainingLayer) {
     return ['Select Layer', 'Choose Taxonomy', 'Upload Files', 'Training Data', 'Review & Submit'];
+  }
+  if (isCompositeLayer) {
+    return ['Select Layer', 'Choose Taxonomy', 'Select Components', 'Upload Files', 'Review & Submit'];
   }
   return ['Select Layer', 'Choose Taxonomy', 'Upload Files', 'Review & Submit'];
 };
@@ -107,6 +111,9 @@ interface FormData {
   mfa: string; // machine friendly address
   sequential: string; // sequential number
   trainingData?: TrainingData; // Only for T layer
+  layerSpecificData?: {
+    components: any[]; // Only for C layer
+  };
 }
 
 const RegisterAssetPage: React.FC = () => {
@@ -140,6 +147,7 @@ const RegisterAssetPage: React.FC = () => {
   const [success, setSuccess] = useState<boolean>(storedData.asset !== null);
   const [uploadedFiles, setUploadedFiles] = useState<FileUploadResponse[]>([]);
   const [isTrainingLayer, setIsTrainingLayer] = useState<boolean>(storedData.asset?.layer === 'T');
+  const [isCompositeLayer, setIsCompositeLayer] = useState<boolean>(storedData.asset?.layer === 'C');
   const [showSuccessPage, setShowSuccessPage] = useState<boolean>(storedData.showSuccessPage);
   const [createdAsset, setCreatedAsset] = useState<Asset | null>(storedData.asset);
   const [potentialDuplicate, setPotentialDuplicate] = useState<{
@@ -173,6 +181,9 @@ const RegisterAssetPage: React.FC = () => {
         images: [],
         videos: [],
         documentation: '',
+      },
+      layerSpecificData: {
+        components: [],
       },
     } as FormData,
   });
@@ -267,6 +278,10 @@ const RegisterAssetPage: React.FC = () => {
           mfa: data.mfa, // Include both versions of the property name
           uploadedFiles: uploadedFiles,
           trainingData: data.trainingData,
+          // For composite assets, include the component references
+          ...(data.layer === 'C' && data.layerSpecificData?.components && {
+            components: data.layerSpecificData.components
+          }),
         },
       };
 
@@ -320,6 +335,10 @@ const RegisterAssetPage: React.FC = () => {
     // Check if this is the training layer (T)
     const isTraining = layer.code === 'T';
     setIsTrainingLayer(isTraining);
+    
+    // Check if this is the composite layer (C)
+    const isComposite = layer.code === 'C';
+    setIsCompositeLayer(isComposite);
     
     // Clear category and subcategory when layer changes
     setValue('categoryCode', '');
@@ -595,9 +614,17 @@ const RegisterAssetPage: React.FC = () => {
 
   // Render step content
   const getStepContent = (step: number) => {
-    // We're using the steps in the Stepper component, so we don't need them here
+    // Adjust step based on layer type
+    let adjustedStep = step;
     
-    switch (step) {
+    // For composite assets, steps are: Select Layer, Choose Taxonomy, Select Components, Upload Files, Review
+    // So we need to adjust the case handling
+    if (isCompositeLayer && step >= 2) {
+      // For composite assets with step > 1, adjust the step index
+      adjustedStep = step + 1;
+    }
+    
+    switch (adjustedStep) {
       case 0:
         return (
           <LayerSelection
@@ -620,6 +647,26 @@ const RegisterAssetPage: React.FC = () => {
           />
         );
       case 2:
+        // For composite assets, display the component selection form
+        if (isCompositeLayer) {
+          return (
+            <Paper sx={{ p: 3, mb: 4 }}>
+              <Typography variant="h6" gutterBottom>
+                Select Component Assets
+              </Typography>
+              <Typography variant="body2" color="text.secondary" paragraph>
+                A composite asset references other existing assets. Select the components that make up this composite asset.
+              </Typography>
+              <Divider sx={{ mb: 3 }} />
+              
+              <ComponentsForm 
+                control={methods.control} 
+                watchLayer={watchLayer}
+              />
+            </Paper>
+          );
+        }
+        // For other assets, display the file upload and asset details
         return (
           <Box>
             <FileUpload
@@ -780,41 +827,180 @@ const RegisterAssetPage: React.FC = () => {
           </Box>
         );
       case 3:
-        // If this is a training layer asset, show the training data collection form
-        // Otherwise, show the review form (for non-training assets)
-        return isTrainingLayer ? (
-          <TrainingDataCollection
-            onChange={handleTrainingDataChange}
-            initialData={getValues('trainingData')}
-            isTrainable={true}
-          />
-        ) : (
-          <ReviewSubmit
-            assetData={{
-              name: getValues('name'),
-              description: getValues('description'),
-              layer: getValues('layer'),
-              layerName: getValues('layerName'),
-              categoryCode: getValues('categoryCode'),
-              categoryName: getValues('categoryName'),
-              subcategoryCode: getValues('subcategoryCode'),
-              subcategoryName: getValues('subcategoryName'),
-              hfn: getValues('hfn'),
-              mfa: getValues('mfa'),
-              sequential: getValues('sequential'),
-              files: getValues('files'),
-              uploadedFiles: uploadedFiles,
-              tags: getValues('tags'),
-            }}
-            onEditStep={(step) => setActiveStep(step)}
-            loading={loading}
-            error={error}
-            isSubmitting={isSubmitting}
-            onSubmit={handleSubmit(onSubmit as any)}
-          />
-        );
-      case 4:
-        // This case is only for training layer assets (review step)
+        // For composite assets, this is file upload step
+        if (isCompositeLayer) {
+          return (
+            <Box>
+              <FileUpload
+                onFilesChange={handleFilesChange}
+                layerCode={watchLayer}
+                maxFiles={1}
+                onUploadProgress={handleUploadProgress}
+                onUploadComplete={handleUploadComplete}
+                onUploadError={handleUploadError}
+                initialFiles={getValues('files')}
+              />
+              
+              <Box mt={3}>
+                <Typography variant="h6" gutterBottom>
+                  Asset Details
+                </Typography>
+                <Typography variant="body2" color="text.secondary" paragraph>
+                  Provide additional information about your composite asset.
+                </Typography>
+                <Divider sx={{ mb: 3 }} />
+                
+                <Grid container spacing={3}>
+                  <Grid item xs={12}>
+                    <Box>
+                      <Typography variant="subtitle1" gutterBottom>
+                        Name
+                      </Typography>
+                      <input
+                        {...register('name')}
+                        placeholder="Asset Name"
+                        style={{
+                          width: '100%',
+                          padding: '10px',
+                          borderRadius: '4px',
+                          border: '1px solid #ccc',
+                        }}
+                      />
+                      {errors.name && (
+                        <Typography color="error" variant="caption">
+                          {errors.name.message}
+                        </Typography>
+                      )}
+                    </Box>
+                  </Grid>
+                  
+                  <Grid item xs={12}>
+                    <Box>
+                      <Typography variant="subtitle1" gutterBottom>
+                        Description
+                      </Typography>
+                      <textarea
+                        {...register('description')}
+                        placeholder="Asset Description"
+                        rows={4}
+                        style={{
+                          width: '100%',
+                          padding: '10px',
+                          borderRadius: '4px',
+                          border: '1px solid #ccc',
+                        }}
+                      />
+                      {errors.description && (
+                        <Typography color="error" variant="caption">
+                          {errors.description.message}
+                        </Typography>
+                      )}
+                    </Box>
+                  </Grid>
+  
+                  <Grid item xs={12}>
+                    <Box>
+                      <Typography variant="subtitle1" gutterBottom>
+                        Tags
+                      </Typography>
+                      <Box sx={{ mb: 2 }}>
+                        {/* Tag Input Field */}
+                        <Box 
+                          component="div" 
+                          sx={{ 
+                            display: 'flex',
+                            alignItems: 'center',
+                            border: '1px solid #ccc',
+                            borderRadius: '4px',
+                            p: 1,
+                            mb: 1
+                          }}
+                        >
+                          <input
+                            id="tag-input"
+                            type="text"
+                            placeholder="Type a tag and press Enter"
+                            style={{
+                              border: 'none',
+                              outline: 'none',
+                              width: '100%',
+                              padding: '8px',
+                              fontSize: '14px'
+                            }}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' && e.currentTarget.value.trim()) {
+                                e.preventDefault();
+                                const currentValue = e.currentTarget.value.trim();
+                                const currentTags = getValues('tags') || [];
+                                if (!currentTags.includes(currentValue)) {
+                                  setValue('tags', [...currentTags, currentValue]);
+                                  e.currentTarget.value = '';
+                                }
+                              }
+                            }}
+                          />
+                          <Button
+                            variant="contained"
+                            color="primary"
+                            size="small"
+                            sx={{ minWidth: '36px', ml: 1 }}
+                            onClick={() => {
+                              const input = document.getElementById('tag-input') as HTMLInputElement;
+                              if (input && input.value.trim()) {
+                                const currentTags = getValues('tags') || [];
+                                const newTag = input.value.trim();
+                                if (!currentTags.includes(newTag)) {
+                                  setValue('tags', [...currentTags, newTag]);
+                                  input.value = '';
+                                }
+                              }
+                              input?.focus();
+                            }}
+                          >
+                            +
+                          </Button>
+                        </Box>
+  
+                        {/* Tag Display Area */}
+                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                          {(watch('tags') || []).map((tag, index) => (
+                            <Chip
+                              key={`tag-${index}`}
+                              label={tag}
+                              variant="outlined"
+                              color="primary"
+                              size="small"
+                              onDelete={() => {
+                                const currentTags = [...(getValues('tags') || [])];
+                                currentTags.splice(index, 1);
+                                setValue('tags', currentTags);
+                              }}
+                            />
+                          ))}
+                        </Box>
+                      </Box>
+                      <Typography variant="caption" color="text.secondary">
+                        Tags help with searchability and metadata
+                      </Typography>
+                    </Box>
+                  </Grid>
+                </Grid>
+              </Box>
+            </Box>
+          );
+        }
+        
+        // For Training Data assets
+        if (isTrainingLayer) {
+          return (
+            <TrainingDataCollection
+              onChange={handleTrainingDataChange}
+              initialData={getValues('trainingData')}
+              isTrainable={true}
+            />
+          );
+        }
+        // For regular assets, show review
         return (
           <ReviewSubmit
             assetData={{
@@ -832,6 +1018,35 @@ const RegisterAssetPage: React.FC = () => {
               files: getValues('files'),
               uploadedFiles: uploadedFiles,
               tags: getValues('tags'),
+              components: isCompositeLayer ? getValues('layerSpecificData.components') : undefined,
+            }}
+            onEditStep={(step) => setActiveStep(step)}
+            loading={loading}
+            error={error}
+            isSubmitting={isSubmitting}
+            onSubmit={handleSubmit(onSubmit as any)}
+          />
+        );
+      case 4:
+        // Final review steps for Training and Composite layers
+        return (
+          <ReviewSubmit
+            assetData={{
+              name: getValues('name'),
+              description: getValues('description'),
+              layer: getValues('layer'),
+              layerName: getValues('layerName'),
+              categoryCode: getValues('categoryCode'),
+              categoryName: getValues('categoryName'),
+              subcategoryCode: getValues('subcategoryCode'),
+              subcategoryName: getValues('subcategoryName'),
+              hfn: getValues('hfn'),
+              mfa: getValues('mfa'),
+              sequential: getValues('sequential'),
+              files: getValues('files'),
+              uploadedFiles: uploadedFiles,
+              tags: getValues('tags'),
+              components: isCompositeLayer ? getValues('layerSpecificData.components') : undefined,
             }}
             onEditStep={(step) => setActiveStep(step)}
             loading={loading}
@@ -1227,7 +1442,7 @@ const RegisterAssetPage: React.FC = () => {
             )}
 
             <Stepper activeStep={activeStep} sx={{ pt: 3, pb: 5 }}>
-              {getSteps(isTrainingLayer).map((label) => (
+              {getSteps(isTrainingLayer, isCompositeLayer).map((label) => (
                 <Step key={label}>
                   <StepLabel>{label}</StepLabel>
                 </Step>
@@ -1239,7 +1454,9 @@ const RegisterAssetPage: React.FC = () => {
               <Box>{getStepContent(activeStep)}</Box>
 
               {/* Only show navigation buttons if not on review step */}
-              {(activeStep < getSteps(isTrainingLayer).length - 1 || (isTrainingLayer && activeStep < getSteps(isTrainingLayer).length - 2)) && (
+              {(activeStep < getSteps(isTrainingLayer, isCompositeLayer).length - 1 || 
+                (isTrainingLayer && activeStep < getSteps(isTrainingLayer, isCompositeLayer).length - 2) ||
+                (isCompositeLayer && activeStep < getSteps(isTrainingLayer, isCompositeLayer).length - 2)) && (
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 3 }}>
                   <Button
                     variant="outlined"
@@ -1251,7 +1468,7 @@ const RegisterAssetPage: React.FC = () => {
                     Back
                   </Button>
                   <Box>
-                    {activeStep < getSteps(isTrainingLayer).length - 1 && (
+                    {activeStep < getSteps(isTrainingLayer, isCompositeLayer).length - 1 && (
                       <Button
                         variant="contained"
                         onClick={handleNext}

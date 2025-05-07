@@ -54,7 +54,7 @@ const LayerSelection: React.FC<LayerSelectionProps> = ({
         // Use taxonomyService to get layers
         const allLayerOptions = taxonomyService.getLayers();
         
-        // If taxonomyService didn't return layers, create mock data
+        // If taxonomyService didn't return all layers, create mock data
         let layersToUse = allLayerOptions;
         
         if (!layersToUse || layersToUse.length === 0) {
@@ -71,6 +71,13 @@ const LayerSelection: React.FC<LayerSelectionProps> = ({
         const filteredLayers = layersToUse.filter((layer: LayerOption) =>
           mvpLayerCodes.includes(layer.code)
         );
+        
+        // Sort layers according to the order in mvpLayerCodes
+        filteredLayers.sort((a, b) => {
+          const indexA = mvpLayerCodes.indexOf(a.code);
+          const indexB = mvpLayerCodes.indexOf(b.code);
+          return indexA - indexB;
+        });
         
         setLayers(filteredLayers);
         

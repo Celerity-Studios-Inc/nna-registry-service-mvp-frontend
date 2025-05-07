@@ -9,7 +9,7 @@ import {
   FileUploadResponse,
   AssetFile
 } from '../types/asset.types';
-import { ApiResponse, PaginatedResponse } from '../../types/api.types';
+import { ApiResponse, PaginatedResponse } from '../types/api.types';
 import assetRegistryService from './assetRegistryService';
 
 // Track ongoing uploads

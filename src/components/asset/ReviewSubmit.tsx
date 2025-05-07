@@ -30,6 +30,7 @@ import {
   InsertChart as DataIcon,
   Check as SubmitIcon,
   ChevronLeft,
+  Public as PublicIcon,
 } from '@mui/icons-material';
 import { FileUploadResponse } from '../../types/asset.types';
 
@@ -50,6 +51,7 @@ interface ReviewSubmitProps {
     files: File[];
     uploadedFiles: FileUploadResponse[];
     tags?: string[];
+    components?: any[]; // Component assets for Composite (C) layer
   };
   onEditStep: (step: number) => void;
   loading?: boolean;
@@ -114,10 +116,14 @@ const ReviewSubmit: React.FC<ReviewSubmitProps> = ({
     files,
     uploadedFiles,
     tags = [],
+    components = [],
   } = assetData;
 
   // Validate that all required fields are present
   const isComplete = name && layer && categoryCode && subcategoryCode && files.length > 0;
+  
+  // Check if this is a composite asset 
+  const isCompositeAsset = layer === 'C';
 
   return (
     <Paper sx={{ p: 3, mb: 4 }}>
@@ -388,6 +394,46 @@ const ReviewSubmit: React.FC<ReviewSubmitProps> = ({
               </Box>
             )}
           </Paper>
+          
+          {/* Component Assets (only for Composite layer) */}
+          {isCompositeAsset && components && components.length > 0 && (
+            <Paper variant="outlined" sx={{ p: 2, mb: 3 }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                <Typography variant="subtitle1" fontWeight="bold">
+                  Component Assets
+                </Typography>
+                <IconButton size="small" onClick={() => onEditStep(2)} color="primary">
+                  <EditIcon fontSize="small" />
+                </IconButton>
+              </Box>
+              <Divider sx={{ mb: 2 }} />
+              
+              <List>
+                {components.map((component, index) => (
+                  <ListItem key={index} divider={index < components.length - 1}>
+                    <ListItemIcon>
+                      {component.layer === 'G' ? <AudioIcon color="primary" /> :
+                       component.layer === 'S' ? <CategoryIcon color="secondary" /> :
+                       component.layer === 'L' ? <DescriptionIcon color="success" /> :
+                       component.layer === 'M' ? <VideoIcon color="warning" /> :
+                       component.layer === 'W' ? <PublicIcon color="info" /> :
+                       <FileIcon />
+                      }
+                    </ListItemIcon>
+                    <ListItemText
+                      primary={component.title}
+                      secondary={component.nnaAddress || `${component.layer} layer asset`}
+                      primaryTypographyProps={{ noWrap: true }}
+                    />
+                  </ListItem>
+                ))}
+              </List>
+              
+              {components.length === 0 && (
+                <Alert severity="warning">No component assets have been selected.</Alert>
+              )}
+            </Paper>
+          )}
           
           {/* NNA Address Information moved below Asset Files */}
           <Paper variant="outlined" sx={{ p: 2, mb: 3 }}>
