@@ -1,46 +1,111 @@
-# Getting Started with Create React App
+# NNA Registry Service Frontend
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+This is the frontend application for the NNA (Naming, Numbering, and Addressing) Registry Service.
+
+## Project Overview
+
+The NNA Registry Service Frontend provides a user interface for registering, managing, and searching assets in the NNA framework. It implements the 10-layer NNA taxonomy (G, S, L, M, W, B, P, T, C, R) and allows for asset registration with appropriate metadata.
+
+## Technology Stack
+
+- React (with TypeScript)
+- Material UI for components
+- React Router for navigation
+- Axios for API communication
+- React Hook Form for form handling
+
+## Development
+
+### Prerequisites
+
+- Node.js (v14+)
+- npm or yarn
+
+### Installation
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/EqualsAjayMadhok/nna-registry-service-mvp-frontend.git
+   cd nna-registry-service-mvp-frontend
+   ```
+
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+
+3. Start the development server:
+   ```bash
+   npm start
+   ```
+
+The application will be available at http://localhost:3000.
+
+### Building
+
+To build the application for production:
+
+```bash
+npm run build
+```
+
+To serve the built application with the Express server (which includes CORS handling):
+
+```bash
+npm run serve
+```
+
+## Deployment
+
+### Vercel Deployment
+
+This project is configured for automatic deployment to Vercel using GitHub Actions.
+
+To set up deployment:
+
+1. Follow the instructions in `.github/MANUAL_DEPLOYMENT_SETUP.md` to set up the required GitHub secrets.
+2. Push to the `main` branch or the `feature/dashboard-and-integration` branch to trigger a deployment.
+3. You can also manually trigger a deployment from the GitHub Actions tab.
+
+### Project Structure
+
+```
+src/
+├── api/             # API service layer
+├── assets/          # Static assets and resources
+├── components/      # Reusable UI components
+├── contexts/        # React context providers
+├── hooks/           # Custom React hooks
+├── pages/           # Page components
+├── services/        # Core service functions
+├── types/           # TypeScript type definitions
+└── utils/           # Utility functions
+```
+
+## Features
+
+- Layer selection for asset registration
+- Taxonomy browsing (categories and subcategories)
+- File uploads
+- Asset metadata management
+- NNA address generation
+- Training data collection for assets
+- Composite asset management
+- Asset search
+
+## Environment Variables
+
+- `REACT_APP_API_BASE_URL`: API endpoint URL (e.g., "https://registry.reviz.dev/api")
+- `REACT_APP_USE_MOCK_API`: Set to "true" to use mock API responses (default: "false")
 
 ## Available Scripts
 
-In the project directory, you can run:
+- `npm start`: Runs the app in development mode
+- `npm test`: Launches the test runner
+- `npm run build`: Builds the app for production
+- `npm run serve`: Serves the built application with Express server
+- `npm run format`: Formats code with Prettier
 
-### `npm start`
+## License
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
-
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
-
-### `npm test`
-
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
-
-### `npm run build`
-
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
-
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
-
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
-
-### `npm run eject`
-
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
-
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
-
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
-
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
+Proprietary - Copyright (c) 2025
