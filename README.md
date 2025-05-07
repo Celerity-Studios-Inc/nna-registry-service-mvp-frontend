@@ -1,6 +1,6 @@
 # NNA Registry Service Frontend
 
-This is the frontend application for the NNA (Naming, Numbering, and Addressing) Registry Service.
+This is the frontend application for the NNA (Naming, Numbering, and Addressing) Registry Service. It provides a user-friendly interface for registering and managing NNA assets with proper human-friendly naming formats.
 
 ## Project Overview
 
@@ -88,7 +88,8 @@ src/
 - Taxonomy browsing (categories and subcategories)
 - File uploads
 - Asset metadata management
-- NNA address generation
+- NNA address generation with proper alphabetic codes
+- Human-Friendly Name (HFN) and Machine-Friendly Address (MFA) support
 - Training data collection for assets
 - Composite asset management
 - Asset search
