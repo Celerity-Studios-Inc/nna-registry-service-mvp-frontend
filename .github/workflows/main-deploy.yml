@@ -25,7 +25,7 @@ jobs:
       - name: Build
         run: npm run build
         env:
-          REACT_APP_API_URL: /api
+          CI: false
 
       - name: Deploy to Vercel
         uses: amondnet/vercel-action@v25
