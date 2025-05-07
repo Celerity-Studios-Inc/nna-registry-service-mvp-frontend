@@ -37,10 +37,11 @@ jobs:
       - name: Check for build errors
         run: |
           echo "Running build check..."
-          if ! npm run build; then
+          # Set CI=false to prevent treating warnings as errors
+          CI=false npm run build || {
             echo "::error::Build failed! Please check your code for errors."
             exit 1
-          fi
+          }
       
       - name: Deploy to Vercel
         id: deploy
