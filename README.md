@@ -59,13 +59,25 @@ npm run serve
 
 ### Vercel Deployment
 
-This project is configured for automatic deployment to Vercel using GitHub Actions.
+This project is configured for deployment to Vercel.
 
-To set up deployment:
+#### Option 1: Use Vercel GitHub Integration (Recommended)
 
-1. Follow the instructions in `.github/MANUAL_DEPLOYMENT_SETUP.md` to set up the required GitHub secrets.
-2. Push to the `main` branch or the `feature/dashboard-and-integration` branch to trigger a deployment.
-3. You can also manually trigger a deployment from the GitHub Actions tab.
+1. Go to [Vercel](https://vercel.com) and sign in with your GitHub account
+2. Click "Add New..." > "Project"
+3. Select this repository
+4. Configure the project settings
+5. Click "Deploy"
+
+Vercel will automatically deploy when changes are pushed to GitHub.
+
+#### Option 2: Manual Deployment
+
+To deploy manually:
+
+1. Install Vercel CLI: `npm install -g vercel`
+2. Login: `vercel login`
+3. Deploy: `vercel --prod`
 
 ### Project Structure
 
