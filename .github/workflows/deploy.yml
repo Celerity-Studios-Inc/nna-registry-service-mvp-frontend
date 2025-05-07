@@ -43,22 +43,31 @@ jobs:
             exit 1
           }
       
-      - name: Create build artifact for manual deployment
-        run: |
-          echo "::notice::Creating build artifact for manual deployment..."
-          # Compress the build directory
-          tar -czf build.tar.gz build/
-          
-          # Save the artifact
-          echo "::notice::Build artifact created. You can now download the build.tar.gz file and deploy manually to Vercel."
-          echo "::notice::Alternatively, setup Vercel project secrets in GitHub repository settings:"
-          echo "::notice::1. VERCEL_TOKEN: Your Vercel API token"
-          echo "::notice::2. VERCEL_ORG_ID: Your Vercel organization ID"
-          echo "::notice::3. VERCEL_PROJECT_ID: Your Vercel project ID"
-          
-      - name: Upload build artifact
-        uses: actions/upload-artifact@v3
+      - name: Deploy to Vercel
+        id: deploy
+        uses: amondnet/vercel-action@v25
         with:
-          name: build-artifact
-          path: build.tar.gz
-          retention-days: 7
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          working-directory: ./
+          vercel-args: '--prod'
+      
+      - name: Verify deployment
+        run: |
+          if [ -z "${{ steps.deploy.outputs.preview-url }}" ]; then
+            echo "::warning::No preview URL was returned by Vercel, deployment may have failed."
+          else
+            echo "::notice::Deployment successful! Site is live at ${{ steps.deploy.outputs.preview-url }}"
+            echo "Running basic health check..."
+            
+            # Wait a bit for the deployment to stabilize
+            sleep 10
+            
+            # Basic health check
+            if curl -s -o /dev/null -w "%{http_code}" "${{ steps.deploy.outputs.preview-url }}" | grep -q "200\|301\|302"; then
+              echo "::notice::Health check passed! Site is responding with expected status code."
+            else
+              echo "::warning::Health check failed! Site is not responding with expected status code."
+            fi
+          fi
