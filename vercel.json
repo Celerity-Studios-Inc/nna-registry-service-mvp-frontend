@@ -2,7 +2,7 @@
   "rewrites": [
     { 
       "source": "/api/:path*", 
-      "destination": "https://registry.reviz.dev/api/:path*" 
+      "destination": "/api/proxy" 
     }
   ],
   "headers": [
