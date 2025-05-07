@@ -2,9 +2,8 @@ import axios from 'axios';
 
 // Configuration for API requests
 export const apiConfig = {
-  // Use relative URL for the API when deployed to Vercel with proxy
-  // or absolute URL with environment variable
-  baseURL: process.env.NODE_ENV === 'production' ? '/api' : '/api', // Using relative path for local development
+  // Use environment variable for API URL or fall back to default
+  baseURL: process.env.REACT_APP_API_BASE_URL || '/api',
 };
 
 // Create an Axios instance

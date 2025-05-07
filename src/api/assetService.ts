@@ -265,89 +265,121 @@ class AssetService {
    */
   async createAsset(assetData: AssetCreateRequest): Promise<Asset> {
     try {
-      // For development/testing: Use mock implementation to avoid 401 errors
-      // Comment this out when the API is ready
-      console.log("Using mock createAsset implementation");
+      // Determine whether to use mock implementation or real API
+      const useMock = process.env.REACT_APP_USE_MOCK_API === 'true';
       
-      // Simulate network delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Extract metadata from the custom assetData structure 
-      // since TypeScript complains about the structure not matching AssetCreateRequest
-      const customMetadata = (assetData as any).metadata || {};
-      
-      // Map uploaded files to AssetFile format
-      const uploadedFiles: AssetFile[] = (customMetadata.uploadedFiles || []).map((file: FileUploadResponse) => ({
-        id: `file-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-        filename: file.filename,
-        contentType: file.mimeType,
-        size: file.size,
-        url: file.url,
-        uploadedAt: new Date().toISOString(),
-        thumbnailUrl: file.mimeType.startsWith('image/') ? file.url : undefined
-      }));
-      
-      // Extract metadata properly for consistent HFN/MFA values
-      const hfn = customMetadata.hfn || customMetadata.humanFriendlyName || assetData.name;
-      const mfa = customMetadata.mfa || customMetadata.machineFriendlyAddress || "0.000.000.001";
-      const layerName = customMetadata.layerName || "Unknown Layer";
-      
-      // Generate a mock response
-      const mockAsset: Asset = {
-        id: `mock-asset-${Date.now()}`,
-        name: assetData.name,
-        friendlyName: assetData.name,
-        nnaAddress: mfa, // Ensure consistent MFA values
-        type: "standard",
-        gcpStorageUrl: "https://storage.googleapis.com/mock-bucket/",
-        description: assetData.description || '',
-        layer: assetData.layer,
-        categoryCode: (assetData as any).categoryCode || "",
-        subcategoryCode: (assetData as any).subcategoryCode || "",
-        category: assetData.category,
-        subcategory: assetData.subcategory,
-        tags: assetData.tags || [],
-        files: uploadedFiles,
-        metadata: {
-          ...customMetadata,
-          humanFriendlyName: hfn, // Always set these consistently
-          machineFriendlyAddress: mfa,
-          layerName: layerName, // Include layer name in metadata
+      if (useMock) {
+        console.log("Using mock createAsset implementation");
+        
+        // Simulate network delay
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        // Extract metadata from the custom assetData structure 
+        const customMetadata = (assetData as any).metadata || {};
+        
+        // Map uploaded files to AssetFile format
+        const uploadedFiles: AssetFile[] = (customMetadata.uploadedFiles || []).map((file: FileUploadResponse) => ({
+          id: `file-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+          filename: file.filename,
+          contentType: file.mimeType,
+          size: file.size,
+          url: file.url,
+          uploadedAt: new Date().toISOString(),
+          thumbnailUrl: file.mimeType.startsWith('image/') ? file.url : undefined
+        }));
+        
+        // Extract metadata properly for consistent HFN/MFA values
+        const hfn = customMetadata.hfn || customMetadata.humanFriendlyName || assetData.name;
+        const mfa = customMetadata.mfa || customMetadata.machineFriendlyAddress || "0.000.000.001";
+        const layerName = customMetadata.layerName || "Unknown Layer";
+        
+        // Generate a mock response
+        const mockAsset: Asset = {
+          id: `mock-asset-${Date.now()}`,
+          name: assetData.name,
+          friendlyName: assetData.name,
+          nnaAddress: mfa, // Ensure consistent MFA values
+          type: "standard",
+          gcpStorageUrl: "https://storage.googleapis.com/mock-bucket/",
+          description: assetData.description || '',
+          layer: assetData.layer,
+          categoryCode: (assetData as any).categoryCode || "",
+          subcategoryCode: (assetData as any).subcategoryCode || "",
+          category: assetData.category,
+          subcategory: assetData.subcategory,
+          tags: assetData.tags || [],
+          files: uploadedFiles,
+          metadata: {
+            ...customMetadata,
+            humanFriendlyName: hfn, // Always set these consistently
+            machineFriendlyAddress: mfa,
+            layerName: layerName, // Include layer name in metadata
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          },
+          status: 'active',
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
-        },
-        status: 'active',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        createdBy: "user@example.com"
-      };
-      
-      // Register this asset in our local registry for duplicate detection
-      // Only if we have file information
-      if (assetData.files && assetData.files.length > 0) {
-        const file = assetData.files[0];
-        const fingerprint = {
-          name: file.name,
-          size: file.size,
-          type: file.type,
-          lastModified: file.lastModified,
-          hash: `${file.name}-${file.size}-${file.lastModified}` // Simple hash
+          createdBy: "user@example.com"
         };
         
-        // Register in our asset registry
-        assetRegistryService.registerAsset(mockAsset, fingerprint);
+        // Register in our asset registry for duplicate detection
+        if (assetData.files && assetData.files.length > 0) {
+          const file = assetData.files[0];
+          const fingerprint = {
+            name: file.name,
+            size: file.size,
+            type: file.type,
+            lastModified: file.lastModified,
+            hash: `${file.name}-${file.size}-${file.lastModified}` // Simple hash
+          };
+          
+          assetRegistryService.registerAsset(mockAsset, fingerprint);
+        }
+        
+        return mockAsset;
+      } else {
+        // Real API implementation
+        console.log("Using real API implementation for createAsset");
+        
+        // Format the data as expected by the API
+        const apiAssetData = {
+          name: assetData.name,
+          friendlyName: assetData.name,
+          description: assetData.description || '',
+          layer: assetData.layer,
+          categoryCode: (assetData as any).categoryCode || "",
+          subcategoryCode: (assetData as any).subcategoryCode || "",
+          tags: assetData.tags || [],
+          metadata: (assetData as any).metadata || {},
+          files: assetData.files || []
+        };
+        
+        // Make the actual API call
+        const response = await api.post<ApiResponse<Asset>>(
+          '/assets',
+          apiAssetData
+        );
+        
+        // Return the created asset
+        const createdAsset = response.data.data as Asset;
+        
+        // Register in our asset registry for duplicate detection
+        if (assetData.files && assetData.files.length > 0) {
+          const file = assetData.files[0];
+          const fingerprint = {
+            name: file.name,
+            size: file.size,
+            type: file.type,
+            lastModified: file.lastModified,
+            hash: `${file.name}-${file.size}-${file.lastModified}` // Simple hash
+          };
+          
+          assetRegistryService.registerAsset(createdAsset, fingerprint);
+        }
+        
+        return createdAsset;
       }
-      
-      return mockAsset;
-      
-      // Original implementation - uncomment when API is ready
-      /*
-      const response = await api.post<ApiResponse<Asset>>(
-        '/assets',
-        assetData
-      );
-      return response.data.data as Asset;
-      */
     } catch (error) {
       console.error('Error creating asset:', error);
       throw new Error('Failed to create asset');

@@ -12,6 +12,7 @@ import DashboardPage from './pages/DashboardPage';
 import { AuthProvider } from './contexts/AuthContext';
 import MainLayout from './components/layout/MainLayout';
 import { NotificationsProvider } from './contexts/NotificationsContext';
+import ErrorBoundary from './components/common/ErrorBoundary';
 
 // Create a theme instance
 const theme = createTheme({
@@ -74,28 +75,30 @@ const theme = createTheme({
 
 const App: React.FC = () => {
   return (
-    <StyledEngineProvider injectFirst>
-      <ThemeProvider theme={theme}>
-        <CssBaseline />
-        <NotificationsProvider>
-          <AuthProvider>
-            <Router>
-              <Routes>
-                <Route path="/login" element={<LoginPage />} />
-                <Route path="/register" element={<RegisterPage />} />
-                <Route element={<MainLayout />}>
-                  <Route path="/dashboard" element={<DashboardPage />} />
-                  <Route path="/register-asset" element={<RegisterAssetPage />} />
-                  <Route path="/search-assets" element={<SearchAssetsPage />} />
-                  <Route path="/assets/:id" element={<AssetDetailPage />} />
-                  <Route path="/" element={<DashboardPage />} />
-                </Route>
-              </Routes>
-            </Router>
-          </AuthProvider>
-        </NotificationsProvider>
-      </ThemeProvider>
-    </StyledEngineProvider>
+    <ErrorBoundary>
+      <StyledEngineProvider injectFirst>
+        <ThemeProvider theme={theme}>
+          <CssBaseline />
+          <NotificationsProvider>
+            <AuthProvider>
+              <Router>
+                <Routes>
+                  <Route path="/login" element={<LoginPage />} />
+                  <Route path="/register" element={<RegisterPage />} />
+                  <Route element={<MainLayout />}>
+                    <Route path="/dashboard" element={<DashboardPage />} />
+                    <Route path="/register-asset" element={<RegisterAssetPage />} />
+                    <Route path="/search-assets" element={<SearchAssetsPage />} />
+                    <Route path="/assets/:id" element={<AssetDetailPage />} />
+                    <Route path="/" element={<DashboardPage />} />
+                  </Route>
+                </Routes>
+              </Router>
+            </AuthProvider>
+          </NotificationsProvider>
+        </ThemeProvider>
+      </StyledEngineProvider>
+    </ErrorBoundary>
   );
 };
 
