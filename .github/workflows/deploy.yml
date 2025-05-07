@@ -1,10 +1,9 @@
 name: Deploy to Vercel
+# NOTE: This workflow has been disabled. Use Vercel GitHub integration instead.
+# See VERCEL_SETUP.md for instructions.
 
 on:
-  push:
-    branches:
-      - main
-      - feature/dashboard-and-integration
+  # Disable automatic triggers
   workflow_dispatch:
     inputs:
       environment:
