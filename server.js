@@ -22,12 +22,21 @@ app.use((req, res, next) => {
 app.use('/api', createProxyMiddleware({
   target: 'https://registry.reviz.dev',
   changeOrigin: true,
-  onProxyRes: (proxyRes) => {
+  pathRewrite: { '^/api': '/api' }, // No rewrite needed as paths match
+  logLevel: 'debug',
+  onProxyReq: (proxyReq, req, res) => {
+    // Log proxy request details for debugging
+    console.log(`Proxying ${req.method} request to ${proxyReq.path}`);
+  },
+  onProxyRes: (proxyRes, req, res) => {
     // Add CORS headers to API responses
     proxyRes.headers['Access-Control-Allow-Origin'] = '*';
     proxyRes.headers['Access-Control-Allow-Methods'] = 'GET, POST, OPTIONS, PUT, PATCH, DELETE';
     proxyRes.headers['Access-Control-Allow-Headers'] = 'Origin, X-Requested-With, Content-Type, Accept, Authorization';
     proxyRes.headers['Access-Control-Allow-Credentials'] = 'true';
+    
+    // Log response status for debugging
+    console.log(`Proxy response from ${req.path}: ${proxyRes.statusCode}`);
   }
 }));
 
