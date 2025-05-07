@@ -87,7 +87,7 @@ const TaxonomySelection: React.FC<TaxonomySelectionProps> = ({
     fetchCategories();
   }, [layerCode]);
 
-  const fetchSequential = async () => {
+  const fetchSequential = React.useCallback(async () => {
     try {
       console.log(layerCode, 'layerCode');
 
@@ -116,7 +116,7 @@ const TaxonomySelection: React.FC<TaxonomySelectionProps> = ({
     } catch (error) {
       console.log(error);
     }
-  };
+  }, [layerCode, categoryName, subcategoryName]);
 
   // Fetch subcategories when category changes
   useEffect(() => {
