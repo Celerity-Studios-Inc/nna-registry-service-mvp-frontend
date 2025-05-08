@@ -35,4 +35,4 @@ All API requests are proxied to the backend service using Vercel's rewrites conf
 
 ## Deployment
 
-The application is automatically deployed to Vercel when changes are pushed to the `main` branch.
+The application is automatically deployed to Vercel when changes are pushed to the `main` branch.# Trigger workflow test
