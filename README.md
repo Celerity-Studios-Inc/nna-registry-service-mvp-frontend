@@ -40,6 +40,17 @@ The application uses a serverless TypeScript proxy function in `api/proxy.ts` to
 - Properly handles preflight (OPTIONS) requests
 - Adds necessary CORS headers to responses
 - Forwards requests to the backend API with appropriate headers
+- Includes detailed logging for troubleshooting
+
+### Environment Configuration
+
+- Development environment: Uses mock data by default (configured in `.env`)
+- Production environment: Uses real API at `registry.reviz.dev` (configured in `.env.production`)
+- Production domain check: Forces real API usage on production domains regardless of environment variables
+
+### Troubleshooting API Connection
+
+If you encounter issues with the API proxy or mock data being used in production, see `API_PROXY_DEBUG.md` for detailed debugging information and potential solutions.
 
 ## Deployment
 
