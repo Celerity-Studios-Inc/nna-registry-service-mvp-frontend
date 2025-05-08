@@ -7,6 +7,8 @@ export const apiConfig = {
   baseURL: '/api',
 };
 
+console.log('API Configuration:', apiConfig);
+
 // Create an Axios instance
 const api = axios.create({
   baseURL: apiConfig.baseURL,
@@ -15,6 +17,17 @@ const api = axios.create({
   },
   // Add withCredentials to handle CORS with credentials properly
   withCredentials: false,
+});
+
+// Log API configuration in a visible way
+console.log(`🔄 API Client configured with baseURL: ${apiConfig.baseURL}`);
+
+// Add request logging to see all outgoing requests
+api.interceptors.request.use(request => {
+  console.log(`🔼 API Request: ${request.method?.toUpperCase()} ${request.baseURL}${request.url}`);
+  console.log('Request headers:', request.headers);
+  console.log('Request data:', request.data);
+  return request;
 });
 
 // Add request interceptor to include auth token

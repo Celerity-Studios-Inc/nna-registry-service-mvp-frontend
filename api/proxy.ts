@@ -5,7 +5,17 @@ const handler = async (req: VercelRequest, res: VercelResponse) => {
   // Log the API proxy invocation for debugging
   console.log(`API Proxy: ${req.method} request to ${req.url}`);
   
-  const targetUrl = `https://registry.reviz.dev${req.url || ''}`;
+  // Extract the path correctly
+  const path = req.url || '';
+  
+  // Remove the '/proxy' part from the path if it exists
+  const cleanPath = path.replace('/proxy', '');
+  
+  // Ensure we have the correct API endpoint format
+  const targetUrl = `https://registry.reviz.dev/api${cleanPath.startsWith('/') ? cleanPath : '/' + cleanPath}`;
+  
+  console.log(`Original URL: ${req.url}`);
+  console.log(`Cleaned path: ${cleanPath}`);
   console.log(`Proxying to: ${targetUrl}`);
 
   // Handle CORS preflight (OPTIONS) requests
