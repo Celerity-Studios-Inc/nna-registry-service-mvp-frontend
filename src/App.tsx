@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import './App.css';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider, createTheme, StyledEngineProvider } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import LoginPage from './pages/LoginPage';
@@ -73,7 +73,41 @@ const theme = createTheme({
   },
 });
 
+// Create a protected route component
+const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
+  // Check if user is authenticated
+  const token = localStorage.getItem('accessToken');
+  
+  // If not authenticated, redirect to login
+  if (!token) {
+    return <Navigate to="/login" />;
+  }
+  
+  // If authenticated, render children
+  return <>{children}</>;
+};
+
+// Root redirect component
+const RootRedirect = () => {
+  const token = localStorage.getItem('accessToken');
+  
+  if (token) {
+    return <Navigate to="/dashboard" />;
+  } else {
+    return <Navigate to="/login" />;
+  }
+};
+
 const App: React.FC = () => {
+  // On start, check if we have a valid token structure and clear if not
+  useEffect(() => {
+    const token = localStorage.getItem('accessToken');
+    // If token doesn't exist or looks malformed, clear it
+    if (token && token.length < 10) {
+      localStorage.removeItem('accessToken');
+    }
+  }, []);
+
   return (
     <ErrorBoundary>
       <StyledEngineProvider injectFirst>
@@ -86,11 +120,27 @@ const App: React.FC = () => {
                   <Route path="/login" element={<LoginPage />} />
                   <Route path="/register" element={<RegisterPage />} />
                   <Route element={<MainLayout />}>
-                    <Route path="/dashboard" element={<DashboardPage />} />
-                    <Route path="/register-asset" element={<RegisterAssetPage />} />
-                    <Route path="/search-assets" element={<SearchAssetsPage />} />
-                    <Route path="/assets/:id" element={<AssetDetailPage />} />
-                    <Route path="/" element={<DashboardPage />} />
+                    <Route path="/dashboard" element={
+                      <ProtectedRoute>
+                        <DashboardPage />
+                      </ProtectedRoute>
+                    } />
+                    <Route path="/register-asset" element={
+                      <ProtectedRoute>
+                        <RegisterAssetPage />
+                      </ProtectedRoute>
+                    } />
+                    <Route path="/search-assets" element={
+                      <ProtectedRoute>
+                        <SearchAssetsPage />
+                      </ProtectedRoute>
+                    } />
+                    <Route path="/assets/:id" element={
+                      <ProtectedRoute>
+                        <AssetDetailPage />
+                      </ProtectedRoute>
+                    } />
+                    <Route path="/" element={<RootRedirect />} />
                   </Route>
                 </Routes>
               </Router>
