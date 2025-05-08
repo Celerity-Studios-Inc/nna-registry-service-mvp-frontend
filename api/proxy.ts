@@ -14,12 +14,22 @@ const handler = async (req: VercelRequest, res: VercelResponse) => {
   }
 
   try {
+    // Create a clean headers object to avoid TypeScript errors with incompatible headers
+    const headers: HeadersInit = {
+      'host': 'registry.reviz.dev',
+    };
+    
+    // Copy over safe headers from the request
+    const headerKeys = ['content-type', 'authorization', 'accept', 'user-agent'];
+    for (const key of headerKeys) {
+      if (req.headers[key]) {
+        headers[key] = req.headers[key] as string;
+      }
+    }
+    
     const response = await fetch(targetUrl, {
       method: req.method,
-      headers: {
-        ...req.headers,
-        host: 'registry.reviz.dev',
-      } as HeadersInit,
+      headers: headers,
       body: req.method !== 'GET' && req.method !== 'HEAD' ? JSON.stringify(req.body) : undefined,
     });
 
