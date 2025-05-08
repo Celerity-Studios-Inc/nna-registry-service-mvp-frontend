@@ -6,9 +6,13 @@
  * 
  * Usage:
  *   node scripts/test-api.js
+ * 
+ * Note: If you get an error about fetch not being a function, you may need to:
+ *   npm install node-fetch@2
  */
 
-const fetch = require('node-fetch');
+// Use native fetch if available (Node 18+), otherwise use polyfill
+const fetch = globalThis.fetch || require('node-fetch');
 
 const API_URL = 'https://registry.reviz.dev/api';
 
