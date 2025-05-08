@@ -37,10 +37,24 @@ api.interceptors.request.use(
     const token = localStorage.getItem('accessToken');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
+      console.log('🔑 Added auth token to request');
+    } else {
+      console.warn('⚠️ No auth token found in localStorage!');
+      
+      // For development/debugging in production environment
+      // Create a test token if in development mode
+      if (process.env.NODE_ENV === 'development') {
+        // Only add this for certain endpoints where auth is required
+        if (config.url?.includes('/assets')) {
+          console.log('🔧 Adding test token for development');
+          config.headers.Authorization = 'Bearer test-development-token';
+        }
+      }
     }
     return config;
   },
   (error) => {
+    console.error('Error in request interceptor:', error);
     return Promise.reject(error);
   }
 );

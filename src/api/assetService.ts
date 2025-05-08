@@ -283,6 +283,17 @@ class AssetService {
         console.log("Production domain detected. Forcing real API usage.");
       }
       
+      // Also check for authentication - if we don't have a token, we may need to use mock data
+      const hasAuthToken = !!localStorage.getItem('accessToken');
+      
+      if (!hasAuthToken && !useMock) {
+        console.warn("⚠️ No auth token found but trying to use real API. Authentication may fail.");
+        
+        // Uncomment this line to force mock usage when no token is available
+        // useMock = true;
+        // console.log("Forcing mock data due to missing authentication token");
+      }
+      
       console.log("useMock determined as:", useMock);
       
       if (useMock) {

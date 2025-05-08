@@ -14,9 +14,20 @@ const handler = async (req: VercelRequest, res: VercelResponse) => {
   // Ensure we have the correct API endpoint format
   const targetUrl = `https://registry.reviz.dev/api${cleanPath.startsWith('/') ? cleanPath : '/' + cleanPath}`;
   
+  // Check proxy configuration
+  console.log(`Proxy Configuration:`);
   console.log(`Original URL: ${req.url}`);
   console.log(`Cleaned path: ${cleanPath}`);
   console.log(`Proxying to: ${targetUrl}`);
+  console.log(`Client IP: ${req.headers['x-forwarded-for'] || req.connection.remoteAddress}`);
+  console.log(`Auth header present: ${!!req.headers.authorization}`);
+  
+  // For development/debugging - if no auth header is present and this isn't a preflight request,
+  // we could add a test token. This would only be for testing!
+  // if (!req.headers.authorization && req.method !== 'OPTIONS') {
+  //   console.log('No auth header present, adding test token for development');
+  //   req.headers.authorization = 'Bearer test-token-for-development';
+  // }
 
   // Handle CORS preflight (OPTIONS) requests
   if (req.method === 'OPTIONS') {
@@ -65,12 +76,23 @@ const handler = async (req: VercelRequest, res: VercelResponse) => {
       console.log(`Response status: ${response.status} ${response.statusText}`);
       console.log('Response headers:', [...response.headers.entries()]);
 
+      // Special handling for authentication errors
+      if (response.status === 401) {
+        console.error('Authentication error from backend - missing or invalid token');
+        console.error('Request authorization header:', req.headers.authorization ? 'Present (not shown for security)' : 'Missing');
+      }
+
       // Forward the response headers
       response.headers.forEach((value, key) => {
         if (key.toLowerCase() !== 'transfer-encoding') {
           res.setHeader(key, value);
         }
       });
+      
+      // Always ensure CORS headers are set
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
+      res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With,Content-Type,Accept,Authorization');
       
       // Log the outgoing headers (what we're sending back to the client)
       console.log('Outgoing headers set on response:', res.getHeaders());
@@ -79,10 +101,7 @@ const handler = async (req: VercelRequest, res: VercelResponse) => {
       throw fetchError;  // Re-throw to be handled by outer catch
     }
 
-    // Add CORS headers to the response
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With,Content-Type,Accept,Authorization');
+    // CORS headers already set above
 
     try {
       // Try to parse the response body as JSON
