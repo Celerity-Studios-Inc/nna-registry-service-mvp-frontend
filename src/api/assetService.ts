@@ -11,6 +11,7 @@ import {
 } from '../types/asset.types';
 import { ApiResponse, PaginatedResponse } from '../types/api.types';
 import assetRegistryService from './assetRegistryService';
+import { checkEnv } from './envCheck';
 
 // Track ongoing uploads
 const activeUploads: Map<string, FileUpload> = new Map();
@@ -266,7 +267,23 @@ class AssetService {
   async createAsset(assetData: AssetCreateRequest): Promise<Asset> {
     try {
       // Determine whether to use mock implementation or real API
-      const useMock = process.env.REACT_APP_USE_MOCK_API === 'true';
+      const envStatus = checkEnv();
+      console.log("Environment check in createAsset:", envStatus);
+      
+      // Check if we're in a production domain - if so, force real API usage
+      const isProductionDomain = window.location.hostname.includes('vercel.app') || 
+                                 window.location.hostname.includes('registry-service-frontend');
+      
+      // Determine whether to use mock implementation or real API
+      let useMock = process.env.REACT_APP_USE_MOCK_API === 'true';
+      
+      // Force real API in production environments
+      if (isProductionDomain) {
+        useMock = false;
+        console.log("Production domain detected. Forcing real API usage.");
+      }
+      
+      console.log("useMock determined as:", useMock);
       
       if (useMock) {
         console.log("Using mock createAsset implementation");
