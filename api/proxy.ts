@@ -43,24 +43,41 @@ const handler = async (req: VercelRequest, res: VercelResponse) => {
       }
     }
     
+    console.log('=== PROXY REQUEST DETAILS ===');
+    console.log('Request method:', req.method);
+    console.log('Request URL:', targetUrl);
     console.log('Request headers:', headers);
-    console.log('Request body:', req.method !== 'GET' && req.method !== 'HEAD' ? JSON.stringify(req.body) : 'No body');
     
-    const response = await fetch(targetUrl, {
-      method: req.method,
-      headers: headers,
-      body: req.method !== 'GET' && req.method !== 'HEAD' ? JSON.stringify(req.body) : undefined,
-    });
+    // Log request body for debugging, but be careful with sensitive data
+    const requestBody = req.method !== 'GET' && req.method !== 'HEAD' ? JSON.stringify(req.body) : 'No body';
+    console.log('Request body:', requestBody);
     
-    console.log(`Response status: ${response.status}`);
-    console.log('Response headers:', [...response.headers.entries()]);
+    // Make the request to the backend API
+    console.log('Fetching from backend...');
+    try {
+      const response = await fetch(targetUrl, {
+        method: req.method,
+        headers: headers,
+        body: req.method !== 'GET' && req.method !== 'HEAD' ? JSON.stringify(req.body) : undefined,
+      });
+      
+      console.log('=== PROXY RESPONSE DETAILS ===');
+      console.log(`Response status: ${response.status} ${response.statusText}`);
+      console.log('Response headers:', [...response.headers.entries()]);
 
-    // Forward the response headers
-    response.headers.forEach((value, key) => {
-      if (key.toLowerCase() !== 'transfer-encoding') {
-        res.setHeader(key, value);
-      }
-    });
+      // Forward the response headers
+      response.headers.forEach((value, key) => {
+        if (key.toLowerCase() !== 'transfer-encoding') {
+          res.setHeader(key, value);
+        }
+      });
+      
+      // Log the outgoing headers (what we're sending back to the client)
+      console.log('Outgoing headers set on response:', res.getHeaders());
+    } catch (fetchError) {
+      console.error('Fetch error details:', fetchError);
+      throw fetchError;  // Re-throw to be handled by outer catch
+    }
 
     // Add CORS headers to the response
     res.setHeader('Access-Control-Allow-Origin', '*');
@@ -68,26 +85,62 @@ const handler = async (req: VercelRequest, res: VercelResponse) => {
     res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With,Content-Type,Accept,Authorization');
 
     try {
-      const data = await response.json();
-      console.log('Response body preview:', 
-        JSON.stringify(data).substring(0, 200) + 
-        (JSON.stringify(data).length > 200 ? '...' : '')
-      );
-      res.status(response.status).json(data);
-      console.log('Response sent to client');
-    } catch (jsonError) {
-      console.error('Error parsing JSON response:', jsonError);
-      // If we can't parse the response as JSON, return the raw text
-      const text = await response.text();
-      console.log('Raw response text:', text.substring(0, 200) + (text.length > 200 ? '...' : ''));
-      res.status(response.status).send(text);
+      // Try to parse the response body as JSON
+      let responseText, responseData;
+      try {
+        responseText = await response.text();
+        console.log('Raw response text preview:', 
+          responseText.substring(0, 200) + 
+          (responseText.length > 200 ? '...' : '')
+        );
+        
+        // Only try to parse as JSON if it looks like JSON
+        if (responseText.trim().startsWith('{') || responseText.trim().startsWith('[')) {
+          responseData = JSON.parse(responseText);
+          console.log('Parsed JSON response preview:', 
+            JSON.stringify(responseData).substring(0, 200) + 
+            (JSON.stringify(responseData).length > 200 ? '...' : '')
+          );
+          
+          // Send the JSON response back to the client
+          res.status(response.status).json(responseData);
+        } else {
+          // Not JSON, send as plain text
+          res.status(response.status).send(responseText);
+        }
+      } catch (parseError) {
+        console.error('Error parsing response:', parseError);
+        // If we already have the text but JSON parsing failed, send the text
+        if (responseText) {
+          res.status(response.status).send(responseText);
+        } else {
+          // Last resort, send a generic error
+          res.status(response.status).send('Error parsing response from backend');
+        }
+      }
+      
+      console.log('Response sent to client with status:', response.status);
+    } catch (responseError) {
+      console.error('Error handling response:', responseError);
+      res.status(500).send('Error handling backend response');
     }
   } catch (error) {
-    console.error('Proxy error:', error);
+    console.error('==== PROXY ERROR ====');
+    console.error('Error details:', error);
+    
+    // Provide a more detailed error response
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    const errorStack = process.env.NODE_ENV === 'development' && error instanceof Error ? error.stack : undefined;
+    
+    console.error('Sending error response to client:', errorMessage);
+    
     res.status(500).json({ 
       error: 'Internal Server Error', 
-      message: error instanceof Error ? error.message : 'Unknown error',
-      stack: process.env.NODE_ENV === 'development' && error instanceof Error ? error.stack : undefined
+      message: errorMessage,
+      stack: errorStack,
+      path: req.url,
+      method: req.method,
+      target: targetUrl
     });
   }
 };

@@ -25,6 +25,7 @@ console.log(`🔄 API Client configured with baseURL: ${apiConfig.baseURL}`);
 // Add request logging to see all outgoing requests
 api.interceptors.request.use(request => {
   console.log(`🔼 API Request: ${request.method?.toUpperCase()} ${request.baseURL}${request.url}`);
+  console.log('Full Request URL:', `${window.location.origin}${request.baseURL}${request.url}`);
   console.log('Request headers:', request.headers);
   console.log('Request data:', request.data);
   return request;
@@ -47,10 +48,30 @@ api.interceptors.request.use(
 // Add response interceptor to handle common error cases
 api.interceptors.response.use(
   (response) => {
+    console.log(`🔽 API Response: ${response.status} ${response.statusText}`);
+    console.log('Response headers:', response.headers);
+    console.log('Response data preview:', 
+      JSON.stringify(response.data).substring(0, 200) + 
+      (JSON.stringify(response.data).length > 200 ? '...' : '')
+    );
     return response;
   },
   (error) => {
+    console.log('❌ API Error:', error.message);
+    
     if (error.response) {
+      console.log(`Error response status: ${error.response.status} ${error.response.statusText}`);
+      console.log('Error response headers:', error.response.headers);
+      
+      try {
+        // Try to log response data if available
+        if (error.response.data) {
+          console.log('Error response data:', error.response.data);
+        }
+      } catch (e) {
+        console.log('Unable to log error response data:', e);
+      }
+      
       // Handle 401 Unauthorized errors
       if (error.response.status === 401) {
         // Clear token and redirect to login if needed
@@ -70,7 +91,7 @@ api.interceptors.response.use(
       }
     } else if (error.request) {
       // The request was made but no response was received
-      console.log("No response received from server.");
+      console.log("No response received from server. Request:", error.request);
     }
     
     return Promise.reject(error);
