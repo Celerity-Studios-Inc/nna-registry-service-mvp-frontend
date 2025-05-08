@@ -33,6 +33,14 @@ npm start
 
 All API requests are proxied to the backend service using Vercel's rewrites configuration (see `vercel.json`).
 
+### CORS Handling
+
+The application uses a serverless TypeScript proxy function in `api/proxy.ts` to handle Cross-Origin Resource Sharing (CORS) issues when deployed to Vercel. This proxy:
+
+- Properly handles preflight (OPTIONS) requests
+- Adds necessary CORS headers to responses
+- Forwards requests to the backend API with appropriate headers
+
 ## Deployment
 
-The application is automatically deployed to Vercel when changes are pushed to the `main` branch.
+The application is automatically deployed to Vercel when changes are pushed to the `main` branch. GitHub Actions workflow in `.github/workflows/main-deploy.yml` handles the CI/CD process.
