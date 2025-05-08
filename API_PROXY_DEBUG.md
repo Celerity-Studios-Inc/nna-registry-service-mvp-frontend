@@ -1,8 +1,14 @@
 # API Proxy Debugging Guide
 
-## Current Issue
+## Current Issues
 
-The application is still using mock data in production despite being configured to use the real backend API. This is evidenced by the log message `Using mock createAsset implementation` in the console and mock asset IDs being generated.
+### Issue 1: Mock Data Usage (FIXED)
+
+The application was using mock data in production despite being configured to use the real backend API. This was evidenced by the log message `Using mock createAsset implementation` in the console and mock asset IDs being generated.
+
+### Issue 2: API Proxy Path Handling (FIXED)
+
+After fixing the mock data issue, we encountered a problem with the API proxy's path handling. The API requests were being sent to `https://nna-registry-service-mvp-frontend.vercel.app/api/assets` instead of `https://registry.reviz.dev/api/assets`, resulting in 405 Method Not Allowed errors.
 
 ## Investigation Findings
 
@@ -31,37 +37,68 @@ The application is still using mock data in production despite being configured 
    - Response information (status, headers, body preview)
    - Better error handling with more detailed error messages
 
-## Recommended Solutions
+## Solutions Implemented
 
-Try the following approaches in order:
+We've implemented the following solutions to fix the issues:
 
-1. **Verify Build Process:**
-   - Check that the Vercel build is correctly including environment variables
-   - The build logs should show `REACT_APP_USE_MOCK_API=false` 
+### For Issue 1 (Mock Data Usage):
 
-2. **Update Vercel Project Settings:**
-   - Go to the Vercel dashboard for this project
-   - Navigate to "Settings" > "Environment Variables"
-   - Check that `REACT_APP_USE_MOCK_API` is set to `false` for the Production environment
-   - If not, add or update this variable
+1. **Added Environment Variable Debugging:**
+   - Created `src/api/envCheck.ts` to log environment variable values
+   - Added logging to startup in `index.tsx`
 
-3. **Force Environment Variable in Code:**
-   - If the above doesn't work, you can temporarily hardcode the value in `assetService.ts` by changing:
+2. **Domain Detection Logic:**
+   - Added code to detect production domains and force real API usage regardless of environment variable values:
      ```typescript
-     const useMock = process.env.REACT_APP_USE_MOCK_API === 'true';
+     // Check if we're in a production domain - if so, force real API usage
+     const isProductionDomain = window.location.hostname.includes('vercel.app') || 
+                               window.location.hostname.includes('registry-service-frontend');
+     
+     // Force real API in production environments
+     if (isProductionDomain) {
+       useMock = false;
+       console.log("Production domain detected. Forcing real API usage.");
+     }
      ```
-     to:
+
+### For Issue 2 (API Proxy Path Handling):
+
+1. **Fixed Path Handling in API Proxy:**
+   - Updated `/api/proxy.ts` to correctly handle path transformations:
      ```typescript
-     const useMock = false; // Force real API usage in production
+     const path = req.url || '';
+     const cleanPath = path.replace('/proxy', '');
+     const targetUrl = `https://registry.reviz.dev/api${cleanPath.startsWith('/') ? cleanPath : '/' + cleanPath}`;
      ```
 
-4. **Update Deployment Scripts:**
-   - If needed, update the GitHub Actions workflow to add a post-build step that verifies the environment variables were correctly included in the build
+2. **Simplified Vercel Rewrites:**
+   - Updated `vercel.json` to use a simpler rewrite rule:
+     ```json
+     {
+       "source": "/api/:path*",
+       "destination": "/api/proxy"
+     }
+     ```
 
-5. **Test with a Manual Deployment:**
-   - Create a test branch with these debugging changes
-   - Deploy it manually using Vercel CLI with explicit environment variables
-   - Check the logs for any issues
+3. **Enhanced API Client Logging:**
+   - Added detailed request logging to track API calls
+   - Added visual indicators in console logs to make them easier to find
+
+## Additional Troubleshooting Steps
+
+If issues persist, try the following:
+
+1. **Check Vercel Function Logs:**
+   - View logs in the Vercel dashboard under Functions > /api/proxy
+   - Look for errors or unexpected behavior
+
+2. **Test Direct API Requests:**
+   - Use tools like Postman to test requests directly to the backend
+   - Compare with proxied requests to identify differences
+
+3. **Check for Network Issues:**
+   - Use browser Network tab to check for CORS issues or other errors
+   - Look for failed requests or unexpected redirects
 
 ## Monitoring the Fix
 
