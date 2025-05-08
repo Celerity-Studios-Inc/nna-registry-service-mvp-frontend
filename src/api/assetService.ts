@@ -1,4 +1,4 @@
-import api from './api';
+import api, { isBackendAvailable as apiBackendStatus } from './api';
 // import axios from 'axios'; // Removed unused import
 import {
   Asset,
@@ -14,12 +14,22 @@ import assetRegistryService from './assetRegistryService';
 import { checkEnv } from './envCheck';
 
 // Determine whether real backend is available and connected
-let isBackendAvailable = false;
+// Use the API module's backend status tracking
+let isBackendAvailable = apiBackendStatus;
 // Simple check function to be run at startup
 const checkBackendAvailability = async () => {
   try {
+    // Try to hit a simple endpoint on the backend
     const response = await fetch('/api/health');
+    
+    // Update our local flag
     isBackendAvailable = response.ok;
+    
+    // Also update the API module's status for consistency
+    if (isBackendAvailable !== apiBackendStatus) {
+      (window as any).apiBackendAvailable = isBackendAvailable; // For debugging
+    }
+    
     console.log(`Backend availability check: ${isBackendAvailable ? 'Available' : 'Unavailable'}`);
     return isBackendAvailable;
   } catch (error) {
@@ -31,6 +41,11 @@ const checkBackendAvailability = async () => {
 
 // Run the check when this module is loaded
 checkBackendAvailability();
+
+// Also periodically recheck to see if backend has come back online
+if (process.env.NODE_ENV === 'production') {
+  setInterval(checkBackendAvailability, 30000); // Check every 30 seconds in production
+}
 
 // Track ongoing uploads
 const activeUploads: Map<string, FileUpload> = new Map();

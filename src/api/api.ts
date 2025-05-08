@@ -59,6 +59,9 @@ api.interceptors.request.use(
   }
 );
 
+// Exported flag to check if backend is available
+export let isBackendAvailable = true;
+
 // Add response interceptor to handle common error cases
 api.interceptors.response.use(
   (response) => {
@@ -68,6 +71,10 @@ api.interceptors.response.use(
       JSON.stringify(response.data).substring(0, 200) + 
       (JSON.stringify(response.data).length > 200 ? '...' : '')
     );
+    
+    // If we get a successful response, the backend is available
+    isBackendAvailable = true;
+    
     return response;
   },
   (error) => {
@@ -102,10 +109,16 @@ api.interceptors.response.use(
       // Handle 500 server errors
       if (error.response.status >= 500) {
         console.log("Server error, please try again later.");
+        // Set backend as potentially unavailable after multiple 500 errors
+        // This is a simple heuristic - in a real app you might want to count consecutive errors
+        isBackendAvailable = false;
       }
     } else if (error.request) {
       // The request was made but no response was received
       console.log("No response received from server. Request:", error.request);
+      // If we can't connect at all, backend is definitely unavailable
+      isBackendAvailable = false;
+      console.warn("⚠️ Backend appears to be unavailable. Falling back to mock data for future requests.");
     }
     
     return Promise.reject(error);
