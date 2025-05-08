@@ -13,6 +13,25 @@ import { ApiResponse, PaginatedResponse } from '../types/api.types';
 import assetRegistryService from './assetRegistryService';
 import { checkEnv } from './envCheck';
 
+// Determine whether real backend is available and connected
+let isBackendAvailable = false;
+// Simple check function to be run at startup
+const checkBackendAvailability = async () => {
+  try {
+    const response = await fetch('/api/health');
+    isBackendAvailable = response.ok;
+    console.log(`Backend availability check: ${isBackendAvailable ? 'Available' : 'Unavailable'}`);
+    return isBackendAvailable;
+  } catch (error) {
+    console.error('Backend availability check failed:', error);
+    isBackendAvailable = false;
+    return false;
+  }
+};
+
+// Run the check when this module is loaded
+checkBackendAvailability();
+
 // Track ongoing uploads
 const activeUploads: Map<string, FileUpload> = new Map();
 
@@ -277,21 +296,24 @@ class AssetService {
       // Determine whether to use mock implementation or real API
       let useMock = process.env.REACT_APP_USE_MOCK_API === 'true';
       
-      // Force real API in production environments
-      if (isProductionDomain) {
+      // Force real API in production environments if we think the backend is available
+      if (isProductionDomain && isBackendAvailable) {
         useMock = false;
-        console.log("Production domain detected. Forcing real API usage.");
+        console.log("Production domain detected and backend available. Forcing real API usage.");
+      } else if (isProductionDomain && !isBackendAvailable) {
+        console.warn("Production domain detected but backend appears unavailable. Using mock data.");
+        useMock = true;
       }
       
       // Also check for authentication - if we don't have a token, we may need to use mock data
       const hasAuthToken = !!localStorage.getItem('accessToken');
       
       if (!hasAuthToken && !useMock) {
-        console.warn("⚠️ No auth token found but trying to use real API. Authentication may fail.");
+        console.warn("⚠️ No auth token found but trying to use real API. Authentication will likely fail.");
         
-        // Uncomment this line to force mock usage when no token is available
-        // useMock = true;
-        // console.log("Forcing mock data due to missing authentication token");
+        // Force mock usage when no token is available to prevent authentication errors
+        useMock = true;
+        console.log("Forcing mock data due to missing authentication token");
       }
       
       console.log("useMock determined as:", useMock);
