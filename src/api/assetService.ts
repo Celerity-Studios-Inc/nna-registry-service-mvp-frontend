@@ -19,18 +19,26 @@ let isBackendAvailable = apiBackendStatus;
 // Simple check function to be run at startup
 const checkBackendAvailability = async () => {
   try {
-    // Try to hit a simple endpoint on the backend
-    const response = await fetch('/api/health');
+    // Try to hit the API docs endpoint instead of health (which doesn't exist)
+    // This will return data even without auth and is a reliable way to check availability
+    const response = await fetch('/api/docs');
     
-    // Update our local flag
-    isBackendAvailable = response.ok;
+    // If we get a response (even 401 Unauthorized), the backend is available
+    // Only consider it unavailable on network errors or 5xx responses
+    isBackendAvailable = response.status < 500;
     
     // Also update the API module's status for consistency
     if (isBackendAvailable !== apiBackendStatus) {
       (window as any).apiBackendAvailable = isBackendAvailable; // For debugging
     }
     
-    console.log(`Backend availability check: ${isBackendAvailable ? 'Available' : 'Unavailable'}`);
+    console.log(`Backend availability check: ${isBackendAvailable ? 'Available' : 'Unavailable'} (Status: ${response.status})`);
+    
+    // If we got a 401, it means the backend is actually working but we need auth
+    if (response.status === 401) {
+      console.log('Backend requires authentication - this is expected and indicates the API is working');
+    }
+    
     return isBackendAvailable;
   } catch (error) {
     console.error('Backend availability check failed:', error);
@@ -311,24 +319,38 @@ class AssetService {
       // Determine whether to use mock implementation or real API
       let useMock = process.env.REACT_APP_USE_MOCK_API === 'true';
       
-      // Force real API in production environments if we think the backend is available
-      if (isProductionDomain && isBackendAvailable) {
+      // Get auth token and determine if it's a mock token
+      const authToken = localStorage.getItem('accessToken') || '';
+      const hasAuthToken = !!authToken;
+      const isMockToken = authToken.startsWith('MOCK-');
+      
+      // Determine whether to use real API based on several factors:
+      // 1. Is the backend available? (based on our health check)
+      // 2. Do we have an auth token? (needed for API calls)
+      // 3. Is it a mock token? (if so, real API will fail)
+      
+      if (isBackendAvailable && hasAuthToken && !isMockToken) {
+        // Ideal case: Backend is available, we have a real token
         useMock = false;
-        console.log("Production domain detected and backend available. Forcing real API usage.");
-      } else if (isProductionDomain && !isBackendAvailable) {
-        console.warn("Production domain detected but backend appears unavailable. Using mock data.");
+        console.log("Backend available and real authentication token found. Using real API.");
+      } else if (isBackendAvailable && hasAuthToken && isMockToken) {
+        // We have a token but it's a mock one - API will reject it
         useMock = true;
+        console.log("Backend available but using mock token. Using mock data.");
+      } else if (isBackendAvailable && !hasAuthToken) {
+        // No auth token - API will reject the request
+        useMock = true;
+        console.log("Backend available but no authentication token. Using mock data.");
+      } else if (!isBackendAvailable) {
+        // Backend not available - have to use mock
+        useMock = true;
+        console.log("Backend unavailable. Using mock data.");
       }
       
-      // Also check for authentication - if we don't have a token, we may need to use mock data
-      const hasAuthToken = !!localStorage.getItem('accessToken');
-      
-      if (!hasAuthToken && !useMock) {
-        console.warn("⚠️ No auth token found but trying to use real API. Authentication will likely fail.");
-        
-        // Force mock usage when no token is available to prevent authentication errors
+      // Override for production domain if needed
+      if (isProductionDomain && !useMock && !hasAuthToken) {
+        console.warn("⚠️ Production domain with no auth token. Forcing mock data for better user experience.");
         useMock = true;
-        console.log("Forcing mock data due to missing authentication token");
       }
       
       console.log("useMock determined as:", useMock);

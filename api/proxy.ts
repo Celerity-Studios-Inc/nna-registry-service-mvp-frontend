@@ -8,8 +8,24 @@ const handler = async (req: VercelRequest, res: VercelResponse) => {
   // Extract the path correctly
   const path = req.url || '';
   
-  // Remove the '/proxy' part from the path if it exists
-  const cleanPath = path.replace('/proxy', '');
+  // For debugging - log all parts of the URL
+  const url = new URL(req.url || '', `https://${req.headers.host || 'localhost'}`);
+  console.log('URL parts:', {
+    original: req.url,
+    pathname: url.pathname,
+    search: url.search,
+    host: req.headers.host
+  });
+  
+  // Fix to handle /api/proxy/:path* pattern correctly
+  let cleanPath = path;
+  if (cleanPath.startsWith('/proxy/')) {
+    cleanPath = cleanPath.substring('/proxy'.length); // Remove /proxy prefix
+  } else if (cleanPath === '/proxy' || cleanPath === '/proxy/') {
+    cleanPath = '/'; // Root API path
+  } else {
+    // Keep as is
+  }
   
   // Ensure we have the correct API endpoint format
   const targetUrl = `https://registry.reviz.dev/api${cleanPath.startsWith('/') ? cleanPath : '/' + cleanPath}`;
