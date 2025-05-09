@@ -19,30 +19,71 @@ let isBackendAvailable = apiBackendStatus;
 // Simple check function to be run at startup
 const checkBackendAvailability = async () => {
   try {
+    // Always start assuming backend is unavailable until proven otherwise
+    let healthEndpointWorking = false;
+    let docsEndpointWorking = false;
+    
     // Try to hit our own health endpoint first
     console.log('Checking backend availability using /api/health...');
     try {
       const healthResponse = await fetch('/api/health');
       
-      // If health endpoint works, we're good
+      // If health endpoint works, log success but continue checking
       if (healthResponse.ok) {
-        isBackendAvailable = true;
-        console.log('Health endpoint available - backend is working!');
-        return true;
+        console.log('Health endpoint available with status:', healthResponse.status);
+        healthEndpointWorking = true;
+        
+        // Try to get the response body for more debugging
+        try {
+          const healthBody = await healthResponse.json();
+          console.log('Health endpoint response:', healthBody);
+        } catch (parseError) {
+          console.log('Could not parse health response as JSON');
+        }
+      } else {
+        console.log('Health endpoint returned non-OK status:', healthResponse.status);
       }
     } catch (healthError) {
-      console.log('Health endpoint not available, falling back to API docs check:', healthError);
+      console.log('Health endpoint request failed:', healthError);
     }
     
-    // Fall back to API docs check
-    console.log('Trying alternative backend availability check with /api/docs...');
-    const response = await fetch('/api/docs');
+    // Always check docs endpoint too for better diagnostics
+    console.log('Checking backend availability with /api/docs...');
+    try {
+      const response = await fetch('/api/docs');
+      
+      // Only consider specific statuses as showing the backend is actually available
+      docsEndpointWorking = response.status === 200 || response.status === 401 || response.status === 403;
+      
+      console.log(`Docs endpoint check: ${docsEndpointWorking ? 'Available' : 'Unavailable'} (Status: ${response.status})`);
+      
+      // If we got a 401, it means the backend is actually working but we need auth
+      if (response.status === 401) {
+        console.log('Backend requires authentication - this is expected and indicates the API is working');
+      } else if (response.status === 404) {
+        console.log('Received 404 Not Found - the backend API may not be compatible or not running');
+      }
+    } catch (docsError) {
+      console.log('Docs endpoint request failed:', docsError);
+    }
     
-    // Only consider these statuses as showing the backend is actually available:
-    // 200 OK - Success
-    // 401 Unauthorized - Auth is working but we need credentials
-    // 403 Forbidden - Auth is working but we don't have permission
-    isBackendAvailable = response.status === 200 || response.status === 401 || response.status === 403;
+    // Consider backend available if either check passes
+    isBackendAvailable = healthEndpointWorking || docsEndpointWorking;
+    
+    console.log(`Backend availability final result: ${isBackendAvailable ? 'Available' : 'Unavailable'}`);
+    console.log(`Health endpoint: ${healthEndpointWorking ? 'Working' : 'Not working'}`);
+    console.log(`Docs endpoint: ${docsEndpointWorking ? 'Working' : 'Not working'}`);
+    
+    // For development/debugging - allow force-enabling mock data via localStorage
+    try {
+      const forceUseMock = localStorage.getItem('forceMockData') === 'true';
+      if (forceUseMock) {
+        console.log('Mock data forced via localStorage setting');
+        isBackendAvailable = false;
+      }
+    } catch (e) {
+      // Ignore localStorage errors
+    }
     
     // Also update the API module's status for consistency
     if (isBackendAvailable !== apiBackendStatus) {
@@ -52,16 +93,6 @@ const checkBackendAvailability = async () => {
       } catch (e) {
         // Ignore if window is not defined (e.g., in test environment)
       }
-    }
-    
-    console.log(`Backend availability check: ${isBackendAvailable ? 'Available' : 'Unavailable'} (Status: ${response.status})`);
-    
-    // If we got a 401, it means the backend is actually working but we need auth
-    if (response.status === 401) {
-      console.log('Backend requires authentication - this is expected and indicates the API is working');
-    } else if (response.status === 404) {
-      console.log('Received 404 Not Found - the backend API may not be compatible or not running');
-      isBackendAvailable = false;
     }
     
     return isBackendAvailable;

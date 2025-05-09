@@ -1,0 +1,13 @@
+{
+  "name": "nna-registry-api-functions",
+  "version": "1.0.0",
+  "description": "Serverless functions for NNA Registry Service",
+  "main": "index.js",
+  "private": true,
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "dependencies": {
+    "node-fetch": "^2.6.7"
+  }
+}

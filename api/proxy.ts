@@ -1,6 +1,10 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import fetch from 'node-fetch';
 
+/**
+ * API Proxy handler for Vercel serverless function
+ * This handles proxying API requests to the backend while dealing with CORS
+ */
 const handler = async (req: VercelRequest, res: VercelResponse) => {
   // Log the API proxy invocation for debugging
   console.log(`API Proxy: ${req.method} request to ${req.url}`);
@@ -33,18 +37,24 @@ const handler = async (req: VercelRequest, res: VercelResponse) => {
   }
   
   // Special handling for our health endpoint - don't proxy this, respond directly
+  // NOTE: This is a fallback in case the health.ts module fails to load - we should handle
+  // health checks in both places for reliability
   if (cleanPath === '/health' || cleanPath === '/health/') {
-    console.log('Health check endpoint hit - responding directly');
+    console.log('Health check endpoint hit in proxy.ts - responding directly');
     res.status(200).json({
       status: 'ok',
-      message: 'API proxy is working',
+      message: 'API proxy is working (direct from proxy handler)',
       timestamp: new Date().toISOString(),
       proxy: {
         version: '1.0',
         path: cleanPath,
         method: req.method,
+        url: req.url,
+        cleanPath: cleanPath,
         headers: {
-          authorization: !!req.headers.authorization ? 'present (redacted)' : 'missing'
+          authorization: !!req.headers.authorization ? 'present (redacted)' : 'missing',
+          host: req.headers.host,
+          referer: req.headers.referer || 'none'
         }
       }
     });
@@ -205,4 +215,6 @@ const handler = async (req: VercelRequest, res: VercelResponse) => {
   }
 };
 
+// Export using both module.exports (for Node.js) and export default (for TypeScript)
+module.exports = handler;
 export default handler;
