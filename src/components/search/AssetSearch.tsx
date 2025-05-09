@@ -56,6 +56,27 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
       console.error('Error loading layers:', error);
     }
   }, []);
+  
+  // Load initial assets when component mounts
+  useEffect(() => {
+    const loadInitialAssets = async () => {
+      try {
+        setIsLoading(true);
+        const results = await assetService.getAssets();
+        
+        if (results && results.data) {
+          setSearchResults(results.data);
+          setTotalAssets(results.pagination?.total || results.data.length);
+        }
+      } catch (error) {
+        console.error('Error loading initial assets:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    loadInitialAssets();
+  }, []);
 
   // Load categories when layer changes
   useEffect(() => {
@@ -106,12 +127,21 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
         subcategory: selectedSubcategory || undefined,
       };
 
+      console.log("Searching with params:", searchParams);
+
       // Call the search API
       const results = await assetService.getAssets(searchParams);
       
       // Update state with results
-      setSearchResults(results.data);
-      setTotalAssets(results.pagination.total);
+      if (results && results.data) {
+        console.log("Search results:", results.data);
+        setSearchResults(results.data);
+        setTotalAssets(results.pagination?.total || results.data.length);
+      } else {
+        console.warn("Received empty or invalid results from assets search");
+        setSearchResults([]);
+        setTotalAssets(0);
+      }
       
       // Call the onSearch callback with the query
       onSearch(searchQuery);
@@ -185,6 +215,7 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
             variant="outlined"
             size="medium"
             sx={{ mr: 1 }}
+            disabled={isLoading}
           />
           <Button
             variant="contained"
@@ -193,7 +224,7 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
             disabled={isLoading}
             sx={{ minWidth: '120px' }}
           >
-            {isLoading ? <CircularProgress size={24} /> : "Search"}
+            {isLoading ? <CircularProgress size={24} color="inherit" /> : "Search"}
           </Button>
         </Box>
 
@@ -317,8 +348,15 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
         </Box>
       )}
 
-      {/* No results message */}
-      {searchResults.length === 0 && searchQuery && !isLoading && (
+      {/* Loading indicator */}
+      {isLoading && (
+        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4, mb: 4 }}>
+          <CircularProgress />
+        </Box>
+      )}
+      
+      {/* No results message - only show if we've actually searched */}
+      {searchResults.length === 0 && (searchQuery || selectedLayer || selectedCategory || selectedSubcategory) && !isLoading && (
         <Box sx={{ textAlign: 'center', py: 4 }}>
           <Typography variant="h6">No assets found</Typography>
           <Typography variant="body2" color="text.secondary">
