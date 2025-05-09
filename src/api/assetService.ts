@@ -520,26 +520,32 @@ class AssetService {
       const isMockToken = authToken.startsWith('MOCK-');
       
       // Determine whether to use real API based on several factors:
-      // 1. Is the backend available? (based on our health check)
+      // 1. Is the backend available? (based on our backend test)
       // 2. Do we have an auth token? (needed for API calls)
       // 3. Is it a mock token? (if so, real API will fail)
+      // 4. Is mock mode forced via localStorage?
       
-      if (isBackendAvailable && hasAuthToken && !isMockToken) {
+      // Check if mock mode is forced via localStorage
+      const forceMockMode = localStorage.getItem('forceMockApi') === 'true';
+      if (forceMockMode) {
+        console.log("⚠️ Mock API mode forced via localStorage setting");
+        useMock = true;
+      } else if (isBackendAvailable && hasAuthToken && !isMockToken) {
         // Ideal case: Backend is available, we have a real token
         useMock = false;
-        console.log("Backend available and real authentication token found. Using real API.");
+        console.log("✅ Backend available and real authentication token found. Using real API.");
       } else if (isBackendAvailable && hasAuthToken && isMockToken) {
         // We have a token but it's a mock one - API will reject it
         useMock = true;
-        console.log("Backend available but using mock token. Using mock data.");
+        console.log("ℹ️ Backend available but using mock token. Using mock data.");
       } else if (isBackendAvailable && !hasAuthToken) {
         // No auth token - API will reject the request
         useMock = true;
-        console.log("Backend available but no authentication token. Using mock data.");
+        console.log("ℹ️ Backend available but no authentication token. Using mock data.");
       } else if (!isBackendAvailable) {
         // Backend not available - have to use mock
         useMock = true;
-        console.log("Backend unavailable. Using mock data.");
+        console.log("ℹ️ Backend unavailable. Using mock data.");
       }
       
       // Override for production domain if needed

@@ -64,13 +64,18 @@ async function handler(req: VercelRequest, res: VercelResponse) {
     return;
   }
   
+  // Define the backend API URL
+  // Use environment variable if available, otherwise use hardcoded value
+  const backendApiUrl = process.env.BACKEND_API_URL || 'https://registry.reviz.dev/api';
+  
   // Ensure we have the correct API endpoint format
-  const targetUrl = `https://registry.reviz.dev/api${cleanPath.startsWith('/') ? cleanPath : '/' + cleanPath}`;
+  const targetUrl = `${backendApiUrl}${cleanPath.startsWith('/') ? cleanPath : '/' + cleanPath}`;
   
   // Check proxy configuration
   console.log(`Proxy Configuration:`);
   console.log(`Original URL: ${req.url}`);
   console.log(`Cleaned path: ${cleanPath}`);
+  console.log(`Backend API URL: ${backendApiUrl}`);
   console.log(`Proxying to: ${targetUrl}`);
   console.log(`Method: ${req.method}`);
   console.log(`Client IP: ${req.headers['x-forwarded-for'] || req.connection.remoteAddress}`);
@@ -132,8 +137,19 @@ async function handler(req: VercelRequest, res: VercelResponse) {
 
       // Special handling for authentication errors
       if (response.status === 401) {
-        console.error('Authentication error from backend - missing or invalid token');
-        console.error('Request authorization header:', req.headers.authorization ? 'Present (not shown for security)' : 'Missing');
+        console.log('Authentication error from backend - missing or invalid token. This is expected for unauthenticated requests.');
+        console.log('Request authorization header:', req.headers.authorization ? 'Present (not shown for security)' : 'Missing');
+      }
+      
+      // Add specific diagnostic for common backend responses
+      if (response.status === 404) {
+        console.log('404 Not Found - Endpoint does not exist in backend API');
+      } else if (response.status === 403) {
+        console.log('403 Forbidden - Endpoint exists but access is denied (may need different permissions)');
+      } else if (response.status >= 500) {
+        console.error('Server error from backend - backend API returned an error');
+      } else if (response.status >= 200 && response.status < 300) {
+        console.log('✅ Backend returned success response');
       }
 
       // Forward the response headers

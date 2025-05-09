@@ -41,10 +41,11 @@ async function handler(req: VercelRequest, res: VercelResponse) {
   };
   
   try {
-    // Test endpoints directly on the real backend
-    const testPaths = ['/health', '/docs', '/assets'];
+    // Test specific endpoints that we know should exist or are common in NestJS backends
+    const testPaths = ['/docs', '/auth/login', '/assets'];
     
-    // Track if any endpoint worked
+    // Track if any endpoint worked - consider 200, 401, and 403 as working
+    // (401/403 mean the API exists but needs auth, which is fine)
     let anyEndpointWorked = false;
     
     // Try each test path
@@ -53,10 +54,17 @@ async function handler(req: VercelRequest, res: VercelResponse) {
         const fullUrl = `${backendUrl}${path}`;
         console.log(`Testing real backend at: ${fullUrl}`);
         
+        // For login endpoint, use POST with empty body as it's likely a POST endpoint
+        const method = path === '/auth/login' ? 'POST' : 'GET';
+        const body = path === '/auth/login' ? JSON.stringify({email: 'test@example.com', password: 'test'}) : undefined;
+        const contentType = path === '/auth/login' ? 'application/json' : 'application/json';
+        
         const response = await fetch(fullUrl, {
-          method: 'GET',
+          method,
+          body,
           headers: {
             'Accept': 'application/json',
+            'Content-Type': contentType,
             'User-Agent': 'NNA-Registry-Frontend-Diagnostic/1.0'
           },
           timeout: 3000 // 3 second timeout
@@ -65,26 +73,41 @@ async function handler(req: VercelRequest, res: VercelResponse) {
         // Store response details
         diagnostics.realBackend.endpoints[path] = {
           url: fullUrl,
+          method,
           status: response.status,
           statusText: response.statusText,
           headers: Object.fromEntries([...response.headers.entries()])
         };
         
-        // If we get something other than a 404, the backend is likely working
-        // Even a 401 (Unauthorized) means the backend is there but needs auth
-        if (response.status !== 404) {
+        // Consider 2xx (success), 3xx (redirect), 401 (unauthorized), or 403 (forbidden) as working
+        // These mean the API responded, even if it needs auth
+        if (
+          (response.status >= 200 && response.status < 400) || // 2xx or 3xx (success or redirect)
+          response.status === 401 || // Unauthorized (API exists but needs auth)
+          response.status === 403    // Forbidden (API exists but user can't access)
+        ) {
           anyEndpointWorked = true;
+          diagnostics.realBackend.endpoints[path].working = true;
+        } else {
+          diagnostics.realBackend.endpoints[path].working = false;
         }
         
         // Try to get response body for more details
         try {
           const text = await response.text();
-          diagnostics.realBackend.endpoints[path].responseBody = text.substring(0, 500);
+          // Only store a preview to avoid huge responses
+          diagnostics.realBackend.endpoints[path].responsePreview = text.substring(0, 500);
           
           // If it looks like JSON, try to parse it
           if (text.trim().startsWith('{') || text.trim().startsWith('[')) {
             try {
-              diagnostics.realBackend.endpoints[path].json = JSON.parse(text);
+              const jsonData = JSON.parse(text);
+              // Look for common NestJS error patterns to provide better diagnostics
+              if (jsonData.success === false && jsonData.error) {
+                diagnostics.realBackend.endpoints[path].errorType = jsonData.error.code;
+                diagnostics.realBackend.endpoints[path].errorMessage = jsonData.error.message;
+              }
+              diagnostics.realBackend.endpoints[path].json = jsonData;
             } catch (e) {
               // Not valid JSON, that's okay
             }
@@ -94,8 +117,9 @@ async function handler(req: VercelRequest, res: VercelResponse) {
         }
       } catch (pathError: any) {
         diagnostics.realBackend.endpoints[path] = {
+          url: `${backendUrl}${path}`,
           error: pathError.message || 'Unknown error',
-          stack: pathError.stack
+          stack: pathError.stack ? pathError.stack.split('\n').slice(0, 3).join('\n') : undefined
         };
       }
     }
