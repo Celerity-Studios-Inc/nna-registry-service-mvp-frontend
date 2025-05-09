@@ -85,13 +85,45 @@ async function handler(req: VercelRequest, res: VercelResponse) {
     // Get the response body
     const bodyText = await response.text();
     
+    // For debugging: Log detailed error information for non-success responses
+    if (response.status >= 400) {
+      console.error(`ASSETS HANDLER - Backend returned error status: ${response.status}`);
+      console.error(`ASSETS HANDLER - Error response body: ${bodyText}`);
+      console.error(`ASSETS HANDLER - Request details:`, {
+        method: req.method,
+        url: finalUrl,
+        hasAuth: !!req.headers.authorization,
+        bodyLength: req.body ? JSON.stringify(req.body).length : 0,
+        bodyPreview: req.body ? JSON.stringify(req.body).substring(0, 200) : 'no body'
+      });
+    }
+    
     // Try to parse as JSON
     let bodyData;
     try {
       bodyData = JSON.parse(bodyText);
+      
+      // Add more helpful information to 400 errors
+      if (response.status === 400) {
+        bodyData = {
+          ...bodyData,
+          _debug: {
+            message: "The server returned a 400 Bad Request error. This typically indicates missing required fields or validation errors.",
+            possibleSolutions: [
+              "Check that all required fields are provided",
+              "Verify the data formats match what the backend expects",
+              "Try submitting with mock data to see the expected format"
+            ],
+            timestamp: new Date().toISOString()
+          }
+        };
+      }
     } catch (e) {
       // If it's not valid JSON, use the raw text
-      bodyData = { text: bodyText };
+      bodyData = { 
+        text: bodyText,
+        error: "Response couldn't be parsed as JSON"
+      };
     }
     
     // Return the response
