@@ -75,6 +75,14 @@ async function handler(req: VercelRequest, res: VercelResponse) {
       bodyLength: req.body ? JSON.stringify(req.body).length : 0
     });
     
+    // Log the incoming request body for debugging
+    console.log('ASSETS HANDLER - Request body preview:', req.body ? JSON.stringify(req.body).substring(0, 500) : 'no body');
+    
+    // The API expects multipart/form-data but we're probably sending JSON
+    // For now, we'll just pass through what we receive and log an informative message
+    console.log('ASSETS HANDLER - Content-Type:', headers['Content-Type']);
+    console.log('ASSETS HANDLER - Note: The backend API expects multipart/form-data for asset submissions');
+    
     // Make the request
     const response = await fetch(finalUrl, {
       method: req.method,

@@ -668,6 +668,14 @@ class AssetService {
       // const hasAuthToken = !!authToken; // Commented out unused variable
       const isMockToken = authToken.startsWith('MOCK-');
       
+      // Add more token debugging
+      console.log("Auth token information:", {
+        tokenExists: !!authToken,
+        tokenLength: authToken.length,
+        isMockToken: isMockToken,
+        tokenPrefix: authToken.substring(0, 15) + '...' // Only show beginning for security
+      });
+      
       // Determine whether to use real API based on several factors:
       // 1. Is the backend available? (based on our backend test)
       // 2. Do we have an auth token? (needed for API calls)
