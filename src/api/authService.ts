@@ -51,20 +51,23 @@ class AuthService {
         console.log('Login successful with real API');
         console.log('Response preview:', JSON.stringify(response.data).substring(0, 100) + '...');
         return response.data.data as AuthResponse;
-      } catch (apiError) {
+      } catch (error) {
+        const apiError = error as any;
         console.warn('Real API login failed, falling back to mock:', apiError);
         
         // Add detailed error logging
-        if (apiError.response) {
+        if (apiError?.response) {
           console.error('API Error Response:', {
             status: apiError.response.status,
             statusText: apiError.response.statusText,
             data: apiError.response.data
           });
-        } else if (apiError.request) {
+        } else if (apiError?.request) {
           console.error('API Request Error (No Response):', apiError.request);
-        } else {
+        } else if (apiError?.message) {
           console.error('API Error:', apiError.message);
+        } else {
+          console.error('Unknown API Error:', apiError);
         }
         
         return this.mockLogin(email, password);
@@ -174,20 +177,23 @@ class AuthService {
         console.log('Registration successful with real API');
         console.log('Response preview:', JSON.stringify(response.data).substring(0, 100) + '...');
         return response.data.data as AuthResponse;
-      } catch (apiError) {
+      } catch (error) {
+        const apiError = error as any;
         console.warn('Real API registration failed, falling back to mock:', apiError);
         
         // Add detailed error logging
-        if (apiError.response) {
+        if (apiError?.response) {
           console.error('API Error Response:', {
             status: apiError.response.status,
             statusText: apiError.response.statusText,
             data: apiError.response.data
           });
-        } else if (apiError.request) {
+        } else if (apiError?.request) {
           console.error('API Request Error (No Response):', apiError.request);
-        } else {
+        } else if (apiError?.message) {
           console.error('API Error:', apiError.message);
+        } else {
+          console.error('Unknown API Error:', apiError);
         }
         
         return this.mockRegister(username, email, password);
