@@ -11,7 +11,8 @@ import {
 } from '../types/asset.types';
 import { ApiResponse, PaginatedResponse } from '../types/api.types';
 import assetRegistryService from './assetRegistryService';
-import { checkEnv } from './envCheck';
+// Import checkEnv only when needed - currently commented out in the code
+// import { checkEnv } from './envCheck';
 
 // Determine whether real backend is available and connected
 // Use the API module's backend status tracking
@@ -686,8 +687,8 @@ class AssetService {
       /* Unreachable code - kept for reference only
       
       // Determine whether to use mock implementation or real API
-      const envStatus = checkEnv();
-      console.log("Environment check in createAsset:", envStatus);
+      // const envStatus = checkEnv();
+      // console.log("Environment check in createAsset:", envStatus);
       
       // Check if we're in a production domain - if so, force real API usage
       const isProductionDomain = window.location.hostname.includes('vercel.app') || 
