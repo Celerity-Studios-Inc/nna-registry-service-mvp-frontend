@@ -99,7 +99,7 @@ const ConnectivityHelp: React.FC = () => {
               </Typography>
               <Alert severity={mockMode ? "warning" : "success"} sx={{ mb: 2 }}>
                 Mock API Mode is currently: <strong>{mockMode ? "ENABLED" : "DISABLED"}</strong>
-              </Typography>
+              </Alert>
               <Typography variant="body2">
                 When enabled, the application will use fake data instead of real API calls.
               </Typography>
