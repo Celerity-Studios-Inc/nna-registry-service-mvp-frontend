@@ -1,4 +1,4 @@
-name: Deploy to Vercel Production
+name: Deploy to Vercel Production (Requires Secrets)
 
 on:
   push:
@@ -39,3 +39,7 @@ jobs:
           vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
           working-directory: ./
           vercel-args: '--prod'
+        # This step requires VERCEL_TOKEN, VERCEL_ORG_ID, and VERCEL_PROJECT_ID secrets
+        # If these secrets are not configured, this workflow will fail
+        # To set up these secrets, see docs/GITHUB_SECRETS_SETUP.md
+        # or use the build-test-only.yml workflow instead
