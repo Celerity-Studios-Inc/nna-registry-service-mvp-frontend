@@ -51,7 +51,8 @@ class AuthService {
         console.log('Login successful with real API');
         
         // Check if we actually got a proper API response or HTML
-        if (typeof response.data === 'string' && response.data.trim().startsWith('<!doctype html>')) {
+        const responseData = response.data;
+        if (typeof responseData === 'string' && responseData.trim && responseData.trim().startsWith('<!doctype html>')) {
           console.error('Error: Received HTML instead of JSON. Server is likely returning the index.html file instead of API response.');
           throw new Error('Invalid API response format (received HTML)');
         }
@@ -191,7 +192,8 @@ class AuthService {
         console.log('Registration successful with real API');
         
         // Check if we actually got a proper API response or HTML
-        if (typeof response.data === 'string' && response.data.trim().startsWith('<!doctype html>')) {
+        const responseData = response.data;
+        if (typeof responseData === 'string' && responseData.trim && responseData.trim().startsWith('<!doctype html>')) {
           console.error('Error: Received HTML instead of JSON. Server is likely returning the index.html file instead of API response.');
           throw new Error('Invalid API response format (received HTML)');
         }
