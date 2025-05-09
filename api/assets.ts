@@ -23,18 +23,36 @@ async function handler(req: VercelRequest, res: VercelResponse) {
     // Hard-code the backend URL - this is the key simplification
     const backendUrl = 'https://registry.reviz.dev/api/assets';
     
-    // Extract the path part to determine if we need a sub-route
-    const pathParts = (req.url || '').split('?')[0].split('/').filter(Boolean);
+    // For debugging: log all parts of URL
+    const url = req.url || '';
+    console.log('URL parts analysis:', {
+      url: url,
+      path: (url || '').split('?')[0],
+      parts: (url || '').split('?')[0].split('/').filter(Boolean)
+    });
     
-    // Only use the parts after 'assets' if present
+    // In Vercel serverless functions, the URL typically doesn't include /api prefix
+    // The URL is often something like /assets or / for root endpoint
+    // so we need to be careful about path construction
+    
+    // Don't add any path components - just use the raw backend URL for POST to /assets
     let finalUrl = backendUrl;
-    if (pathParts.length > 1) {
-      // The first part should be 'assets' since the route is /api/assets/...
-      const subPath = pathParts.slice(1).join('/');
-      if (subPath) {
-        finalUrl = `${backendUrl}/${subPath}`;
+    
+    // Only add path components for specific asset routes (GET one asset, etc.)
+    // But NOT for the main /assets endpoint which is what we use for POST
+    if (url && url !== '/' && url !== '/assets' && url !== '/assets/') {
+      // Extract path after assets/ if it exists
+      const match = url.match(/\/assets\/(.+)/);
+      if (match && match[1]) {
+        finalUrl = `${backendUrl}/${match[1]}`;
+        console.log(`Found sub-path: ${match[1]}`);
       }
     }
+    
+    console.log(`Final URL decision:
+    - Original URL: ${url}
+    - Backend root: ${backendUrl}
+    - Final URL: ${finalUrl}`);
     
     console.log(`Forwarding to backend: ${finalUrl}`);
     
