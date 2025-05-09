@@ -119,6 +119,7 @@ const App: React.FC = () => {
                 <Routes>
                   <Route path="/login" element={<LoginPage />} />
                   <Route path="/register" element={<RegisterPage />} />
+                  <Route path="/api-test" element={<TestComponent />} />
                   <Route element={<MainLayout />}>
                     <Route path="/dashboard" element={
                       <ProtectedRoute>
