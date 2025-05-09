@@ -1,9 +1,12 @@
 name: Deploy to Vercel Production (Requires Secrets)
 
 on:
-  push:
-    branches:
-      - main
+  workflow_dispatch:
+    inputs:
+      deploy_environment:
+        description: 'Environment to deploy to'
+        required: true
+        default: 'production'
 
 jobs:
   deploy:

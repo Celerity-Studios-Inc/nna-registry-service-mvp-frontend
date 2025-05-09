@@ -1,4 +1,4 @@
-name: Build and Test
+name: Build and Test (Default CI)
 
 on:
   push:
@@ -32,7 +32,12 @@ jobs:
       - name: Build project
         run: CI=false npm run build
         
-      - name: Log build success
+      - name: Log build success and deployment instructions
         run: |
           echo "✅ Build completed successfully"
-          echo "To deploy, use the Vercel CLI: vercel --prod"
+          echo "To deploy, use one of these methods:"
+          echo "1. Vercel CLI: vercel --prod"
+          echo "2. Manual trigger of the 'Deploy to Vercel Production (Requires Secrets)' workflow"
+          echo ""
+          echo "NOTE: The Deploy to Vercel workflow requires secrets to be configured."
+          echo "See GITHUB_SECRETS_SETUP.md for instructions."
