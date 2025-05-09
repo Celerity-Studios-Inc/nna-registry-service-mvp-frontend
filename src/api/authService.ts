@@ -49,7 +49,21 @@ class AuthService {
         
         // If we get here, the API call was successful
         console.log('Login successful with real API');
+        
+        // Check if we actually got a proper API response or HTML
+        if (typeof response.data === 'string' && response.data.trim().startsWith('<!doctype html>')) {
+          console.error('Error: Received HTML instead of JSON. Server is likely returning the index.html file instead of API response.');
+          throw new Error('Invalid API response format (received HTML)');
+        }
+        
         console.log('Response preview:', JSON.stringify(response.data).substring(0, 100) + '...');
+        
+        // Validate response structure
+        if (!response.data || !response.data.data) {
+          console.error('Invalid API response format:', response.data);
+          throw new Error('Invalid API response format (missing data field)');
+        }
+        
         return response.data.data as AuthResponse;
       } catch (error) {
         const apiError = error as any;
@@ -175,7 +189,21 @@ class AuthService {
         
         // If we get here, the API call was successful
         console.log('Registration successful with real API');
+        
+        // Check if we actually got a proper API response or HTML
+        if (typeof response.data === 'string' && response.data.trim().startsWith('<!doctype html>')) {
+          console.error('Error: Received HTML instead of JSON. Server is likely returning the index.html file instead of API response.');
+          throw new Error('Invalid API response format (received HTML)');
+        }
+        
         console.log('Response preview:', JSON.stringify(response.data).substring(0, 100) + '...');
+        
+        // Validate response structure
+        if (!response.data || !response.data.data) {
+          console.error('Invalid API response format:', response.data);
+          throw new Error('Invalid API response format (missing data field)');
+        }
+        
         return response.data.data as AuthResponse;
       } catch (error) {
         const apiError = error as any;

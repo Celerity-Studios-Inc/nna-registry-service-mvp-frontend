@@ -16,6 +16,7 @@ import MainLayout from './components/layout/MainLayout';
 import { NotificationsProvider } from './contexts/NotificationsContext';
 import ErrorBoundary from './components/common/ErrorBoundary';
 import TestComponent from './components/common/TestComponent';
+import ApiRouteAlert from './components/common/ApiRouteAlert';
 
 // Create a theme instance
 const theme = createTheme({
@@ -116,6 +117,7 @@ const App: React.FC = () => {
       <StyledEngineProvider injectFirst>
         <ThemeProvider theme={theme}>
           <CssBaseline />
+          <ApiRouteAlert /> {/* Add alert for API routing issues */}
           <NotificationsProvider>
             <AuthProvider>
               <Router>

@@ -46,10 +46,63 @@ const checkBackendAvailability = async () => {
         
         // Try to get the response body for more debugging
         try {
-          const healthBody = await healthResponse.json();
-          console.log('Health endpoint response:', healthBody);
+          // First check if it's HTML
+          const responseText = await healthResponse.text();
+          if (responseText.trim().startsWith('<!doctype html>') || responseText.includes('<html')) {
+            console.log('%c Health endpoint returned HTML instead of JSON. This is likely a routing issue.', 'color: red; font-weight: bold');
+            console.log('HTML preview:', responseText.substring(0, 150) + '...');
+            console.log('%c SOLUTION: When using serve -s build, include the --config serve.json parameter', 'color: green; font-weight: bold');
+            
+            // Log a more detailed error with visual emphasis
+            console.error(`
+======================================
+API ROUTING CONFIGURATION ERROR DETECTED
+======================================
+The server is returning HTML instead of JSON for API endpoints.
+This happens when the server is not properly configured to handle API routes.
+
+This is common when using 'serve -s build' without proper configuration.
+
+SOLUTION:
+1. Use the provided serve-local.sh script: ./serve-local.sh
+   OR
+2. Use serve with the config file: serve -s build -l 3000 --config serve.json
+
+The serve.json file contains special routing rules to handle API requests properly.
+======================================`);
+            
+            // Set a flag in localStorage to show an error in the UI
+            try {
+              localStorage.setItem('apiRoutingError', 'true');
+            } catch (e) {
+              // Ignore localStorage errors
+            }
+            
+            // This is definitely indicative of an issue
+            localHealthEndpointWorking = false;
+          } else {
+            // Try to parse as JSON
+            try {
+              const healthBody = JSON.parse(responseText);
+              console.log('Health endpoint response:', healthBody);
+              
+              // Check for our special marker
+              if (healthBody && healthBody.diagnostics && healthBody.diagnostics.responseMarker === 'JSON_RESPONSE_MARKER') {
+                console.log('%c API routing is configured correctly!', 'color: green; font-weight: bold');
+                // Clear any previous error flags
+                try {
+                  localStorage.removeItem('apiRoutingError');
+                } catch (e) {
+                  // Ignore localStorage errors
+                }
+              }
+            } catch (jsonError) {
+              console.log('Could not parse health response as JSON');
+              console.log('Raw response:', responseText.substring(0, 200));
+            }
+          }
         } catch (parseError) {
-          console.log('Could not parse health response as JSON');
+          console.log('Could not parse health response:', parseError);
         }
       } else {
         console.log('Health endpoint returned non-OK status:', healthResponse.status);
@@ -65,20 +118,37 @@ const checkBackendAvailability = async () => {
       
       if (response.ok) {
         try {
-          const testResult = await response.json();
-          console.log('Real backend test results:', testResult);
-          
-          // Get the actual backend status from the dedicated test
-          realBackendWorking = testResult.realBackendAvailable === true;
-          
-          if (realBackendWorking) {
-            console.log('✅ Real backend API is available and responding!');
+          // First check if it's HTML
+          const responseText = await response.text();
+          if (responseText.trim().startsWith('<!doctype html>')) {
+            console.log('test-real-backend endpoint returned HTML instead of JSON. This is likely a routing issue.');
+            console.log('HTML preview:', responseText.substring(0, 100) + '...');
+            // Since we got HTML, the real backend is probably not working correctly
+            realBackendWorking = false;
           } else {
-            console.log('❌ Real backend API is NOT available. Will use mock data.');
-            console.log('Reason:', testResult.diagnostics?.realBackend?.error || 'Unknown error');
+            // Try to parse as JSON
+            try {
+              const testResult = JSON.parse(responseText);
+              console.log('Real backend test results:', testResult);
+              
+              // Get the actual backend status from the dedicated test
+              realBackendWorking = testResult.realBackendAvailable === true;
+              
+              if (realBackendWorking) {
+                console.log('✅ Real backend API is available and responding!');
+              } else {
+                console.log('❌ Real backend API is NOT available. Will use mock data.');
+                console.log('Reason:', testResult.diagnostics?.realBackend?.error || 'Unknown error');
+              }
+            } catch (jsonError) {
+              console.log('Could not parse test-real-backend response as JSON:', jsonError);
+              console.log('Raw response:', responseText.substring(0, 200));
+              realBackendWorking = false;
+            }
           }
         } catch (parseError) {
-          console.log('Could not parse test-real-backend response as JSON:', parseError);
+          console.log('Could not process test-real-backend response:', parseError);
+          realBackendWorking = false;
         }
       } else {
         console.log('test-real-backend endpoint returned non-OK status:', response.status);
@@ -148,7 +218,7 @@ class AssetService {
     try {
       // Check if we should use mock data based on token and backend availability
       const authToken = localStorage.getItem('accessToken') || '';
-      const hasAuthToken = !!authToken;
+      // const hasAuthToken = !!authToken; // Commented out unused variable
       const isMockToken = authToken.startsWith('MOCK-');
       
       // Use mock data if using a mock token or backend isn't available
@@ -516,7 +586,7 @@ class AssetService {
       
       // Get auth token and determine if it's a mock token
       const authToken = localStorage.getItem('accessToken') || '';
-      const hasAuthToken = !!authToken;
+      // const hasAuthToken = !!authToken; // Commented out unused variable
       const isMockToken = authToken.startsWith('MOCK-');
       
       // Determine whether to use real API based on several factors:
@@ -525,20 +595,23 @@ class AssetService {
       // 3. Is it a mock token? (if so, real API will fail)
       // 4. Is mock mode forced via localStorage?
       
+      // Check if we have a valid authentication token
+      const hasValidAuthToken = !!authToken && !isMockToken;
+      
       // Check if mock mode is forced via localStorage
       const forceMockMode = localStorage.getItem('forceMockApi') === 'true';
       if (forceMockMode) {
         console.log("⚠️ Mock API mode forced via localStorage setting");
         useMock = true;
-      } else if (isBackendAvailable && hasAuthToken && !isMockToken) {
+      } else if (isBackendAvailable && hasValidAuthToken) {
         // Ideal case: Backend is available, we have a real token
         useMock = false;
         console.log("✅ Backend available and real authentication token found. Using real API.");
-      } else if (isBackendAvailable && hasAuthToken && isMockToken) {
+      } else if (isBackendAvailable && authToken && isMockToken) {
         // We have a token but it's a mock one - API will reject it
         useMock = true;
         console.log("ℹ️ Backend available but using mock token. Using mock data.");
-      } else if (isBackendAvailable && !hasAuthToken) {
+      } else if (isBackendAvailable && !authToken) {
         // No auth token - API will reject the request
         useMock = true;
         console.log("ℹ️ Backend available but no authentication token. Using mock data.");
@@ -549,7 +622,7 @@ class AssetService {
       }
       
       // Override for production domain if needed
-      if (isProductionDomain && !useMock && !hasAuthToken) {
+      if (isProductionDomain && !useMock && !authToken) {
         console.warn("⚠️ Production domain with no auth token. Forcing mock data for better user experience.");
         useMock = true;
       }

@@ -22,16 +22,26 @@ async function handler(req: VercelRequest, res: VercelResponse) {
     pathname: url.pathname,
     search: url.search,
     host: req.headers.host,
-    method: req.method
+    method: req.method,
+    query: Object.fromEntries(url.searchParams.entries())
   });
   
   // Log the request method and headers
   console.log('Request method:', req.method);
   console.log('Request headers:', req.headers);
   
-  // Fix to handle /api/proxy/:path* pattern correctly
+  // Extract path from query parameter if available (new approach)
+  const queryPath = url.searchParams.get('path');
+  
+  // Fix to handle various path patterns correctly
   let cleanPath = path;
-  if (cleanPath.startsWith('/proxy/')) {
+  
+  if (queryPath) {
+    // New approach: path comes from query parameter
+    console.log('Using path from query parameter:', queryPath);
+    cleanPath = '/' + queryPath;
+  } else if (cleanPath.startsWith('/proxy/')) {
+    // Legacy approach: path is part of URL
     cleanPath = cleanPath.substring('/proxy'.length); // Remove /proxy prefix
   } else if (cleanPath === '/proxy' || cleanPath === '/proxy/') {
     cleanPath = '/'; // Root API path

@@ -19,7 +19,21 @@
       "Bash(git checkout:*)",
       "Bash(git merge:*)",
       "Bash(rm:*)",
-      "Bash(mv:*)"
+      "Bash(mv:*)",
+      "Bash(npm install:*)",
+      "Bash(vercel:*)",
+      "Bash(curl:*)",
+      "Bash(echo:*)",
+      "Bash(ls:*)",
+      "Bash(node:*)",
+      "Bash(npx serve:*)",
+      "Bash(command -v:*)",
+      "WebFetch(domain:registry.reviz.dev)",
+      "Bash(npm run start:*)",
+      "Bash(git rm:*)",
+      "Bash(git revert:*)",
+      "Bash(./scripts/update-workflows.sh:*)",
+      "Bash(sed:*)"
     ],
     "deny": []
   }
