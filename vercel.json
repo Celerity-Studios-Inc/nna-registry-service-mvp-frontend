@@ -3,6 +3,7 @@
   "buildCommand": "npm run build",
   "installCommand": "npm install",
   "outputDirectory": "build",
+  "public": true,
   "env": {
     "REACT_APP_API_URL": "/api",
     "REACT_APP_USE_MOCK_API": "false"
