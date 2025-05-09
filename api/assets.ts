@@ -1,9 +1,11 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import fetch from 'node-fetch';
+import { Readable } from 'stream';
+import getRawBody from 'raw-body';
 
 /**
- * Simplified assets endpoint handler that directly forwards to backend
- * This is the minimal implementation to handle /api/assets routes
+ * Improved assets endpoint handler for proper FormData handling
+ * Special focus on maintaining multipart/form-data structure when proxying
  */
 async function handler(req: VercelRequest, res: VercelResponse) {
   // Set CORS headers upfront
@@ -18,9 +20,8 @@ async function handler(req: VercelRequest, res: VercelResponse) {
 
   console.log(`ASSETS HANDLER: ${req.method} ${req.url}`);
   
-  // Simple direct forwarding to backend
   try {
-    // Hard-code the backend URL - this is the key simplification
+    // Hard-code the backend URL
     const backendUrl = 'https://registry.reviz.dev/api/assets';
     
     // For debugging: log all parts of URL
@@ -31,11 +32,7 @@ async function handler(req: VercelRequest, res: VercelResponse) {
       parts: (url || '').split('?')[0].split('/').filter(Boolean)
     });
     
-    // In Vercel serverless functions, the URL typically doesn't include /api prefix
-    // The URL is often something like /assets or / for root endpoint
-    // so we need to be careful about path construction
-    
-    // Don't add any path components - just use the raw backend URL for POST to /assets
+    // Determine final URL based on path
     let finalUrl = backendUrl;
     
     // Only add path components for specific asset routes (GET one asset, etc.)
@@ -54,125 +51,89 @@ async function handler(req: VercelRequest, res: VercelResponse) {
     - Backend root: ${backendUrl}
     - Final URL: ${finalUrl}`);
     
-    console.log(`Forwarding to backend: ${finalUrl}`);
-    
-    // Extract and prepare headers from the original request
-    // We need to be careful not to overwrite critical headers like Content-Type
-    const headers: { [key: string]: string } = {
-      'Accept': 'application/json',
-      'Host': 'registry.reviz.dev'
-    };
-    
-    // Copy all relevant headers from the original request
-    // But be careful to preserve the original Content-Type which is critical for FormData
-    const requestHeaders: { [key: string]: string } = {};
-    for (const [key, value] of Object.entries(req.headers)) {
-      if (typeof value === 'string') {
-        requestHeaders[key] = value;
-      }
-    }
-    
-    // Only set the Authorization header if it exists in the original request
-    if (req.headers.authorization) {
-      requestHeaders['Authorization'] = req.headers.authorization as string;
-    }
-    
-    // Determine if this is a FormData (multipart/form-data) request
+    // Determine content type
     const contentType = req.headers['content-type'] || '';
-    const isFormData = contentType.includes('multipart/form-data');
+    const isMultipart = contentType.includes('multipart/form-data');
     
-    // Get the raw body type for debugging
-    const bodyType = req.body ? typeof req.body : 'undefined';
-    const isBufferOrStream = bodyType === 'object' && (
-      req.body instanceof Buffer || 
-      req.body.constructor.name === 'ReadableStream' ||
-      req.body.constructor.name === 'IncomingMessage'
-    );
+    console.log(`Request content type: ${contentType}`);
+    console.log(`Is multipart/form-data: ${isMultipart}`);
     
-    // Log what we're doing
-    console.log({
-      method: req.method,
-      url: finalUrl,
-      contentType: contentType,
-      isFormData: isFormData,
-      bodyType: bodyType,
-      isBufferOrStream: isBufferOrStream,
-      bodyPresent: !!req.body,
-      headersProvided: Object.keys(requestHeaders).length
+    // Create headers object to forward
+    const headers: Record<string, string> = {};
+    
+    // Copy relevant headers, but be careful to preserve Content-Type exactly as is
+    Object.entries(req.headers).forEach(([key, value]) => {
+      // Skip host header which will be set by fetch
+      if (key.toLowerCase() !== 'host' && typeof value === 'string') {
+        headers[key] = value;
+      }
     });
     
-    if (isFormData) {
-      console.log('ASSETS HANDLER - Detected FormData request with multipart/form-data');
+    // Set a specific Host header for the backend
+    headers['host'] = 'registry.reviz.dev';
+    
+    console.log('Forwarding with headers:', {
+      contentType: headers['content-type'],
+      contentLength: headers['content-length'],
+      authorization: headers['authorization'] ? 'Present' : 'Missing',
+    });
+    
+    let body;
+    
+    // Handle multipart/form-data specially - we need to forward the raw body
+    if (isMultipart && req.method === 'POST') {
+      console.log('ASSETS HANDLER - Processing multipart/form-data request');
       
-      // More detailed logging about the request body for FormData
-      if (bodyType === 'string') {
-        console.log('ASSETS HANDLER - FormData received as string. Preview:', req.body.substring(0, 200));
-      } else if (isBufferOrStream) {
-        console.log('ASSETS HANDLER - FormData received as buffer or stream, which is correct format');
-      } else if (bodyType === 'object') {
-        console.log('ASSETS HANDLER - FormData received as object, which may need special handling');
-        console.log('Object constructor:', req.body.constructor ? req.body.constructor.name : 'unknown');
-      } else {
-        console.log('ASSETS HANDLER - Unexpected FormData format:', bodyType);
+      try {
+        // Get the raw body as a Buffer to preserve binary data
+        // This is critical for multipart/form-data with file uploads
+        if (!req.body && req.readable) {
+          console.log('ASSETS HANDLER - Request is readable, getting raw body');
+          body = await getRawBody(req);
+          console.log('ASSETS HANDLER - Successfully retrieved raw body from request stream');
+        } else {
+          console.log('ASSETS HANDLER - Using existing body:', typeof req.body);
+          body = req.body;
+        }
+        
+        // Make sure the Content-Type header is preserved exactly as it came in
+        // This is critical for multipart/form-data to work properly
+        console.log('ASSETS HANDLER - Using content type:', headers['content-type']);
+        
+      } catch (error) {
+        console.error('ASSETS HANDLER - Error processing multipart/form-data:', error);
+        throw error;
       }
     } else {
-      // Only for non-FormData requests, log the body preview
-      console.log('ASSETS HANDLER - Request body preview:', 
-        req.body ? (typeof req.body === 'string' ? req.body.substring(0, 200) : JSON.stringify(req.body).substring(0, 200)) : 'no body');
-    }
-    
-    // Make the request to backend with proper handling of different content types
-    // We need special handling for FormData vs. JSON
-    let requestOptions: any = {
-      method: req.method,
-      headers: requestHeaders
-    };
-    
-    // For FormData, we must pass the raw body without modification
-    // For regular JSON requests, we need to stringify the body
-    if (isFormData) {
-      // For FormData, pass the raw body without JSON.stringify
-      // This is CRITICAL for multipart/form-data to work correctly
-      requestOptions.body = req.body;
-      
-      // For multipart/form-data requests, we need to make sure we don't override the content-type header
-      // The content-type header must include the boundary which is automatically generated
-      if (contentType.includes('multipart/form-data')) {
-        // Remove content-type if present, to ensure boundary is preserved
-        if (requestHeaders['content-type']) {
-          console.log('ASSETS HANDLER - Preserving original multipart/form-data content-type with boundary');
-          // Keep the original content-type with boundary
+      // For JSON requests, ensure the body is properly formatted
+      if (req.body) {
+        if (typeof req.body === 'string') {
+          body = req.body;
         } else {
-          console.warn('ASSETS HANDLER - FormData without proper content-type header. This may cause issues.');
+          body = JSON.stringify(req.body);
         }
       }
-      
-      console.log('ASSETS HANDLER - Forwarding FormData with original Content-Type:', requestHeaders['content-type'] || contentType);
-    } else {
-      // For JSON and other formats, stringify the body if needed
-      if (req.body) {
-        requestOptions.body = typeof req.body === 'string' ? req.body : JSON.stringify(req.body);
-      }
-      console.log('ASSETS HANDLER - Forwarding JSON data with Content-Type:', contentType);
     }
     
-    console.log('Final request options:', {
-      method: requestOptions.method,
-      url: finalUrl,
-      headersCount: Object.keys(requestOptions.headers).length,
-      bodyPresent: !!requestOptions.body
+    console.log('ASSETS HANDLER - Making fetch request to backend');
+    
+    // Forward the request to the backend
+    const response = await fetch(finalUrl, {
+      method: req.method,
+      headers: headers,
+      body: body,
     });
     
-    // Make the actual request to the backend
-    const response = await fetch(finalUrl, requestOptions);
-    
     // Get the response body
-    const bodyText = await response.text();
+    const responseBody = await response.text();
+    
+    // Log response details
+    console.log(`ASSETS HANDLER - Backend response: ${response.status} ${response.statusText}`);
     
     // For debugging: Log detailed error information for non-success responses
     if (response.status >= 400) {
       console.error(`ASSETS HANDLER - Backend returned error status: ${response.status}`);
-      console.error(`ASSETS HANDLER - Error response body: ${bodyText}`);
+      console.error(`ASSETS HANDLER - Error response body: ${responseBody.substring(0, 1000)}`);
       
       // Add more detailed error logging with highlighted formatting
       console.error(`
@@ -180,62 +141,57 @@ async function handler(req: VercelRequest, res: VercelResponse) {
 Status: ${response.status} ${response.statusText}
 URL: ${finalUrl}
 Method: ${req.method}
-Content-Type: ${req.headers['content-type'] || 'not specified'}
-Authorization: ${req.headers.authorization ? 'Present' : 'Missing'}
-FormData: ${isFormData ? 'Yes (multipart/form-data)' : 'No'}
+Content-Type: ${contentType}
+Authorization: ${headers['authorization'] ? 'Present' : 'Missing'}
+FormData: ${isMultipart ? 'Yes (multipart/form-data)' : 'No'}
 
 Error Response:
-${bodyText}
+${responseBody.substring(0, 1000)}
 
 Request Headers:
-${JSON.stringify(requestHeaders, null, 2)}
-
-Request Details:
-- Body Type: ${bodyType}
-- Is Buffer/Stream: ${isBufferOrStream}
-- Body Present: ${!!req.body}
+${JSON.stringify(headers, null, 2)}
 ====================== END ERROR DETAILS ======================
 `);
-      
-      console.error(`ASSETS HANDLER - Request details:`, {
-        method: req.method,
-        url: finalUrl,
-        hasAuth: !!req.headers.authorization,
-        bodyLength: req.body ? JSON.stringify(req.body).length : 0,
-        bodyPreview: req.body ? JSON.stringify(req.body).substring(0, 200) : 'no body'
-      });
     }
     
-    // Try to parse as JSON
-    let bodyData;
+    // Try to parse response as JSON
+    let parsedResponse;
     try {
-      bodyData = JSON.parse(bodyText);
+      parsedResponse = JSON.parse(responseBody);
       
       // Add more helpful information to 400 errors
       if (response.status === 400) {
-        bodyData = {
-          ...bodyData,
+        parsedResponse = {
+          ...parsedResponse,
           _debug: {
             message: "The server returned a 400 Bad Request error. This typically indicates missing required fields or validation errors.",
             possibleSolutions: [
               "Check that all required fields are provided",
               "Verify the data formats match what the backend expects",
-              "Try submitting with mock data to see the expected format"
+              "Ensure files are properly uploaded"
             ],
             timestamp: new Date().toISOString()
           }
         };
       }
     } catch (e) {
-      // If it's not valid JSON, use the raw text
-      bodyData = { 
-        text: bodyText,
+      // If not valid JSON, return the raw text
+      parsedResponse = { 
+        text: responseBody,
         error: "Response couldn't be parsed as JSON"
       };
     }
     
+    // Copy response headers
+    for (const [key, value] of Object.entries(response.headers.raw())) {
+      if (key.toLowerCase() !== 'transfer-encoding') {
+        res.setHeader(key, value);
+      }
+    }
+    
     // Return the response
-    return res.status(response.status).json(bodyData);
+    return res.status(response.status).json(parsedResponse);
+    
   } catch (error) {
     console.error('ASSETS HANDLER ERROR:', error);
     return res.status(500).json({ 

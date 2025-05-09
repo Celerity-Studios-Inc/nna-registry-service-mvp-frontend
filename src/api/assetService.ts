@@ -675,16 +675,15 @@ class AssetService {
   
   /**
    * Main asset creation method
-   * Currently forwarding directly to directCreateAsset
-   * To use proxy approach, comment out the early return
+   * Uses the proxy approach by default now that it has been fixed
    */
   async createAsset(assetData: AssetCreateRequest): Promise<Asset> {
     try {
-      // Force direct API implementation for testing
-      // Comment out the next line to use the regular proxy flow
-      return await this.directCreateAsset(assetData);
+      // Direct API calls won't work due to CORS, so we use the proxy instead
+      // Use this line if you need to test direct API calls:
+      // return await this.directCreateAsset(assetData);
       
-      /* Unreachable code - kept for reference only
+      // Continue with the regular proxy flow
       
       // Determine whether to use mock implementation or real API
       // const envStatus = checkEnv();
@@ -968,8 +967,8 @@ class AssetService {
           // For other errors, re-throw
           throw apiError;
         }
-      } 
-      */
+      // End of previous implementation 
+      //*/
     } catch (error) {
       console.error('Error creating asset:', error);
       throw new Error('Failed to create asset');
