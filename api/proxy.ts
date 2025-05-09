@@ -8,14 +8,19 @@ const handler = async (req: VercelRequest, res: VercelResponse) => {
   // Extract the path correctly
   const path = req.url || '';
   
-  // For debugging - log all parts of the URL
+  // For debugging - log all parts of the URL and request details
   const url = new URL(req.url || '', `https://${req.headers.host || 'localhost'}`);
   console.log('URL parts:', {
     original: req.url,
     pathname: url.pathname,
     search: url.search,
-    host: req.headers.host
+    host: req.headers.host,
+    method: req.method
   });
+  
+  // Log the request method and headers
+  console.log('Request method:', req.method);
+  console.log('Request headers:', req.headers);
   
   // Fix to handle /api/proxy/:path* pattern correctly
   let cleanPath = path;
