@@ -4,8 +4,11 @@ import fetch from 'node-fetch';
 /**
  * API Proxy handler for Vercel serverless function
  * This handles proxying API requests to the backend while dealing with CORS
+ * 
+ * @param req The Vercel request object
+ * @param res The Vercel response object
  */
-const handler = async (req: VercelRequest, res: VercelResponse) => {
+async function handler(req: VercelRequest, res: VercelResponse) {
   // Log the API proxy invocation for debugging
   console.log(`API Proxy: ${req.method} request to ${req.url}`);
   
