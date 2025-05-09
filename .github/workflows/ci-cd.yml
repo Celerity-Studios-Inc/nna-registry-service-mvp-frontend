@@ -1,0 +1,150 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+    inputs:
+      deploy_type:
+        description: 'Type of deployment to run'
+        required: true
+        default: 'full'
+        type: choice
+        options:
+          - full
+          - build-only
+          - deploy-only
+
+jobs:
+  # Build and test job
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Create production environment file
+        run: |
+          echo "REACT_APP_API_URL=/api" > .env.production
+          echo "REACT_APP_USE_MOCK_API=false" >> .env.production
+          cat .env.production
+        
+      - name: Build project
+        run: |
+          CI=false npm run build
+          echo "✅ Build completed successfully"
+      
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: build-output
+          path: build/
+          retention-days: 1
+      
+      - name: Verify build output
+        run: |
+          echo "Verifying build output..."
+          if [ -d "build" ]; then
+            echo "✅ Build directory exists"
+            ls -la build/
+          else
+            echo "❌ Build directory not found"
+            exit 1
+          fi
+
+  # Deploy job (only runs on main branch or manual trigger)
+  deploy:
+    needs: build
+    if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    # Check if secrets are available
+    env:
+      HAS_SECRETS: ${{ secrets.VERCEL_TOKEN != '' && secrets.VERCEL_ORG_ID != '' && secrets.VERCEL_PROJECT_ID != '' }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      
+      - name: Download build artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: build-output
+          path: build
+      
+      - name: Verify downloaded artifacts
+        run: |
+          echo "Verifying downloaded build artifacts..."
+          if [ -d "build" ]; then
+            echo "✅ Build directory exists"
+            ls -la build/
+          else
+            echo "❌ Build directory not found"
+            exit 1
+          fi
+      
+      # Method 1: Deploy with amondnet/vercel-action
+      - name: Deploy to Vercel (Action)
+        id: deploy-vercel-action
+        if: env.HAS_SECRETS == 'true'
+        uses: amondnet/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          working-directory: ./
+          vercel-args: '--prod'
+      
+      # Method 2: Alternative deployment with Vercel CLI (backup method)
+      - name: Install Vercel CLI (Fallback)
+        if: env.HAS_SECRETS != 'true'
+        run: npm install --global vercel@latest
+
+      - name: Deploy with Vercel CLI (Fallback)
+        if: env.HAS_SECRETS != 'true'
+        id: deploy-vercel-cli
+        run: |
+          echo "⚠️ Vercel secrets not found. Using fallback deployment method."
+          echo "⚠️ This deployment may require manual login through the CLI."
+          echo "To configure GitHub secrets for automated deployment, see GITHUB_SECRETS_SETUP.md"
+          vercel --prod --confirm || echo "Manual deployment with vercel CLI failed. Please deploy manually."
+      
+      # Notify about missing secrets
+      - name: Secrets Status
+        run: |
+          if [[ "${{ env.HAS_SECRETS }}" != "true" ]]; then
+            echo "⚠️ Vercel secrets not configured. Automated deployment may not work."
+            echo "To set up secrets for automated deployment, see GITHUB_SECRETS_SETUP.md"
+          else
+            echo "✅ Vercel secrets are configured correctly."
+          fi
+      
+      # Add deployment comment
+      - name: Comment on commit
+        if: env.HAS_SECRETS == 'true' && github.event_name != 'pull_request'
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const { issue, repo } = context;
+            github.rest.repos.createCommitComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              commit_sha: context.sha,
+              body: `✅ Deployment complete! Your application has been deployed to Vercel.`
+            });
