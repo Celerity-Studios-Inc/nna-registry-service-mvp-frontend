@@ -40,13 +40,30 @@ async function handler(req: VercelRequest, res: VercelResponse) {
   // Extract auth endpoint (like /register or /login)
   let endpoint = '';
   
-  // Handle the path correctly based on how it arrives
+  console.log('AUTH PROXY - Detailed path analysis:', {
+    path,
+    indexOf_auth: path.indexOf('/auth'),
+    lastIndexOf_auth: path.lastIndexOf('/auth'),
+    startsWith_auth: path.startsWith('/auth'),
+    includes_auth: path.includes('/auth')
+  });
+  
+  // Handle a variety of path formats
   if (path.startsWith('/auth/')) {
-    // Path is already in the format /auth/login or /auth/register
+    // Path is in the format /auth/login or /auth/register
     endpoint = path.substring('/auth'.length);
   } else if (path === '/auth') {
     // Just /auth with no trailing slash
     endpoint = '';
+  } else if (path.includes('/auth/')) {
+    // Handle cases where we might have duplicated paths like /api/auth/login
+    // Extract everything after the last occurrence of '/auth'
+    const lastAuthIndex = path.lastIndexOf('/auth');
+    if (lastAuthIndex >= 0) {
+      endpoint = path.substring(lastAuthIndex + '/auth'.length);
+    } else {
+      endpoint = path;
+    }
   } else {
     // Fallback - use the provided path directly
     console.log('AUTH PROXY - Using the whole path as endpoint:', path);
@@ -58,6 +75,8 @@ async function handler(req: VercelRequest, res: VercelResponse) {
   
   // Construct the target URL - hardcode the backend URL
   const targetUrl = `https://registry.reviz.dev/api/auth${endpoint}`;
+  
+  console.log('AUTH PROXY - Target URL constructed:', targetUrl);
   
   // Log request body for debugging
   if (req.method !== 'GET' && req.method !== 'HEAD' && req.body) {
