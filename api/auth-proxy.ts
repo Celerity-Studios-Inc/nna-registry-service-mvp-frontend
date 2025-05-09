@@ -73,6 +73,12 @@ async function handler(req: VercelRequest, res: VercelResponse) {
   // Log the extracted endpoint for debugging
   console.log('AUTH PROXY - Extracted endpoint:', endpoint);
   
+  // Clean up the endpoint to remove any duplicate /api/auth prefixes
+  if (endpoint.startsWith('/api/auth')) {
+    endpoint = endpoint.substring('/api/auth'.length);
+    console.log('AUTH PROXY - Removed duplicate /api/auth prefix from endpoint');
+  }
+  
   // Construct the target URL - hardcode the backend URL
   const targetUrl = `https://registry.reviz.dev/api/auth${endpoint}`;
   
