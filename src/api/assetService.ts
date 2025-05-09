@@ -804,11 +804,51 @@ class AssetService {
         };
         
         try {
-          // Make the actual API call
+          console.log("Preparing asset data for real API submission");
+          
+          // According to Swagger docs, we need to use FormData (multipart/form-data)
+          const formData = new FormData();
+          
+          // Add the file if it exists
+          if (assetData.files && assetData.files.length > 0) {
+            formData.append('file', assetData.files[0]);
+          }
+          
+          // Add all the required fields from the Swagger docs
+          formData.append('layer', assetData.layer || 'S');
+          formData.append('category', assetData.category || 'POP'); 
+          formData.append('subcategory', assetData.subcategory || 'BASE');
+          formData.append('description', assetData.description || 'Asset description');
+          
+          // Add optional fields if available
+          if (assetData.tags && assetData.tags.length > 0) {
+            formData.append('tags', assetData.tags.join(','));
+          }
+          
+          // Add empty objects for training data and rights as required by API
+          formData.append('trainingData', JSON.stringify({}));
+          formData.append('rights', JSON.stringify({}));
+          
+          // Add source if available
+          formData.append('source', 'NNA Registry Frontend');
+          
+          console.log("FormData prepared with file and metadata");
+          
+          // Configure axios to use the right content type for FormData
+          const config = {
+            headers: {
+              'Content-Type': 'multipart/form-data'
+            }
+          };
+          
+          // Make the actual API call with FormData
           const response = await api.post<ApiResponse<Asset>>(
             '/assets',
-            apiAssetData
+            formData,
+            config
           );
+          
+          console.log("API Response:", response.data);
           
           // Return the created asset
           const createdAsset = response.data.data as Asset;

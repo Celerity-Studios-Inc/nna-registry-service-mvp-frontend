@@ -78,15 +78,14 @@ async function handler(req: VercelRequest, res: VercelResponse) {
     // Log the incoming request body for debugging
     console.log('ASSETS HANDLER - Request body preview:', req.body ? JSON.stringify(req.body).substring(0, 500) : 'no body');
     
-    // The API expects multipart/form-data but we're probably sending JSON
-    // For now, we'll just pass through what we receive and log an informative message
+    // According to Swagger docs, the API expects multipart/form-data
     console.log('ASSETS HANDLER - Content-Type:', headers['Content-Type']);
-    console.log('ASSETS HANDLER - Note: The backend API expects multipart/form-data for asset submissions');
     
-    // Make the request
+    // Make the request - using the exact same headers and body as the client sent us
+    // This ensures we don't lose authentication or content-type settings
     const response = await fetch(finalUrl, {
       method: req.method,
-      headers: headers,
+      headers: req.headers,
       body: req.body ? JSON.stringify(req.body) : undefined
     });
     
