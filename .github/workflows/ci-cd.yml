@@ -1,4 +1,7 @@
-name: CI/CD Pipeline
+name: NNA Frontend CI/CD
+
+# This workflow handles building, testing, and deploying the NNA Registry Service Frontend
+# It runs on pushes to main, pull requests, and manual triggers
 
 on:
   push:
@@ -21,15 +24,16 @@ on:
 jobs:
   # Build and test job
   build:
+    name: Build and Test
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+      - name: Checkout repository
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
       - name: Setup Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: '18'
           cache: 'npm'
@@ -48,8 +52,9 @@ jobs:
           CI=false npm run build
           echo "✅ Build completed successfully"
       
-      - name: Upload build artifacts
-        uses: actions/upload-artifact@v3
+      # Save the build output as an artifact
+      - name: Save build artifact
+        uses: actions/upload-artifact@v4
         with:
           name: build-output
           path: build/
@@ -68,6 +73,7 @@ jobs:
 
   # Deploy job (only runs on main branch or manual trigger)
   deploy:
+    name: Deploy to Vercel
     needs: build
     if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
@@ -76,12 +82,12 @@ jobs:
       HAS_SECRETS: ${{ secrets.VERCEL_TOKEN != '' && secrets.VERCEL_ORG_ID != '' && secrets.VERCEL_PROJECT_ID != '' }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
       
       - name: Download build artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: build-output
           path: build
@@ -97,7 +103,7 @@ jobs:
             exit 1
           fi
       
-      # Method 1: Deploy with amondnet/vercel-action
+      # Deploy with Vercel deploy action if secrets are available
       - name: Deploy to Vercel (Action)
         id: deploy-vercel-action
         if: env.HAS_SECRETS == 'true'
@@ -110,11 +116,11 @@ jobs:
           working-directory: ./
           vercel-args: '--prod'
       
-      # Method 2: Alternative deployment with Vercel CLI (backup method)
+      # Alternative: Deploy with Vercel CLI (backup method)
       - name: Install Vercel CLI (Fallback)
         if: env.HAS_SECRETS != 'true'
         run: npm install --global vercel@latest
-
+      
       - name: Deploy with Vercel CLI (Fallback)
         if: env.HAS_SECRETS != 'true'
         id: deploy-vercel-cli
@@ -134,17 +140,13 @@ jobs:
             echo "✅ Vercel secrets are configured correctly."
           fi
       
-      # Add deployment comment
+      # Add deployment comment when successful
       - name: Comment on commit
         if: env.HAS_SECRETS == 'true' && github.event_name != 'pull_request'
-        uses: actions/github-script@v6
+        uses: marocchino/sticky-pull-request-comment@v2
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            const { issue, repo } = context;
-            github.rest.repos.createCommitComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              commit_sha: context.sha,
-              body: `✅ Deployment complete! Your application has been deployed to Vercel.`
-            });
+          message: |
+            ✅ Deployment complete! 
+            
+            Your application has been deployed to Vercel.
+            Preview URL: ${{ steps.deploy-vercel-action.outputs.preview-url }}
