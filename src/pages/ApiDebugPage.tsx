@@ -16,9 +16,10 @@ const ApiDebugPage: React.FC = () => {
 
   // Define test endpoints
   const testEndpoints = [
-    { name: 'Health Check', url: '/api/health' },
-    { name: 'Backend Test', url: '/api/test-backend' }, 
-    { name: 'Check Backend Directly', url: 'https://registry.reviz.dev/api/health' },
+    { name: 'Local Health Check', url: '/api/health' },
+    { name: 'Backend Diagnostics', url: '/api/test-backend' },
+    { name: 'Real Backend Test', url: '/api/test-real-backend' }, 
+    { name: 'Backend URL Info', url: '/api/backend-url' },
     { name: 'API Endpoint with Auth', url: '/api/assets' },
   ];
 

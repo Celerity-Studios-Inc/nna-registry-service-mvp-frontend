@@ -16,22 +16,33 @@ import { checkEnv } from './envCheck';
 // Determine whether real backend is available and connected
 // Use the API module's backend status tracking
 let isBackendAvailable = apiBackendStatus;
+let lastBackendCheck = 0;
+const BACKEND_CHECK_INTERVAL = 30 * 1000; // 30 seconds
+
 // Simple check function to be run at startup
 const checkBackendAvailability = async () => {
   try {
     // Always start assuming backend is unavailable until proven otherwise
-    let healthEndpointWorking = false;
-    let docsEndpointWorking = false;
+    let realBackendWorking = false;
+    let localHealthEndpointWorking = false;
     
-    // Try to hit our own health endpoint first
-    console.log('Checking backend availability using /api/health...');
+    // For caching - only recheck if it's been long enough since last check
+    const now = Date.now();
+    if (now - lastBackendCheck < BACKEND_CHECK_INTERVAL && lastBackendCheck > 0) {
+      console.log('Using cached backend availability result:', isBackendAvailable);
+      return isBackendAvailable;
+    }
+    
+    // Try to hit our own health endpoint first - this just tells us if *our* API is working,
+    // not the real backend
+    console.log('Checking local API health using /api/health...');
     try {
       const healthResponse = await fetch('/api/health');
       
       // If health endpoint works, log success but continue checking
       if (healthResponse.ok) {
-        console.log('Health endpoint available with status:', healthResponse.status);
-        healthEndpointWorking = true;
+        console.log('Local health endpoint available with status:', healthResponse.status);
+        localHealthEndpointWorking = true;
         
         // Try to get the response body for more debugging
         try {
@@ -47,43 +58,56 @@ const checkBackendAvailability = async () => {
       console.log('Health endpoint request failed:', healthError);
     }
     
-    // Always check docs endpoint too for better diagnostics
-    console.log('Checking backend availability with /api/docs...');
+    // Use our dedicated endpoint to test the real backend directly
+    console.log('Checking REAL backend availability with /api/test-real-backend...');
     try {
-      const response = await fetch('/api/docs');
+      const response = await fetch('/api/test-real-backend');
       
-      // Only consider specific statuses as showing the backend is actually available
-      docsEndpointWorking = response.status === 200 || response.status === 401 || response.status === 403;
-      
-      console.log(`Docs endpoint check: ${docsEndpointWorking ? 'Available' : 'Unavailable'} (Status: ${response.status})`);
-      
-      // If we got a 401, it means the backend is actually working but we need auth
-      if (response.status === 401) {
-        console.log('Backend requires authentication - this is expected and indicates the API is working');
-      } else if (response.status === 404) {
-        console.log('Received 404 Not Found - the backend API may not be compatible or not running');
+      if (response.ok) {
+        try {
+          const testResult = await response.json();
+          console.log('Real backend test results:', testResult);
+          
+          // Get the actual backend status from the dedicated test
+          realBackendWorking = testResult.realBackendAvailable === true;
+          
+          if (realBackendWorking) {
+            console.log('✅ Real backend API is available and responding!');
+          } else {
+            console.log('❌ Real backend API is NOT available. Will use mock data.');
+            console.log('Reason:', testResult.diagnostics?.realBackend?.error || 'Unknown error');
+          }
+        } catch (parseError) {
+          console.log('Could not parse test-real-backend response as JSON:', parseError);
+        }
+      } else {
+        console.log('test-real-backend endpoint returned non-OK status:', response.status);
       }
-    } catch (docsError) {
-      console.log('Docs endpoint request failed:', docsError);
+    } catch (testError) {
+      console.log('test-real-backend endpoint request failed:', testError);
     }
     
-    // Consider backend available if either check passes
-    isBackendAvailable = healthEndpointWorking || docsEndpointWorking;
-    
-    console.log(`Backend availability final result: ${isBackendAvailable ? 'Available' : 'Unavailable'}`);
-    console.log(`Health endpoint: ${healthEndpointWorking ? 'Working' : 'Not working'}`);
-    console.log(`Docs endpoint: ${docsEndpointWorking ? 'Working' : 'Not working'}`);
-    
-    // For development/debugging - allow force-enabling mock data via localStorage
+    // Check if user has forced mock mode via localStorage
+    let forceMockMode = false;
     try {
-      const forceUseMock = localStorage.getItem('forceMockData') === 'true';
-      if (forceUseMock) {
-        console.log('Mock data forced via localStorage setting');
-        isBackendAvailable = false;
+      forceMockMode = localStorage.getItem('forceMockApi') === 'true';
+      if (forceMockMode) {
+        console.log('⚠️ Mock API mode forced via localStorage setting');
       }
     } catch (e) {
       // Ignore localStorage errors
     }
+    
+    // Real backend is only available if the test confirms it AND user hasn't forced mock mode
+    isBackendAvailable = realBackendWorking && !forceMockMode;
+    
+    // Update cache timestamp
+    lastBackendCheck = now;
+    
+    console.log(`Backend availability final result: ${isBackendAvailable ? 'Available' : 'Unavailable'}`);
+    console.log(`Local API health: ${localHealthEndpointWorking ? 'Working' : 'Not working'}`);
+    console.log(`Real backend API: ${realBackendWorking ? 'Working' : 'Not working'}`);
+    console.log(`Force mock mode: ${forceMockMode ? 'Enabled' : 'Disabled'}`);
     
     // Also update the API module's status for consistency
     if (isBackendAvailable !== apiBackendStatus) {
@@ -99,6 +123,7 @@ const checkBackendAvailability = async () => {
   } catch (error) {
     console.error('Backend availability check failed:', error);
     isBackendAvailable = false;
+    lastBackendCheck = Date.now(); // Update timestamp even on error
     return false;
   }
 };

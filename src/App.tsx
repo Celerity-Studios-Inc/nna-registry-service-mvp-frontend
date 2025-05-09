@@ -9,6 +9,7 @@ import RegisterAssetPage from './pages/RegisterAssetPage';
 import SearchAssetsPage from './pages/SearchAssetsPage';
 import AssetDetailPage from './pages/AssetDetailPage';
 import DashboardPage from './pages/DashboardPage';
+import ApiDebugPage from './pages/ApiDebugPage';
 import { AuthProvider } from './contexts/AuthContext';
 import MainLayout from './components/layout/MainLayout';
 import { NotificationsProvider } from './contexts/NotificationsContext';
@@ -121,6 +122,8 @@ const App: React.FC = () => {
                   <Route path="/login" element={<LoginPage />} />
                   <Route path="/register" element={<RegisterPage />} />
                   <Route path="/api-test" element={<TestComponent />} />
+                  <Route path="/api-debug" element={<ApiDebugPage />} />
+                  <Route path="/debug" element={<ApiDebugPage />} />
                   <Route element={<MainLayout />}>
                     <Route path="/dashboard" element={
                       <ProtectedRoute>

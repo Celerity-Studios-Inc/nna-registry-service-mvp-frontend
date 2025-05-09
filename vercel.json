@@ -21,6 +21,11 @@
       "methods": ["GET", "POST", "OPTIONS"]
     },
     {
+      "src": "/api/test-real-backend",
+      "dest": "/api/test-real-backend",
+      "methods": ["GET", "OPTIONS"]
+    },
+    {
       "src": "/api/debug",
       "dest": "/api/test-backend",
       "methods": ["GET", "POST", "OPTIONS"]

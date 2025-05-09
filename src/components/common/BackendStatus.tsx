@@ -27,18 +27,20 @@ const BackendStatus: React.FC<BackendStatusProps> = ({ onStatusChange }) => {
   const checkBackendStatus = async () => {
     setLoading(true);
     try {
-      // Try to hit the test-backend endpoint
-      const response = await axios.get('/api/test-backend', { timeout: 5000 });
+      // Try to hit the improved real backend test endpoint
+      const response = await axios.get('/api/test-real-backend', { timeout: 5000 });
       
       setDetails(response.data);
       
-      // Determine status based on the response
-      const backendStatus = response.data?.diagnostics?.backend?.status === 'available' 
+      // Determine status directly from the realBackendAvailable flag
+      const backendStatus = response.data?.realBackendAvailable === true 
         ? 'available' 
         : 'unavailable';
       
       setStatus(backendStatus);
       onStatusChange?.(backendStatus);
+      
+      console.log(`Backend status check: ${backendStatus}`, response.data);
     } catch (error) {
       console.error('Error checking backend status:', error);
       setStatus('unavailable');
