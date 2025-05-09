@@ -806,7 +806,7 @@ class AssetService {
         try {
           console.log("Preparing asset data for real API submission");
           
-          // According to Swagger docs, we need to use FormData (multipart/form-data)
+          // Format based on the reference implementation and backend examples
           const formData = new FormData();
           
           // Add the file if it exists
@@ -814,38 +814,42 @@ class AssetService {
             formData.append('file', assetData.files[0]);
           }
           
-          // Add all the required fields from the Swagger docs
+          // Add all the required fields from the backend
           formData.append('layer', assetData.layer || 'S');
           formData.append('category', assetData.category || 'POP'); 
           formData.append('subcategory', assetData.subcategory || 'BASE');
           formData.append('description', assetData.description || 'Asset description');
+          formData.append('source', 'NNA Registry Frontend');
           
-          // Add optional fields if available
+          // Add tags as array items (important: backend expects tags[] format)
           if (assetData.tags && assetData.tags.length > 0) {
-            formData.append('tags', assetData.tags.join(','));
+            assetData.tags.forEach(tag => {
+              formData.append('tags[]', tag);
+            });
           }
           
           // Add empty objects for training data and rights as required by API
-          formData.append('trainingData', JSON.stringify({}));
-          formData.append('rights', JSON.stringify({}));
+          formData.append('trainingData', JSON.stringify({
+            "prompts": [],
+            "images": [],
+            "videos": []
+          }));
           
-          // Add source if available
-          formData.append('source', 'NNA Registry Frontend');
+          formData.append('rights', JSON.stringify({
+            "source": "Original",
+            "rights_split": "100%"
+          }));
           
-          console.log("FormData prepared with file and metadata");
+          // Empty array for components
+          formData.append('components[]', '');
           
-          // Configure axios to use the right content type for FormData
-          const config = {
-            headers: {
-              'Content-Type': 'multipart/form-data'
-            }
-          };
+          console.log("FormData prepared with file and metadata following reference implementation");
           
-          // Make the actual API call with FormData
+          // Make the actual API call with FormData - don't set Content-Type header,
+          // Axios will set the correct one with boundary
           const response = await api.post<ApiResponse<Asset>>(
             '/assets',
-            formData,
-            config
+            formData
           );
           
           console.log("API Response:", response.data);
