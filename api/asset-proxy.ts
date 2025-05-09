@@ -45,19 +45,35 @@ async function handler(req: VercelRequest, res: VercelResponse) {
   
   // Extract the asset-specific endpoint from the URL
   // The URL will be like /api/assets/* or /api/assets?param=value
+  console.log('ASSET PROXY - Original path:', path);
+  
+  // Get endpoint path ensuring we strip any prefixes
   let endpoint = path;
+  
+  // Check for endpoint query parameter (from vercel.json)
+  const queryEndpoint = url.searchParams.get('endpoint');
+  if (queryEndpoint) {
+    console.log('ASSET PROXY - Using endpoint from query parameter:', queryEndpoint);
+    endpoint = '/' + queryEndpoint;
+  } else if (endpoint.startsWith('/api/')) {
+    // Strip any /api prefix that might be present
+    endpoint = endpoint.substring('/api'.length);
+    console.log('ASSET PROXY - Removed /api prefix');
+  }
   
   // Check if we're dealing with a specific asset route format
   if (endpoint.startsWith('/assets/')) {
-    // Already in the right format: /assets/123
-    console.log('Using direct asset endpoint path:', endpoint);
+    // Format like: /assets/123
+    console.log('ASSET PROXY - Using asset detail endpoint:', endpoint);
   } else if (endpoint === '/assets' || endpoint === '/assets/') {
     // Root assets endpoint
-    console.log('Using root assets endpoint');
+    console.log('ASSET PROXY - Using root assets endpoint:', endpoint);
   } else {
-    // For any other paths, just use as-is
-    console.log('Using custom asset path:', endpoint);
+    // For any other paths, just use as-is but log for debugging
+    console.log('ASSET PROXY - Using custom asset path:', endpoint);
   }
+  
+  console.log('ASSET PROXY - Final endpoint after processing:', endpoint);
   
   // Define the backend API URL - hardcode it for reliability
   const backendApiUrl = 'https://registry.reviz.dev/api';
