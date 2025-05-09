@@ -18,8 +18,8 @@ async function handler(req: VercelRequest, res: VercelResponse) {
     return;
   }
   
-  // Get the real backend URL from environment or use default
-  const backendUrl = process.env.BACKEND_API_URL || 'https://registry.reviz.dev/api';
+  // Backend API URL is fixed to this specific endpoint
+  const backendUrl = 'https://registry.reviz.dev/api';
   
   // Create a diagnostics object for debugging
   const diagnostics = {
