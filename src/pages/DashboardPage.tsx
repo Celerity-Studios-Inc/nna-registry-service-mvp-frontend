@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Container, Typography, Grid, Paper, Button, Box, Card, CardContent, CardActions, CardHeader, Divider, Avatar, Chip, IconButton } from '@mui/material';
 import { Link as RouterLink } from 'react-router-dom';
 import { Add as AddIcon, Search as SearchIcon, Category as CategoryIcon, Edit as EditIcon, MoreVert as MoreVertIcon } from '@mui/icons-material';
+import BackendStatus from '../components/common/BackendStatus';
 
 const mockUser = { username: 'ajaymadhok' };
 const mockIncompleteAssets = [
@@ -25,6 +26,9 @@ const DashboardPage: React.FC = () => {
       <Typography variant="subtitle1" color="text.secondary" paragraph>
         Welcome back, {mockUser.username}!
       </Typography>
+      
+      {/* Backend Status */}
+      <BackendStatus />
 
       {/* Quick Actions */}
       <Paper elevation={0} sx={{ p: 3, mb: 4, bgcolor: 'background.default' }}>
