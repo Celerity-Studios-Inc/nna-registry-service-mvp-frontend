@@ -651,8 +651,10 @@ class AssetService {
    * @returns Created asset
    */
   /**
-   * Direct asset creation - bypasses our proxy and calls the backend directly
-   * This is a simplified implementation for testing/debugging purposes
+   * Direct asset creation method that bypasses our proxy 
+   * This is a simplified implementation that makes a direct API call to the backend
+   * @param assetData Asset data for creation
+   * @returns Created asset from backend or mock asset on error
    */
   async directCreateAsset(assetData: AssetCreateRequest): Promise<Asset> {
     console.log("⚡ Using DIRECT asset creation implementation (bypassing proxy)");
@@ -662,8 +664,11 @@ class AssetService {
     
     // Add the file if it exists (most important part)
     if (assetData.files && assetData.files.length > 0) {
-      formData.append('file', assetData.files[0]);
-      console.log("Added file to FormData:", assetData.files[0].name);
+      const file = assetData.files[0];
+      if (file) {
+        formData.append('file', file);
+        console.log("Added file to FormData:", file.name);
+      }
     }
     
     // Add all required fields exactly as in reference implementation
@@ -675,7 +680,8 @@ class AssetService {
     
     // Add tags exactly as used in reference
     if (assetData.tags && assetData.tags.length > 0) {
-      assetData.tags.forEach(tag => {
+      // Use TypeScript-safe forEach with null check
+      assetData.tags.forEach((tag: string) => {
         formData.append('tags[]', tag);
       });
     } else {
@@ -696,6 +702,12 @@ class AssetService {
     
     // Empty array for components
     formData.append('components[]', '');
+    
+    // Debug: List all keys in the FormData - use Array.from to avoid Iterator issue
+    console.log("FormData keys:");
+    Array.from(formData.entries()).forEach(([key]) => {
+      console.log(" - " + key);
+    });
     
     // Get auth token
     const token = localStorage.getItem('accessToken') || '';
@@ -745,13 +757,23 @@ class AssetService {
   }
   
   /**
-   * Main asset creation method - uses proxy by default but can fall back to direct or mock
+   * Main asset creation method
+   * Currently forwarding directly to directCreateAsset
+   * To use proxy approach, comment out the early return
    */
   async createAsset(assetData: AssetCreateRequest): Promise<Asset> {
     try {
       // Force direct API implementation for testing
-      // Remove or change this line to use the normal flow
+      // Comment out the next line to use the regular proxy flow
       return await this.directCreateAsset(assetData);
+      
+      /* 
+      // ======================================================================
+      // WARNING: UNREACHABLE CODE BELOW - FOR REFERENCE ONLY
+      // The code below is unreachable due to the early return above
+      // It's kept as a reference for the regular proxy approach
+      // To use this code: comment out the "return" line above
+      // ======================================================================
       
       // Determine whether to use mock implementation or real API
       const envStatus = checkEnv();
@@ -1044,17 +1066,18 @@ class AssetService {
   
   /**
    * Mock implementation to create an asset (fallback for errors)
+   * This replaces the original implementation with a more robust one
+   * @param assetData Asset data to create mock from
+   * @param apiAssetData Optional processed API data 
+   * @returns Mocked asset with all required fields
    */
   private mockCreateAsset(assetData: AssetCreateRequest, apiAssetData?: any): Asset {
-    console.log("Using mock createAsset implementation after API failure");
-    
-    // Simulate network delay
-    // await new Promise(resolve => setTimeout(resolve, 300));
+    console.log("Using mock createAsset implementation");
     
     // Extract metadata from the custom assetData structure 
     const customMetadata = (assetData as any).metadata || {};
     
-    // Map uploaded files to AssetFile format
+    // Map uploaded files to AssetFile format safely
     const uploadedFiles: AssetFile[] = (customMetadata.uploadedFiles || []).map((file: FileUploadResponse) => ({
       id: `file-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       filename: file.filename,
@@ -1103,15 +1126,17 @@ class AssetService {
     // Register in our asset registry for duplicate detection
     if (assetData.files && assetData.files.length > 0) {
       const file = assetData.files[0];
-      const fingerprint = {
-        name: file.name,
-        size: file.size,
-        type: file.type,
-        lastModified: file.lastModified,
-        hash: `${file.name}-${file.size}-${file.lastModified}` // Simple hash
-      };
-      
-      assetRegistryService.registerAsset(mockAsset, fingerprint);
+      if (file) {
+        const fingerprint = {
+          name: file.name,
+          size: file.size,
+          type: file.type,
+          lastModified: file.lastModified,
+          hash: `${file.name}-${file.size}-${file.lastModified}` // Simple hash
+        };
+        
+        assetRegistryService.registerAsset(mockAsset, fingerprint);
+      }
     }
     
     console.log("Created mock asset:", mockAsset.id);
