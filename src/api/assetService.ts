@@ -19,13 +19,30 @@ let isBackendAvailable = apiBackendStatus;
 // Simple check function to be run at startup
 const checkBackendAvailability = async () => {
   try {
-    // Try to hit the API docs endpoint instead of health (which doesn't exist)
-    // This will return data even without auth and is a reliable way to check availability
+    // Try to hit our own health endpoint first
+    console.log('Checking backend availability using /api/health...');
+    try {
+      const healthResponse = await fetch('/api/health');
+      
+      // If health endpoint works, we're good
+      if (healthResponse.ok) {
+        isBackendAvailable = true;
+        console.log('Health endpoint available - backend is working!');
+        return true;
+      }
+    } catch (healthError) {
+      console.log('Health endpoint not available, falling back to API docs check:', healthError);
+    }
+    
+    // Fall back to API docs check
+    console.log('Trying alternative backend availability check with /api/docs...');
     const response = await fetch('/api/docs');
     
-    // If we get a response (even 401 Unauthorized), the backend is available
-    // Only consider it unavailable on network errors or 5xx responses
-    isBackendAvailable = response.status < 500;
+    // Only consider these statuses as showing the backend is actually available:
+    // 200 OK - Success
+    // 401 Unauthorized - Auth is working but we need credentials
+    // 403 Forbidden - Auth is working but we don't have permission
+    isBackendAvailable = response.status === 200 || response.status === 401 || response.status === 403;
     
     // Also update the API module's status for consistency
     if (isBackendAvailable !== apiBackendStatus) {
@@ -42,6 +59,9 @@ const checkBackendAvailability = async () => {
     // If we got a 401, it means the backend is actually working but we need auth
     if (response.status === 401) {
       console.log('Backend requires authentication - this is expected and indicates the API is working');
+    } else if (response.status === 404) {
+      console.log('Received 404 Not Found - the backend API may not be compatible or not running');
+      isBackendAvailable = false;
     }
     
     return isBackendAvailable;

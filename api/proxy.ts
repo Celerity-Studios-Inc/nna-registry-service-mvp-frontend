@@ -32,6 +32,25 @@ const handler = async (req: VercelRequest, res: VercelResponse) => {
     // Keep as is
   }
   
+  // Special handling for our health endpoint - don't proxy this, respond directly
+  if (cleanPath === '/health' || cleanPath === '/health/') {
+    console.log('Health check endpoint hit - responding directly');
+    res.status(200).json({
+      status: 'ok',
+      message: 'API proxy is working',
+      timestamp: new Date().toISOString(),
+      proxy: {
+        version: '1.0',
+        path: cleanPath,
+        method: req.method,
+        headers: {
+          authorization: !!req.headers.authorization ? 'present (redacted)' : 'missing'
+        }
+      }
+    });
+    return;
+  }
+  
   // Ensure we have the correct API endpoint format
   const targetUrl = `https://registry.reviz.dev/api${cleanPath.startsWith('/') ? cleanPath : '/' + cleanPath}`;
   
@@ -40,6 +59,7 @@ const handler = async (req: VercelRequest, res: VercelResponse) => {
   console.log(`Original URL: ${req.url}`);
   console.log(`Cleaned path: ${cleanPath}`);
   console.log(`Proxying to: ${targetUrl}`);
+  console.log(`Method: ${req.method}`);
   console.log(`Client IP: ${req.headers['x-forwarded-for'] || req.connection.remoteAddress}`);
   console.log(`Auth header present: ${!!req.headers.authorization}`);
   
