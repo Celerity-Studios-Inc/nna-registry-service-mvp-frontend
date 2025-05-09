@@ -35,7 +35,7 @@ class AuthService {
         console.log('Attempting to login with real API');
         
         const response = await api.post<ApiResponse<AuthResponse>>(
-          '/api/auth/login',
+          '/auth/login',
           {
             email,
             password,
@@ -137,7 +137,7 @@ class AuthService {
         console.log('Attempting to register with real API');
         
         const response = await api.post<ApiResponse<AuthResponse>>(
-          '/api/auth/register',
+          '/auth/register',
           {
             username,
             email,
@@ -227,7 +227,7 @@ class AuthService {
       // If it appears to be a real token, try the real API
       try {
         console.log('Attempting to get user profile from real API');
-        const response = await api.get<ApiResponse<User>>('/api/auth/profile');
+        const response = await api.get<ApiResponse<User>>('/auth/profile');
         console.log('Successfully retrieved user profile from API');
         return response.data.data as User;
       } catch (apiError) {

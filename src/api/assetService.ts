@@ -219,7 +219,7 @@ class AssetService {
       const apiParams = this.prepareSearchParams(params);
 
       const response = await api.get<ApiResponse<PaginatedResponse<Asset>>>(
-        '/api/assets',
+        '/assets',
         {
           params: apiParams,
         }
@@ -289,7 +289,7 @@ class AssetService {
       const apiParams = this.prepareSearchParams(params);
 
       const response = await api.post<ApiResponse<PaginatedResponse<Asset>>>(
-        '/api/assets/search',
+        '/assets/search',
         apiParams
       );
       return response.data.data as PaginatedResponse<Asset>;
@@ -306,7 +306,7 @@ class AssetService {
    */
   async getAssetById(id: string): Promise<Asset> {
     try {
-      const response = await api.get<ApiResponse<Asset>>(`/api/assets/${id}`);
+      const response = await api.get<ApiResponse<Asset>>(`/assets/${id}`);
       return response.data.data as Asset;
     } catch (error) {
       console.error(`Error fetching asset ${id}:`, error);
@@ -322,7 +322,7 @@ class AssetService {
   async getAssetByNnaAddress(nnaAddress: string): Promise<Asset> {
     try {
       const response = await api.get<ApiResponse<Asset>>(
-        `/api/assets/nna/${nnaAddress}`
+        `/assets/nna/${nnaAddress}`
       );
       return response.data.data as Asset;
     } catch (error) {
@@ -373,7 +373,7 @@ class AssetService {
       // Create a simulated response instead of making the actual API call
       // In production, you would use the commented code with the real API call
       /*
-      const response = await api.post('/api/assets/upload', formData, {
+      const response = await api.post('/assets/upload', formData, {
         onUploadProgress: (progressEvent) => {
           const progress = progressEvent.total ? (progressEvent.loaded / progressEvent.total) * 100 : 0;
           fileUpload.progress = progress;
@@ -645,7 +645,7 @@ class AssetService {
         
         // Make the actual API call
         const response = await api.post<ApiResponse<Asset>>(
-          '/api/assets',
+          '/assets',
           apiAssetData
         );
         
@@ -682,7 +682,7 @@ class AssetService {
   async getAssetForEditing(id: string): Promise<Asset> {
     try {
       const response = await api.get<ApiResponse<Asset>>(
-        `/api/assets/${id}/edit`
+        `/assets/${id}/edit`
       );
       return response.data.data as Asset;
     } catch (error) {
@@ -703,7 +703,7 @@ class AssetService {
   ): Promise<Asset> {
     try {
       const response = await api.put<ApiResponse<Asset>>(
-        `/api/assets/${id}`,
+        `/assets/${id}`,
         updateData
       );
       return response.data.data as Asset;
@@ -719,7 +719,7 @@ class AssetService {
    */
   async deleteAsset(id: string): Promise<void> {
     try {
-      await api.delete<ApiResponse<void>>(`/api/assets/${id}`);
+      await api.delete<ApiResponse<void>>(`/assets/${id}`);
     } catch (error) {
       console.error(`Error deleting asset ${id}:`, error);
       throw new Error('Failed to delete asset');
@@ -735,7 +735,7 @@ class AssetService {
   async deleteAssetFile(assetId: string, fileId: string): Promise<Asset> {
     try {
       const response = await api.delete<ApiResponse<Asset>>(
-        `/api/assets/${assetId}/files/${fileId}`
+        `/assets/${assetId}/files/${fileId}`
       );
       return response.data.data as Asset;
     } catch (error) {
@@ -750,7 +750,7 @@ class AssetService {
    */
   async updateAssetOrder(assets: Asset[]): Promise<void> {
     try {
-      await api.put<ApiResponse<void>>('/api/assets/order', {
+      await api.put<ApiResponse<void>>('/assets/order', {
         assets: assets.map((asset) => ({
           id: asset.id,
           ...(asset.order !== undefined ? { order: asset.order } : {}),
@@ -768,7 +768,7 @@ class AssetService {
    */
   async updateAssetGroups(assets: Asset[]): Promise<void> {
     try {
-      await api.put<ApiResponse<void>>('/api/assets/groups', {
+      await api.put<ApiResponse<void>>('/assets/groups', {
         assets: assets.map((asset) => ({
           id: asset.id,
           ...(asset.groupId !== undefined ? { groupId: asset.groupId } : {}),
@@ -785,7 +785,7 @@ class AssetService {
    */
   async saveAssetOrganization(): Promise<void> {
     try {
-      await api.post<ApiResponse<void>>('/api/assets/organization/save');
+      await api.post<ApiResponse<void>>('/assets/organization/save');
     } catch (error) {
       console.error('Error saving asset organization:', error);
       throw new Error('Failed to save asset organization');
@@ -797,7 +797,7 @@ class AssetService {
    */
   async resetAssetOrganization(): Promise<void> {
     try {
-      await api.post<ApiResponse<void>>('/api/assets/organization/reset');
+      await api.post<ApiResponse<void>>('/assets/organization/reset');
     } catch (error) {
       console.error('Error resetting asset organization:', error);
       throw new Error('Failed to reset asset organization');
