@@ -2,12 +2,12 @@ import axios from 'axios';
 
 // Configuration for API requests
 export const apiConfig = {
-  // For direct backend connection, use the full URL
-  // This bypasses the Vercel proxy and connects directly to the backend
-  baseURL: 'https://registry.reviz.dev/api',
+  // Use the proxy approach to avoid CORS issues
+  // This ensures requests go through Vercel's proxy defined in vercel.json
+  baseURL: '/api',
   
-  // Alternatively, uncomment this to use the proxy approach
-  // baseURL: '/api',
+  // Direct connection causes CORS errors because our domain is not allowed
+  // baseURL: 'https://registry.reviz.dev/api',
 };
 
 console.log('API Configuration:', apiConfig);

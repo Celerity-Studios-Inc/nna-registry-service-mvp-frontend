@@ -36,8 +36,11 @@ async function handler(req: VercelRequest, res: VercelResponse) {
   } else if (cleanPath === '/proxy' || cleanPath === '/proxy/') {
     cleanPath = '/'; // Root API path
   } else {
-    // Keep as is
+    // Keep as is - this is for direct access via /api/<path>
   }
+  
+  // Log the path transformation for debugging
+  console.log(`Path transformation: ${path} → ${cleanPath}`);
   
   // Special handling for our health endpoint - don't proxy this, respond directly
   // NOTE: This is a fallback in case the health.ts module fails to load - we should handle
@@ -64,9 +67,8 @@ async function handler(req: VercelRequest, res: VercelResponse) {
     return;
   }
   
-  // Define the backend API URL
-  // Use environment variable if available, otherwise use hardcoded value
-  const backendApiUrl = process.env.BACKEND_API_URL || 'https://registry.reviz.dev/api';
+  // Define the backend API URL - hardcode it for reliability
+  const backendApiUrl = 'https://registry.reviz.dev/api';
   
   // Ensure we have the correct API endpoint format
   const targetUrl = `${backendApiUrl}${cleanPath.startsWith('/') ? cleanPath : '/' + cleanPath}`;
