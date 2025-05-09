@@ -13,6 +13,7 @@ import { AuthProvider } from './contexts/AuthContext';
 import MainLayout from './components/layout/MainLayout';
 import { NotificationsProvider } from './contexts/NotificationsContext';
 import ErrorBoundary from './components/common/ErrorBoundary';
+import TestComponent from './components/common/TestComponent';
 
 // Create a theme instance
 const theme = createTheme({
