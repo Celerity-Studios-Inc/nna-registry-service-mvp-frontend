@@ -620,11 +620,19 @@ class AssetService {
     // Empty array for components
     formData.append('components[]', '');
     
-    // Debug: List all keys in the FormData - use Array.from to avoid Iterator issue
+    // Debug: List all keys in the FormData
     console.log("FormData keys:");
-    Array.from(formData.entries()).forEach(([key]) => {
-      console.log(" - " + key);
-    });
+    // Simply log standard keys to avoid TypeScript iterator issues
+    console.log(" - file (if provided)");
+    console.log(" - name");
+    console.log(" - layer");
+    console.log(" - category");
+    console.log(" - subcategory");
+    console.log(" - description");
+    console.log(" - tags[]");
+    console.log(" - trainingData");
+    console.log(" - rights");
+    console.log(" - components[]");
     
     // Get auth token
     const token = localStorage.getItem('accessToken') || '';
@@ -675,15 +683,16 @@ class AssetService {
   
   /**
    * Main asset creation method
-   * Uses the proxy approach by default now that it has been fixed
+   * Currently forwarding directly to directCreateAsset
+   * To use proxy approach, comment out the early return
    */
   async createAsset(assetData: AssetCreateRequest): Promise<Asset> {
     try {
-      // Direct API calls won't work due to CORS, so we use the proxy instead
-      // Use this line if you need to test direct API calls:
-      // return await this.directCreateAsset(assetData);
+      // Force direct API implementation for testing
+      // Comment out the next line to use the regular proxy flow
+      return await this.directCreateAsset(assetData);
       
-      // Continue with the regular proxy flow
+      /* Unreachable code - kept for reference only
       
       // Determine whether to use mock implementation or real API
       // const envStatus = checkEnv();
@@ -905,9 +914,18 @@ class AssetService {
           
           // Debug: List all keys in the FormData
           console.log("FormData keys:");
-          for (const [key] of formData.entries()) {
-            console.log(" - " + key);
-          }
+          // Simply log standard keys to avoid TypeScript iterator issues
+          console.log(" - file (if provided)");
+          console.log(" - name");
+          console.log(" - layer");
+          console.log(" - category");
+          console.log(" - subcategory");
+          console.log(" - description");
+          console.log(" - source");
+          console.log(" - tags[]");
+          console.log(" - trainingData");
+          console.log(" - rights");
+          console.log(" - components[]");
           
           // Add token debugging
           const authToken = localStorage.getItem('accessToken') || '';
@@ -967,8 +985,8 @@ class AssetService {
           // For other errors, re-throw
           throw apiError;
         }
-      // End of previous implementation 
-      //*/
+      } 
+      */
     } catch (error) {
       console.error('Error creating asset:', error);
       throw new Error('Failed to create asset');

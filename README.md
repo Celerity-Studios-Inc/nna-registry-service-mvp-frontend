@@ -29,6 +29,31 @@ npm install
 npm start
 ```
 
+## Testing API Integration
+
+We've provided scripts to test the backend API integration for asset registration:
+
+```bash
+# Install test script dependencies
+npm install node-fetch form-data
+
+# Test with a valid token
+node complete-api-test.mjs YOUR_TOKEN_HERE
+```
+
+See [API_TESTING.md](./API_TESTING.md) for detailed testing instructions, including:
+
+- How to obtain a valid authentication token
+- Testing asset creation endpoints
+- Troubleshooting common issues
+
+### Mock vs. Real Backend
+
+The application can work with both mock data and the real backend API:
+
+- Set `REACT_APP_USE_MOCK_API=true` in `.env` to use mock data
+- Set `REACT_APP_USE_MOCK_API=false` to use the real backend API
+
 ## Local Production Testing
 
 If you need to test the production build locally, there are two ways to do this:
@@ -88,6 +113,14 @@ The application uses a serverless TypeScript proxy function in `api/proxy.ts` to
 - Adds necessary CORS headers to responses
 - Forwards requests to the backend API with appropriate headers
 - Includes detailed logging for troubleshooting
+
+### File Upload and Asset Creation
+
+For asset creation with file uploads, a special API handler in `api/assets.ts` ensures that multipart/form-data requests are properly forwarded to the backend with:
+
+- Correct content-type headers preserved
+- Binary file data properly handled
+- FormData structure maintained
 
 ### Environment Configuration
 
