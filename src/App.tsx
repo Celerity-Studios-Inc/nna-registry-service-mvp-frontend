@@ -10,6 +10,7 @@ import SearchAssetsPage from './pages/SearchAssetsPage';
 import AssetDetailPage from './pages/AssetDetailPage';
 import DashboardPage from './pages/DashboardPage';
 import ApiDebugPage from './pages/ApiDebugPage';
+import ConnectivityHelp from './pages/ConnectivityHelp';
 import { AuthProvider } from './contexts/AuthContext';
 import MainLayout from './components/layout/MainLayout';
 import { NotificationsProvider } from './contexts/NotificationsContext';
@@ -124,6 +125,8 @@ const App: React.FC = () => {
                   <Route path="/api-test" element={<TestComponent />} />
                   <Route path="/api-debug" element={<ApiDebugPage />} />
                   <Route path="/debug" element={<ApiDebugPage />} />
+                  <Route path="/connect" element={<ConnectivityHelp />} />
+                  <Route path="/help" element={<ConnectivityHelp />} />
                   <Route element={<MainLayout />}>
                     <Route path="/dashboard" element={
                       <ProtectedRoute>
