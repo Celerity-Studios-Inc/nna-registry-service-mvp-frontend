@@ -8,6 +8,13 @@ export const apiConfig = {
   
   // Direct connection causes CORS errors because our domain is not allowed
   // baseURL: 'https://registry.reviz.dev/api',
+  
+  // Define debugging information for the API
+  debug: {
+    version: '1.2',
+    timestamp: new Date().toISOString(),
+    backendUrl: 'https://registry.reviz.dev/api'
+  }
 };
 
 console.log('API Configuration:', apiConfig);

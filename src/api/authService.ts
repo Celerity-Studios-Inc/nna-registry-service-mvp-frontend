@@ -32,7 +32,12 @@ class AuthService {
       
       // Attempt to use real API first, fall back to mock if it fails
       try {
-        console.log('Attempting to login with real API');
+        console.log('Attempting to login with real API at endpoint: /auth/login');
+        console.log('Login credentials (email only for security):', { email });
+        
+        // Log URL construction for debugging
+        const fullUrl = window.location.origin + '/api/auth/login';
+        console.log('Expected full URL after base concatenation:', fullUrl);
         
         const response = await api.post<ApiResponse<AuthResponse>>(
           '/auth/login',
@@ -44,9 +49,24 @@ class AuthService {
         
         // If we get here, the API call was successful
         console.log('Login successful with real API');
+        console.log('Response preview:', JSON.stringify(response.data).substring(0, 100) + '...');
         return response.data.data as AuthResponse;
       } catch (apiError) {
         console.warn('Real API login failed, falling back to mock:', apiError);
+        
+        // Add detailed error logging
+        if (apiError.response) {
+          console.error('API Error Response:', {
+            status: apiError.response.status,
+            statusText: apiError.response.statusText,
+            data: apiError.response.data
+          });
+        } else if (apiError.request) {
+          console.error('API Request Error (No Response):', apiError.request);
+        } else {
+          console.error('API Error:', apiError.message);
+        }
+        
         return this.mockLogin(email, password);
       }
     } catch (error) {
@@ -134,7 +154,12 @@ class AuthService {
       
       // Try the real API first, fall back to mock if it fails
       try {
-        console.log('Attempting to register with real API');
+        console.log('Attempting to register with real API at endpoint: /auth/register');
+        console.log('Registration credentials (email/username only for security):', { email, username });
+        
+        // Log URL construction for debugging
+        const fullUrl = window.location.origin + '/api/auth/register';
+        console.log('Expected full URL after base concatenation:', fullUrl);
         
         const response = await api.post<ApiResponse<AuthResponse>>(
           '/auth/register',
@@ -147,9 +172,24 @@ class AuthService {
         
         // If we get here, the API call was successful
         console.log('Registration successful with real API');
+        console.log('Response preview:', JSON.stringify(response.data).substring(0, 100) + '...');
         return response.data.data as AuthResponse;
       } catch (apiError) {
         console.warn('Real API registration failed, falling back to mock:', apiError);
+        
+        // Add detailed error logging
+        if (apiError.response) {
+          console.error('API Error Response:', {
+            status: apiError.response.status,
+            statusText: apiError.response.statusText,
+            data: apiError.response.data
+          });
+        } else if (apiError.request) {
+          console.error('API Request Error (No Response):', apiError.request);
+        } else {
+          console.error('API Error:', apiError.message);
+        }
+        
         return this.mockRegister(username, email, password);
       }
     } catch (error) {
