@@ -607,17 +607,16 @@ class AssetService {
     // Use type assertion to ensure TypeScript recognizes the source property
     formData.append('source', (assetData as any).source || 'ReViz');
     
-    // Tags need to be formatted as tags[] for the backend
+    // Backend expects tags as a stringified JSON array
     if (assetData.tags && assetData.tags.length > 0) {
-      // Add each tag individually as tags[]
-      assetData.tags.forEach(tag => {
-        formData.append('tags[]', tag);
-      });
-      console.log("Added tags to FormData as array items:", assetData.tags);
+      // Convert array to JSON string
+      const tagsString = JSON.stringify(assetData.tags);
+      formData.append('tags', tagsString);
+      console.log("Added tags to FormData as JSON string:", tagsString);
     } else {
       // Make sure we at least have one tag
-      formData.append('tags[]', 'general');
-      console.log("No tags provided, added default 'general' tag");
+      formData.append('tags', JSON.stringify(['general']));
+      console.log("No tags provided, added default tag array: ['general']");
     }
     
     // Add empty trainingData and rights objects
@@ -934,17 +933,16 @@ class AssetService {
           // Use type assertion to ensure TypeScript recognizes the source property
           formData.append('source', (assetData as any).source || 'ReViz');
           
-          // Tags need to be formatted as tags[] for the backend
+          // Backend expects tags as a stringified JSON array
           if (assetData.tags && assetData.tags.length > 0) {
-            // Add each tag individually as tags[]
-            assetData.tags.forEach(tag => {
-              formData.append('tags[]', tag);
-            });
-            console.log("Added tags to FormData as array items:", assetData.tags);
+            // Convert array to JSON string
+            const tagsString = JSON.stringify(assetData.tags);
+            formData.append('tags', tagsString);
+            console.log("Added tags to FormData as JSON string:", tagsString);
           } else {
             // Make sure we at least have one tag
-            formData.append('tags[]', 'general');
-            console.log("No tags provided, added default 'general' tag");
+            formData.append('tags', JSON.stringify(['general']));
+            console.log("No tags provided, added default tag array: ['general']");
           }
           
           // Add empty objects for training data and rights as required by API
