@@ -593,8 +593,9 @@ class AssetService {
     // Don't use either 'name' or 'title' since API is rejecting both
     // formData.append('name', assetData.name || 'Unnamed Asset'); // Removed as API rejects this field
 
-    // Use name field after all - backend appears to want this
-    formData.append('name', assetData.name || 'Unnamed Asset');
+    // DO NOT include 'name' field - backend will reject it
+    // Backend expects the name to be set via taxonomic naming only
+    // formData.append('name', assetData.name || 'Unnamed Asset');
 
     formData.append('layer', assetData.layer || 'S');
     // Use category and subcategory as the backend is rejecting categoryCode
@@ -773,6 +774,8 @@ class AssetService {
 
       // === CRITICAL: Add all fields EXACTLY as expected by backend ===
       // These field names and formats are confirmed to work with the backend
+      // DO NOT include 'name' field - backend will reject it
+
       formData.append('layer', assetData.layer);
       formData.append('category', assetData.category || '');
       formData.append('subcategory', assetData.subcategory || '');
@@ -799,7 +802,9 @@ class AssetService {
       }));
 
       // Components (empty array)
-      formData.append('components', '[]'); // Must be a string that parses to an array
+      // The components field must be handled specially for the backend
+      // We need to add it as an empty array but in a format the backend accepts
+      formData.append('components', JSON.stringify([])); // Send as stringified empty array
 
       // Make the API request using fetch for better FormData handling
       console.log('Sending asset creation request to API...');

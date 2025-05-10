@@ -71,7 +71,7 @@ async function testFinalSolution() {
     rights_split: '100%'
   }));
   
-  formData.append('components', '[]'); // Components must be a string that parses to an array
+  formData.append('components', JSON.stringify([])); // Send as stringified empty array
   
   // Log what we're sending
   console.log('Sending FormData with fields:');
