@@ -635,8 +635,8 @@ class AssetService {
       "rights_split": "100%"
     }));
     
-    // Empty array for components as JSON-stringified array
-    formData.append('components', JSON.stringify([]));
+    // Empty array for components using array bracket format
+    formData.append('components[]', '');
     
     // Debug: List all keys in the FormData
     console.log("FormData keys:");
@@ -803,9 +803,9 @@ class AssetService {
         rights_split: '100%'
       }));
 
-      // Components (empty array)
-      // The components field must be a JSON-stringified empty array
-      formData.append('components', JSON.stringify([]));
+      // Components - using array bracket format
+      // The backend expects this specific format
+      formData.append('components[]', '');
 
       // Make the API request using fetch for better FormData handling
       console.log('Sending asset creation request to API...');
@@ -894,7 +894,7 @@ class AssetService {
       categoryCode: (assetData as any).categoryCode || "",
       subcategoryCode: (assetData as any).subcategoryCode || "",
       category: assetData.category,
-      subcategory: assetData.subcategory || (assetData.layer === 'S' && assetData.category === 'POP' ? 'DIV' : 'BAS'),
+      subcategory: assetData.subcategory || 'BAS',
       tags: assetData.tags || [],
       files: uploadedFiles,
       metadata: {

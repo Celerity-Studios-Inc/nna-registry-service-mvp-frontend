@@ -81,7 +81,7 @@ export interface AssetSearchParams {
  * - tags: JSON.stringify(array of tags)
  * - trainingData: JSON.stringify(trainingData object)
  * - rights: JSON.stringify(rights object)
- * - components: JSON.stringify(components array)
+ * - components[]: '' (special format required by backend)
  */
 export interface AssetCreateRequest {
   name: string;              // Used in UI but don't send to backend
@@ -103,7 +103,7 @@ export interface AssetCreateRequest {
     source?: string;         // Different from the asset "source" field
     rights_split?: string;
   };
-  components?: any[];        // Components array
+  components?: any[];        // Components array - Note: Use components[] in FormData
 }
 
 export interface AssetUpdateRequest {
