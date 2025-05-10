@@ -65,13 +65,15 @@ async function testFinalSolution() {
     images: [],
     videos: []
   }));
-  
+
   formData.append('rights', JSON.stringify({
     source: 'Original',
     rights_split: '100%'
   }));
-  
-  formData.append('components', JSON.stringify([])); // Send as stringified empty array
+
+  // Backend is very picky about the format of components
+  // Try a different approach - use components[] to indicate an array format
+  formData.append('components[]', '');
   
   // Log what we're sending
   console.log('Sending FormData with fields:');

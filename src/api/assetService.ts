@@ -634,7 +634,7 @@ class AssetService {
       "rights_split": "100%"
     }));
     
-    // Empty array for components
+    // Empty array for components - specific syntax required by backend
     formData.append('components[]', '');
     
     // Debug: List all keys in the FormData
@@ -804,7 +804,8 @@ class AssetService {
       // Components (empty array)
       // The components field must be handled specially for the backend
       // We need to add it as an empty array but in a format the backend accepts
-      formData.append('components', JSON.stringify([])); // Send as stringified empty array
+      // This specific syntax is what the backend expects
+      formData.append('components[]', '');
 
       // Make the API request using fetch for better FormData handling
       console.log('Sending asset creation request to API...');
