@@ -568,13 +568,13 @@ class AssetService {
   }
 
   /**
-   * Asset creation method that uses our proxy to avoid CORS issues
-   * This implementation routes through our API proxy to handle FormData correctly
+   * Direct asset creation method that bypasses our proxy 
+   * This is a simplified implementation that makes a direct API call to the backend
    * @param assetData Asset data for creation
    * @returns Created asset from backend or mock asset on error
    */
-  async createAssetViaProxy(assetData: AssetCreateRequest): Promise<Asset> {
-    console.log("⚡ Using proxied asset creation implementation");
+  async directCreateAsset(assetData: AssetCreateRequest): Promise<Asset> {
+    console.log("⚡ Using DIRECT asset creation implementation (bypassing proxy)");
     
     // Format based on reference implementation - only the essential fields
     const formData = new FormData();
@@ -639,9 +639,8 @@ class AssetService {
     console.log("Using auth token:", token.substring(0, 15) + '...');
     
     try {
-      // Use the proxy API endpoint instead of direct backend API
-      // This is the critical fix for CORS issues
-      const response = await fetch('/api/assets', {
+      // Make a direct fetch call to the backend API
+      const response = await fetch('https://registry.reviz.dev/api/assets', {
         method: 'POST',
         headers: {
           // Only add Authorization header, let browser set Content-Type with boundary
@@ -650,11 +649,11 @@ class AssetService {
         body: formData
       });
       
-      console.log("API response status:", response.status);
+      console.log("Direct API response status:", response.status);
       
       // Get the response content
       const responseText = await response.text();
-      console.log("API response text:", responseText.substring(0, 200) + (responseText.length > 200 ? '...' : ''));
+      console.log("Direct API response text:", responseText.substring(0, 200) + (responseText.length > 200 ? '...' : ''));
       
       // Parse as JSON if possible
       let responseData;
@@ -674,7 +673,7 @@ class AssetService {
       // If we got here, something is wrong with the response format
       throw new Error("Invalid response format or asset creation failed");
     } catch (error) {
-      console.error("API call failed:", error);
+      console.error("Direct API call failed:", error);
       
       // Fall back to mock implementation for UI testing
       console.log("Falling back to mock implementation");
@@ -684,12 +683,14 @@ class AssetService {
   
   /**
    * Main asset creation method
-   * Uses proxy implementation to avoid CORS issues
+   * Currently forwarding directly to directCreateAsset
+   * To use proxy approach, comment out the early return
    */
   async createAsset(assetData: AssetCreateRequest): Promise<Asset> {
     try {
-      // Use proxy implementation to avoid CORS issues 
-      return await this.createAssetViaProxy(assetData);
+      // Force direct API implementation for testing
+      // Comment out the next line to use the regular proxy flow
+      return await this.directCreateAsset(assetData);
       
       /* Unreachable code - kept for reference only
       
