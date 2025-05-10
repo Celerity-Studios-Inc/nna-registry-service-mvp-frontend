@@ -10,11 +10,6 @@ import {
   Alert,
   Chip,
   Stack,
-  MenuItem,
-  FormControl,
-  InputLabel,
-  Select,
-  FormHelperText,
 } from '@mui/material';
 import {
   CloudUpload as UploadIcon,
@@ -86,13 +81,7 @@ interface FileUploadProps {
   onUploadError?: (fileId: string, error: string) => void;
 }
 
-// Source options as shown in Swagger documentation
-const SOURCE_OPTIONS = [
-  { value: 'ReViz', label: 'ReViz' },
-  { value: 'Original', label: 'Original' },
-  { value: 'Licensed', label: 'Licensed' },
-  { value: 'External', label: 'External' }
-];
+// Source options have been moved to asset.types.ts
 
 // Get layer-specific accepted file types string
 const getAcceptedFileTypesByLayer = (layerCode?: string): string => {
@@ -140,7 +129,8 @@ const FileUpload: React.FC<FileUploadProps> = ({
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [uploadedFiles, setUploadedFiles] = useState<FileUploadResponse[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [source, setSource] = useState<string>(initialSource);
+  // Keep source state even though UI moved to MetadataForm for possible future use
+  const [_, setSource] = useState<string>(initialSource);
   const [retryQueue, setRetryQueue] = useState<{ file: File; error: string }[]>(
     []
   );
@@ -148,13 +138,16 @@ const FileUpload: React.FC<FileUploadProps> = ({
   // Use layer-specific file types if none provided
   const accept = acceptedFileTypes || getAcceptedFileTypesByLayer(layerCode);
   
-  // Handle source change
+  // Handle source change - commented out as source UI moved to MetadataForm
+  // Keeping this handler for future use if source gets moved back
+  /*
   const handleSourceChange = (newSource: string) => {
     setSource(newSource);
     if (onSourceChange) {
       onSourceChange(newSource);
     }
   };
+  */
 
   // For layer-specific validation
   const validateFile = useCallback(
@@ -389,48 +382,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
         </Box>
       )}
 
-      {/* Source selector - with improved visibility */}
-      <Box sx={{ mb: 3, mt: 2, p: 2, bgcolor: '#f5f9ff', borderRadius: 1, border: '1px solid #e0e8f5' }}>
-        <Typography variant="subtitle1" fontWeight="bold" gutterBottom sx={{ color: '#1976d2' }}>
-          Source *
-        </Typography>
-        <Typography variant="body2" sx={{ mb: 2 }}>
-          Select the origin of this asset. This is a required field for asset registration.
-        </Typography>
-        <FormControl fullWidth sx={{ mb: 1 }} required>
-          <InputLabel id="source-label">Source</InputLabel>
-          <Select
-            labelId="source-label"
-            id="source"
-            value={source}
-            label="Source"
-            onChange={(e) => handleSourceChange(e.target.value)}
-            sx={{ 
-              bgcolor: '#ffffff',
-              '& .MuiOutlinedInput-notchedOutline': {
-                borderColor: '#1976d2',
-              },
-            }}
-          >
-            {SOURCE_OPTIONS.map((option) => (
-              <MenuItem key={option.value} value={option.value}>
-                {option.label}
-              </MenuItem>
-            ))}
-          </Select>
-          <FormHelperText>
-            <Box component="span" fontWeight="medium">
-              ReViz: Assets created by or for ReViz
-              <br />
-              Original: Your own original content
-              <br />
-              Licensed: Content licensed from third parties
-              <br />
-              External: Content from external sources
-            </Box>
-          </FormHelperText>
-        </FormControl>
-      </Box>
+      {/* Source field has been moved to the Asset Details section */}
 
       {/* Main uploader */}
       <Grid container spacing={3}>
