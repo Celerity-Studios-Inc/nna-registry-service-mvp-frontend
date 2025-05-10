@@ -190,7 +190,7 @@ class AuthService {
         const response = await api.post<ApiResponse<AuthResponse>>(
           '/auth/register',
           {
-            username,
+            name: username,  // Backend expects 'name' instead of 'username'
             email,
             password,
           }
