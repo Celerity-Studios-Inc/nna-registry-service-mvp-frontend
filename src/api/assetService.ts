@@ -575,10 +575,10 @@ class AssetService {
    */
   async directCreateAsset(assetData: AssetCreateRequest): Promise<Asset> {
     console.log("⚡ Using DIRECT asset creation implementation (bypassing proxy)");
-    
+
     // Format based on reference implementation - only the essential fields
     const formData = new FormData();
-    
+
     // Add the file if it exists (most important part)
     if (assetData.files && assetData.files.length > 0) {
       const file = assetData.files[0];
@@ -587,29 +587,35 @@ class AssetService {
         console.log("Added file to FormData:", file.name);
       }
     }
-    
+
     // Add all required fields exactly as in reference implementation
     // From the error message "property name should not exist", we need to REMOVE 'name' field completely
     // Don't use either 'name' or 'title' since API is rejecting both
     // formData.append('name', assetData.name || 'Unnamed Asset'); // Removed as API rejects this field
+
+    // Try using friendlyName instead
+    formData.append('friendlyName', assetData.name || 'Unnamed Asset');
+
     formData.append('layer', assetData.layer || 'S');
-    formData.append('category', assetData.category || 'POP'); 
-    formData.append('subcategory', assetData.subcategory || 'BASE');
+    // Use categoryCode and subcategoryCode instead of category and subcategory
+    formData.append('categoryCode', assetData.category || 'POP');
+    formData.append('subcategoryCode', assetData.subcategory || 'BASE');
     formData.append('description', assetData.description || 'Asset description');
     // IMPORTANT: Asset "source" field (different from rights.source)
-    // This field is required by the backend API and must be set to "ReViz"
-    // based on the Swagger documentation example
-    formData.append('source', 'ReViz');
+    // This field is required by the backend API
+    // Use the source value from the form data instead of hardcoding
+    formData.append('source', assetData.source || 'ReViz');
     
-    // Based on API error, tags must be a string, not an array
+    // Tags need to be formatted as tags[] for the backend
     if (assetData.tags && assetData.tags.length > 0) {
-      // Join tags into a single string
-      const tagsString = assetData.tags.join(',');
-      formData.append('tags', tagsString);
-      console.log("Added tags to FormData as string:", tagsString);
+      // Add each tag individually as tags[]
+      assetData.tags.forEach(tag => {
+        formData.append('tags[]', tag);
+      });
+      console.log("Added tags to FormData as array items:", assetData.tags);
     } else {
       // Make sure we at least have one tag
-      formData.append('tags', 'general');
+      formData.append('tags[]', 'general');
       console.log("No tags provided, added default 'general' tag");
     }
     
@@ -912,24 +918,30 @@ class AssetService {
           // From the error message "property name should not exist", we need to REMOVE 'name' field completely
           // Don't use either 'name' or 'title' since API is rejecting both
           // formData.append('name', assetData.name || 'Unnamed Asset'); // Removed as API rejects this field
+
+          // Try using friendlyName instead
+          formData.append('friendlyName', assetData.name || 'Unnamed Asset');
+
           formData.append('layer', assetData.layer || 'S');
-          formData.append('category', assetData.category || 'POP'); 
-          formData.append('subcategory', assetData.subcategory || 'BASE');
+          // Use categoryCode and subcategoryCode instead of category and subcategory
+          formData.append('categoryCode', assetData.category || 'POP');
+          formData.append('subcategoryCode', assetData.subcategory || 'BASE');
           formData.append('description', assetData.description || 'Asset description');
           // IMPORTANT: Asset "source" field (different from rights.source)
-          // This field is required by the backend API and must be set to "ReViz"
-          // based on the Swagger documentation example
-          formData.append('source', 'ReViz');
+          // This field is required by the backend API
+          // Use the source value from the form data instead of hardcoding
+          formData.append('source', assetData.source || 'ReViz');
           
-          // Based on API error, tags must be a string, not an array
+          // Tags need to be formatted as tags[] for the backend
           if (assetData.tags && assetData.tags.length > 0) {
-            // Join tags into a single string
-            const tagsString = assetData.tags.join(',');
-            formData.append('tags', tagsString);
-            console.log("Added tags to FormData as string:", tagsString);
+            // Add each tag individually as tags[]
+            assetData.tags.forEach(tag => {
+              formData.append('tags[]', tag);
+            });
+            console.log("Added tags to FormData as array items:", assetData.tags);
           } else {
             // Make sure we at least have one tag
-            formData.append('tags', 'general');
+            formData.append('tags[]', 'general');
             console.log("No tags provided, added default 'general' tag");
           }
           
