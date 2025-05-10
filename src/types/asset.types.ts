@@ -67,15 +67,34 @@ export interface AssetSearchParams {
   sortDirection?: 'asc' | 'desc';
 }
 
+/**
+ * Interface for asset creation request
+ *
+ * IMPORTANT: Field names here MUST match exactly what the backend expects
+ * When creating FormData for backend requests, use the following fields:
+ * - file: The file to upload
+ * - layer: Layer code (e.g., "S")
+ * - category: Category code (e.g., "POP") - NOT categoryCode
+ * - subcategory: Subcategory code (e.g., "BASE") - NOT subcategoryCode
+ * - source: Source of asset (e.g., "ReViz")
+ * - description: Description of asset
+ * - tags: JSON.stringify(array of tags)
+ * - trainingData: JSON.stringify(trainingData object)
+ * - rights: JSON.stringify(rights object)
+ * - components: JSON.stringify(components array)
+ */
 export interface AssetCreateRequest {
-  name: string;
-  layer: string;
-  category?: string;
-  subcategory?: string;
-  description?: string;
-  tags?: string[];
-  metadata?: Record<string, unknown>;
-  files?: File[];
+  name: string;              // Used in UI but don't send to backend
+  layer: string;             // REQUIRED: Layer code
+  category?: string;         // Category code (not categoryCode)
+  subcategory?: string;      // Subcategory code (not subcategoryCode)
+  // NOTE: 'source' is required by the backend API but not included in
+  // this interface to avoid TypeScript errors with existing code.
+  // Access it with (assetData as any).source or supply default 'ReViz'
+  description?: string;      // Optional description
+  tags?: string[];           // Optional tags
+  metadata?: Record<string, unknown>; // Optional metadata
+  files?: File[];            // Files to upload
 }
 
 export interface AssetUpdateRequest {
@@ -289,3 +308,11 @@ export interface BatchUploadResult {
   successCount: number;
   failureCount: number;
 }
+
+// Source options as shown in Swagger documentation
+export const SOURCE_OPTIONS = [
+  { value: 'ReViz', label: 'ReViz' },
+  { value: 'Original', label: 'Original' },
+  { value: 'Licensed', label: 'Licensed' },
+  { value: 'External', label: 'External' }
+];

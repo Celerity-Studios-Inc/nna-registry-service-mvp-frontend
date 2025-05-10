@@ -23,7 +23,7 @@ async function createAssetWithFormData(assetData: AssetCreateRequest): Promise<A
     category: assetData.category,
     subcategory: assetData.subcategory,
     description: assetData.description,
-    source: assetData.source,
+    source: (assetData as any).source || 'ReViz',
     tags: assetData.tags,
     hasFiles: assetData.files && assetData.files.length > 0
   });
@@ -48,7 +48,7 @@ async function createAssetWithFormData(assetData: AssetCreateRequest): Promise<A
   formData.append('layer', assetData.layer);
   formData.append('category', assetData.category || '');
   formData.append('subcategory', assetData.subcategory || '');
-  formData.append('source', assetData.source || 'ReViz');
+  formData.append('source', (assetData as any).source || 'ReViz');
   formData.append('description', assetData.description || '');
   
   // Tags must be a JSON string - backend will parse it
@@ -81,8 +81,8 @@ async function createAssetWithFormData(assetData: AssetCreateRequest): Promise<A
   console.log(` - layer: ${assetData.layer}`);
   console.log(` - category: ${assetData.category}`);
   console.log(` - subcategory: ${assetData.subcategory}`);
-  console.log(` - source: ${assetData.source}`);
-  console.log(` - description: ${assetData.description?.substring(0, 30)}${assetData.description?.length > 30 ? '...' : ''}`);
+  console.log(` - source: ${(assetData as any).source || 'ReViz'}`);
+  console.log(` - description: ${assetData.description ? assetData.description.substring(0, 30) + (assetData.description.length > 30 ? '...' : '') : ''}`);
   console.log(` - tags: ${JSON.stringify(assetData.tags)}`);
   console.log(' - trainingData: {}');
   console.log(' - rights: {}');

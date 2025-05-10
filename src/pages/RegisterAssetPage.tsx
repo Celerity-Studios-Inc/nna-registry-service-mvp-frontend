@@ -15,6 +15,11 @@ import {
   Grid,
   Divider,
   Chip,
+  MenuItem,
+  FormControl,
+  InputLabel,
+  Select,
+  FormHelperText,
 } from '@mui/material';
 import { 
   ChevronLeft as PreviousIcon, 
@@ -30,7 +35,7 @@ import { ComponentsForm } from '../components/asset/ComponentsForm';
 
 // Types
 import { LayerOption, CategoryOption, SubcategoryOption } from '../types/taxonomy.types';
-import { FileUploadResponse, Asset } from '../types/asset.types';
+import { FileUploadResponse, Asset, SOURCE_OPTIONS } from '../types/asset.types';
 
 // Define the steps in the registration process
 const getSteps = (isTrainingLayer: boolean, isCompositeLayer: boolean) => {
@@ -753,6 +758,37 @@ const RegisterAssetPage: React.FC = () => {
                 <Grid item xs={12}>
                   <Box>
                     <Typography variant="subtitle1" gutterBottom>
+                      Source
+                    </Typography>
+                    <select
+                      {...register('source')}
+                      defaultValue="ReViz"
+                      style={{
+                        width: '100%',
+                        padding: '10px',
+                        borderRadius: '4px',
+                        border: '1px solid #ccc',
+                      }}
+                    >
+                      <option value="ReViz">ReViz</option>
+                      <option value="Original">Original</option>
+                      <option value="Licensed">Licensed</option>
+                      <option value="External">External</option>
+                    </select>
+                    {errors.source && (
+                      <Typography color="error" variant="caption">
+                        {errors.source.message}
+                      </Typography>
+                    )}
+                    <Typography variant="caption" color="text.secondary">
+                      Source indicates the origin of the asset
+                    </Typography>
+                  </Box>
+                </Grid>
+
+                <Grid item xs={12}>
+                  <Box>
+                    <Typography variant="subtitle1" gutterBottom>
                       Tags
                     </Typography>
                     <Box sx={{ mb: 2 }}>
@@ -853,8 +889,7 @@ const RegisterAssetPage: React.FC = () => {
                 onUploadComplete={handleUploadComplete}
                 onUploadError={handleUploadError}
                 initialFiles={getValues('files')}
-                initialSource={getValues('source')}
-                onSourceChange={(source) => setValue('source', source)}
+                // Source field now handled directly in the form below
               />
               
               <Box mt={3}>
@@ -998,6 +1033,112 @@ const RegisterAssetPage: React.FC = () => {
                       <Typography variant="caption" color="text.secondary">
                         Tags help with searchability and metadata
                       </Typography>
+                    </Box>
+                  </Grid>
+
+                  {/* Source field - Now under the Tags field */}
+                  <Grid item xs={12}>
+                    <Box sx={{ mb: 3, mt: 2, bgcolor: '#f5f9ff', borderRadius: 1, border: '1px solid #e0e8f5', p: 2 }}>
+                      <Typography variant="subtitle1" fontWeight="bold" gutterBottom sx={{ color: '#1976d2' }}>
+                        Source *
+                      </Typography>
+                      <Typography variant="body2" sx={{ mb: 2 }}>
+                        Select the origin of this asset. This is a required field for asset registration.
+                      </Typography>
+                      <FormControl fullWidth sx={{ mb: 1 }} required>
+                        <InputLabel id="source-label">Source</InputLabel>
+                        <Select
+                          labelId="source-label"
+                          id="source"
+                          value={watch('source')}
+                          label="Source"
+                          error={!!errors.source}
+                          {...register('source')}
+                          onChange={(e) => setValue('source', e.target.value)}
+                          sx={{ 
+                            bgcolor: '#ffffff',
+                            '& .MuiOutlinedInput-notchedOutline': {
+                              borderColor: '#1976d2',
+                            },
+                          }}
+                        >
+                          {SOURCE_OPTIONS.map((option) => (
+                            <MenuItem key={option.value} value={option.value}>
+                              {option.label}
+                            </MenuItem>
+                          ))}
+                        </Select>
+                        {errors.source ? (
+                          <FormHelperText error>
+                            {errors.source.message as string}
+                          </FormHelperText>
+                        ) : (
+                          <FormHelperText>
+                            <Box component="span" fontWeight="medium">
+                              ReViz: Assets created by or for ReViz
+                              <br />
+                              Original: Your own original content
+                              <br />
+                              Licensed: Content licensed from third parties
+                              <br />
+                              External: Content from external sources
+                            </Box>
+                          </FormHelperText>
+                        )}
+                      </FormControl>
+                    </Box>
+                  </Grid>
+                  
+                  {/* Source field for composite assets - Under the Tags field */}
+                  <Grid item xs={12}>
+                    <Box sx={{ mb: 3, mt: 2, bgcolor: '#f5f9ff', borderRadius: 1, border: '1px solid #e0e8f5', p: 2 }}>
+                      <Typography variant="subtitle1" fontWeight="bold" gutterBottom sx={{ color: '#1976d2' }}>
+                        Source *
+                      </Typography>
+                      <Typography variant="body2" sx={{ mb: 2 }}>
+                        Select the origin of this asset. This is a required field for asset registration.
+                      </Typography>
+                      <FormControl fullWidth sx={{ mb: 1 }} required>
+                        <InputLabel id="source-label-composite">Source</InputLabel>
+                        <Select
+                          labelId="source-label-composite"
+                          id="source-composite"
+                          value={watch('source')}
+                          label="Source"
+                          error={!!errors.source}
+                          {...register('source')}
+                          onChange={(e) => setValue('source', e.target.value)}
+                          sx={{ 
+                            bgcolor: '#ffffff',
+                            '& .MuiOutlinedInput-notchedOutline': {
+                              borderColor: '#1976d2',
+                            },
+                          }}
+                        >
+                          {SOURCE_OPTIONS.map((option) => (
+                            <MenuItem key={option.value} value={option.value}>
+                              {option.label}
+                            </MenuItem>
+                          ))}
+                        </Select>
+                        {errors.source ? (
+                          <FormHelperText error>
+                            {errors.source.message as string}
+                          </FormHelperText>
+                        ) : (
+                          <FormHelperText>
+                            <Box component="span" fontWeight="medium">
+                              ReViz: Assets created by or for ReViz
+                              <br />
+                              Original: Your own original content
+                              <br />
+                              Licensed: Content licensed from third parties
+                              <br />
+                              External: Content from external sources
+                            </Box>
+                          </FormHelperText>
+                        )}
+                      </FormControl>
                     </Box>
                   </Grid>
                 </Grid>
