@@ -83,7 +83,7 @@ async function handler(req: VercelRequest, res: VercelResponse) {
     // Handle multipart/form-data specially - we need to forward the raw body
     if (isMultipart && req.method === 'POST') {
       console.log('ASSETS HANDLER - Processing multipart/form-data request');
-      
+
       try {
         // Get the raw body as a Buffer to preserve binary data
         // This is critical for multipart/form-data with file uploads
@@ -95,11 +95,34 @@ async function handler(req: VercelRequest, res: VercelResponse) {
           console.log('ASSETS HANDLER - Using existing body:', typeof req.body);
           body = req.body;
         }
-        
+
         // Make sure the Content-Type header is preserved exactly as it came in
         // This is critical for multipart/form-data to work properly
         console.log('ASSETS HANDLER - Using content type:', headers['content-type']);
-        
+
+        // Log CORS headers
+        console.log('ASSETS HANDLER - CORS headers:', {
+          origin: headers['origin'] || 'not set',
+          'access-control-request-method': headers['access-control-request-method'] || 'not set',
+          'access-control-request-headers': headers['access-control-request-headers'] || 'not set'
+        });
+
+        // Log more details about the FormData
+        // Do not log the binary data itself
+        if (typeof req.body === 'object' && req.body !== null) {
+          console.log('ASSETS HANDLER - FormData summary:', {
+            source: req.body.source ? 'Present' : 'Missing',
+            layer: req.body.layer ? 'Present' : 'Missing',
+            category: req.body.category ? 'Present' : 'Missing',
+            subcategory: req.body.subcategory ? 'Present' : 'Missing',
+            description: req.body.description ? 'Present' : 'Missing',
+            friendlyName: req.body.friendlyName ? 'Present' : 'Missing',
+            file: req.body.file ? 'Present' : 'Missing',
+            name: req.body.name ? 'Present (should be removed)' : 'Not present (good)',
+            contentTypeHeader: headers['content-type']
+          });
+        }
+
       } catch (error) {
         console.error('ASSETS HANDLER - Error processing multipart/form-data:', error);
         throw error;
@@ -158,8 +181,8 @@ ${JSON.stringify(headers, null, 2)}
     let parsedResponse;
     try {
       parsedResponse = JSON.parse(responseBody);
-      
-      // Add more helpful information to 400 errors
+
+      // Add more helpful information to errors
       if (response.status === 400) {
         parsedResponse = {
           ...parsedResponse,
@@ -168,17 +191,44 @@ ${JSON.stringify(headers, null, 2)}
             possibleSolutions: [
               "Check that all required fields are provided",
               "Verify the data formats match what the backend expects",
-              "Ensure files are properly uploaded"
+              "Ensure files are properly uploaded",
+              "Make sure 'source' field is included and has a valid value",
+              "Check that 'name' field is not included (use 'friendlyName' instead)"
             ],
+            timestamp: new Date().toISOString()
+          }
+        };
+      } else if (response.status === 500) {
+        // Add debug information for Internal Server Errors
+        parsedResponse = {
+          ...parsedResponse,
+          _debug: {
+            message: "The server returned a 500 Internal Server Error. This could be due to server-side issues processing the request.",
+            possibleSolutions: [
+              "Check that authentication token is valid",
+              "Verify that the FormData is properly formatted",
+              "Examine backend logs for specific error details",
+              "Ensure all required fields are correctly named and formatted",
+              "Verify file format and size restrictions"
+            ],
+            requestDetails: {
+              hasFile: isMultipart && headers['content-length'] && parseInt(headers['content-length']) > 1000,
+              isAuthenticated: !!headers['authorization'],
+              method: req.method,
+              contentType: contentType
+            },
             timestamp: new Date().toISOString()
           }
         };
       }
     } catch (e) {
       // If not valid JSON, return the raw text
-      parsedResponse = { 
+      parsedResponse = {
         text: responseBody,
-        error: "Response couldn't be parsed as JSON"
+        error: "Response couldn't be parsed as JSON",
+        status: response.status,
+        message: response.statusText,
+        timestamp: new Date().toISOString()
       };
     }
     

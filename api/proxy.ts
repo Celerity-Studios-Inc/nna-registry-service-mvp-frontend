@@ -131,16 +131,42 @@ async function handler(req: VercelRequest, res: VercelResponse) {
     console.log('Request headers:', headers);
     
     // Log request body for debugging, but be careful with sensitive data
-    const requestBody = req.method !== 'GET' && req.method !== 'HEAD' ? JSON.stringify(req.body) : 'No body';
-    console.log('Request body:', requestBody);
-    
+    // Check if this is form data before stringifying
+    const contentType = req.headers['content-type'] || '';
+    const isFormData = contentType.includes('multipart/form-data');
+
+    if (isFormData) {
+      console.log('Request body: [FormData - not logging to avoid binary data]');
+    } else {
+      const requestBody = req.method !== 'GET' && req.method !== 'HEAD' ? JSON.stringify(req.body) : 'No body';
+      console.log('Request body:', requestBody);
+    }
+
     // Make the request to the backend API
     console.log('Fetching from backend...');
     try {
+      // Important: Check Content-Type header to handle FormData properly
+      const contentType = req.headers['content-type'] || '';
+      const isFormData = contentType.includes('multipart/form-data');
+
+      console.log('Content-Type:', contentType);
+      console.log('Is FormData:', isFormData);
+
+      // Special handling for multipart/form-data (file uploads)
+      // For multipart requests, we cannot use JSON.stringify
+      // Instead, we need to forward the raw request body
+
+      // Don't stringify the body if it's FormData or multipart/form-data
+      const body = (req.method !== 'GET' && req.method !== 'HEAD')
+        ? (isFormData ? req.body : JSON.stringify(req.body))
+        : undefined;
+
+      console.log('Using body type:', isFormData ? 'RAW (FormData)' : typeof body);
+
       const response = await fetch(targetUrl, {
         method: req.method,
         headers: headers,
-        body: req.method !== 'GET' && req.method !== 'HEAD' ? JSON.stringify(req.body) : undefined,
+        body: body,
       });
       
       console.log('=== PROXY RESPONSE DETAILS ===');
