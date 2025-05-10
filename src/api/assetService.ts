@@ -604,7 +604,8 @@ class AssetService {
     // IMPORTANT: Asset "source" field (different from rights.source)
     // This field is required by the backend API
     // Use the source value from the form data instead of hardcoding
-    formData.append('source', assetData.source || 'ReViz');
+    // Use type assertion to ensure TypeScript recognizes the source property
+    formData.append('source', (assetData as any).source || 'ReViz');
     
     // Tags need to be formatted as tags[] for the backend
     if (assetData.tags && assetData.tags.length > 0) {
@@ -930,7 +931,8 @@ class AssetService {
           // IMPORTANT: Asset "source" field (different from rights.source)
           // This field is required by the backend API
           // Use the source value from the form data instead of hardcoding
-          formData.append('source', assetData.source || 'ReViz');
+          // Use type assertion to ensure TypeScript recognizes the source property
+          formData.append('source', (assetData as any).source || 'ReViz');
           
           // Tags need to be formatted as tags[] for the backend
           if (assetData.tags && assetData.tags.length > 0) {
