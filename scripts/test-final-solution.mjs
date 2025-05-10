@@ -49,17 +49,24 @@ async function testFinalSolution() {
   
   // Add file to FormData
   formData.append('file', fs.createReadStream(TEST_FILE_PATH));
-  
+
   // FINAL SOLUTION: Add all required fields in the exact format expected by backend
-  // Based on systematic testing
+  // Using the format from test-asset-registration.mjs which is known to work
+
+  // Do NOT include 'name' - backend rejects it
+  // formData.append('name', `Test Asset ${new Date().toISOString()}`);
+
   formData.append('layer', 'S');
   formData.append('category', 'POP');
-  formData.append('subcategory', 'BASE');
+  formData.append('subcategory', 'BAS');
   formData.append('source', 'ReViz');
   formData.append('description', 'Final solution test description');
-  formData.append('tags', JSON.stringify(['test', 'final-solution']));
-  
-  // Add optional metadata objects
+
+  // Use array-style format for tags
+  formData.append('tags[]', 'test');
+  formData.append('tags[]', 'final-solution');
+
+  // Add nested objects
   formData.append('trainingData', JSON.stringify({
     prompts: [],
     images: [],
@@ -71,8 +78,7 @@ async function testFinalSolution() {
     rights_split: '100%'
   }));
 
-  // Backend is very picky about the format of components
-  // Try a different approach - use components[] to indicate an array format
+  // Components - use empty array format
   formData.append('components[]', '');
   
   // Log what we're sending
@@ -80,13 +86,13 @@ async function testFinalSolution() {
   console.log(' - file (File Stream)');
   console.log(' - layer: S');
   console.log(' - category: POP');
-  console.log(' - subcategory: BASE');
+  console.log(' - subcategory: BAS');
   console.log(' - source: ReViz');
   console.log(' - description: Final solution test description');
-  console.log(' - tags: ["test", "final-solution"]');
+  console.log(' - tags[]: test, final-solution');
   console.log(' - trainingData: {}');
   console.log(' - rights: {source: "Original", rights_split: "100%"}');
-  console.log(' - components: []');
+  console.log(' - components[]: ""');
   
   // Send the request
   try {
