@@ -129,8 +129,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [uploadedFiles, setUploadedFiles] = useState<FileUploadResponse[]>([]);
   const [error, setError] = useState<string | null>(null);
-  // Keep source state even though UI moved to MetadataForm for possible future use
-  const [_, setSource] = useState<string>(initialSource);
+  // Source state removed as it's no longer needed (moved to MetadataForm)
   const [retryQueue, setRetryQueue] = useState<{ file: File; error: string }[]>(
     []
   );
