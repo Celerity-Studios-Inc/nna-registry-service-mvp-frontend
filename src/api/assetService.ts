@@ -593,13 +593,13 @@ class AssetService {
     // Don't use either 'name' or 'title' since API is rejecting both
     // formData.append('name', assetData.name || 'Unnamed Asset'); // Removed as API rejects this field
 
-    // Try using friendlyName instead
-    formData.append('friendlyName', assetData.name || 'Unnamed Asset');
+    // Use name field after all - backend appears to want this
+    formData.append('name', assetData.name || 'Unnamed Asset');
 
     formData.append('layer', assetData.layer || 'S');
-    // Use categoryCode and subcategoryCode instead of category and subcategory
-    formData.append('categoryCode', assetData.category || 'POP');
-    formData.append('subcategoryCode', assetData.subcategory || 'BASE');
+    // Use category and subcategory as the backend is rejecting categoryCode
+    formData.append('category', assetData.category || 'POP');
+    formData.append('subcategory', assetData.subcategory || 'BASE');
     formData.append('description', assetData.description || 'Asset description');
     // IMPORTANT: Asset "source" field (different from rights.source)
     // This field is required by the backend API
@@ -920,13 +920,13 @@ class AssetService {
           // Don't use either 'name' or 'title' since API is rejecting both
           // formData.append('name', assetData.name || 'Unnamed Asset'); // Removed as API rejects this field
 
-          // Try using friendlyName instead
-          formData.append('friendlyName', assetData.name || 'Unnamed Asset');
+          // Use name field after all - backend appears to want this
+          formData.append('name', assetData.name || 'Unnamed Asset');
 
           formData.append('layer', assetData.layer || 'S');
-          // Use categoryCode and subcategoryCode instead of category and subcategory
-          formData.append('categoryCode', assetData.category || 'POP');
-          formData.append('subcategoryCode', assetData.subcategory || 'BASE');
+          // Use category and subcategory as the backend is rejecting categoryCode
+          formData.append('category', assetData.category || 'POP');
+          formData.append('subcategory', assetData.subcategory || 'BASE');
           formData.append('description', assetData.description || 'Asset description');
           // IMPORTANT: Asset "source" field (different from rights.source)
           // This field is required by the backend API
