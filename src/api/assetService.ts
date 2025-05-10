@@ -589,7 +589,9 @@ class AssetService {
     }
     
     // Add all required fields exactly as in reference implementation
-    formData.append('name', assetData.name || 'Unnamed Asset');
+    // IMPORTANT: Based on API error, we should NOT send 'name'
+    // Instead we should use 'title' or something else
+    formData.append('title', assetData.name || 'Unnamed Asset'); // Changed from 'name' to 'title'
     formData.append('layer', assetData.layer || 'S');
     formData.append('category', assetData.category || 'POP'); 
     formData.append('subcategory', assetData.subcategory || 'BASE');
@@ -599,14 +601,16 @@ class AssetService {
     // based on the Swagger documentation example
     formData.append('source', 'ReViz');
     
-    // Add tags exactly as used in reference
+    // Based on API error, tags must be a string, not an array
     if (assetData.tags && assetData.tags.length > 0) {
-      // Use TypeScript-safe forEach with null check
-      assetData.tags.forEach((tag: string) => {
-        formData.append('tags[]', tag);
-      });
+      // Join tags into a single string
+      const tagsString = assetData.tags.join(',');
+      formData.append('tags', tagsString);
+      console.log("Added tags to FormData as string:", tagsString);
     } else {
-      formData.append('tags[]', 'general');
+      // Make sure we at least have one tag
+      formData.append('tags', 'general');
+      console.log("No tags provided, added default 'general' tag");
     }
     
     // Add empty trainingData and rights objects
@@ -905,7 +909,9 @@ class AssetService {
           }
           
           // Add all the required fields from the backend
-          formData.append('name', assetData.name || 'Unnamed Asset');
+          // IMPORTANT: Based on API error, we should NOT send 'name'
+          // Instead we should use 'title' or something else
+          formData.append('title', assetData.name || 'Unnamed Asset'); // Changed from 'name' to 'title'
           formData.append('layer', assetData.layer || 'S');
           formData.append('category', assetData.category || 'POP'); 
           formData.append('subcategory', assetData.subcategory || 'BASE');
@@ -915,15 +921,15 @@ class AssetService {
           // based on the Swagger documentation example
           formData.append('source', 'ReViz');
           
-          // Add tags as array items (important: backend expects tags[] format)
+          // Based on API error, tags must be a string, not an array
           if (assetData.tags && assetData.tags.length > 0) {
-            assetData.tags.forEach(tag => {
-              formData.append('tags[]', tag);
-            });
-            console.log("Added tags to FormData:", assetData.tags);
+            // Join tags into a single string
+            const tagsString = assetData.tags.join(',');
+            formData.append('tags', tagsString);
+            console.log("Added tags to FormData as string:", tagsString);
           } else {
             // Make sure we at least have one tag
-            formData.append('tags[]', 'general');
+            formData.append('tags', 'general');
             console.log("No tags provided, added default 'general' tag");
           }
           
