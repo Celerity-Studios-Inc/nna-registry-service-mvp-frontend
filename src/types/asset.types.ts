@@ -88,13 +88,22 @@ export interface AssetCreateRequest {
   layer: string;             // REQUIRED: Layer code
   category?: string;         // Category code (not categoryCode)
   subcategory?: string;      // Subcategory code (not subcategoryCode)
-  // NOTE: 'source' is required by the backend API but not included in
-  // this interface to avoid TypeScript errors with existing code.
-  // Access it with (assetData as any).source or supply default 'ReViz'
+  source?: string;           // REQUIRED by backend API: Source of asset (e.g., "ReViz")
   description?: string;      // Optional description
   tags?: string[];           // Optional tags
   metadata?: Record<string, unknown>; // Optional metadata
   files?: File[];            // Files to upload
+  // Optional complex objects that will be JSON-stringified for backend
+  trainingData?: {
+    prompts?: string[];
+    images?: any[];
+    videos?: any[];
+  };
+  rights?: {
+    source?: string;         // Different from the asset "source" field
+    rights_split?: string;
+  };
+  components?: any[];        // Components array
 }
 
 export interface AssetUpdateRequest {

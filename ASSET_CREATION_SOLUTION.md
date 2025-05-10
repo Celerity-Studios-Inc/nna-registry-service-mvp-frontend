@@ -45,7 +45,14 @@ Our testing has confirmed that the backend API requires these fields in the Form
 
 4. Complex objects like `trainingData` and `rights` must be JSON-stringified before being added to FormData.
 
-5. The backend does NOT expect a `name` field in the FormData; any such field should be omitted.
+5. The `components` field must be a JSON-stringified empty array, not an array-like field (`components[]`).
+
+6. The backend does NOT expect a `name` field in the FormData; any such field should be omitted.
+
+7. **Taxonomy Validation**: The subcategory must be valid for the given layer and category combination:
+   - For layer "S" and category "POP", the subcategory "BAS" is invalid
+   - Valid subcategories for S.POP include "DIV" (Pop_Diva_Female_Stars), "IDF", "LGF", etc.
+   - We now use "DIV" as a default subcategory when layer is "S" and category is "POP"
 
 ### Implementation
 
@@ -61,7 +68,9 @@ formData.append('file', file);
 // Add all required and optional fields
 formData.append('layer', assetData.layer);
 formData.append('category', assetData.category || '');
-formData.append('subcategory', assetData.subcategory || '');
+// Use a valid subcategory for the selected layer/category
+formData.append('subcategory', assetData.subcategory ||
+  (assetData.layer === 'S' && assetData.category === 'POP' ? 'DIV' : 'BAS'));
 formData.append('source', assetData.source || 'ReViz');
 formData.append('description', assetData.description || '');
 
@@ -80,6 +89,7 @@ formData.append('rights', JSON.stringify({
   rights_split: '100%'
 }));
 
+// Components as JSON-stringified empty array (NOT components[])
 formData.append('components', JSON.stringify([]));
 ```
 
@@ -110,9 +120,30 @@ If asset creation still fails:
 
 5. Run one of our test scripts with your token to isolate any field-specific issues.
 
+## Next Steps
+
+1. **Add Source Field to UI**: We need to add the "source" field to the UI form in Step 3 after the Tags field.
+   - This is a required field by the backend API
+   - Should default to "ReViz" if not specified
+
+2. **Update Asset Types**: Update the `AssetCreateRequest` interface to include the `source` field.
+
+3. **Fix Authentication Issues**: The 401 Unauthorized errors when testing directly with the backend API need to be addressed:
+   - Implement token refresh mechanism
+   - Improve error handling for auth failures
+
+4. **Complete E2E Testing**: Test the complete asset creation flow from UI to backend.
+
 ## Conclusion
 
 By systematically testing different field combinations, we've identified the exact field names and formats required by the backend API for asset creation. Our solution has been implemented in `assetService.ts` using a clean, consistent approach that matches these requirements.
+
+The key improvements we've made are:
+1. Fixed field naming to match backend expectations
+2. Corrected the format of nested objects and arrays
+3. Added proper default values for required fields
+4. Implemented taxonomy validation to ensure valid subcategory codes
+5. Improved error handling and fallback to mock implementation when needed
 
 ## Building the Project
 

@@ -15,6 +15,7 @@ import { fileURLToPath } from 'url';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // Configuration
+// Use direct backend URL for testing
 const BACKEND_URL = 'https://registry.reviz.dev/api';
 const TEST_FILE_PATH = path.join(__dirname, '..', 'test-assets', 'test-image.jpg');
 
@@ -58,7 +59,7 @@ async function testFinalSolution() {
 
   formData.append('layer', 'S');
   formData.append('category', 'POP');
-  formData.append('subcategory', 'BAS');
+  formData.append('subcategory', 'DIV'); // Using "DIV" (Pop_Diva_Female_Stars) which is a valid subcategory
   formData.append('source', 'ReViz');
   formData.append('description', 'Final solution test description');
 
@@ -77,21 +78,21 @@ async function testFinalSolution() {
     rights_split: '100%'
   }));
 
-  // Components - use empty array format
-  formData.append('components[]', '');
+  // Components - use JSON-stringified empty array
+  formData.append('components', JSON.stringify([]));
   
   // Log what we're sending
   console.log('Sending FormData with fields:');
   console.log(' - file (File Stream)');
   console.log(' - layer: S');
   console.log(' - category: POP');
-  console.log(' - subcategory: BAS');
+  console.log(' - subcategory: DIV');
   console.log(' - source: ReViz');
   console.log(' - description: Final solution test description');
   console.log(' - tags: ["test", "final-solution"]');
   console.log(' - trainingData: {}');
   console.log(' - rights: {source: "Original", rights_split: "100%"}');
-  console.log(' - components[]: ""');
+  console.log(' - components: []');
   
   // Send the request
   try {

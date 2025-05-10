@@ -313,9 +313,9 @@ class AssetService {
           type: 'standard',
           layer: params.layer || 'S',
           categoryCode: params.category || 'POP',
-          subcategoryCode: params.subcategory || 'BAS',
+          subcategoryCode: params.subcategory || (params.layer === 'S' && params.category === 'POP' ? 'DIV' : 'BAS'),
           category: params.category || 'POP',
-          subcategory: params.subcategory || 'BAS',
+          subcategory: params.subcategory || (params.layer === 'S' && params.category === 'POP' ? 'DIV' : 'BAS'),
           description: `This is a mock asset created for demonstration purposes.`,
           tags: ['mock', 'demo', 'test'],
           gcpStorageUrl: 'https://storage.googleapis.com/mock-bucket/',
@@ -600,13 +600,14 @@ class AssetService {
     formData.append('layer', assetData.layer || 'S');
     // Use category and subcategory as the backend is rejecting categoryCode
     formData.append('category', assetData.category || 'POP');
-    formData.append('subcategory', assetData.subcategory || 'BASE');
+    // Use a valid subcategory for S layer and POP category (DIV = Pop_Diva_Female_Stars)
+    formData.append('subcategory', assetData.subcategory || (assetData.layer === 'S' && assetData.category === 'POP' ? 'DIV' : 'BAS'));
     formData.append('description', assetData.description || 'Asset description');
     // IMPORTANT: Asset "source" field (different from rights.source)
     // This field is required by the backend API
     // Use the source value from the form data instead of hardcoding
     // Use type assertion to ensure TypeScript recognizes the source property
-    formData.append('source', (assetData as any).source || 'ReViz');
+    formData.append('source', assetData.source || 'ReViz');
     
     // Backend expects tags as a stringified JSON array
     if (assetData.tags && assetData.tags.length > 0) {
@@ -634,8 +635,8 @@ class AssetService {
       "rights_split": "100%"
     }));
     
-    // Empty array for components - specific syntax required by backend
-    formData.append('components[]', '');
+    // Empty array for components as JSON-stringified array
+    formData.append('components', JSON.stringify([]));
     
     // Debug: List all keys in the FormData
     console.log("FormData keys:");
@@ -740,7 +741,7 @@ class AssetService {
       category: assetData.category,
       subcategory: assetData.subcategory,
       description: assetData.description,
-      source: (assetData as any).source || 'ReViz', // Cast to any to avoid TypeScript errors
+      source: assetData.source || 'ReViz',
       tags: assetData.tags,
       hasFiles: assetData.files && assetData.files.length > 0
     });
@@ -778,8 +779,9 @@ class AssetService {
 
       formData.append('layer', assetData.layer);
       formData.append('category', assetData.category || '');
-      formData.append('subcategory', assetData.subcategory || '');
-      formData.append('source', (assetData as any).source || 'ReViz');
+      // Use a valid subcategory for S layer and POP category (DIV = Pop_Diva_Female_Stars)
+      formData.append('subcategory', assetData.subcategory || (assetData.layer === 'S' && assetData.category === 'POP' ? 'DIV' : 'BAS'));
+      formData.append('source', assetData.source || 'ReViz');
       formData.append('description', assetData.description || '');
 
       // Tags must be a JSON string per backend expectations
@@ -802,10 +804,8 @@ class AssetService {
       }));
 
       // Components (empty array)
-      // The components field must be handled specially for the backend
-      // We need to add it as an empty array but in a format the backend accepts
-      // This specific syntax is what the backend expects
-      formData.append('components[]', '');
+      // The components field must be a JSON-stringified empty array
+      formData.append('components', JSON.stringify([]));
 
       // Make the API request using fetch for better FormData handling
       console.log('Sending asset creation request to API...');
@@ -894,7 +894,7 @@ class AssetService {
       categoryCode: (assetData as any).categoryCode || "",
       subcategoryCode: (assetData as any).subcategoryCode || "",
       category: assetData.category,
-      subcategory: assetData.subcategory,
+      subcategory: assetData.subcategory || (assetData.layer === 'S' && assetData.category === 'POP' ? 'DIV' : 'BAS'),
       tags: assetData.tags || [],
       files: uploadedFiles,
       metadata: {
