@@ -34,7 +34,13 @@
       "Bash(git revert:*)",
       "Bash(./scripts/update-workflows.sh:*)",
       "Bash(sed:*)",
-      "Bash(cp:*)"
+      "Bash(cp:*)",
+      "Bash(git restore:*)",
+      "Bash(CI=false npm run build)",
+      "Bash(git switch:*)",
+      "Bash(npm run tsc:*)",
+      "Bash(npx tsc:*)",
+      "Bash(npm build:*)"
     ],
     "deny": []
   }

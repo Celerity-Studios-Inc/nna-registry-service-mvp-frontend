@@ -89,6 +89,7 @@
     "eslint-plugin-prettier": "4.2.1",
     "eslint-plugin-react": "7.37.5",
     "eslint-plugin-react-hooks": "4.6.2",
+    "form-data": "^4.0.2",
     "http-proxy-middleware": "^3.0.5",
     "identity-obj-proxy": "^3.0.0",
     "node-fetch": "^2.7.0",
