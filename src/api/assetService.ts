@@ -589,8 +589,9 @@ class AssetService {
     }
     
     // Add all required fields exactly as in reference implementation
-    // Based on the error message "property title should not exist", we need to use 'name' instead of 'title'
-    formData.append('name', assetData.name || 'Unnamed Asset'); // Changed back to 'name' based on API error
+    // From the error message "property name should not exist", we need to REMOVE 'name' field completely
+    // Don't use either 'name' or 'title' since API is rejecting both
+    // formData.append('name', assetData.name || 'Unnamed Asset'); // Removed as API rejects this field
     formData.append('layer', assetData.layer || 'S');
     formData.append('category', assetData.category || 'POP'); 
     formData.append('subcategory', assetData.subcategory || 'BASE');
@@ -633,7 +634,7 @@ class AssetService {
     console.log("FormData keys:");
     // Simply log standard keys to avoid TypeScript iterator issues
     console.log(" - file (if provided)");
-    console.log(" - name");
+    // console.log(" - name"); // Removed since API rejects this field
     console.log(" - layer");
     console.log(" - category");
     console.log(" - subcategory");
@@ -908,9 +909,9 @@ class AssetService {
           }
           
           // Add all the required fields from the backend
-          // From the error message "property title should not exist", we need to use 'name' instead of 'title'
-          // The earlier comment was incorrect based on new error information
-          formData.append('name', assetData.name || 'Unnamed Asset'); // Changed back to 'name' based on API error
+          // From the error message "property name should not exist", we need to REMOVE 'name' field completely
+          // Don't use either 'name' or 'title' since API is rejecting both
+          // formData.append('name', assetData.name || 'Unnamed Asset'); // Removed as API rejects this field
           formData.append('layer', assetData.layer || 'S');
           formData.append('category', assetData.category || 'POP'); 
           formData.append('subcategory', assetData.subcategory || 'BASE');
@@ -955,7 +956,7 @@ class AssetService {
           console.log("FormData keys:");
           // Simply log standard keys to avoid TypeScript iterator issues
           console.log(" - file (if provided)");
-          console.log(" - name");
+          // console.log(" - name"); // Removed since API rejects this field
           console.log(" - layer");
           console.log(" - category");
           console.log(" - subcategory");
