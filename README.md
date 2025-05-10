@@ -122,6 +122,24 @@ For asset creation with file uploads, a special API handler in `api/assets.ts` e
 - Binary file data properly handled
 - FormData structure maintained
 
+#### FormData Handling Fix
+
+The asset creation implementation has been updated to use native `fetch` instead of axios for FormData handling:
+
+```javascript
+// Using native fetch which handles FormData correctly
+const fetchResponse = await fetch('/api/assets', {
+  method: 'POST',
+  headers: {
+    'Authorization': `Bearer ${authToken}`,
+    // No Content-Type header - let browser set it with boundary
+  },
+  body: formData
+});
+```
+
+This solution addresses an issue where axios was incorrectly setting the Content-Type header for FormData requests, causing file uploads to fail. See [FORM_DATA_FIX_SUMMARY.md](./docs/FORM_DATA_FIX_SUMMARY.md) for details.
+
 ### Environment Configuration
 
 - Development environment: Uses mock data by default (configured in `.env`)
@@ -145,3 +163,13 @@ Authentication is handled through the `/api/auth/` endpoints, which are specific
 - `/api/auth/profile` - Get the current user's profile
 
 The app will fallback to mock authentication if the backend is unavailable.
+
+## Testing Tools
+
+To help test and debug API interactions, we've provided these utility tools:
+
+- `/public/test-asset-upload.html` - Browser-based UI for testing asset uploads
+- `/scripts/test-asset-creation.js` - Node.js script for testing asset creation
+- `/scripts/verify-formdata-handling.js` - Tool to verify FormData handling differences between fetch and axios
+
+These tools can be used to validate API connectivity, test asset registration, and debug FormData issues.

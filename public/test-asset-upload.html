@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Asset Upload Test</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        h1 {
+            color: #333;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 10px;
+        }
+        .section {
+            background-color: #f5f5f5;
+            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        .file-input {
+            margin-bottom: 15px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-right: 10px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        .output {
+            background-color: #f8f9fa;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 15px;
+            margin-top: 20px;
+            white-space: pre-wrap;
+            overflow-x: auto;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .hidden {
+            display: none;
+        }
+        .checkbox-group {
+            margin: 10px 0;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input[type="text"], textarea, select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        .tag-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 8px;
+        }
+        .tag {
+            background-color: #e1e1e1;
+            padding: 5px 10px;
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+        }
+        .tag-remove {
+            margin-left: 5px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .status {
+            padding: 10px;
+            margin-top: 15px;
+            border-radius: 4px;
+        }
+        .status.success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status.error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .status.warning {
+            background-color: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeeba;
+        }
+        .status.info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+    </style>
+</head>
+<body>
+    <h1>Asset Upload Test</h1>
+    
+    <div class="section">
+        <h2>Authentication</h2>
+        <div class="form-group">
+            <label for="auth-token">Auth Token (or use "MOCK-" prefix for testing)</label>
+            <input type="text" id="auth-token" placeholder="Enter your auth token">
+        </div>
+        <button id="save-token">Save Token</button>
+        <button id="clear-token">Clear Token</button>
+        <button id="use-mock-token">Use Mock Token</button>
+        <div id="token-status" class="status info hidden"></div>
+    </div>
+
+    <div class="section">
+        <h2>File Upload</h2>
+        <div class="file-input">
+            <input type="file" id="file-input">
+        </div>
+        <div class="form-group">
+            <label for="asset-name">Asset Name:</label>
+            <input type="text" id="asset-name" value="Test Asset">
+        </div>
+        <div class="form-group">
+            <label for="asset-layer">Layer:</label>
+            <select id="asset-layer">
+                <option value="S">S (Stars)</option>
+                <option value="M">M (Moves)</option>
+                <option value="L">L (Looks)</option>
+                <option value="W">W (Worlds)</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="asset-category">Category:</label>
+            <select id="asset-category">
+                <option value="POP">POP (Pop)</option>
+                <option value="HIP">HIP (Hip Hop)</option>
+                <option value="EDM">EDM (Electronic Dance Music)</option>
+                <option value="RB">RB (R&B)</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="asset-subcategory">Subcategory:</label>
+            <select id="asset-subcategory">
+                <option value="BAS">BAS (Bass)</option>
+                <option value="DRM">DRM (Drums)</option>
+                <option value="SYN">SYN (Synth)</option>
+                <option value="VOC">VOC (Vocals)</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="asset-description">Description:</label>
+            <textarea id="asset-description" rows="3">Test asset description</textarea>
+        </div>
+        <div class="form-group">
+            <label for="new-tag">Tags:</label>
+            <div style="display: flex;">
+                <input type="text" id="new-tag" placeholder="Add a tag">
+                <button id="add-tag" style="margin-left: 10px;">Add</button>
+            </div>
+            <div id="tags-container" class="tag-container">
+                <div class="tag">test <span class="tag-remove" data-tag="test">×</span></div>
+                <div class="tag">mock <span class="tag-remove" data-tag="mock">×</span></div>
+            </div>
+        </div>
+        
+        <div class="checkbox-group">
+            <input type="checkbox" id="use-direct-api" checked>
+            <label for="use-direct-api">Use Direct API (bypass proxy)</label>
+        </div>
+        
+        <div class="checkbox-group">
+            <input type="checkbox" id="use-fetch-api" checked>
+            <label for="use-fetch-api">Use Native Fetch API (instead of axios)</label>
+        </div>
+        
+        <button id="upload-button">Upload Asset</button>
+        <div id="upload-status" class="status info hidden"></div>
+    </div>
+    
+    <div class="section">
+        <h2>Results</h2>
+        <button id="clear-output">Clear Output</button>
+        <pre id="output" class="output">Results will appear here...</pre>
+    </div>
+
+    <script>
+        // Current tags
+        let tags = ['test', 'mock'];
+        
+        // DOM elements
+        const fileInput = document.getElementById('file-input');
+        const assetName = document.getElementById('asset-name');
+        const assetLayer = document.getElementById('asset-layer');
+        const assetCategory = document.getElementById('asset-category');
+        const assetSubcategory = document.getElementById('asset-subcategory');
+        const assetDescription = document.getElementById('asset-description');
+        const newTagInput = document.getElementById('new-tag');
+        const addTagButton = document.getElementById('add-tag');
+        const tagsContainer = document.getElementById('tags-container');
+        const useDirectApi = document.getElementById('use-direct-api');
+        const useFetchApi = document.getElementById('use-fetch-api');
+        const uploadButton = document.getElementById('upload-button');
+        const uploadStatus = document.getElementById('upload-status');
+        const output = document.getElementById('output');
+        const clearOutputButton = document.getElementById('clear-output');
+        const authTokenInput = document.getElementById('auth-token');
+        const saveTokenButton = document.getElementById('save-token');
+        const clearTokenButton = document.getElementById('clear-token');
+        const useMockTokenButton = document.getElementById('use-mock-token');
+        const tokenStatus = document.getElementById('token-status');
+        
+        // Load token from localStorage
+        function loadToken() {
+            const token = localStorage.getItem('accessToken');
+            if (token) {
+                // Show only first 10 chars + ... for security
+                const displayToken = token.substring(0, 10) + '...';
+                authTokenInput.value = displayToken;
+                tokenStatus.textContent = `Token loaded (${displayToken})`;
+                tokenStatus.classList.remove('hidden', 'error');
+                tokenStatus.classList.add('success');
+            } else {
+                tokenStatus.textContent = 'No token found in localStorage';
+                tokenStatus.classList.remove('hidden', 'success');
+                tokenStatus.classList.add('info');
+            }
+        }
+        
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', loadToken);
+        
+        // Save token
+        saveTokenButton.addEventListener('click', () => {
+            const token = authTokenInput.value.trim();
+            if (token) {
+                localStorage.setItem('accessToken', token);
+                tokenStatus.textContent = `Token saved (${token.substring(0, 10)}...)`;
+                tokenStatus.classList.remove('hidden', 'error');
+                tokenStatus.classList.add('success');
+            } else {
+                tokenStatus.textContent = 'Please enter a token';
+                tokenStatus.classList.remove('hidden', 'success');
+                tokenStatus.classList.add('error');
+            }
+        });
+        
+        // Clear token
+        clearTokenButton.addEventListener('click', () => {
+            localStorage.removeItem('accessToken');
+            authTokenInput.value = '';
+            tokenStatus.textContent = 'Token cleared';
+            tokenStatus.classList.remove('hidden', 'error', 'success');
+            tokenStatus.classList.add('info');
+        });
+        
+        // Use mock token
+        useMockTokenButton.addEventListener('click', () => {
+            const mockToken = 'MOCK-TOKEN-' + Math.random().toString(36).substring(2, 15);
+            localStorage.setItem('accessToken', mockToken);
+            authTokenInput.value = mockToken.substring(0, 10) + '...';
+            tokenStatus.textContent = `Mock token set (${mockToken.substring(0, 10)}...)`;
+            tokenStatus.classList.remove('hidden', 'error');
+            tokenStatus.classList.add('success');
+        });
+        
+        // Add tag
+        addTagButton.addEventListener('click', () => {
+            const newTag = newTagInput.value.trim();
+            if (newTag && !tags.includes(newTag)) {
+                tags.push(newTag);
+                renderTags();
+                newTagInput.value = '';
+            }
+        });
+        
+        // Enter key to add tag
+        newTagInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                addTagButton.click();
+            }
+        });
+        
+        // Render tags
+        function renderTags() {
+            tagsContainer.innerHTML = '';
+            tags.forEach(tag => {
+                const tagElement = document.createElement('div');
+                tagElement.className = 'tag';
+                tagElement.innerHTML = `${tag} <span class="tag-remove" data-tag="${tag}">×</span>`;
+                tagsContainer.appendChild(tagElement);
+            });
+            
+            // Add event listeners to remove buttons
+            document.querySelectorAll('.tag-remove').forEach(button => {
+                button.addEventListener('click', (e) => {
+                    const tagToRemove = e.target.getAttribute('data-tag');
+                    tags = tags.filter(tag => tag !== tagToRemove);
+                    renderTags();
+                });
+            });
+        }
+        
+        // Clear output
+        clearOutputButton.addEventListener('click', () => {
+            output.textContent = 'Results will appear here...';
+        });
+        
+        // Log to output
+        function log(message) {
+            if (typeof message === 'object') {
+                message = JSON.stringify(message, null, 2);
+            }
+            output.textContent += '\n\n' + message;
+            // Scroll to bottom
+            output.scrollTop = output.scrollHeight;
+        }
+        
+        // Upload asset
+        uploadButton.addEventListener('click', async () => {
+            if (!fileInput.files || fileInput.files.length === 0) {
+                uploadStatus.textContent = 'Please select a file';
+                uploadStatus.classList.remove('hidden', 'success');
+                uploadStatus.classList.add('error');
+                return;
+            }
+            
+            try {
+                uploadStatus.textContent = 'Uploading...';
+                uploadStatus.classList.remove('hidden', 'success', 'error');
+                uploadStatus.classList.add('info');
+                
+                // Get the file
+                const file = fileInput.files[0];
+                
+                // Create FormData
+                const formData = new FormData();
+                
+                // Add file to FormData
+                formData.append('file', file);
+                
+                // Add asset metadata
+                formData.append('name', assetName.value || 'Test Asset');
+                formData.append('layer', assetLayer.value || 'S');
+                formData.append('category', assetCategory.value || 'POP');
+                formData.append('subcategory', assetSubcategory.value || 'BASE');
+                formData.append('description', assetDescription.value || 'Test asset description');
+                
+                // Add tags
+                tags.forEach(tag => {
+                    formData.append('tags[]', tag);
+                });
+                
+                // Add empty trainingData and rights objects
+                formData.append('trainingData', JSON.stringify({
+                    "prompts": [],
+                    "images": [],
+                    "videos": []
+                }));
+                
+                formData.append('rights', JSON.stringify({
+                    "source": "Original",
+                    "rights_split": "100%"
+                }));
+                
+                // Empty array for components
+                formData.append('components[]', '');
+                
+                // Log FormData keys
+                log('FormData created with the following fields:');
+                for (const key of formData.keys()) {
+                    log(` - ${key}`);
+                }
+                
+                // Get auth token from localStorage
+                const authToken = localStorage.getItem('accessToken') || '';
+                if (!authToken) {
+                    log('Warning: No auth token found. Asset creation may fail.');
+                }
+                
+                // Determine endpoint based on direct API checkbox
+                const endpoint = useDirectApi.checked 
+                    ? 'https://registry.reviz.dev/api/assets' 
+                    : '/api/assets';
+                
+                log(`Using endpoint: ${endpoint}`);
+                log(`Using native fetch API: ${useFetchApi.checked}`);
+                
+                // Log auth token (partial) for debugging
+                log(`Auth token (first 10 chars): ${authToken.substring(0, 10)}...`);
+                
+                let response;
+                
+                if (useFetchApi.checked) {
+                    // Use native fetch API
+                    log('Using native fetch API for FormData...');
+                    response = await fetch(endpoint, {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${authToken}`
+                        },
+                        body: formData
+                    });
+                } else {
+                    // Use axios-like approach
+                    // Note: This is a simplified version and not actually using axios
+                    log('Using axios-like approach with Content-Type header...');
+                    response = await fetch(endpoint, {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${authToken}`,
+                            'Accept': 'application/json'
+                            // No Content-Type - let the browser set it
+                        },
+                        body: formData
+                    });
+                }
+                
+                log(`API response status: ${response.status} ${response.statusText}`);
+                
+                // Get response text
+                const responseText = await response.text();
+                
+                try {
+                    // Try to parse as JSON
+                    const responseData = JSON.parse(responseText);
+                    log('API response data:');
+                    log(responseData);
+                    
+                    if (response.ok && responseData.success) {
+                        uploadStatus.textContent = 'Asset uploaded successfully';
+                        uploadStatus.classList.remove('info', 'error');
+                        uploadStatus.classList.add('success');
+                    } else {
+                        uploadStatus.textContent = 'Error uploading asset';
+                        uploadStatus.classList.remove('info', 'success');
+                        uploadStatus.classList.add('error');
+                    }
+                } catch (error) {
+                    // Not JSON, log as text
+                    log('Response is not valid JSON:');
+                    log(responseText);
+                    
+                    uploadStatus.textContent = 'Error parsing response';
+                    uploadStatus.classList.remove('info', 'success');
+                    uploadStatus.classList.add('error');
+                }
+                
+            } catch (error) {
+                log('Error during upload:');
+                log(error.toString());
+                
+                uploadStatus.textContent = 'Error: ' + error.message;
+                uploadStatus.classList.remove('info', 'success');
+                uploadStatus.classList.add('error');
+            }
+        });
+        
+        // Initialize tags
+        renderTags();
+    </script>
+</body>
+</html>

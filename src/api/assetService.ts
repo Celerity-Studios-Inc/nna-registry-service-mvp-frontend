@@ -936,32 +936,39 @@ class AssetService {
           
           console.log("FormData prepared with file and metadata following reference implementation");
           
-          // Make the actual API call with FormData - don't set Content-Type header,
-          // Axios will set the correct one with boundary
-          console.log("Making API call to /assets with FormData");
+          // Make the actual API call with FormData
+          // Using native fetch instead of axios to ensure proper FormData handling
+          console.log("Making API call to /assets with FormData using native fetch");
           
-          // To ensure proper FormData handling, explicitly set the right config options
-          const response = await api.post<ApiResponse<Asset>>(
-            '/assets',
-            formData,
-            {
-              headers: {
-                // Don't set Content-Type here - let Axios set it with the correct boundary
-                // Only send the authorization header
-                'Accept': 'application/json',
-              },
-              // Required for proper FormData handling
-              transformRequest: (data) => {
-                // Don't transform FormData objects
-                if (data instanceof FormData) {
-                  console.log("Preserving FormData object during request transformation");
-                  return data;
-                }
-                // Default transformation for other data types
-                return JSON.stringify(data);
-              }
+          // Use native fetch which handles FormData correctly
+          // Important: Do NOT set Content-Type header manually for FormData!
+          const fetchResponse = await fetch('/api/assets', {
+            method: 'POST',
+            headers: {
+              // Only add Authorization header, let browser set Content-Type with boundary
+              'Authorization': `Bearer ${authToken}`
+            },
+            body: formData
+          });
+          
+          // Parse the response
+          const responseText = await fetchResponse.text();
+          let responseData;
+          try {
+            responseData = JSON.parse(responseText);
+          } catch (e) {
+            console.error("Failed to parse response as JSON:", e);
+            console.log("Response text:", responseText.substring(0, 500));
+            throw new Error("Invalid response format");
+          }
+          
+          // Create a response-like object that matches the structure expected below
+          const response = {
+            data: {
+              success: responseData.success,
+              data: responseData.data
             }
-          );
+          };
           
           console.log("API Response:", response.data);
           
