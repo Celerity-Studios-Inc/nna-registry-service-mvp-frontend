@@ -10,6 +10,12 @@ import {
   Alert,
   Chip,
   Stack,
+  TextField,
+  MenuItem,
+  FormControl,
+  InputLabel,
+  Select,
+  FormHelperText,
 } from '@mui/material';
 import {
   CloudUpload as UploadIcon,
@@ -25,6 +31,16 @@ interface FileUploadProps {
    * Callback when files change (added, removed)
    */
   onFilesChange: (files: File[]) => void;
+
+  /**
+   * Callback when source changes
+   */
+  onSourceChange?: (source: string) => void;
+
+  /**
+   * Initial source value
+   */
+  initialSource?: string;
 
   /**
    * Accepted file types (MIME types)
@@ -71,6 +87,14 @@ interface FileUploadProps {
   onUploadError?: (fileId: string, error: string) => void;
 }
 
+// Source options as shown in Swagger documentation
+const SOURCE_OPTIONS = [
+  { value: 'ReViz', label: 'ReViz' },
+  { value: 'Original', label: 'Original' },
+  { value: 'Licensed', label: 'Licensed' },
+  { value: 'External', label: 'External' }
+];
+
 // Get layer-specific accepted file types string
 const getAcceptedFileTypesByLayer = (layerCode?: string): string => {
   switch (layerCode) {
@@ -95,6 +119,8 @@ const getAcceptedFileTypesByLayer = (layerCode?: string): string => {
 
 const FileUpload: React.FC<FileUploadProps> = ({
   onFilesChange,
+  onSourceChange,
+  initialSource = 'ReViz', // Default to ReViz as shown in Swagger docs
   acceptedFileTypes,
   maxFiles = 1, // Only allow one file for regular assets, multiple for .set type assets
   maxSize = 104857600, // 100MB default
@@ -115,12 +141,21 @@ const FileUpload: React.FC<FileUploadProps> = ({
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [uploadedFiles, setUploadedFiles] = useState<FileUploadResponse[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [source, setSource] = useState<string>(initialSource);
   const [retryQueue, setRetryQueue] = useState<{ file: File; error: string }[]>(
     []
   );
 
   // Use layer-specific file types if none provided
   const accept = acceptedFileTypes || getAcceptedFileTypesByLayer(layerCode);
+  
+  // Handle source change
+  const handleSourceChange = (newSource: string) => {
+    setSource(newSource);
+    if (onSourceChange) {
+      onSourceChange(newSource);
+    }
+  };
 
   // For layer-specific validation
   const validateFile = useCallback(
@@ -354,6 +389,30 @@ const FileUpload: React.FC<FileUploadProps> = ({
           </Button>
         </Box>
       )}
+
+      {/* Source selector */}
+      <Box sx={{ mb: 3 }}>
+        <Typography variant="subtitle2" gutterBottom>
+          Source
+        </Typography>
+        <FormControl fullWidth sx={{ mb: 2 }}>
+          <InputLabel id="source-label">Source</InputLabel>
+          <Select
+            labelId="source-label"
+            id="source"
+            value={source}
+            label="Source"
+            onChange={(e) => handleSourceChange(e.target.value)}
+          >
+            {SOURCE_OPTIONS.map((option) => (
+              <MenuItem key={option.value} value={option.value}>
+                {option.label}
+              </MenuItem>
+            ))}
+          </Select>
+          <FormHelperText>Select the source of this asset</FormHelperText>
+        </FormControl>
+      </Box>
 
       {/* Main uploader */}
       <Grid container spacing={3}>

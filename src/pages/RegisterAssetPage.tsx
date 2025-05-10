@@ -54,6 +54,7 @@ const schema = yup.object({
   subcategoryNumericCode: yup.string(),
   name: yup.string().required('Name is required'),
   description: yup.string(),
+  source: yup.string().required('Source is required'),
   tags: yup.array().of(yup.string()),
   files: yup.array(),
   // NNA Address fields
@@ -105,6 +106,7 @@ interface FormData {
   subcategoryNumericCode: string;
   name: string;
   description: string;
+  source: string; // Source field from dropdown
   tags: string[];
   files: File[];
   hfn: string; // human friendly name
@@ -170,6 +172,7 @@ const RegisterAssetPage: React.FC = () => {
       subcategoryNumericCode: '',
       name: '',
       description: '',
+      source: 'ReViz', // Default source value
       tags: [],
       files: [] as File[],
       hfn: '',
@@ -266,6 +269,7 @@ const RegisterAssetPage: React.FC = () => {
         categoryCode: data.categoryCode,
         subcategoryCode: data.subcategoryCode,
         description: data.description,
+        source: data.source, // Include source field from dropdown
         tags: data.tags || [],
         files: data.files,  // Pass the original files
         metadata: {
@@ -685,6 +689,8 @@ const RegisterAssetPage: React.FC = () => {
               onUploadComplete={handleUploadComplete}
               onUploadError={handleUploadError}
               initialFiles={getValues('files')}
+              initialSource={getValues('source')}
+              onSourceChange={(source) => setValue('source', source)}
             />
             
             <Box mt={3}>
@@ -847,6 +853,8 @@ const RegisterAssetPage: React.FC = () => {
                 onUploadComplete={handleUploadComplete}
                 onUploadError={handleUploadError}
                 initialFiles={getValues('files')}
+                initialSource={getValues('source')}
+                onSourceChange={(source) => setValue('source', source)}
               />
               
               <Box mt={3}>

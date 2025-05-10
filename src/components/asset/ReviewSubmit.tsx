@@ -39,6 +39,7 @@ interface ReviewSubmitProps {
   assetData: {
     name: string;
     description: string;
+    source: string; // Source field
     layer: string;
     layerName: string;
     categoryCode: string;
@@ -104,6 +105,7 @@ const ReviewSubmit: React.FC<ReviewSubmitProps> = ({
   const {
     name,
     description,
+    source,
     layer,
     layerName,
     categoryCode,
@@ -120,7 +122,7 @@ const ReviewSubmit: React.FC<ReviewSubmitProps> = ({
   } = assetData;
 
   // Validate that all required fields are present
-  const isComplete = name && layer && categoryCode && subcategoryCode && files.length > 0;
+  const isComplete = name && source && layer && categoryCode && subcategoryCode && files.length > 0;
   
   // Check if this is a composite asset 
   const isCompositeAsset = layer === 'C';
@@ -183,6 +185,20 @@ const ReviewSubmit: React.FC<ReviewSubmitProps> = ({
                   <ListItemText
                     primary="Description"
                     secondary={description}
+                    primaryTypographyProps={{ variant: 'body2', color: 'text.secondary' }}
+                    secondaryTypographyProps={{ variant: 'body1' }}
+                  />
+                </ListItem>
+              )}
+              
+              {source && (
+                <ListItem disablePadding sx={{ mb: 1 }}>
+                  <ListItemIcon sx={{ minWidth: 40 }}>
+                    <PublicIcon />
+                  </ListItemIcon>
+                  <ListItemText
+                    primary="Source"
+                    secondary={source}
                     primaryTypographyProps={{ variant: 'body2', color: 'text.secondary' }}
                     secondaryTypographyProps={{ variant: 'body1' }}
                   />
