@@ -389,12 +389,15 @@ const FileUpload: React.FC<FileUploadProps> = ({
         </Box>
       )}
 
-      {/* Source selector */}
-      <Box sx={{ mb: 3 }}>
-        <Typography variant="subtitle2" gutterBottom>
-          Source
+      {/* Source selector - with improved visibility */}
+      <Box sx={{ mb: 3, mt: 2, p: 2, bgcolor: '#f5f9ff', borderRadius: 1, border: '1px solid #e0e8f5' }}>
+        <Typography variant="subtitle1" fontWeight="bold" gutterBottom sx={{ color: '#1976d2' }}>
+          Source *
         </Typography>
-        <FormControl fullWidth sx={{ mb: 2 }}>
+        <Typography variant="body2" sx={{ mb: 2 }}>
+          Select the origin of this asset. This is a required field for asset registration.
+        </Typography>
+        <FormControl fullWidth sx={{ mb: 1 }} required>
           <InputLabel id="source-label">Source</InputLabel>
           <Select
             labelId="source-label"
@@ -402,6 +405,12 @@ const FileUpload: React.FC<FileUploadProps> = ({
             value={source}
             label="Source"
             onChange={(e) => handleSourceChange(e.target.value)}
+            sx={{ 
+              bgcolor: '#ffffff',
+              '& .MuiOutlinedInput-notchedOutline': {
+                borderColor: '#1976d2',
+              },
+            }}
           >
             {SOURCE_OPTIONS.map((option) => (
               <MenuItem key={option.value} value={option.value}>
@@ -409,7 +418,17 @@ const FileUpload: React.FC<FileUploadProps> = ({
               </MenuItem>
             ))}
           </Select>
-          <FormHelperText>Select the source of this asset</FormHelperText>
+          <FormHelperText>
+            <Box component="span" fontWeight="medium">
+              ReViz: Assets created by or for ReViz
+              <br />
+              Original: Your own original content
+              <br />
+              Licensed: Content licensed from third parties
+              <br />
+              External: Content from external sources
+            </Box>
+          </FormHelperText>
         </FormControl>
       </Box>
 
