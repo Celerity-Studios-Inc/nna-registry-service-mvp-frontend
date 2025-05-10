@@ -13,10 +13,14 @@ This document provides instructions for testing the NNA Registry Service backend
 To get a valid token for testing:
 
 1. Log in to the application UI at [registry-service-frontend.vercel.app](https://registry-service-frontend.vercel.app)
-2. Open browser developer tools (F12)
-3. Go to Application tab > Local Storage
-4. Copy the value of the `accessToken` key
-5. **Important**: The token should NOT start with "MOCK-" which indicates a mock token
+2. Create an account if you don't have one yet
+3. After logging in, open browser developer tools (F12)
+4. Go to Application tab > Local Storage
+5. Look for the key `accessToken` and copy its value
+6. **Important**: The token should NOT start with "MOCK-" which indicates a mock token
+7. The token should look like `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1...` (a JWT token)
+
+**Note**: Tokens expire after a certain period (typically 24 hours). If your tests fail with 401 Unauthorized errors, you may need to log in again and get a fresh token.
 
 ## Test Scripts
 
