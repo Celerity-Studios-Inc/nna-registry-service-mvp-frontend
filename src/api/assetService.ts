@@ -594,7 +594,10 @@ class AssetService {
     formData.append('category', assetData.category || 'POP'); 
     formData.append('subcategory', assetData.subcategory || 'BASE');
     formData.append('description', assetData.description || 'Asset description');
-    formData.append('source', 'ReViz'); // Match the exact source value from Swagger example
+    // IMPORTANT: Asset "source" field (different from rights.source)
+    // This field is required by the backend API and must be set to "ReViz"
+    // based on the Swagger documentation example
+    formData.append('source', 'ReViz');
     
     // Add tags exactly as used in reference
     if (assetData.tags && assetData.tags.length > 0) {
@@ -613,6 +616,8 @@ class AssetService {
       "videos": []
     }));
     
+    // "rights" object with its own "source" field (this is DIFFERENT from the asset "source" field)
+    // The rights.source indicates the origin of the rights (e.g., "Original" for original content)  
     formData.append('rights', JSON.stringify({
       "source": "Original",
       "rights_split": "100%"
@@ -641,9 +646,13 @@ class AssetService {
     console.log("Using auth token:", token.substring(0, 15) + '...');
     
     try {
-      console.log("Attempting direct fetch to backend API with FormData");
-      // Make a direct fetch call to the backend API
-      const response = await fetch('https://registry.reviz.dev/api/assets', {
+      console.log("Using proxy endpoint to avoid CORS issues");
+      // Use the proxy endpoint which handles CORS correctly
+      const proxyEndpoint = '/api/assets';
+      console.log(`Making fetch request through proxy: ${proxyEndpoint}`);
+      
+      // Make a fetch call through our proxy (which handles CORS)
+      const response = await fetch(proxyEndpoint, {
         method: 'POST',
         headers: {
           // Only add Authorization header, let browser set Content-Type with boundary
@@ -901,7 +910,10 @@ class AssetService {
           formData.append('category', assetData.category || 'POP'); 
           formData.append('subcategory', assetData.subcategory || 'BASE');
           formData.append('description', assetData.description || 'Asset description');
-          formData.append('source', 'ReViz'); // Match the exact source value from Swagger example
+          // IMPORTANT: Asset "source" field (different from rights.source)
+          // This field is required by the backend API and must be set to "ReViz"
+          // based on the Swagger documentation example
+          formData.append('source', 'ReViz');
           
           // Add tags as array items (important: backend expects tags[] format)
           if (assetData.tags && assetData.tags.length > 0) {
@@ -923,6 +935,8 @@ class AssetService {
           });
           formData.append('trainingData', trainingData);
           
+          // "rights" object with its own "source" field (this is DIFFERENT from the asset "source" field)
+          // The rights.source indicates the origin of the rights (e.g., "Original" for original content)
           const rights = JSON.stringify({
             "source": "Original",
             "rights_split": "100%"
@@ -962,16 +976,15 @@ class AssetService {
           // Using native fetch instead of axios to ensure proper FormData handling
           console.log("Making API call to /assets with FormData using native fetch");
           
-          // Use direct API approach for asset creation
-          // This should bypass any proxying issues and connect directly to backend
-          console.log("Using direct API connection to backend for asset creation");
+          // IMPORTANT: Use the proxy endpoint to avoid CORS issues
+          // Direct access to the backend API is blocked by CORS
+          console.log("Using proxy endpoint to avoid CORS issues");
           
-          // IMPORTANT: Use absolute URL to backend API, not relative URL
-          // This avoids any confusion with frontend domain
-          const directBackendUrl = 'https://registry.reviz.dev/api/assets';
-          console.log(`Making direct fetch to: ${directBackendUrl}`);
+          // Use the proxy endpoint which handles CORS correctly
+          const proxyEndpoint = '/api/assets';
+          console.log(`Making fetch request through proxy: ${proxyEndpoint}`);
           
-          const fetchResponse = await fetch(directBackendUrl, {
+          const fetchResponse = await fetch(proxyEndpoint, {
             method: 'POST',
             headers: {
               // Only add Authorization header, let browser set Content-Type with boundary
