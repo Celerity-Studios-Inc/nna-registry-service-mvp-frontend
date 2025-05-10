@@ -1022,6 +1022,7 @@ const RegisterAssetPage: React.FC = () => {
             assetData={{
               name: getValues('name'),
               description: getValues('description'),
+              source: getValues('source'),
               layer: getValues('layer'),
               layerName: getValues('layerName'),
               categoryCode: getValues('categoryCode'),
@@ -1050,6 +1051,7 @@ const RegisterAssetPage: React.FC = () => {
             assetData={{
               name: getValues('name'),
               description: getValues('description'),
+              source: getValues('source'),
               layer: getValues('layer'),
               layerName: getValues('layerName'),
               categoryCode: getValues('categoryCode'),
