@@ -594,7 +594,7 @@ class AssetService {
     formData.append('category', assetData.category || 'POP'); 
     formData.append('subcategory', assetData.subcategory || 'BASE');
     formData.append('description', assetData.description || 'Asset description');
-    formData.append('source', 'NNA Registry Frontend');
+    formData.append('source', 'ReViz'); // Match the exact source value from Swagger example
     
     // Add tags exactly as used in reference
     if (assetData.tags && assetData.tags.length > 0) {
@@ -901,7 +901,7 @@ class AssetService {
           formData.append('category', assetData.category || 'POP'); 
           formData.append('subcategory', assetData.subcategory || 'BASE');
           formData.append('description', assetData.description || 'Asset description');
-          formData.append('source', 'NNA Registry Frontend');
+          formData.append('source', 'ReViz'); // Match the exact source value from Swagger example
           
           // Add tags as array items (important: backend expects tags[] format)
           if (assetData.tags && assetData.tags.length > 0) {
@@ -965,7 +965,13 @@ class AssetService {
           // Use direct API approach for asset creation
           // This should bypass any proxying issues and connect directly to backend
           console.log("Using direct API connection to backend for asset creation");
-          const fetchResponse = await fetch('https://registry.reviz.dev/api/assets', {
+          
+          // IMPORTANT: Use absolute URL to backend API, not relative URL
+          // This avoids any confusion with frontend domain
+          const directBackendUrl = 'https://registry.reviz.dev/api/assets';
+          console.log(`Making direct fetch to: ${directBackendUrl}`);
+          
+          const fetchResponse = await fetch(directBackendUrl, {
             method: 'POST',
             headers: {
               // Only add Authorization header, let browser set Content-Type with boundary
