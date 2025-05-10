@@ -5,10 +5,13 @@ export const apiConfig = {
   // Use the proxy approach to avoid CORS issues
   // This ensures requests go through Vercel's proxy defined in vercel.json
   baseURL: '/api',
-  
+
+  // Allow overriding mock mode via localStorage
+  useMockApi: process.env.REACT_APP_USE_MOCK_API === 'true',
+
   // Direct connection causes CORS errors because our domain is not allowed
   // baseURL: 'https://registry.reviz.dev/api',
-  
+
   // Define debugging information for the API
   debug: {
     version: '1.2',
@@ -16,6 +19,17 @@ export const apiConfig = {
     backendUrl: 'https://registry.reviz.dev/api'
   }
 };
+
+// For development, allow overriding mock mode via localStorage
+try {
+  const localStorageMockOverride = localStorage.getItem('forceMockApi');
+  if (localStorageMockOverride !== null) {
+    apiConfig.useMockApi = localStorageMockOverride === 'true';
+    console.log(`Using localStorage override for mock API: ${apiConfig.useMockApi}`);
+  }
+} catch (e) {
+  console.warn('Unable to access localStorage for mock API setting');
+}
 
 console.log('API Configuration:', apiConfig);
 

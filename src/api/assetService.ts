@@ -1,5 +1,4 @@
-import api, { isBackendAvailable as apiBackendStatus } from './api';
-// import axios from 'axios'; // Removed unused import
+import api, { isBackendAvailable as apiBackendStatus, apiConfig } from './api';
 import {
   Asset,
   AssetSearchParams,
@@ -750,7 +749,8 @@ class AssetService {
       // Determine whether to use mock implementation or real API
       const authToken = localStorage.getItem('accessToken') || '';
       const isMockToken = authToken.startsWith('MOCK-');
-      const useMock = process.env.REACT_APP_USE_MOCK_API === 'true' || isMockToken || !isBackendAvailable;
+      const useMock = apiConfig.useMockApi || isMockToken || !isBackendAvailable;
+      console.log('Asset creation mode:', useMock ? 'Mock' : 'Real API');
 
       // Use mock implementation if needed
       if (useMock) {
