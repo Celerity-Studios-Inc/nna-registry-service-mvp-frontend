@@ -291,8 +291,16 @@ const RegisterAssetPage: React.FC = () => {
       const createdAsset = await assetService.createAsset(assetData);
       console.log("Asset created successfully:", createdAsset);
       
+      if (!createdAsset) {
+        throw new Error("Asset creation failed - no asset returned from API");
+      }
+      
       // Store the created asset in localStorage as a fallback in case of page refresh
-      localStorage.setItem('lastCreatedAsset', JSON.stringify(createdAsset));
+      try {
+        localStorage.setItem('lastCreatedAsset', JSON.stringify(createdAsset));
+      } catch (e) {
+        console.warn("Failed to store created asset in localStorage:", e);
+      }
       
       // Update state with the created asset
       setCreatedAsset(createdAsset);
