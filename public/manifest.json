@@ -1,6 +1,6 @@
 {
-  "short_name": "React App",
-  "name": "Create React App Sample",
+  "short_name": "NNA Registry",
+  "name": "NNA Registry Service",
   "icons": [
     {
       "src": "favicon.ico",
