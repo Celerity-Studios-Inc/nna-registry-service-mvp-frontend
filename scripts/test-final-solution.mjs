@@ -62,9 +62,8 @@ async function testFinalSolution() {
   formData.append('source', 'ReViz');
   formData.append('description', 'Final solution test description');
 
-  // Use array-style format for tags
-  formData.append('tags[]', 'test');
-  formData.append('tags[]', 'final-solution');
+  // Backend expects tags as a string
+  formData.append('tags', JSON.stringify(['test', 'final-solution']));
 
   // Add nested objects
   formData.append('trainingData', JSON.stringify({
@@ -89,7 +88,7 @@ async function testFinalSolution() {
   console.log(' - subcategory: BAS');
   console.log(' - source: ReViz');
   console.log(' - description: Final solution test description');
-  console.log(' - tags[]: test, final-solution');
+  console.log(' - tags: ["test", "final-solution"]');
   console.log(' - trainingData: {}');
   console.log(' - rights: {source: "Original", rights_split: "100%"}');
   console.log(' - components[]: ""');

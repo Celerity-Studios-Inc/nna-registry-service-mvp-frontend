@@ -782,13 +782,11 @@ class AssetService {
       formData.append('source', (assetData as any).source || 'ReViz');
       formData.append('description', assetData.description || '');
 
-      // Tags must use the array syntax with tags[] format
+      // Tags must be a JSON string per backend expectations
       if (assetData.tags && assetData.tags.length > 0) {
-        for (const tag of assetData.tags) {
-          formData.append('tags[]', tag);
-        }
+        formData.append('tags', JSON.stringify(assetData.tags));
       } else {
-        formData.append('tags[]', 'general');
+        formData.append('tags', JSON.stringify(['general']));
       }
 
       // Required nested objects
