@@ -297,11 +297,24 @@ const RegisterAssetPage: React.FC = () => {
       // Log form data for debugging
       console.log('Form data for asset creation:', {
         layer: data.layer,
-        categoryCode: data.categoryCode,  // This should be the 3-letter code like "POP"
-        subcategoryCode: data.subcategoryCode, // This should be the 3-letter code like "HPM"
+        categoryCode: data.categoryCode,  // This could be numeric "001" or alphabetic "POP"
+        subcategoryCode: data.subcategoryCode, // This could be numeric "005"/"007" or alphabetic "LGM"/"HPM"
         hfn: data.hfn,
-        mfa: data.mfa
+        mfa: data.mfa,
+        isNumericCategory: /^\d+$/.test(data.categoryCode), // Check if category is numeric
+        isNumericSubcategory: /^\d+$/.test(data.subcategoryCode) // Check if subcategory is numeric
       });
+
+      // Add special logging for the category/subcategory format to debug backend issues
+      console.log('IMPORTANT: Category/Subcategory Format Check:');
+      console.log(`Category: ${data.categoryCode} (${/^\d+$/.test(data.categoryCode) ? 'NUMERIC - needs conversion' : 'ALPHABETIC - OK'})`);
+      console.log(`Subcategory: ${data.subcategoryCode} (${/^\d+$/.test(data.subcategoryCode) ? 'NUMERIC - needs conversion' : 'ALPHABETIC - OK'})`);
+
+      // For S.POP.LGM, log the specific mapping that will be used
+      if (data.layer === 'S' && (data.categoryCode === 'POP' || data.categoryCode === '001') &&
+          (data.subcategoryCode === 'LGM' || data.subcategoryCode === '005')) {
+        console.log('DETECTED S.POP.LGM COMBINATION - Will convert to proper codes for backend');
+      }
 
       // Add extended debug logging specifically for S.POP.HPM case
       if (data.layer === 'S' && data.categoryCode === 'POP' && data.subcategoryCode === 'HPM') {
@@ -317,6 +330,89 @@ const RegisterAssetPage: React.FC = () => {
       }
 
       // Create the asset
+      // First handle the category/subcategory conversion
+      // Enhanced conversion logic to ensure we're sending alphabetic codes to the backend
+      // This is critical as the backend expects alphabetic codes like "POP", not numeric ones like "001"
+
+      // Function to convert known numeric codes to their alphabetic counterparts
+      const getAlphabeticCode = (layer: string, codeType: 'category' | 'subcategory',
+                                 numericCode: string, parentCategoryCode?: string): string => {
+        console.log(`Converting ${codeType} code: ${numericCode} for layer ${layer}` +
+                    (parentCategoryCode ? ` with parent category ${parentCategoryCode}` : ''));
+
+        // For Song layer (S)
+        if (layer === 'S') {
+          // Category codes for S layer
+          if (codeType === 'category') {
+            switch (numericCode) {
+              case '001': return 'POP';
+              case '002': return 'RNB';
+              case '003': return 'RAP';
+              case '004': return 'EDM';
+              // Add more mappings as needed
+              default: return numericCode; // If unknown, keep the original code
+            }
+          }
+
+          // Subcategory codes for S layer - these depend on the parent category
+          if (codeType === 'subcategory') {
+            // Check parent category to provide context-specific conversion
+            // For the POP category
+            if (parentCategoryCode === 'POP' || parentCategoryCode === '001') {
+              switch (numericCode) {
+                case '001': return 'TOP';
+                case '005': return 'LGM';
+                case '007': return 'HPM';
+                // Add more mappings as needed
+                default: return numericCode;
+              }
+            }
+
+            // For other categories, add mappings as needed
+            // This can be expanded with more switch statements
+          }
+        }
+
+        // Add mappings for other layers as needed
+
+        // If no specific mapping is found, return the original code
+        return numericCode;
+      };
+
+      // Check if the code is numeric using regex
+      const isNumeric = (code: string): boolean => /^\d+$/.test(code);
+
+      // Convert category code if it's numeric
+      const convertedCategory = isNumeric(data.categoryCode)
+          ? getAlphabeticCode(data.layer, 'category', data.categoryCode)
+          : data.categoryCode;
+
+      // Convert subcategory code if it's numeric
+      const convertedSubcategory = isNumeric(data.subcategoryCode)
+          ? getAlphabeticCode(data.layer, 'subcategory', data.subcategoryCode, data.categoryCode)
+          : data.subcategoryCode;
+
+      // Log the conversion results for debugging
+      console.log('Code conversion results:');
+      console.log(`Category: ${data.categoryCode} → ${convertedCategory}`);
+      console.log(`Subcategory: ${data.subcategoryCode} → ${convertedSubcategory}`);
+
+      // Add extra validation for the critical S.POP.HPM case
+      if (data.layer === 'S' && (data.categoryCode === 'POP' || data.categoryCode === '001') &&
+          (data.subcategoryCode === 'HPM' || data.subcategoryCode === '007')) {
+        console.log('IMPORTANT - Final validation for S.POP.HPM case:');
+        console.log(`Original values: layer=${data.layer}, category=${data.categoryCode}, subcategory=${data.subcategoryCode}`);
+        console.log(`Converted values: layer=${data.layer}, category=${convertedCategory}, subcategory=${convertedSubcategory}`);
+        console.log(`These should be sending: layer=S, category=POP, subcategory=HPM to the backend`);
+
+        // Check if the conversion is correct
+        if (convertedCategory !== 'POP' || convertedSubcategory !== 'HPM') {
+          console.error('WARNING: S.POP.HPM conversion failed! Backend will likely reject this request.');
+        } else {
+          console.log('✅ S.POP.HPM conversion successful - should work with backend API');
+        }
+      }
+
       const assetData = {
         name: data.name,
         friendlyName: data.name,
@@ -324,8 +420,9 @@ const RegisterAssetPage: React.FC = () => {
         // IMPORTANT: Use category and subcategory instead of categoryCode and subcategoryCode
         // These are the field names the backend API expects
         // Use the 3-letter alphabetic codes (e.g. "POP", "HPM") not numeric codes (e.g. "001", "007")
-        category: data.categoryCode, // Use the 3-letter code (e.g. "POP")
-        subcategory: data.subcategoryCode, // Use the 3-letter code (e.g. "HPM")
+        // Use the pre-converted values to ensure consistency
+        category: convertedCategory,
+        subcategory: convertedSubcategory,
         description: data.description,
         source: data.source || 'ReViz', // Include source field with default
         tags: data.tags || [],

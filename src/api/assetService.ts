@@ -818,7 +818,9 @@ class AssetService {
       // IMPORTANT: Use the direct assets endpoint which is optimized for FormData
       // The assets.ts serverless function is specifically designed to handle
       // multipart/form-data correctly with proper binary handling
-      const assetEndpoint = '/api/assets';
+      // CRITICAL FIX: We must use the direct /api/assets endpoint, NOT /api/proxy?path=assets
+      // Using the proxy endpoint causes FormData handling issues, preventing asset creation
+      const assetEndpoint = '/api/assets'; // Direct endpoint - do not change this
 
       console.log('Using direct asset endpoint:', assetEndpoint);
 
