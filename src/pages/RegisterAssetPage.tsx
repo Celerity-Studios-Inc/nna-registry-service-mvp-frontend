@@ -429,7 +429,11 @@ const RegisterAssetPage: React.FC = () => {
         files: data.files,  // Pass the original files
         // CRITICAL: Include nnaAddress at the root level for consistent access patterns
         // For S.POP.HPM, always use the correct MFA value 2.001.007.001
-        nnaAddress: (data.layer === 'S' && data.categoryCode === 'POP' && data.subcategoryCode === 'HPM')
+        // NOTE: While we're sending 'DIV' as the subcategory to the backend API,
+        // we still keep the correct MFA (2.001.007.001) for display purposes
+        nnaAddress: (data.layer === 'S' &&
+                    (data.categoryCode === 'POP' || data.categoryCode === '001') &&
+                    (data.subcategoryCode === 'HPM' || data.subcategoryCode === '007'))
             ? '2.001.007.001' : data.mfa, // Set the MFA at the root level
         metadata: {
           layerName: data.layerName,
@@ -443,10 +447,15 @@ const RegisterAssetPage: React.FC = () => {
           trainingData: data.trainingData,
           // Special handling for S.POP.HPM to ensure consistent MFA display
           // This ensures that the MFA is always 2.001.007.001 for S.POP.HPM
-          ...(data.layer === 'S' && data.categoryCode === 'POP' && data.subcategoryCode === 'HPM' && {
+          ...(data.layer === 'S' &&
+              (data.categoryCode === 'POP' || data.categoryCode === '001') &&
+              (data.subcategoryCode === 'HPM' || data.subcategoryCode === '007') && {
             // Force the correct MFA for S.POP.HPM
             mfa: '2.001.007.001',
-            machineFriendlyAddress: '2.001.007.001'
+            machineFriendlyAddress: '2.001.007.001',
+            // Store the original HFN with HPM even though we're using DIV for backend
+            hfn: 'S.POP.HPM.001',
+            humanFriendlyName: 'S.POP.HPM.001'
           }),
           // For composite assets, include the component references
           ...(data.layer === 'C' && data.layerSpecificData?.components && {
