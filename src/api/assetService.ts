@@ -12,6 +12,7 @@ import { ApiResponse, PaginatedResponse } from '../types/api.types';
 import assetRegistryService from './assetRegistryService';
 // Import checkEnv only when needed - currently commented out in the code
 // import { checkEnv } from './envCheck';
+import { TaxonomyConverter } from '../services/taxonomyConverter';
 
 // Determine whether real backend is available and connected
 // Use the API module's backend status tracking
@@ -785,27 +786,26 @@ class AssetService {
       formData.append('layer', assetData.layer);
       formData.append('category', assetData.category || '');
 
-      // SPECIAL CASE HANDLING: For S.POP.HPM, use 'DIV' as the subcategory for backend API
-      // While we keep the MFA as 2.001.007.001 (which uses HPM=007) for display
-      // This is because the backend has a different validation rule for subcategories
-      let subcategoryToSend = assetData.subcategory;
+      // We're now using TaxonomyConverter to correctly format taxonomy data for the backend
+      // This replaces the previous special case handling with a systematic solution
 
-      // If this is an S.POP.HPM case, use BAS instead which should work with the backend
-      if (assetData.layer === 'S' && assetData.category === 'POP' && assetData.subcategory === 'HPM') {
-        console.log('CRITICAL FIX: Detected S.POP.HPM case - using BAS subcategory for backend compatibility');
-        console.log('The MFA will still be displayed as 2.001.007.001 but backend will use S.POP.BAS');
-        subcategoryToSend = 'BAS'; // Use BAS (Base) which should be universally accepted
-      }
+      // Get the proper category and subcategory names expected by the backend
+      const categoryName = TaxonomyConverter.getBackendCategoryValue(assetData.layer, assetData.category);
+      const subcategoryName = TaxonomyConverter.getBackendSubcategoryValue(
+        assetData.layer,
+        assetData.category,
+        assetData.subcategory
+      );
 
-      // Use BAS (Base) as the fallback subcategory for all layers and categories
-      // This should be the most universally accepted subcategory
-      formData.append('subcategory', subcategoryToSend || 'BAS');
+      // Send taxonomy names to the backend instead of codes
+      formData.append('category', categoryName || 'Pop');
+      formData.append('subcategory', subcategoryName || 'Base');
       formData.append('source', assetData.source || 'ReViz');
 
       // IMPORTANT: Backend validation requires the description field to be non-empty
       // If description is empty, use a default value based on the asset name
       const descriptionToSend = assetData.description ||
-                               `Asset ${assetData.name} (${assetData.layer}.${assetData.category}.${subcategoryToSend})`;
+                               `Asset ${assetData.name} (${assetData.layer}.${assetData.category}.${assetData.subcategory})`;
       formData.append('description', descriptionToSend);
 
       // Tags must be a JSON string per backend expectations

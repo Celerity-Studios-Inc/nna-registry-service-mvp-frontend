@@ -32,6 +32,7 @@ import FileUpload from '../components/asset/FileUpload';
 import ReviewSubmit from '../components/asset/ReviewSubmit';
 import TrainingDataCollection from '../components/asset/TrainingDataCollection';
 import { ComponentsForm } from '../components/asset/ComponentsForm';
+import { TaxonomyConverter } from '../services/taxonomyConverter';
 
 // Types
 import { LayerOption, CategoryOption, SubcategoryOption } from '../types/taxonomy.types';
@@ -334,63 +335,23 @@ const RegisterAssetPage: React.FC = () => {
       // Enhanced conversion logic to ensure we're sending alphabetic codes to the backend
       // This is critical as the backend expects alphabetic codes like "POP", not numeric ones like "001"
 
-      // Function to convert known numeric codes to their alphabetic counterparts
-      const getAlphabeticCode = (layer: string, codeType: 'category' | 'subcategory',
-                                 numericCode: string, parentCategoryCode?: string): string => {
-        console.log(`Converting ${codeType} code: ${numericCode} for layer ${layer}` +
-                    (parentCategoryCode ? ` with parent category ${parentCategoryCode}` : ''));
+      // Use the new TaxonomyConverter utility for reliable code conversion
+      console.log(`Converting taxonomy codes for layer: ${data.layer}`);
 
-        // For Song layer (S)
-        if (layer === 'S') {
-          // Category codes for S layer
-          if (codeType === 'category') {
-            switch (numericCode) {
-              case '001': return 'POP';
-              case '002': return 'RNB';
-              case '003': return 'RAP';
-              case '004': return 'EDM';
-              // Add more mappings as needed
-              default: return numericCode; // If unknown, keep the original code
-            }
-          }
+      // Convert category code to alphabetic form if needed
+      const convertedCategory = TaxonomyConverter.getAlphabeticCode(
+        data.layer,
+        'category',
+        data.categoryCode
+      );
 
-          // Subcategory codes for S layer - these depend on the parent category
-          if (codeType === 'subcategory') {
-            // Check parent category to provide context-specific conversion
-            // For the POP category
-            if (parentCategoryCode === 'POP' || parentCategoryCode === '001') {
-              switch (numericCode) {
-                case '001': return 'TOP';
-                case '005': return 'LGM';
-                case '007': return 'HPM';
-                // Add more mappings as needed
-                default: return numericCode;
-              }
-            }
-
-            // For other categories, add mappings as needed
-            // This can be expanded with more switch statements
-          }
-        }
-
-        // Add mappings for other layers as needed
-
-        // If no specific mapping is found, return the original code
-        return numericCode;
-      };
-
-      // Check if the code is numeric using regex
-      const isNumeric = (code: string): boolean => /^\d+$/.test(code);
-
-      // Convert category code if it's numeric
-      const convertedCategory = isNumeric(data.categoryCode)
-          ? getAlphabeticCode(data.layer, 'category', data.categoryCode)
-          : data.categoryCode;
-
-      // Convert subcategory code if it's numeric
-      const convertedSubcategory = isNumeric(data.subcategoryCode)
-          ? getAlphabeticCode(data.layer, 'subcategory', data.subcategoryCode, data.categoryCode)
-          : data.subcategoryCode;
+      // Convert subcategory code to alphabetic form if needed
+      const convertedSubcategory = TaxonomyConverter.getAlphabeticCode(
+        data.layer,
+        'subcategory',
+        data.subcategoryCode,
+        data.categoryCode
+      );
 
       // Log the conversion results for debugging
       console.log('Code conversion results:');
