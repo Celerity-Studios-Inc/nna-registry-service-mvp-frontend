@@ -164,21 +164,38 @@ const TaxonomySelection: React.FC<TaxonomySelectionProps> = ({
         
         // Generate and propagate NNA address values when taxonomy is complete
         if (onNNAAddressChange) {
-          // Get alphabetic code for category if it's numeric
-          let categoryAlpha = selectedCategoryCode;
-          if (selectedCategoryCode === '001') categoryAlpha = 'POP';
-          if (selectedCategoryCode === '002') categoryAlpha = 'ROK';
-          if (selectedCategoryCode === '003') categoryAlpha = 'HIP';
-          
-          // Get alphabetic code for subcategory if it's numeric
-          let subcategoryAlpha = selectedSubcategoryCode;
-          if (selectedSubcategoryCode === '001') subcategoryAlpha = 'BAS';
-          if (selectedSubcategoryCode === '002') subcategoryAlpha = 'GLB';
-          if (selectedSubcategoryCode === '003') subcategoryAlpha = 'TEN';
-          
+          // Use categoryName and subcategoryName if available, otherwise try to convert numeric codes
+          let categoryAlpha = categoryName || selectedCategoryCode;
+          let subcategoryAlpha = subcategoryName || selectedSubcategoryCode;
+
+          // If we have numeric codes without names, convert them (fallback)
+          if (/^\d+$/.test(categoryAlpha)) {
+            if (categoryAlpha === '001') categoryAlpha = 'POP';
+            if (categoryAlpha === '002') categoryAlpha = 'ROK';
+            if (categoryAlpha === '003') categoryAlpha = 'HIP';
+          }
+
+          if (/^\d+$/.test(subcategoryAlpha)) {
+            // For Stars (S) layer with POP category, the mappings are different
+            if (layerCode === 'S' && (categoryAlpha === 'POP' || categoryAlpha === '001')) {
+              if (subcategoryAlpha === '001') subcategoryAlpha = 'BAS';
+              if (subcategoryAlpha === '002') subcategoryAlpha = 'DIV';
+              if (subcategoryAlpha === '003') subcategoryAlpha = 'IDF';
+              if (subcategoryAlpha === '004') subcategoryAlpha = 'LGF';
+              if (subcategoryAlpha === '005') subcategoryAlpha = 'LGM';
+              if (subcategoryAlpha === '006') subcategoryAlpha = 'ICM';
+              if (subcategoryAlpha === '007') subcategoryAlpha = 'HPM';
+            } else {
+              // General mapping
+              if (subcategoryAlpha === '001') subcategoryAlpha = 'BAS';
+              if (subcategoryAlpha === '002') subcategoryAlpha = 'GLB';
+              if (subcategoryAlpha === '003') subcategoryAlpha = 'TEN';
+            }
+          }
+
           // Create the properly formatted HFN with alphabetic codes
           const hfnAddress = `${layerCode}.${categoryAlpha}.${subcategoryAlpha}.${sequential}`;
-          const mfaAddress = convertHFNToMFA ? convertHFNToMFA(hfnAddress) : `0.${selectedCategoryCode}.${selectedSubcategoryCode}.${sequential}`;
+          const mfaAddress = convertHFNToMFA(hfnAddress);
           const sequentialNum = parseInt(sequential, 10) || 1;
           
           console.log(`Sending NNA address change: HFN=${hfnAddress}, MFA=${mfaAddress}, seq=${sequentialNum}`);
