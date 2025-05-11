@@ -355,7 +355,7 @@ const RegisterAssetPage: React.FC = () => {
       // Convert subcategory code to alphabetic form if needed
       let convertedSubcategory = data.subcategoryCode;
       if (data.layer === 'S' && (data.categoryCode === 'POP' || data.categoryCode === '001') &&
-          (data.subcategoryCode === '007' || /^\d+$/.test(data.subcategoryCode) && data.subcategoryCode === '007')) {
+          (data.subcategoryCode === '007' || (/^\d+$/.test(data.subcategoryCode) && data.subcategoryCode === '007'))) {
         convertedSubcategory = 'HPM';
         console.log(`CRITICAL PATH: Force mapped subcategory code ${data.subcategoryCode} → HPM for S.POP layer`);
       } else {
@@ -1422,7 +1422,7 @@ const RegisterAssetPage: React.FC = () => {
             createdAsset.metadata?.machineFriendlyAddress ||
             createdAsset.metadata?.mfa ||
             getValues('mfa') ||  // Try to get the value from the form as a last resort
-            createdAsset.nna_address; // Backend sometimes returns this format
+            (createdAsset as any).nna_address; // Backend sometimes returns this format with a different property name
     }
 
     if (!hfn) {
@@ -1558,7 +1558,7 @@ const RegisterAssetPage: React.FC = () => {
                         <Button 
                           variant="outlined" 
                           size="small" 
-                          href={mainFile.url} 
+                          href={displayFile?.url}
                           target="_blank"
                           sx={{ mt: 1 }}
                         >
