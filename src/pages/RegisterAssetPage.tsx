@@ -127,14 +127,30 @@ const RegisterAssetPage: React.FC = () => {
   // Check for any previously created asset in localStorage/sessionStorage
   const getStoredAssetData = () => {
     try {
+      // Only keep stored asset data if navigation is from success page
+      const referrer = document.referrer;
+      const isFromSuccessPage = referrer?.includes('register-asset') &&
+                              window.sessionStorage.getItem('directNavigation') !== 'true';
+
+      // If the user came directly to register-asset via a menu link or direct URL,
+      // we should start with a fresh form
+      if (!isFromSuccessPage) {
+        // Clear any previously stored data to ensure a fresh form
+        window.sessionStorage.removeItem('showSuccessPage');
+        localStorage.removeItem('lastCreatedAsset');
+        console.log('Direct navigation to Register Asset - clearing stored data');
+        window.sessionStorage.setItem('directNavigation', 'true');
+        return { showSuccessPage: false, asset: null };
+      }
+
       const savedShowSuccessPage = window.sessionStorage.getItem('showSuccessPage') === 'true';
       let savedAsset = null;
-      
+
       const savedAssetJson = localStorage.getItem('lastCreatedAsset');
       if (savedAssetJson) {
         savedAsset = JSON.parse(savedAssetJson);
       }
-      
+
       return {
         showSuccessPage: savedShowSuccessPage,
         asset: savedAsset
@@ -147,6 +163,18 @@ const RegisterAssetPage: React.FC = () => {
   
   const storedData = getStoredAssetData();
   
+  // IMPORTANT: Force real API mode for asset creation
+  React.useEffect(() => {
+    // Set forceMockApi to false to ensure we use the real backend
+    localStorage.setItem('forceMockApi', 'false');
+    console.log('FORCING REAL API MODE for asset creation');
+
+    // Clean up on unmount
+    return () => {
+      // Don't remove this setting as we want it to persist
+    };
+  }, []);
+
   // State
   const [activeStep, setActiveStep] = useState<number>(0);
   const [loading, setLoading] = useState<boolean>(false);
