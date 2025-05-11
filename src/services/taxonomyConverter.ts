@@ -3,12 +3,12 @@ import taxonomyService from '../api/taxonomyService';
 
 /**
  * TaxonomyConverter - Utility to convert between various taxonomy formats
- * 
+ *
  * The NNA Registry System uses several representations of taxonomy items:
- * 1. Codes (alphabetic): POP, HPM - Used in human-friendly naming
- * 2. Codes (numeric): 001, 007 - Used in machine-friendly addressing
+ * 1. Codes (alphabetic): POP, HPM - Used in human-friendly naming (HFN)
+ * 2. Codes (numeric): 001, 007 - Used in machine-friendly addressing (MFA)
  * 3. Names: Pop, Pop_Hipster_Male_Stars - Used by backend validation
- * 
+ *
  * This utility provides conversion between these formats to ensure
  * consistent communication between frontend and backend.
  */
