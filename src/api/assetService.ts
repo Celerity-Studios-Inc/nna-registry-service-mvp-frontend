@@ -815,8 +815,13 @@ class AssetService {
       // Make the API request using fetch for better FormData handling
       console.log('Sending asset creation request to API...');
 
-      // Use proxy endpoint to avoid CORS issues
-      const proxyEndpoint = '/api/assets';
+      // IMPORTANT: Use the REST API endpoint from the Vercel proxy helper route
+      // This correctly proxies the request through the API function to the real backend
+      // Using /api/proxy?path=assets ensures the request will get to the correct backend URL
+      const proxyEndpoint = '/api/proxy?path=assets';
+
+      console.log('Using proxy endpoint:', proxyEndpoint);
+
       const response = await fetch(proxyEndpoint, {
         method: 'POST',
         headers: {

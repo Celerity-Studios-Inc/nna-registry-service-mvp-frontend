@@ -23,6 +23,7 @@ async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     // Hard-code the backend URL
     const backendUrl = 'https://registry.reviz.dev/api/assets';
+    console.log('ASSETS HANDLER - Using direct backend URL:', backendUrl);
     
     // For debugging: log all parts of URL
     const url = req.url || '';
