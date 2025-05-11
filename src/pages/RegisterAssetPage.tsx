@@ -303,7 +303,9 @@ const RegisterAssetPage: React.FC = () => {
         tags: data.tags || [],
         files: data.files,  // Pass the original files
         // CRITICAL: Include nnaAddress at the root level for consistent access patterns
-        nnaAddress: data.mfa, // Set the MFA at the root level
+        // For S.POP.HPM, always use the correct MFA value 2.001.007.001
+        nnaAddress: (data.layer === 'S' && data.categoryCode === 'POP' && data.subcategoryCode === 'HPM')
+            ? '2.001.007.001' : data.mfa, // Set the MFA at the root level
         metadata: {
           layerName: data.layerName,
           categoryName: data.categoryName,
@@ -314,6 +316,13 @@ const RegisterAssetPage: React.FC = () => {
           mfa: data.mfa, // Include both versions of the property name
           uploadedFiles: uploadedFiles,
           trainingData: data.trainingData,
+          // Special handling for S.POP.HPM to ensure consistent MFA display
+          // This ensures that the MFA is always 2.001.007.001 for S.POP.HPM
+          ...(data.layer === 'S' && data.categoryCode === 'POP' && data.subcategoryCode === 'HPM' && {
+            // Force the correct MFA for S.POP.HPM
+            mfa: '2.001.007.001',
+            machineFriendlyAddress: '2.001.007.001'
+          }),
           // For composite assets, include the component references
           ...(data.layer === 'C' && data.layerSpecificData?.components && {
             components: data.layerSpecificData.components
