@@ -82,10 +82,17 @@ const AssetDetail: React.FC = () => {
 
   // Extract NNA addressing information from asset data with proper fallbacks
   const hfn = asset.metadata?.humanFriendlyName || asset.metadata?.hfn || asset.friendlyName || asset.name;
+
   // For MFA, use the nnaAddress field (primary field) or check metadata properties
+  // Using consistent fallback pattern across all components
   const mfa = asset.nnaAddress || asset.metadata?.machineFriendlyAddress || asset.metadata?.mfa;
 
   console.log(`Asset detail showing HFN: ${hfn}, MFA: ${mfa}`);
+
+  // If we don't have a valid MFA, log a warning
+  if (!mfa) {
+    console.warn('Warning: No MFA found in asset! Asset ID:', asset.id);
+  }
 
   return (
     <Container maxWidth="lg" sx={{ mt: 4 }}>

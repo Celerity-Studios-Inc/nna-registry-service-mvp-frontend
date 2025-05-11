@@ -93,10 +93,12 @@ const TaxonomySelection: React.FC<TaxonomySelectionProps> = ({
 
       // For development, use the mock implementation in taxonomyService
       // instead of making the actual API call that results in 404
+      // IMPORTANT: Always use the 3-letter codes (not human-readable names) 
+      // for consistent mapping between HFN and MFA
       const response = await taxonomyService.getSequentialNumber(
         layerCode,
-        categoryName || '',
-        subcategoryName || ''
+        selectedCategoryCode || '', // Use code instead of name
+        selectedSubcategoryCode || '' // Use code instead of name
       );
 
       setSequential(response.sequential);
@@ -164,46 +166,26 @@ const TaxonomySelection: React.FC<TaxonomySelectionProps> = ({
         
         // Generate and propagate NNA address values when taxonomy is complete
         if (onNNAAddressChange) {
-          // Use categoryName and subcategoryName if available, otherwise try to convert numeric codes
-          let categoryAlpha = categoryName || selectedCategoryCode;
-          let subcategoryAlpha = subcategoryName || selectedSubcategoryCode;
-
-          // If we have numeric codes without names, convert them (fallback)
-          if (/^\d+$/.test(categoryAlpha)) {
-            if (categoryAlpha === '001') categoryAlpha = 'POP';
-            if (categoryAlpha === '002') categoryAlpha = 'ROK';
-            if (categoryAlpha === '003') categoryAlpha = 'HIP';
-          }
-
-          if (/^\d+$/.test(subcategoryAlpha)) {
-            // For Stars (S) layer with POP category, the mappings are different
-            if (layerCode === 'S' && (categoryAlpha === 'POP' || categoryAlpha === '001')) {
-              if (subcategoryAlpha === '001') subcategoryAlpha = 'BAS';
-              if (subcategoryAlpha === '002') subcategoryAlpha = 'DIV';
-              if (subcategoryAlpha === '003') subcategoryAlpha = 'IDF';
-              if (subcategoryAlpha === '004') subcategoryAlpha = 'LGF';
-              if (subcategoryAlpha === '005') subcategoryAlpha = 'LGM';
-              if (subcategoryAlpha === '006') subcategoryAlpha = 'ICM';
-              if (subcategoryAlpha === '007') subcategoryAlpha = 'HPM';
-            } else {
-              // General mapping
-              if (subcategoryAlpha === '001') subcategoryAlpha = 'BAS';
-              if (subcategoryAlpha === '002') subcategoryAlpha = 'GLB';
-              if (subcategoryAlpha === '003') subcategoryAlpha = 'TEN';
-            }
-          }
-
-          // Create the properly formatted HFN with alphabetic codes
+          // IMPORTANT: Always use the 3-letter codes for consistent mapping
+          // This ensures that the MFA is correctly generated using the taxonomy
+          let categoryAlpha = selectedCategoryCode;
+          let subcategoryAlpha = selectedSubcategoryCode;
+          
+          // Make sure we're using upper case for all codes
+          categoryAlpha = categoryAlpha.toUpperCase();
+          subcategoryAlpha = subcategoryAlpha.toUpperCase();
+          
+          // Create the properly formatted HFN with the 3-letter codes
           const hfnAddress = `${layerCode}.${categoryAlpha}.${subcategoryAlpha}.${sequential}`;
-
-          // Generate the MFA using our conversion function
+          
+          // Generate the MFA using the standard conversion function
           const mfaAddress = convertHFNToMFA(hfnAddress);
           const sequentialNum = parseInt(sequential, 10) || 1;
-
+          
           console.log(`Generated NNA addresses: HFN=${hfnAddress}, MFA=${mfaAddress}, seq=${sequentialNum}`);
-
-          // Use the standard conversion for all cases - no special handling needed
-          // The convertHFNToMFA function will correctly map S.POP.HPM to 2.001.007.XXX
+          
+          // Use the standard conversion for all cases
+          // The convertHFNToMFA function will correctly map codes based on the taxonomy
           console.log(`Using standard MFA conversion for ${hfnAddress} -> ${mfaAddress}`);
           onNNAAddressChange(hfnAddress, mfaAddress, sequentialNum);
         }

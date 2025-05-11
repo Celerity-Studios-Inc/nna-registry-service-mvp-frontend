@@ -273,14 +273,15 @@ const RegisterAssetPage: React.FC = () => {
         layer: data.layer,
         // IMPORTANT: Use category and subcategory instead of categoryCode and subcategoryCode
         // These are the field names the backend API expects
-        // Use the categoryName and subcategoryName (alphabetic codes like "POP", "BAS")
-        // instead of the numeric codes ("001", "001")
-        category: data.categoryName || data.categoryCode, // Use alphabetic code (e.g. "POP") not numeric (e.g. "001")
-        subcategory: data.subcategoryName || data.subcategoryCode, // Use alphabetic code (e.g. "BAS") not numeric
+        // Use the 3-letter alphabetic codes (e.g. "POP", "HPM") not numeric codes (e.g. "001", "007")
+        category: data.categoryCode, // Use the 3-letter code (e.g. "POP")
+        subcategory: data.subcategoryCode, // Use the 3-letter code (e.g. "HPM")
         description: data.description,
         source: data.source || 'ReViz', // Include source field with default
         tags: data.tags || [],
         files: data.files,  // Pass the original files
+        // CRITICAL: Include nnaAddress at the root level for consistent access patterns
+        nnaAddress: data.mfa, // Set the MFA at the root level
         metadata: {
           layerName: data.layerName,
           categoryName: data.categoryName,
@@ -1250,15 +1251,19 @@ const RegisterAssetPage: React.FC = () => {
 
     console.log("Rendering success screen with asset:", createdAsset);
 
-    // Get asset metadata values with fallbacks
-    // For MFA, first try the standard property nnaAddress, then check metadata properties,
-    // then use the values derived during form submission - no hardcoded default
+    // Get asset metadata values with consistent fallbacks (using the same priority as in assetService.ts)
+    // For MFA, first try the standard property nnaAddress, then check metadata properties
     const mfa = createdAsset.nnaAddress ||
                 createdAsset.metadata?.machineFriendlyAddress ||
                 createdAsset.metadata?.mfa ||
-                getValues('mfa');  // Try to get the value from the form as a fallback
+                getValues('mfa');  // Try to get the value from the form as a last resort
 
     console.log(`Success screen showing MFA: ${mfa} from asset:`, createdAsset);
+
+    // If we don't have a valid MFA, log a warning
+    if (!mfa) {
+      console.warn('Warning: No MFA found in created asset or form data!');
+    }
 
     // For HFN, check metadata properties, fall back to form values or name
     const hfn = createdAsset.metadata?.humanFriendlyName ||

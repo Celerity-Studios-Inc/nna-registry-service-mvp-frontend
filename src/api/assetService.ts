@@ -884,9 +884,14 @@ class AssetService {
     // Extract metadata properly for consistent HFN/MFA values
     const hfn = customMetadata.hfn || customMetadata.humanFriendlyName || assetData.name;
 
-    // For MFA, use the value provided in metadata or compute from taxonomy
-    // Don't use a hardcoded default like "0.000.000.001" as it's not a valid standard MFA
-    const mfa = customMetadata.mfa || customMetadata.machineFriendlyAddress;
+    // For MFA, use the value provided in metadata in the proper priority order
+    const mfa = assetData.nnaAddress || // First check if it's at the root level
+              customMetadata.machineFriendlyAddress || // Then check property variations
+              customMetadata.mfa;
+
+    if (!mfa) {
+      console.warn('No MFA found in asset data! This indicates a potential issue with taxonomy selection.');
+    }
 
     console.log(`Mock asset using MFA: ${mfa} and HFN: ${hfn}`);
 

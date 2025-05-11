@@ -88,6 +88,7 @@ export interface AssetCreateRequest {
   layer: string;             // REQUIRED: Layer code
   category?: string;         // Category code (not categoryCode)
   subcategory?: string;      // Subcategory code (not subcategoryCode)
+  nnaAddress?: string;       // Machine Friendly Address (at the root level for consistent access)
   source?: string;           // REQUIRED by backend API: Source of asset (e.g., "ReViz")
   description?: string;      // Optional description
   tags?: string[];           // Optional tags
