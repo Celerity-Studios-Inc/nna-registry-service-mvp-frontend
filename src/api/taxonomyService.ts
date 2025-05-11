@@ -491,35 +491,46 @@ class TaxonomyService {
    */
   async getSequentialNumber(
     layerCode: string,
-    category: string, 
+    category: string,
     subcategory: string
   ): Promise<{ sequential: string }> {
     // Simulate API latency
     await new Promise(resolve => setTimeout(resolve, 500));
-    
+
     // Store sequential counters in a static map to ensure incrementing numbers
     // for the same layer/category/subcategory combination
     if (!this.sequentialCounters) {
       this.sequentialCounters = new Map<string, number>();
     }
-    
+
+    // IMPORTANT: Fix for category code format consistency
+    // Ensure we're using alphabetic codes for the canonical path
+    // If numeric code is provided for category (like "001"), convert to alphabetic (like "POP")
+    let categoryKey = category || "DEFAULT";
+    let subcategoryKey = subcategory || "DEFAULT";
+
+    // Check if category is in numeric format (e.g., "001") and convert to alphabetic (e.g., "POP")
+    if (categoryKey && /^\d+$/.test(categoryKey)) {
+      // For Stars layer with category code 001, use "POP"
+      if (layerCode === 'S' && categoryKey === '001') {
+        categoryKey = 'POP';
+      }
+    }
+
     // Create a key using the taxonomy path
-    // Handle missing category or subcategory by using fallbacks
-    const categoryKey = category || "DEFAULT";
-    const subcategoryKey = subcategory || "DEFAULT";
     const taxonomyPath = `${layerCode}.${categoryKey}.${subcategoryKey}`;
-    
+
     console.log(`Generating sequential number for path: ${taxonomyPath}`);
-    
+
     // Get the current counter or start at 1
     let counter = this.sequentialCounters.get(taxonomyPath) || 1;
-    
+
     // Store the incremented counter for next time
     this.sequentialCounters.set(taxonomyPath, counter + 1);
-    
+
     // Format the counter as a 3-digit string (001, 002, etc.)
     const sequential = String(counter).padStart(3, '0');
-    
+
     console.log(`Generated sequential number: ${sequential} for path: ${taxonomyPath}`);
 
     return { sequential };
