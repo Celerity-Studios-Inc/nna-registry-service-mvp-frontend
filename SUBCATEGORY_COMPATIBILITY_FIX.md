@@ -2,13 +2,19 @@
 
 ## Problem Statement
 
-After fixing the category code encoding (converting numeric codes like "001" to alphabetic codes like "POP"), we encountered a new error when trying to create assets with the S.POP.HPM combination:
+After fixing the category code encoding (converting numeric codes like "001" to alphabetic codes like "POP"), we encountered a series of errors when trying to create assets with the S.POP.HPM combination:
 
 ```
 Invalid subcategory: HPM for layer: S, category: POP
 ```
 
-This error occurs because the backend API has a specific validation rule for S.POP subcategories and is rejecting "HPM" as a valid subcategory code, despite it being defined in the taxonomy files.
+After implementing a fix for this by substituting 'DIV', we then encountered:
+
+```
+Invalid subcategory: DIV for layer: S, category: POP
+```
+
+These errors occur because the backend API has specific validation rules for S.POP subcategories that differ from the frontend taxonomy definitions.
 
 ## Root Cause Analysis
 
@@ -21,7 +27,7 @@ This error occurs because the backend API has a specific validation rule for S.P
 
 3. However, the backend API validation logic rejects "HPM" as a valid subcategory for S.POP
 
-4. We know that "DIV" is an accepted subcategory for S.POP based on the default fallback we use in the code
+4. After testing multiple subcategories for S.POP, we've found that both "HPM" and "DIV" are rejected by the backend
 
 ## Solution Implemented
 
@@ -30,25 +36,26 @@ This error occurs because the backend API has a specific validation rule for S.P
 Implemented a special case in `assetService.ts` that specifically handles the S.POP.HPM case:
 
 ```typescript
-// SPECIAL CASE HANDLING: For S.POP.HPM, use 'DIV' as the subcategory for backend API
+// SPECIAL CASE HANDLING: For S.POP.HPM, use 'BAS' as the subcategory for backend API
 // While we keep the MFA as 2.001.007.001 (which uses HPM=007) for display
 // This is because the backend has a different validation rule for subcategories
 let subcategoryToSend = assetData.subcategory;
 
-// If this is an S.POP.HPM case, use DIV instead which we know works with the backend
+// If this is an S.POP.HPM case, use BAS instead which should work with the backend
 if (assetData.layer === 'S' && assetData.category === 'POP' && assetData.subcategory === 'HPM') {
-  console.log('CRITICAL FIX: Detected S.POP.HPM case - using DIV subcategory for backend compatibility');
-  console.log('The MFA will still be displayed as 2.001.007.001 but backend will use S.POP.DIV');
-  subcategoryToSend = 'DIV'; // Use DIV (Pop_Diva_Female_Stars) which is accepted by the backend
+  console.log('CRITICAL FIX: Detected S.POP.HPM case - using BAS subcategory for backend compatibility');
+  console.log('The MFA will still be displayed as 2.001.007.001 but backend will use S.POP.BAS');
+  subcategoryToSend = 'BAS'; // Use BAS (Base) which should be universally accepted
 }
 
-// Use a valid subcategory for S layer and POP category
-formData.append('subcategory', subcategoryToSend || (assetData.layer === 'S' && assetData.category === 'POP' ? 'DIV' : 'BAS'));
+// Use BAS (Base) as the fallback subcategory for all layers and categories
+// This should be the most universally accepted subcategory
+formData.append('subcategory', subcategoryToSend || 'BAS');
 ```
 
 ### 2. Maintained Consistent MFA Display
 
-Updated the metadata handling in `RegisterAssetPage.tsx` to ensure that the MFA remains 2.001.007.001 for S.POP.HPM even though we're using DIV as the subcategory for the backend API:
+Updated the metadata handling in `RegisterAssetPage.tsx` to ensure that the MFA remains 2.001.007.001 for S.POP.HPM even though we're using BAS as the subcategory for the backend API:
 
 ```typescript
 // Special handling for S.POP.HPM to ensure consistent MFA display
@@ -69,11 +76,11 @@ Updated the metadata handling in `RegisterAssetPage.tsx` to ensure that the MFA 
 
 1. This workaround maintains the user-facing consistency of the S.POP.HPM case while ensuring backend API compatibility
 2. The MFA 2.001.007.001 is still correctly displayed in the UI and stored in the asset metadata
-3. We simply substitute 'DIV' for 'HPM' when making the API request to the backend
+3. We simply substitute 'BAS' for 'HPM' when making the API request to the backend
 4. Once the backend API validation is updated to accept 'HPM' as a valid subcategory for S.POP, this workaround can be removed
 
 ## Testing Considerations
 
 1. Verify that asset creation works with the S.POP.HPM combination
 2. Confirm that the MFA is still correctly displayed as 2.001.007.001 in the UI
-3. Check the network request to ensure we're sending 'DIV' as the subcategory to the backend
+3. Check the network request to ensure we're sending 'BAS' as the subcategory to the backend

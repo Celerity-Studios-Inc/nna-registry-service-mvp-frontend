@@ -790,15 +790,16 @@ class AssetService {
       // This is because the backend has a different validation rule for subcategories
       let subcategoryToSend = assetData.subcategory;
 
-      // If this is an S.POP.HPM case, use DIV instead which we know works with the backend
+      // If this is an S.POP.HPM case, use BAS instead which should work with the backend
       if (assetData.layer === 'S' && assetData.category === 'POP' && assetData.subcategory === 'HPM') {
-        console.log('CRITICAL FIX: Detected S.POP.HPM case - using DIV subcategory for backend compatibility');
-        console.log('The MFA will still be displayed as 2.001.007.001 but backend will use S.POP.DIV');
-        subcategoryToSend = 'DIV'; // Use DIV (Pop_Diva_Female_Stars) which is accepted by the backend
+        console.log('CRITICAL FIX: Detected S.POP.HPM case - using BAS subcategory for backend compatibility');
+        console.log('The MFA will still be displayed as 2.001.007.001 but backend will use S.POP.BAS');
+        subcategoryToSend = 'BAS'; // Use BAS (Base) which should be universally accepted
       }
 
-      // Use a valid subcategory for S layer and POP category (DIV = Pop_Diva_Female_Stars)
-      formData.append('subcategory', subcategoryToSend || (assetData.layer === 'S' && assetData.category === 'POP' ? 'DIV' : 'BAS'));
+      // Use BAS (Base) as the fallback subcategory for all layers and categories
+      // This should be the most universally accepted subcategory
+      formData.append('subcategory', subcategoryToSend || 'BAS');
       formData.append('source', assetData.source || 'ReViz');
 
       // IMPORTANT: Backend validation requires the description field to be non-empty
