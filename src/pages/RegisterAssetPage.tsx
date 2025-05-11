@@ -271,10 +271,12 @@ const RegisterAssetPage: React.FC = () => {
         name: data.name,
         friendlyName: data.name,
         layer: data.layer,
-        categoryCode: data.categoryCode,
-        subcategoryCode: data.subcategoryCode,
+        // IMPORTANT: Use category and subcategory instead of categoryCode and subcategoryCode
+        // These are the field names the backend API expects
+        category: data.categoryCode,
+        subcategory: data.subcategoryCode,
         description: data.description,
-        source: data.source, // Include source field from dropdown
+        source: data.source || 'ReViz', // Include source field with default
         tags: data.tags || [],
         files: data.files,  // Pass the original files
         metadata: {
