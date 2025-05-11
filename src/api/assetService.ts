@@ -749,8 +749,13 @@ class AssetService {
       // Determine whether to use mock implementation or real API
       const authToken = localStorage.getItem('accessToken') || '';
       const isMockToken = authToken.startsWith('MOCK-');
-      const useMock = apiConfig.useMockApi || isMockToken || !isBackendAvailable;
+
+      // DIRECT FIX: Explicitly check localStorage for override
+      const forceRealMode = localStorage.getItem('forceMockApi') === 'false';
+      const useMock = forceRealMode ? false : (apiConfig.useMockApi || isMockToken || !isBackendAvailable);
+
       console.log('Asset creation mode:', useMock ? 'Mock' : 'Real API');
+      console.log('Force real mode:', forceRealMode);
 
       // Use mock implementation if needed
       if (useMock) {
