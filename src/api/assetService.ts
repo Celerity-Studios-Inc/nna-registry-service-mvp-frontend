@@ -815,14 +815,14 @@ class AssetService {
       // Make the API request using fetch for better FormData handling
       console.log('Sending asset creation request to API...');
 
-      // IMPORTANT: Use the REST API endpoint from the Vercel proxy helper route
-      // This correctly proxies the request through the API function to the real backend
-      // Using /api/proxy?path=assets ensures the request will get to the correct backend URL
-      const proxyEndpoint = '/api/proxy?path=assets';
+      // IMPORTANT: Use the direct assets endpoint which is optimized for FormData
+      // The assets.ts serverless function is specifically designed to handle
+      // multipart/form-data correctly with proper binary handling
+      const assetEndpoint = '/api/assets';
 
-      console.log('Using proxy endpoint:', proxyEndpoint);
+      console.log('Using direct asset endpoint:', assetEndpoint);
 
-      const response = await fetch(proxyEndpoint, {
+      const response = await fetch(assetEndpoint, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${authToken}`
