@@ -273,8 +273,10 @@ const RegisterAssetPage: React.FC = () => {
         layer: data.layer,
         // IMPORTANT: Use category and subcategory instead of categoryCode and subcategoryCode
         // These are the field names the backend API expects
-        category: data.categoryCode,
-        subcategory: data.subcategoryCode,
+        // Use the categoryName and subcategoryName (alphabetic codes like "POP", "BAS")
+        // instead of the numeric codes ("001", "001")
+        category: data.categoryName || data.categoryCode, // Use alphabetic code (e.g. "POP") not numeric (e.g. "001")
+        subcategory: data.subcategoryName || data.subcategoryCode, // Use alphabetic code (e.g. "BAS") not numeric
         description: data.description,
         source: data.source || 'ReViz', // Include source field with default
         tags: data.tags || [],
