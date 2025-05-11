@@ -339,19 +339,34 @@ const RegisterAssetPage: React.FC = () => {
       console.log(`Converting taxonomy codes for layer: ${data.layer}`);
 
       // Convert category code to alphabetic form if needed
-      const convertedCategory = TaxonomyConverter.getAlphabeticCode(
-        data.layer,
-        'category',
-        data.categoryCode
-      );
+      let convertedCategory = data.categoryCode;
+      if (data.layer === 'S' && (data.categoryCode === '001' || /^\d+$/.test(data.categoryCode))) {
+        convertedCategory = 'POP';
+        console.log(`CRITICAL PATH: Force mapped category code ${data.categoryCode} → POP for Stars layer`);
+      } else {
+        // Normal conversion path
+        convertedCategory = TaxonomyConverter.getAlphabeticCode(
+          data.layer,
+          'category',
+          data.categoryCode
+        );
+      }
 
       // Convert subcategory code to alphabetic form if needed
-      const convertedSubcategory = TaxonomyConverter.getAlphabeticCode(
-        data.layer,
-        'subcategory',
-        data.subcategoryCode,
-        data.categoryCode
-      );
+      let convertedSubcategory = data.subcategoryCode;
+      if (data.layer === 'S' && (data.categoryCode === 'POP' || data.categoryCode === '001') &&
+          (data.subcategoryCode === '007' || /^\d+$/.test(data.subcategoryCode) && data.subcategoryCode === '007')) {
+        convertedSubcategory = 'HPM';
+        console.log(`CRITICAL PATH: Force mapped subcategory code ${data.subcategoryCode} → HPM for S.POP layer`);
+      } else {
+        // Normal conversion path
+        convertedSubcategory = TaxonomyConverter.getAlphabeticCode(
+          data.layer,
+          'subcategory',
+          data.subcategoryCode,
+          convertedCategory // Use the already converted category
+        );
+      }
 
       // Log the conversion results for debugging
       console.log('Code conversion results:');

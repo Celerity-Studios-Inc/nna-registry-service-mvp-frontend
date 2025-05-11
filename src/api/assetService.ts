@@ -784,22 +784,34 @@ class AssetService {
       // DO NOT include 'name' field - backend will reject it
 
       formData.append('layer', assetData.layer);
-      formData.append('category', assetData.category || '');
 
-      // We're now using TaxonomyConverter to correctly format taxonomy data for the backend
-      // This replaces the previous special case handling with a systematic solution
+      // We're using TaxonomyConverter to correctly format taxonomy data for the backend
+      // Handle S.POP.HPM case and all other cases properly
 
-      // Get the proper category and subcategory names expected by the backend
-      const categoryName = TaxonomyConverter.getBackendCategoryValue(assetData.layer, assetData.category);
-      const subcategoryName = TaxonomyConverter.getBackendSubcategoryValue(
-        assetData.layer,
-        assetData.category,
-        assetData.subcategory
-      );
+      // CRITICAL FIX: Convert the category/subcategory codes to names directly here
+      // This ensures we always send names (not codes) to the backend
 
-      // Send taxonomy names to the backend instead of codes
-      formData.append('category', categoryName || 'Pop');
-      formData.append('subcategory', subcategoryName || 'Base');
+      // Special handling for S.POP.HPM
+      if (assetData.layer === 'S' && (assetData.category === 'POP' || assetData.category === '001')
+          && (assetData.subcategory === 'HPM' || assetData.subcategory === '007')) {
+        console.log('CRITICAL FIX: Sending Pop name for category and Pop_Hipster_Male_Stars for subcategory');
+        formData.append('category', 'Pop');
+        formData.append('subcategory', 'Pop_Hipster_Male_Stars');
+      } else {
+        // For all other cases, use the converter
+        const categoryName = TaxonomyConverter.getBackendCategoryValue(assetData.layer, assetData.category);
+        const subcategoryName = TaxonomyConverter.getBackendSubcategoryValue(
+          assetData.layer,
+          assetData.category,
+          assetData.subcategory
+        );
+
+        console.log(`Converting to names: category=${assetData.category} → ${categoryName}, subcategory=${assetData.subcategory} → ${subcategoryName}`);
+
+        // Send taxonomy names to the backend instead of codes
+        formData.append('category', categoryName || 'Pop');
+        formData.append('subcategory', subcategoryName || 'Base');
+      }
       formData.append('source', assetData.source || 'ReViz');
 
       // IMPORTANT: Backend validation requires the description field to be non-empty
