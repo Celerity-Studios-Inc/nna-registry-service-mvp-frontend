@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NNA Addressing Test for All Layers</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+      line-height: 1.6;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    h1, h2 {
+      color: #2196f3;
+      border-bottom: 1px solid #eee;
+      padding-bottom: 10px;
+    }
+    .layer-section {
+      margin-bottom: 40px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 20px;
+    }
+    th, td {
+      padding: 8px 12px;
+      border: 1px solid #ddd;
+      text-align: left;
+    }
+    th {
+      background-color: #f5f5f5;
+      font-weight: bold;
+    }
+    tr:hover {
+      background-color: #f9f9f9;
+    }
+    .error {
+      color: #f44336;
+      font-weight: bold;
+    }
+    .success {
+      color: #4caf50;
+      font-weight: bold;
+    }
+    code {
+      background-color: #f5f5f5;
+      padding: 2px 4px;
+      border-radius: 2px;
+      font-family: monospace;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <h1>NNA Addressing Test for All Layers</h1>
+  <p>This page tests the conversion between Human-Friendly Names (HFN) and Machine-Friendly Addresses (MFA) for all layers in the NNA Registry system.</p>
+
+  <div id="results"></div>
+
+  <script>
+    const layers = [
+      { code: 'G', name: 'Songs', numeric: 1 },
+      { code: 'S', name: 'Stars', numeric: 2 },
+      { code: 'L', name: 'Looks', numeric: 3 },
+      { code: 'M', name: 'Moves', numeric: 4 },
+      { code: 'W', name: 'Worlds', numeric: 5 },
+      { code: 'B', name: 'Branded', numeric: 6 },
+      { code: 'P', name: 'Personalize', numeric: 7 },
+      { code: 'T', name: 'Training Data', numeric: 8 },
+      { code: 'C', name: 'Composite', numeric: 9 },
+      { code: 'R', name: 'Rights', numeric: 10 }
+    ];
+
+    // Sample categories and subcategories for each layer
+    const samples = {
+      'G': [
+        { category: 'POP', subcategory: 'IND', desc: 'Pop - Indie Pop' },
+        { category: 'RCK', subcategory: 'PRG', desc: 'Rock - Progressive Rock' },
+        { category: 'HIP', subcategory: 'TRP', desc: 'Hip Hop - Trap' }
+      ],
+      'S': [
+        { category: 'POP', subcategory: 'HPM', desc: 'Pop - Pop_Hipster_Male_Stars' },
+        { category: 'POP', subcategory: 'DIV', desc: 'Pop - Pop_Diva_Female_Stars' },
+        { category: 'RCK', subcategory: 'LGD', desc: 'Rock - Rock Legend' }
+      ],
+      'L': [
+        { category: 'PRF', subcategory: 'SPK', desc: 'Modern Performance - Sparkly Dress' },
+        { category: 'TRD', subcategory: 'KIM', desc: 'Traditional Attire - Kimono' },
+        { category: 'FAS', subcategory: 'HGH', desc: 'Fashion - High Fashion' }
+      ],
+      'W': [
+        { category: 'CLB', subcategory: 'BCH', desc: 'Dance Clubs - Beach Club' },
+        { category: 'STG', subcategory: 'FES', desc: 'Concert Stages - Festival' },
+        { category: 'URB', subcategory: 'NYS', desc: 'Urban - New York Style' }
+      ],
+      'M': [
+        { category: 'DAN', subcategory: 'HIP', desc: 'Dance - Hip Hop' },
+        { category: 'BAL', subcategory: 'CLS', desc: 'Ballet - Classical' },
+        { category: 'MAR', subcategory: 'KNG', desc: 'Martial Arts - Kung Fu' }
+      ],
+      'B': [
+        { category: 'FAS', subcategory: 'LOU', desc: 'Fashion - Louis Vuitton' },
+        { category: 'FOO', subcategory: 'MCL', desc: 'Food - McDonalds' },
+        { category: 'CAR', subcategory: 'FRR', desc: 'Cars - Ferrari' }
+      ],
+      'P': [
+        { category: 'AVA', subcategory: 'FAC', desc: 'Avatar - Face' },
+        { category: 'SCR', subcategory: 'VOI', desc: 'Script - Voice' },
+        { category: 'STY', subcategory: 'CLO', desc: 'Style - Clothes' }
+      ],
+      'T': [
+        { category: 'SNG', subcategory: 'LYR', desc: 'Songs - Lyrics' },
+        { category: 'IMP', subcategory: 'MIC', desc: 'Impressions - Michael Jackson' },
+        { category: 'VIB', subcategory: 'EMO', desc: 'Vibes - Emotional' }
+      ],
+      'C': [
+        { category: 'MIX', subcategory: 'AVG', desc: 'Mix - Avengers' },
+        { category: 'COM', subcategory: 'SCN', desc: 'Combo - Scene' },
+        { category: 'BND', subcategory: 'STA', desc: 'Bundle - Standard' }
+      ],
+      'R': [
+        { category: 'LIC', subcategory: 'IMG', desc: 'License - Image Rights' },
+        { category: 'OWN', subcategory: 'TRD', desc: 'Ownership - Trademark' },
+        { category: 'ROY', subcategory: 'SNG', desc: 'Royalty - Song Rights' }
+      ]
+    };
+
+    // Function to run tests
+    async function runTests() {
+      const resultsElement = document.getElementById('results');
+      
+      // Import functions from the frontend build
+      try {
+        // Load the main bundle - wait for it
+        await new Promise((resolve) => {
+          const script = document.createElement('script');
+          script.src = '/static/js/main.c7651dca.js';
+          script.onload = resolve;
+          document.head.appendChild(script);
+        });
+
+        // Access the functions from the window object
+        const { convertHFNToMFA, convertMFAToHFN } = window.nnaCodeMappingFunctions || {};
+        
+        if (!convertHFNToMFA || !convertMFAToHFN) {
+          throw new Error('Conversion functions not found in the bundle');
+        }
+
+        // Create HTML for each layer
+        for (const layer of layers) {
+          let htmlContent = `
+            <div class="layer-section">
+              <h2>${layer.name} (${layer.code})</h2>
+              <table>
+                <thead>
+                  <tr>
+                    <th>Description</th>
+                    <th>HFN</th>
+                    <th>MFA</th>
+                    <th>Round-Trip HFN</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+          `;
+
+          // Add test cases for this layer
+          const layerSamples = samples[layer.code] || [];
+          for (const sample of layerSamples) {
+            const hfn = `${layer.code}.${sample.category}.${sample.subcategory}.001`;
+            let mfa, roundTripHfn, status;
+
+            try {
+              mfa = convertHFNToMFA(hfn);
+              roundTripHfn = convertMFAToHFN(mfa);
+              status = hfn === roundTripHfn ? 'success' : 'error';
+            } catch (error) {
+              mfa = 'Error';
+              roundTripHfn = 'Error';
+              status = 'error';
+            }
+
+            htmlContent += `
+              <tr>
+                <td>${sample.desc}</td>
+                <td><code>${hfn}</code></td>
+                <td><code>${mfa}</code></td>
+                <td><code>${roundTripHfn}</code></td>
+                <td class="${status}">
+                  ${status === 'success' ? '✅ MATCH' : '❌ MISMATCH'}
+                </td>
+              </tr>
+            `;
+          }
+
+          htmlContent += `
+                </tbody>
+              </table>
+            </div>
+          `;
+
+          resultsElement.innerHTML += htmlContent;
+        }
+      } catch (error) {
+        resultsElement.innerHTML = `
+          <div class="error">
+            <h3>Error Running Tests</h3>
+            <p>${error.message}</p>
+            <p>Try to reload the page, or check the console for more information.</p>
+          </div>
+        `;
+        console.error('Error running tests:', error);
+      }
+    }
+
+    // Run tests when page loads
+    window.onload = runTests;
+  </script>
+</body>
+</html>
