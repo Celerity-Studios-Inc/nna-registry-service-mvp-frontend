@@ -1,0 +1,251 @@
+<\!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MFA Conversion Test</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+      padding: 20px;
+      max-width: 800px;
+      margin: 0 auto;
+      line-height: 1.6;
+    }
+    h1 {
+      color: #333;
+      border-bottom: 1px solid #ddd;
+      padding-bottom: 10px;
+    }
+    h2 {
+      color: #555;
+      margin-top: 30px;
+    }
+    .input-section {
+      margin-bottom: 20px;
+      padding: 15px;
+      background-color: #f5f5f5;
+      border-radius: 5px;
+    }
+    .output-section {
+      margin-bottom: 20px;
+      padding: 15px;
+      background-color: #eef5ff;
+      border-radius: 5px;
+    }
+    .special-cases {
+      margin-top: 30px;
+      padding: 15px;
+      background-color: #fff3e0;
+      border-radius: 5px;
+      border-left: 4px solid #ff9800;
+    }
+    .test-cases {
+      margin-top: 30px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 8px;
+      text-align: left;
+    }
+    th {
+      background-color: #f2f2f2;
+    }
+    tr:nth-child(even) {
+      background-color: #f9f9f9;
+    }
+    .test-button {
+      background-color: #4CAF50;
+      color: white;
+      padding: 10px 15px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+      margin-top: 5px;
+    }
+    .test-button:hover {
+      background-color: #45a049;
+    }
+    input, select {
+      padding: 8px;
+      margin: 5px 0;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      width: 100%;
+    }
+    .success {
+      color: green;
+      font-weight: bold;
+    }
+    .error {
+      color: red;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <h1>NNA Address Conversion Tool</h1>
+  <p>This tool tests the conversion between Human-Friendly Names (HFN) and Machine-Friendly Addresses (MFA) for the NNA Registry.</p>
+  
+  <div class="input-section">
+    <h2>Manual Test</h2>
+    <div>
+      <label for="hfn-input">Human-Friendly Name (HFN):</label>
+      <input type="text" id="hfn-input" placeholder="e.g., S.POP.HPM.001" value="S.POP.HPM.001">
+      <button id="convert-to-mfa" class="test-button">Convert to MFA</button>
+    </div>
+    <div>
+      <label for="mfa-input">Machine-Friendly Address (MFA):</label>
+      <input type="text" id="mfa-input" placeholder="e.g., 2.001.007.001" value="2.001.007.001">
+      <button id="convert-to-hfn" class="test-button">Convert to HFN</button>
+    </div>
+  </div>
+  
+  <div class="output-section">
+    <h2>Conversion Result</h2>
+    <div id="result-output">Enter a value above and click a conversion button.</div>
+  </div>
+  
+  <div class="special-cases">
+    <h2>Special Case - S.POP.HPM</h2>
+    <p>The S.POP.HPM case is particularly important because it has a specific mapping requirement:</p>
+    <ul>
+      <li>Human-Friendly Name: <strong>S.POP.HPM.001</strong></li>
+      <li>Machine-Friendly Address: <strong>2.001.007.001</strong></li>
+    </ul>
+    <button id="test-special-case" class="test-button">Test S.POP.HPM Case</button>
+    <div id="special-case-result" style="margin-top: 10px;"></div>
+  </div>
+  
+  <div class="test-cases">
+    <h2>Batch Test Cases</h2>
+    <button id="run-all-tests" class="test-button">Run All Test Cases</button>
+    <table id="test-cases-table">
+      <thead>
+        <tr>
+          <th>HFN</th>
+          <th>Expected MFA</th>
+          <th>Conversion Result</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <\!-- Test cases will be added here by JavaScript -->
+      </tbody>
+    </table>
+  </div>
+
+  <script src="/static/js/main.c7651dca.js"></script>
+  <script>
+    // Wait for the page to load
+    document.addEventListener('DOMContentLoaded', function() {
+      // Check if the code mapping functions are available
+      const checkFunctionsAvailable = setInterval(() => {
+        if (window.nnaCodeMappingFunctions) {
+          clearInterval(checkFunctionsAvailable);
+          initializeApp();
+        }
+      }, 500);
+      
+      // Set a timeout to stop checking after 10 seconds
+      setTimeout(() => {
+        clearInterval(checkFunctionsAvailable);
+        document.getElementById('result-output').innerHTML = 
+          '<span class="error">Error: NNA code mapping functions not found. Please make sure the application is loaded correctly.</span>';
+      }, 10000);
+    });
+    
+    function initializeApp() {
+      const { convertHFNToMFA, convertMFAToHFN } = window.nnaCodeMappingFunctions;
+      
+      // Convert HFN to MFA
+      document.getElementById('convert-to-mfa').addEventListener('click', function() {
+        const hfn = document.getElementById('hfn-input').value;
+        const mfa = convertHFNToMFA(hfn);
+        document.getElementById('result-output').innerHTML = 
+          `<p>HFN: <strong>${hfn}</strong></p>
+           <p>MFA: <strong>${mfa}</strong></p>`;
+      });
+      
+      // Convert MFA to HFN
+      document.getElementById('convert-to-hfn').addEventListener('click', function() {
+        const mfa = document.getElementById('mfa-input').value;
+        const hfn = convertMFAToHFN(mfa);
+        document.getElementById('result-output').innerHTML = 
+          `<p>MFA: <strong>${mfa}</strong></p>
+           <p>HFN: <strong>${hfn}</strong></p>`;
+      });
+      
+      // Test S.POP.HPM special case
+      document.getElementById('test-special-case').addEventListener('click', function() {
+        const hfn = 'S.POP.HPM.001';
+        const expectedMfa = '2.001.007.001';
+        const actualMfa = convertHFNToMFA(hfn);
+        
+        // Test MFA to HFN conversion too
+        const roundTripHfn = convertMFAToHFN(actualMfa);
+        
+        const isCorrect = actualMfa === expectedMfa;
+        const roundTripCorrect = roundTripHfn === hfn;
+        
+        document.getElementById('special-case-result').innerHTML = 
+          `<p>HFN: <strong>${hfn}</strong></p>
+           <p>Expected MFA: <strong>${expectedMfa}</strong></p>
+           <p>Actual MFA: <strong class="${isCorrect ? 'success' : 'error'}">${actualMfa}</strong></p>
+           <p>Round-trip HFN: <strong class="${roundTripCorrect ? 'success' : 'error'}">${roundTripHfn}</strong></p>
+           <p>Status: <strong class="${isCorrect && roundTripCorrect ? 'success' : 'error'}">${isCorrect && roundTripCorrect ? 'PASSED' : 'FAILED'}</strong></p>`;
+      });
+      
+      // Batch test cases
+      const testCases = [
+        { hfn: 'S.POP.HPM.001', expectedMfa: '2.001.007.001' },
+        { hfn: 'S.POP.DIV.001', expectedMfa: '2.001.002.001' },
+        { hfn: 'S.ROK.BAS.001', expectedMfa: '2.002.001.001' },
+        { hfn: 'G.POP.BAS.001', expectedMfa: '1.001.001.001' },
+        { hfn: 'G.POP.IND.001', expectedMfa: '1.001.007.001' },
+        { hfn: 'M.HIP.BAS.001', expectedMfa: '4.003.001.001' },
+        { hfn: 'L.LAT.BAS.001', expectedMfa: '3.010.001.001' },
+        { hfn: 'W.WLD.BAS.001', expectedMfa: '5.013.001.001' }
+      ];
+      
+      // Run all test cases
+      document.getElementById('run-all-tests').addEventListener('click', function() {
+        const tbody = document.querySelector('#test-cases-table tbody');
+        tbody.innerHTML = ''; // Clear previous results
+        
+        let allPassed = true;
+        
+        testCases.forEach(test => {
+          const actualMfa = convertHFNToMFA(test.hfn);
+          const passed = actualMfa === test.expectedMfa;
+          if (\!passed) allPassed = false;
+          
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td>${test.hfn}</td>
+            <td>${test.expectedMfa}</td>
+            <td>${actualMfa}</td>
+            <td class="${passed ? 'success' : 'error'}">${passed ? 'PASSED' : 'FAILED'}</td>
+          `;
+          tbody.appendChild(row);
+        });
+        
+        // Add summary row
+        const summaryRow = document.createElement('tr');
+        summaryRow.innerHTML = `
+          <td colspan="3" style="text-align:right">Overall Status:</td>
+          <td class="${allPassed ? 'success' : 'error'}">${allPassed ? 'ALL PASSED' : 'SOME FAILED'}</td>
+        `;
+        tbody.appendChild(summaryRow);
+      });
+    }
+  </script>
+</body>
+</html>
+EOF < /dev/null

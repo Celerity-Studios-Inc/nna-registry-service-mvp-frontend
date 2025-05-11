@@ -93,12 +93,18 @@ const TaxonomySelection: React.FC<TaxonomySelectionProps> = ({
 
       // For development, use the mock implementation in taxonomyService
       // instead of making the actual API call that results in 404
-      // IMPORTANT: Always use the 3-letter codes (not human-readable names) 
+      // IMPORTANT: Always use the 3-letter alphabetic codes (not numeric codes)
       // for consistent mapping between HFN and MFA
+      // Make sure we're using the 3-letter codes (POP, HPM) and not numeric codes (001, 007)
+      const categoryCode = selectedCategoryCode || '';
+      const subcategoryCode = selectedSubcategoryCode || '';
+
+      console.log(`Using category code: ${categoryCode}, subcategory code: ${subcategoryCode}`);
+
       const response = await taxonomyService.getSequentialNumber(
         layerCode,
-        selectedCategoryCode || '', // Use code instead of name
-        selectedSubcategoryCode || '' // Use code instead of name
+        categoryCode,
+        subcategoryCode
       );
 
       setSequential(response.sequential);
@@ -163,30 +169,47 @@ const TaxonomySelection: React.FC<TaxonomySelectionProps> = ({
         await fetchSequential();
 
         setIsUnique(true);
-        
+
         // Generate and propagate NNA address values when taxonomy is complete
         if (onNNAAddressChange) {
           // IMPORTANT: Always use the 3-letter codes for consistent mapping
           // This ensures that the MFA is correctly generated using the taxonomy
           let categoryAlpha = selectedCategoryCode;
           let subcategoryAlpha = selectedSubcategoryCode;
-          
+
           // Make sure we're using upper case for all codes
           categoryAlpha = categoryAlpha.toUpperCase();
           subcategoryAlpha = subcategoryAlpha.toUpperCase();
-          
+
+          // Check if we're dealing with S.POP.HPM for additional debugging
+          if (layerCode === 'S' && categoryAlpha === 'POP' && subcategoryAlpha === 'HPM') {
+            console.log('IMPORTANT: Found S.POP.HPM combination, special case for debugging');
+          }
+
           // Create the properly formatted HFN with the 3-letter codes
           const hfnAddress = `${layerCode}.${categoryAlpha}.${subcategoryAlpha}.${sequential}`;
-          
+
           // Generate the MFA using the standard conversion function
           const mfaAddress = convertHFNToMFA(hfnAddress);
           const sequentialNum = parseInt(sequential, 10) || 1;
-          
+
           console.log(`Generated NNA addresses: HFN=${hfnAddress}, MFA=${mfaAddress}, seq=${sequentialNum}`);
-          
+
           // Use the standard conversion for all cases
           // The convertHFNToMFA function will correctly map codes based on the taxonomy
           console.log(`Using standard MFA conversion for ${hfnAddress} -> ${mfaAddress}`);
+
+          // Verify the correct MFA generation for S.POP.HPM
+          if (layerCode === 'S' && categoryAlpha === 'POP' && subcategoryAlpha === 'HPM') {
+            console.log('VERIFICATION: S.POP.HPM should map to MFA 2.001.007.001');
+            // Apply a validation check - this is expected to be 2.001.007.001
+            if (mfaAddress !== '2.001.007.001') {
+              console.error(`WARNING: Expected MFA for S.POP.HPM to be 2.001.007.001 but got ${mfaAddress}`);
+            }
+          }
+
+          // Always pass the original 3-letter codes along with the MFA and HFN
+          // This ensures consistency between steps
           onNNAAddressChange(hfnAddress, mfaAddress, sequentialNum);
         }
       } catch (err) {

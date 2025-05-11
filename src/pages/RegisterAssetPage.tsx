@@ -266,6 +266,28 @@ const RegisterAssetPage: React.FC = () => {
         }
       }
 
+      // Log form data for debugging
+      console.log('Form data for asset creation:', {
+        layer: data.layer,
+        categoryCode: data.categoryCode,  // This should be the 3-letter code like "POP"
+        subcategoryCode: data.subcategoryCode, // This should be the 3-letter code like "HPM"
+        hfn: data.hfn,
+        mfa: data.mfa
+      });
+
+      // Add extended debug logging specifically for S.POP.HPM case
+      if (data.layer === 'S' && data.categoryCode === 'POP' && data.subcategoryCode === 'HPM') {
+        console.log('IMPORTANT - Asset registration with S.POP.HPM:');
+        console.log(`HFN: ${data.hfn}`);
+        console.log(`MFA: ${data.mfa}`);
+        console.log('Verifying MFA is correct: expected 2.001.007.001');
+
+        // This should match the expected MFA for S.POP.HPM
+        if (data.mfa !== '2.001.007.001') {
+          console.error(`WARNING: MFA is incorrect! Expected 2.001.007.001 but got ${data.mfa}`);
+        }
+      }
+
       // Create the asset
       const assetData = {
         name: data.name,
@@ -1259,6 +1281,20 @@ const RegisterAssetPage: React.FC = () => {
                 getValues('mfa');  // Try to get the value from the form as a last resort
 
     console.log(`Success screen showing MFA: ${mfa} from asset:`, createdAsset);
+
+    // Validate S.POP.HPM case specifically
+    if (createdAsset.layer === 'S' &&
+        (createdAsset.category === 'POP' || createdAsset.metadata?.categoryCode === 'POP')) {
+      if (createdAsset.subcategory === 'HPM' || createdAsset.metadata?.subcategoryCode === 'HPM') {
+        console.log('IMPORTANT: Created asset is S.POP.HPM');
+        console.log(`MFA value on success screen: ${mfa}`);
+
+        // The expected MFA for S.POP.HPM is 2.001.007.001
+        if (mfa !== '2.001.007.001') {
+          console.error(`ERROR: Expected MFA of 2.001.007.001 for S.POP.HPM but found ${mfa}`);
+        }
+      }
+    }
 
     // If we don't have a valid MFA, log a warning
     if (!mfa) {
