@@ -800,7 +800,12 @@ class AssetService {
       // Use a valid subcategory for S layer and POP category (DIV = Pop_Diva_Female_Stars)
       formData.append('subcategory', subcategoryToSend || (assetData.layer === 'S' && assetData.category === 'POP' ? 'DIV' : 'BAS'));
       formData.append('source', assetData.source || 'ReViz');
-      formData.append('description', assetData.description || '');
+
+      // IMPORTANT: Backend validation requires the description field to be non-empty
+      // If description is empty, use a default value based on the asset name
+      const descriptionToSend = assetData.description ||
+                               `Asset ${assetData.name} (${assetData.layer}.${assetData.category}.${subcategoryToSend})`;
+      formData.append('description', descriptionToSend);
 
       // Tags must be a JSON string per backend expectations
       if (assetData.tags && assetData.tags.length > 0) {
