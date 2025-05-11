@@ -88,6 +88,10 @@ export function convertHFNToMFA(hfnAddress: string): string {
   // For each category, map its subcategories correctly
   let subcategoryNumeric = '001'; // Default as Base
 
+  // Handle standard conversion using the mappings in the taxonomy
+  // No special case needed - HPM already maps to 007 in the taxonomy data
+  console.log(`Converting ${layer}.${category}.${subcategory}.${sequential} to MFA format`);
+
   // Handle common subcategories with proper mappings
   // These numeric mappings come from enriched_nna_layer_taxonomy_v1.3.json
   const subcategoryMappings: Record<string, Record<string, string>> = {
@@ -203,7 +207,7 @@ export function convertMFAToHFN(mfaAddress: string): string {
       '004': 'DNC', // Dance_Pop for Songs, LGF for Stars
       '005': 'ELC', // Electro_Pop for Songs, LGM for Stars
       '006': 'DRM', // Dream_Pop for Songs, ICM for Stars
-      '007': 'IND', // Indie_Pop for Songs, HPM for Stars
+      '007': 'IND', // Indie_Pop for Songs, HPM for Stars (for Stars layer)
       '008': 'LAT', // Latin_Pop
       '009': 'SOU', // Soul_Pop
       '010': 'RCK', // Pop_Rock
@@ -239,9 +243,12 @@ export function convertMFAToHFN(mfaAddress: string): string {
       '004': 'LGF', // Pop_Legend_Female_Stars
       '005': 'LGM', // Pop_Legend_Male_Stars
       '006': 'ICM', // Pop_Icon_Male_Stars
-      '007': 'HPM'  // Pop_Hipster_Male_Stars
+      '007': 'HPM'  // Pop_Hipster_Male_Stars - IMPORTANT: Special case that must map to 007
     };
     subcategoryAlpha = starsPOPSubcategories[subcategoryNumeric] || 'BAS';
+
+    // Log the standard conversion result
+    console.log(`Converted MFA: ${layerNumeric}.${categoryNumeric}.${subcategoryNumeric}.${sequential} to HFN: ${layerAlpha}.${categoryAlpha}.${subcategoryAlpha}.${sequential}`);
   } else {
     // Try to get subcategory mapping for the category, or fall back to default
     if (subcategoryMappings[categoryAlpha]) {

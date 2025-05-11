@@ -1249,15 +1249,21 @@ const RegisterAssetPage: React.FC = () => {
     }
 
     console.log("Rendering success screen with asset:", createdAsset);
-    
+
     // Get asset metadata values with fallbacks
-    const mfa = createdAsset.nnaAddress || 
-                createdAsset.metadata?.machineFriendlyAddress || 
-                createdAsset.metadata?.mfa || 
-                "0.000.000.001";
-                
-    const hfn = createdAsset.metadata?.humanFriendlyName || 
-                createdAsset.metadata?.hfn || 
+    // For MFA, first try the standard property nnaAddress, then check metadata properties,
+    // then use the values derived during form submission - no hardcoded default
+    const mfa = createdAsset.nnaAddress ||
+                createdAsset.metadata?.machineFriendlyAddress ||
+                createdAsset.metadata?.mfa ||
+                getValues('mfa');  // Try to get the value from the form as a fallback
+
+    console.log(`Success screen showing MFA: ${mfa} from asset:`, createdAsset);
+
+    // For HFN, check metadata properties, fall back to form values or name
+    const hfn = createdAsset.metadata?.humanFriendlyName ||
+                createdAsset.metadata?.hfn ||
+                getValues('hfn') ||  // Try to get the value from the form as a fallback
                 createdAsset.name;
                 
     const layerName = createdAsset.metadata?.layerName || 

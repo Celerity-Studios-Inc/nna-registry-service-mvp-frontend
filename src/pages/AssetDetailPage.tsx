@@ -80,6 +80,13 @@ const AssetDetail: React.FC = () => {
     );
   }
 
+  // Extract NNA addressing information from asset data with proper fallbacks
+  const hfn = asset.metadata?.humanFriendlyName || asset.metadata?.hfn || asset.friendlyName || asset.name;
+  // For MFA, use the nnaAddress field (primary field) or check metadata properties
+  const mfa = asset.nnaAddress || asset.metadata?.machineFriendlyAddress || asset.metadata?.mfa;
+
+  console.log(`Asset detail showing HFN: ${hfn}, MFA: ${mfa}`);
+
   return (
     <Container maxWidth="lg" sx={{ mt: 4 }}>
       <Button
@@ -135,6 +142,33 @@ const AssetDetail: React.FC = () => {
                 <strong>Updated At:</strong>
                 {formatDate(asset.updatedAt || '')}
               </Typography>
+            </Box>
+          </Grid>
+
+          {/* Add NNA Address section */}
+          <Grid item xs={12}>
+            <Typography variant="subtitle1" color="textSecondary" gutterBottom>
+              NNA Addressing
+            </Typography>
+            <Box sx={{ mb: 2, p: 2, border: '1px solid #eee', borderRadius: 1 }}>
+              <Grid container spacing={2}>
+                <Grid item xs={12} sm={6}>
+                  <Typography variant="body2" color="textSecondary">
+                    Human-Friendly Name (HFN)
+                  </Typography>
+                  <Typography variant="body1" fontWeight="bold" sx={{ mt: 0.5 }}>
+                    {hfn}
+                  </Typography>
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <Typography variant="body2" color="textSecondary">
+                    Machine-Friendly Address (MFA)
+                  </Typography>
+                  <Typography variant="body1" fontFamily="monospace" fontWeight="medium" sx={{ mt: 0.5 }}>
+                    {mfa}
+                  </Typography>
+                </Grid>
+              </Grid>
             </Box>
           </Grid>
 

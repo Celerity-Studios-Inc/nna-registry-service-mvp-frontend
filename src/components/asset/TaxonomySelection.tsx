@@ -195,10 +195,16 @@ const TaxonomySelection: React.FC<TaxonomySelectionProps> = ({
 
           // Create the properly formatted HFN with alphabetic codes
           const hfnAddress = `${layerCode}.${categoryAlpha}.${subcategoryAlpha}.${sequential}`;
+
+          // Generate the MFA using our conversion function
           const mfaAddress = convertHFNToMFA(hfnAddress);
           const sequentialNum = parseInt(sequential, 10) || 1;
-          
-          console.log(`Sending NNA address change: HFN=${hfnAddress}, MFA=${mfaAddress}, seq=${sequentialNum}`);
+
+          console.log(`Generated NNA addresses: HFN=${hfnAddress}, MFA=${mfaAddress}, seq=${sequentialNum}`);
+
+          // Use the standard conversion for all cases - no special handling needed
+          // The convertHFNToMFA function will correctly map S.POP.HPM to 2.001.007.XXX
+          console.log(`Using standard MFA conversion for ${hfnAddress} -> ${mfaAddress}`);
           onNNAAddressChange(hfnAddress, mfaAddress, sequentialNum);
         }
       } catch (err) {

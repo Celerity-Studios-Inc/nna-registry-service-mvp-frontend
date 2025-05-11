@@ -883,7 +883,13 @@ class AssetService {
     
     // Extract metadata properly for consistent HFN/MFA values
     const hfn = customMetadata.hfn || customMetadata.humanFriendlyName || assetData.name;
-    const mfa = customMetadata.mfa || customMetadata.machineFriendlyAddress || "0.000.000.001";
+
+    // For MFA, use the value provided in metadata or compute from taxonomy
+    // Don't use a hardcoded default like "0.000.000.001" as it's not a valid standard MFA
+    const mfa = customMetadata.mfa || customMetadata.machineFriendlyAddress;
+
+    console.log(`Mock asset using MFA: ${mfa} and HFN: ${hfn}`);
+
     const layerName = customMetadata.layerName || "Unknown Layer";
     
     // Generate a mock response
@@ -906,6 +912,8 @@ class AssetService {
         ...customMetadata,
         humanFriendlyName: hfn, // Always set these consistently
         machineFriendlyAddress: mfa,
+        hfn: hfn, // Include duplicate keys for better compatibility
+        mfa: mfa, // Include duplicate keys for better compatibility
         layerName: layerName, // Include layer name in metadata
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
