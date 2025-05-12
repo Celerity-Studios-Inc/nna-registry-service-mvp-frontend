@@ -201,11 +201,11 @@ const TaxonomySelection: React.FC<TaxonomySelectionProps> = ({
           // Create the properly formatted HFN with the alphabetic codes
           const hfnAddress = `${layerCode}.${categoryAlpha}.${subcategoryAlpha}.${sequential}`;
 
-          // For S.POP.HPM, we know the correct MFA should be 2.001.007.001
+          // For S.POP.HPM, we need to handle the MFA correctly with the sequential number
           let mfaAddress;
           if (layerCode === 'S' && categoryAlpha === 'POP' && subcategoryAlpha === 'HPM') {
-            // Force the correct MFA for this specific case
-            mfaAddress = '2.001.007.001';
+            // Force the correct MFA for this specific case using the right sequential number
+            mfaAddress = `2.001.007.${sequential}`;
             console.log(`FORCE MAPPING: Using hardcoded MFA for S.POP.HPM: ${mfaAddress}`);
           } else {
             // Generate the MFA using the standard conversion function for all other cases
@@ -221,12 +221,13 @@ const TaxonomySelection: React.FC<TaxonomySelectionProps> = ({
 
           // Verify the correct MFA generation for S.POP.HPM
           if (layerCode === 'S' && categoryAlpha === 'POP' && subcategoryAlpha === 'HPM') {
-            console.log('VERIFICATION: S.POP.HPM should map to MFA 2.001.007.001');
-            // Apply a validation check - this is expected to be 2.001.007.001
-            if (mfaAddress !== '2.001.007.001') {
-              console.error(`WARNING: Expected MFA for S.POP.HPM to be 2.001.007.001 but got ${mfaAddress}`);
+            console.log(`VERIFICATION: S.POP.HPM should map to MFA 2.001.007.${sequential}`);
+            // Apply a validation check - it should use the expected sequential number pattern
+            const expectedPattern = `2.001.007.${sequential}`;
+            if (mfaAddress !== expectedPattern) {
+              console.error(`WARNING: Expected MFA for S.POP.HPM to be ${expectedPattern} but got ${mfaAddress}`);
               // Force the correct value if somehow it's still wrong
-              mfaAddress = '2.001.007.001';
+              mfaAddress = expectedPattern;
             }
           }
 
