@@ -1427,7 +1427,6 @@ const RegisterAssetPage: React.FC = () => {
     // When uploaded from form to backend, we have the original Files in watchFiles
     const formFiles = getValues('files');
     const hasFormFiles = formFiles && formFiles.length > 0;
-    const uploadedFileUrl = uploadedFiles.length > 0 ? uploadedFiles[0].url : null;
 
     // Enhanced logging to debug file display issues
     console.log('File debugging:');
