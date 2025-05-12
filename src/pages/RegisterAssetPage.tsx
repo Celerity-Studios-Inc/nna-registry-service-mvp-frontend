@@ -1392,45 +1392,143 @@ const RegisterAssetPage: React.FC = () => {
 
     console.log("Rendering success screen with asset:", createdAsset);
 
-    // Special case handling for S.POP.HPM
+    // Comprehensive handling of HFN and MFA display
     let mfa = '';
     let hfn = '';
 
-    // The backend may return numeric sequence as 003 if multiple assets exist
-    // but we want to display it consistently as 001 in the UI
-    // Get the sequential number from what we're displaying
-    const formSeq = getValues('sequential') || '001';
+    // 1. Extract all components from the backend response
+    // This will allow us to construct the correct HFN and MFA for any taxonomy
 
-    // Handle S.POP.HPM specifically to ensure consistent display
-    if (createdAsset.layer === 'S' &&
-        (createdAsset.category === 'Pop' || createdAsset.category === 'POP' ||
-         createdAsset.metadata?.categoryCode === 'POP')) {
-      if (createdAsset.subcategory === 'Pop_Hipster_Male_Stars' ||
-          createdAsset.subcategory === 'HPM' ||
-          createdAsset.metadata?.subcategoryCode === 'HPM') {
-        console.log('IMPORTANT: Created asset is S.POP.HPM - using forced consistent values for display');
+    // First, get the backend HFN to extract layer, category, subcategory, and sequence
+    const backendHfn = createdAsset.metadata?.humanFriendlyName ||
+                       createdAsset.metadata?.hfn ||
+                       createdAsset.name;
 
-        // Force correct values regardless of what came back from the server
-        mfa = '2.001.007.001';
-        hfn = `S.POP.HPM.${formSeq}`;
+    console.log('Analyzing backend HFN:', backendHfn);
+
+    // Get the backend MFA for numeric codes
+    const backendMfa = createdAsset.nnaAddress ||
+                       createdAsset.metadata?.machineFriendlyAddress ||
+                       createdAsset.metadata?.mfa ||
+                       (createdAsset as any).nna_address;
+
+    console.log('Backend MFA:', backendMfa);
+
+    // 2. Parse components from available data
+    let layer = '';
+    let categoryCode = '';
+    let subcategoryCode = '';
+    let sequentialNumber = '001'; // Default fallback
+
+    // 2a. Try to extract from HFN first (e.g., S.POP.BAS.002)
+    if (backendHfn && backendHfn.includes('.')) {
+      const parts = backendHfn.split('.');
+      if (parts.length >= 4) {
+        layer = parts[0];
+        categoryCode = parts[1];
+        subcategoryCode = parts[2];
+        sequentialNumber = parts[3];
+        console.log(`Extracted from HFN - Layer: ${layer}, Category: ${categoryCode}, Subcategory: ${subcategoryCode}, Sequence: ${sequentialNumber}`);
       }
     }
 
-    // If not S.POP.HPM or we couldn't determine the values, use normal fallbacks
-    if (!mfa) {
-      mfa = createdAsset.nnaAddress ||
-            createdAsset.metadata?.machineFriendlyAddress ||
-            createdAsset.metadata?.mfa ||
-            getValues('mfa') ||  // Try to get the value from the form as a last resort
-            (createdAsset as any).nna_address; // Backend sometimes returns this format with a different property name
+    // 2b. If needed, supplement with createdAsset properties
+    if (!layer) layer = createdAsset.layer || '';
+    if (!categoryCode) {
+      categoryCode = createdAsset.categoryCode ||
+                     createdAsset.category ||
+                     createdAsset.metadata?.categoryCode || '';
+    }
+    if (!subcategoryCode) {
+      subcategoryCode = createdAsset.subcategoryCode ||
+                        createdAsset.subcategory ||
+                        createdAsset.metadata?.subcategoryCode || '';
     }
 
-    if (!hfn) {
-      hfn = createdAsset.metadata?.humanFriendlyName ||
-            createdAsset.metadata?.hfn ||
-            getValues('hfn') ||  // Try to get the value from the form as a fallback
-            createdAsset.name;
+    // 2c. Attempt to extract from MFA as well (mainly for the sequence number)
+    if (backendMfa && backendMfa.includes('.')) {
+      const parts = backendMfa.split('.');
+      if (parts.length >= 4) {
+        // Extract layer from MFA if needed
+        if (!layer) {
+          // Convert numeric layer to alphabetic
+          const numericLayer = parts[0];
+          if (numericLayer === '2') layer = 'S';
+          else if (numericLayer === '1') layer = 'G';
+          else layer = numericLayer;
+        }
+
+        // Always get sequence from MFA if available (should be most accurate)
+        sequentialNumber = parts[parts.length - 1];
+        console.log(`Using sequence number from MFA: ${sequentialNumber}`);
+      }
     }
+
+    console.log(`Parsed components - Layer: ${layer}, Category: ${categoryCode}, Subcategory: ${subcategoryCode}, Sequence: ${sequentialNumber}`);
+
+    // 3. Handle all special cases systematically
+
+    // 3a. Handle Stars layer cases
+    if (layer === 'S') {
+      // Pop category
+      if (categoryCode === 'POP' || categoryCode === 'Pop' ||
+          createdAsset.category === 'Pop' ||
+          createdAsset.metadata?.categoryName === 'Pop') {
+
+        console.log(`Handling Stars+Pop combination with subcategory: ${subcategoryCode}`);
+
+        // Hipster Male Stars subcategory
+        if (subcategoryCode === 'HPM' ||
+            subcategoryCode === 'Pop_Hipster_Male_Stars' ||
+            createdAsset.subcategory === 'Pop_Hipster_Male_Stars') {
+          console.log('SPECIAL CASE: S.POP.HPM detected');
+          hfn = `S.POP.HPM.${sequentialNumber}`;
+          mfa = `2.001.007.${sequentialNumber}`;
+        }
+        // Base subcategory
+        else if (subcategoryCode === 'BAS' ||
+                subcategoryCode === 'Base' ||
+                createdAsset.subcategory === 'Base' ||
+                createdAsset.subcategory === 'Pop_Base') {
+          console.log('SPECIAL CASE: S.POP.BAS detected');
+          hfn = `S.POP.BAS.${sequentialNumber}`;
+          mfa = `2.001.001.${sequentialNumber}`;
+        }
+        // Gangster Male Stars subcategory
+        else if (subcategoryCode === 'LGM' ||
+                subcategoryCode === 'Pop_Gangster_Male_Stars' ||
+                createdAsset.subcategory === 'Pop_Gangster_Male_Stars') {
+          console.log('SPECIAL CASE: S.POP.LGM detected');
+          hfn = `S.POP.LGM.${sequentialNumber}`;
+          mfa = `2.001.005.${sequentialNumber}`;
+        }
+        // Generic fallback for other Pop subcategories
+        else {
+          console.log('Using generic S.POP.XXX format');
+          // Get the subcategory code in the proper format
+          let code = subcategoryCode;
+          if (createdAsset.subcategory && createdAsset.subcategory.startsWith('Pop_')) {
+            // Try to extract 3-letter code from the subcategory name
+            code = createdAsset.subcategory.substr(4, 3).toUpperCase();
+          }
+          hfn = `S.POP.${code}.${sequentialNumber}`;
+          mfa = `2.001.???.${sequentialNumber}`; // We don't know the MFA subcategory code
+        }
+      }
+    }
+
+    // 4. If we still don't have values, use the backend values directly
+    if (!hfn) {
+      hfn = backendHfn || '';
+      console.log(`Using direct backend HFN: ${hfn}`);
+    }
+
+    if (!mfa) {
+      mfa = backendMfa || '';
+      console.log(`Using direct backend MFA: ${mfa}`);
+    }
+
+    console.log(`FINAL VALUES - HFN: ${hfn}, MFA: ${mfa}`);
 
     console.log(`Success screen showing MFA: ${mfa} and HFN: ${hfn} from asset:`, createdAsset);
                 
@@ -1443,26 +1541,86 @@ const RegisterAssetPage: React.FC = () => {
     const hasFormFiles = formFiles && formFiles.length > 0;
     const uploadedFileUrl = uploadedFiles.length > 0 ? uploadedFiles[0].url : null;
 
+    // Enhanced logging to debug file display issues
+    console.log('File debugging:');
+    console.log('- Form files:', formFiles);
+    console.log('- Uploaded files:', uploadedFiles);
+    console.log('- Asset files from backend:', createdAsset.files);
+
+    if (createdAsset.files && createdAsset.files.length > 0) {
+      console.log('- First backend file:', createdAsset.files[0]);
+    }
+
+    if (uploadedFiles.length > 0) {
+      console.log('- First uploaded file URL:', uploadedFiles[0].url);
+    }
+
     // Try to get files from API response first, then fallback to form/uploaded files
     const hasFiles = createdAsset.files && createdAsset.files.length > 0;
 
-    // The file from the backend response
-    const mainFile = hasFiles ? createdAsset.files[0] : null;
+    // The file from the backend response - check for url property existence
+    let mainFile = null;
+    if (hasFiles) {
+      mainFile = createdAsset.files[0];
+      // Some backends return different property structures
+      if (!mainFile.url && (mainFile as any).file_url) {
+        mainFile.url = (mainFile as any).file_url;
+      }
+    }
 
-    // Create fallback file data if needed from the form uploads
-    const fallbackFile = hasFormFiles ? {
-      url: uploadedFileUrl || URL.createObjectURL(formFiles[0]),
-      contentType: formFiles[0].type,
-      filename: formFiles[0].name,
-      size: formFiles[0].size
-    } : null;
+    // Create fallback file data from the uploaded files or form files
+    // First try uploadedFiles which has the correct URL
+    let fallbackFile = null;
+
+    if (uploadedFiles.length > 0) {
+      fallbackFile = {
+        url: uploadedFiles[0].url,
+        contentType: uploadedFiles[0].mimeType || 'application/octet-stream',
+        filename: uploadedFiles[0].originalName || uploadedFiles[0].filename,
+        size: uploadedFiles[0].size || 0
+      };
+      console.log('Using uploaded file for preview:', fallbackFile);
+    }
+    // If no uploaded files, try to use form files with createObjectURL
+    else if (hasFormFiles) {
+      fallbackFile = {
+        url: URL.createObjectURL(formFiles[0]),
+        contentType: formFiles[0].type,
+        filename: formFiles[0].name,
+        size: formFiles[0].size
+      };
+      console.log('Using form file for preview with object URL:', fallbackFile);
+    }
 
     // Use backend file or fallback to form file
     const displayFile = mainFile || fallbackFile;
-    const isImage = displayFile && displayFile.contentType && displayFile.contentType.startsWith('image/');
-    const isAudio = displayFile && displayFile.contentType && displayFile.contentType.startsWith('audio/');
-    const isVideo = displayFile && displayFile.contentType && displayFile.contentType.startsWith('video/');
-    const isPdf = displayFile && displayFile.contentType && displayFile.contentType === 'application/pdf';
+    console.log('Final display file:', displayFile);
+
+    // Define a type guard to check if an object has mimeType property
+    const hasMimeType = (obj: any): obj is { mimeType: string } => {
+      return obj && typeof obj.mimeType === 'string';
+    };
+
+    // Use type guards to check content type in a type-safe way
+    const isImage = displayFile && (
+      (displayFile.contentType && displayFile.contentType.startsWith('image/')) ||
+      (hasMimeType(displayFile) && displayFile.mimeType.startsWith('image/'))
+    );
+
+    const isAudio = displayFile && (
+      (displayFile.contentType && displayFile.contentType.startsWith('audio/')) ||
+      (hasMimeType(displayFile) && displayFile.mimeType.startsWith('audio/'))
+    );
+
+    const isVideo = displayFile && (
+      (displayFile.contentType && displayFile.contentType.startsWith('video/')) ||
+      (hasMimeType(displayFile) && displayFile.mimeType.startsWith('video/'))
+    );
+
+    const isPdf = displayFile && (
+      (displayFile.contentType && displayFile.contentType === 'application/pdf') ||
+      (hasMimeType(displayFile) && displayFile.mimeType === 'application/pdf')
+    );
     
     return (
       <Box sx={{ textAlign: 'center', py: 4 }}>
@@ -1507,7 +1665,11 @@ const RegisterAssetPage: React.FC = () => {
                       flex: 1
                     }}
                   >
-                    {isImage && displayFile?.url && (
+                    {/* Enhanced image detection - detect by filename extension if content type fails */}
+                    {(isImage ||
+                      (displayFile?.filename &&
+                        /\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i.test(displayFile.filename)
+                      )) && displayFile?.url && (
                       <Box
                         component="img"
                         src={displayFile.url}
@@ -1518,13 +1680,29 @@ const RegisterAssetPage: React.FC = () => {
                           objectFit: 'contain',
                           borderRadius: 1
                         }}
+                        onError={(e) => {
+                          console.error('Image failed to load:', displayFile.url);
+                          // Set a fallback image or hide the broken image
+                          (e.target as HTMLImageElement).style.display = 'none';
+                          // Show error message in console for debugging
+                          const errorContainer = document.createElement('div');
+                          errorContainer.innerHTML = 'Image preview unavailable';
+                          (e.target as HTMLImageElement).parentNode?.appendChild(errorContainer);
+                        }}
                       />
                     )}
 
                     {isAudio && displayFile?.url && (
                       <Box sx={{ width: '100%', mt: 2 }}>
                         <Box component="audio" controls sx={{ width: '100%' }}>
-                          <source src={displayFile.url} type={displayFile.contentType} />
+                          <source
+                            src={displayFile.url}
+                            type={
+                              hasMimeType(displayFile) ?
+                                displayFile.mimeType :
+                                displayFile.contentType
+                            }
+                          />
                           Your browser does not support the audio element.
                         </Box>
                       </Box>
@@ -1533,16 +1711,23 @@ const RegisterAssetPage: React.FC = () => {
                     {isVideo && displayFile?.url && (
                       <Box sx={{ width: '100%', mt: 2 }}>
                         <Box component="video" controls sx={{ width: '100%', maxHeight: 200 }}>
-                          <source src={displayFile.url} type={displayFile.contentType} />
+                          <source
+                            src={displayFile.url}
+                            type={
+                              hasMimeType(displayFile) ?
+                                displayFile.mimeType :
+                                displayFile.contentType
+                            }
+                          />
                           Your browser does not support the video element.
                         </Box>
                       </Box>
                     )}
 
                     {isPdf && displayFile?.url && (
-                      <Box 
-                        sx={{ 
-                          display: 'flex', 
+                      <Box
+                        sx={{
+                          display: 'flex',
                           flexDirection: 'column',
                           alignItems: 'center',
                           justifyContent: 'center',
@@ -1555,9 +1740,9 @@ const RegisterAssetPage: React.FC = () => {
                         <Typography variant="body2" sx={{ mt: 1 }}>
                           PDF Document
                         </Typography>
-                        <Button 
-                          variant="outlined" 
-                          size="small" 
+                        <Button
+                          variant="outlined"
+                          size="small"
                           href={displayFile?.url}
                           target="_blank"
                           sx={{ mt: 1 }}
@@ -1566,8 +1751,14 @@ const RegisterAssetPage: React.FC = () => {
                         </Button>
                       </Box>
                     )}
-                    
-                    {!isImage && !isAudio && !isVideo && !isPdf && displayFile && (
+
+                    {/* Only show the generic file icon if we couldn't detect it as an image/audio/video/pdf */}
+                    {!isImage &&
+                     !isAudio &&
+                     !isVideo &&
+                     !isPdf &&
+                     displayFile &&
+                     !(displayFile.filename && /\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i.test(displayFile.filename)) && (
                       <Box
                         sx={{
                           display: 'flex',
@@ -1584,8 +1775,18 @@ const RegisterAssetPage: React.FC = () => {
                           {displayFile?.filename || 'File'}
                         </Typography>
                         <Typography variant="caption" color="text.secondary">
-                          {displayFile?.contentType || 'Unknown file type'}
+                          {displayFile?.contentType || (hasMimeType(displayFile) ? displayFile.mimeType : 'Unknown file type')}
                         </Typography>
+                        {/* Add direct link to file */}
+                        <Button
+                          variant="outlined"
+                          size="small"
+                          href={displayFile?.url}
+                          target="_blank"
+                          sx={{ mt: 1 }}
+                        >
+                          View File
+                        </Button>
                       </Box>
                     )}
 
