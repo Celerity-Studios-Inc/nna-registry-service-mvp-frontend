@@ -1392,143 +1392,31 @@ const RegisterAssetPage: React.FC = () => {
 
     console.log("Rendering success screen with asset:", createdAsset);
 
-    // Comprehensive handling of HFN and MFA display
-    let mfa = '';
-    let hfn = '';
+    // EMERGENCY FIX: Directly use asset name for HFN and MFA
 
-    // 1. Extract all components from the backend response
-    // This will allow us to construct the correct HFN and MFA for any taxonomy
+    // Always use the name field from createdAsset as the HFN
+    // This is what's shown at the top of the success page
+    const hfn = createdAsset.name || '';
 
-    // First, get the backend HFN to extract layer, category, subcategory, and sequence
-    const backendHfn = createdAsset.metadata?.humanFriendlyName ||
-                       createdAsset.metadata?.hfn ||
-                       createdAsset.name;
+    // Get the MFA directly from the asset (what the backend reported)
+    const mfa = createdAsset.nnaAddress ||
+                createdAsset.metadata?.machineFriendlyAddress ||
+                createdAsset.metadata?.mfa ||
+                (createdAsset as any).nna_address || '';
 
-    console.log('Analyzing backend HFN:', backendHfn);
+    console.log('IMPORTANT: Created asset is using direct backend values:');
+    console.log(`Direct Asset Name/HFN: ${hfn}`);
+    console.log(`Direct Asset MFA: ${mfa}`);
 
-    // Get the backend MFA for numeric codes
-    const backendMfa = createdAsset.nnaAddress ||
-                       createdAsset.metadata?.machineFriendlyAddress ||
-                       createdAsset.metadata?.mfa ||
-                       (createdAsset as any).nna_address;
-
-    console.log('Backend MFA:', backendMfa);
-
-    // 2. Parse components from available data
-    let layer = '';
-    let categoryCode = '';
-    let subcategoryCode = '';
-    let sequentialNumber = '001'; // Default fallback
-
-    // 2a. Try to extract from HFN first (e.g., S.POP.BAS.002)
-    if (backendHfn && backendHfn.includes('.')) {
-      const parts = backendHfn.split('.');
-      if (parts.length >= 4) {
-        layer = parts[0];
-        categoryCode = parts[1];
-        subcategoryCode = parts[2];
-        sequentialNumber = parts[3];
-        console.log(`Extracted from HFN - Layer: ${layer}, Category: ${categoryCode}, Subcategory: ${subcategoryCode}, Sequence: ${sequentialNumber}`);
-      }
-    }
-
-    // 2b. If needed, supplement with createdAsset properties
-    if (!layer) layer = createdAsset.layer || '';
-    if (!categoryCode) {
-      categoryCode = createdAsset.categoryCode ||
-                     createdAsset.category ||
-                     createdAsset.metadata?.categoryCode || '';
-    }
-    if (!subcategoryCode) {
-      subcategoryCode = createdAsset.subcategoryCode ||
-                        createdAsset.subcategory ||
-                        createdAsset.metadata?.subcategoryCode || '';
-    }
-
-    // 2c. Attempt to extract from MFA as well (mainly for the sequence number)
-    if (backendMfa && backendMfa.includes('.')) {
-      const parts = backendMfa.split('.');
-      if (parts.length >= 4) {
-        // Extract layer from MFA if needed
-        if (!layer) {
-          // Convert numeric layer to alphabetic
-          const numericLayer = parts[0];
-          if (numericLayer === '2') layer = 'S';
-          else if (numericLayer === '1') layer = 'G';
-          else layer = numericLayer;
-        }
-
-        // Always get sequence from MFA if available (should be most accurate)
-        sequentialNumber = parts[parts.length - 1];
-        console.log(`Using sequence number from MFA: ${sequentialNumber}`);
-      }
-    }
-
-    console.log(`Parsed components - Layer: ${layer}, Category: ${categoryCode}, Subcategory: ${subcategoryCode}, Sequence: ${sequentialNumber}`);
-
-    // 3. Handle all special cases systematically
-
-    // 3a. Handle Stars layer cases
-    if (layer === 'S') {
-      // Pop category
-      if (categoryCode === 'POP' || categoryCode === 'Pop' ||
-          createdAsset.category === 'Pop' ||
-          createdAsset.metadata?.categoryName === 'Pop') {
-
-        console.log(`Handling Stars+Pop combination with subcategory: ${subcategoryCode}`);
-
-        // Hipster Male Stars subcategory
-        if (subcategoryCode === 'HPM' ||
-            subcategoryCode === 'Pop_Hipster_Male_Stars' ||
-            createdAsset.subcategory === 'Pop_Hipster_Male_Stars') {
-          console.log('SPECIAL CASE: S.POP.HPM detected');
-          hfn = `S.POP.HPM.${sequentialNumber}`;
-          mfa = `2.001.007.${sequentialNumber}`;
-        }
-        // Base subcategory
-        else if (subcategoryCode === 'BAS' ||
-                subcategoryCode === 'Base' ||
-                createdAsset.subcategory === 'Base' ||
-                createdAsset.subcategory === 'Pop_Base') {
-          console.log('SPECIAL CASE: S.POP.BAS detected');
-          hfn = `S.POP.BAS.${sequentialNumber}`;
-          mfa = `2.001.001.${sequentialNumber}`;
-        }
-        // Gangster Male Stars subcategory
-        else if (subcategoryCode === 'LGM' ||
-                subcategoryCode === 'Pop_Gangster_Male_Stars' ||
-                createdAsset.subcategory === 'Pop_Gangster_Male_Stars') {
-          console.log('SPECIAL CASE: S.POP.LGM detected');
-          hfn = `S.POP.LGM.${sequentialNumber}`;
-          mfa = `2.001.005.${sequentialNumber}`;
-        }
-        // Generic fallback for other Pop subcategories
-        else {
-          console.log('Using generic S.POP.XXX format');
-          // Get the subcategory code in the proper format
-          let code = subcategoryCode;
-          if (createdAsset.subcategory && createdAsset.subcategory.startsWith('Pop_')) {
-            // Try to extract 3-letter code from the subcategory name
-            code = createdAsset.subcategory.substr(4, 3).toUpperCase();
-          }
-          hfn = `S.POP.${code}.${sequentialNumber}`;
-          mfa = `2.001.???.${sequentialNumber}`; // We don't know the MFA subcategory code
-        }
-      }
-    }
-
-    // 4. If we still don't have values, use the backend values directly
-    if (!hfn) {
-      hfn = backendHfn || '';
-      console.log(`Using direct backend HFN: ${hfn}`);
-    }
-
-    if (!mfa) {
-      mfa = backendMfa || '';
-      console.log(`Using direct backend MFA: ${mfa}`);
-    }
-
-    console.log(`FINAL VALUES - HFN: ${hfn}, MFA: ${mfa}`);
+    // Add clear logging for debugging
+    console.log('Asset structure:', {
+      name: createdAsset.name,
+      nnaAddress: createdAsset.nnaAddress,
+      layer: createdAsset.layer,
+      category: createdAsset.category,
+      subcategory: createdAsset.subcategory,
+      metadata: createdAsset.metadata
+    });
 
     console.log(`Success screen showing MFA: ${mfa} and HFN: ${hfn} from asset:`, createdAsset);
                 
@@ -1653,12 +1541,12 @@ const RegisterAssetPage: React.FC = () => {
                   Asset Preview
                 </Typography>
                 
-                {hasFiles ? (
-                  <Box 
-                    sx={{ 
-                      width: '100%', 
-                      mt: 2, 
-                      display: 'flex', 
+                {displayFile ? (
+                  <Box
+                    sx={{
+                      width: '100%',
+                      mt: 2,
+                      display: 'flex',
                       flexDirection: 'column',
                       alignItems: 'center',
                       justifyContent: 'center',
@@ -1797,9 +1685,9 @@ const RegisterAssetPage: React.FC = () => {
                     )}
                   </Box>
                 ) : (
-                  <Box 
-                    sx={{ 
-                      display: 'flex', 
+                  <Box
+                    sx={{
+                      display: 'flex',
                       flexDirection: 'column',
                       alignItems: 'center',
                       justifyContent: 'center',
@@ -1807,8 +1695,22 @@ const RegisterAssetPage: React.FC = () => {
                     }}
                   >
                     <Typography variant="body2" color="text.secondary">
-                      No preview available
+                      No preview available for this asset
                     </Typography>
+                    <Typography variant="caption" color="error" sx={{ mt: 1 }}>
+                      Troubleshooting: Asset files may still be processing or image URL may be incorrect.
+                    </Typography>
+                    {createdAsset.files && createdAsset.files.length > 0 && createdAsset.files[0].url && (
+                      <Button
+                        variant="outlined"
+                        size="small"
+                        href={createdAsset.files[0].url}
+                        target="_blank"
+                        sx={{ mt: 2 }}
+                      >
+                        View File Directly
+                      </Button>
+                    )}
                   </Box>
                 )}
               </Paper>
