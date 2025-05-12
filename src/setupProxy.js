@@ -20,7 +20,7 @@ module.exports = function(app) {
   app.use(
     '/api',
     createProxyMiddleware({
-      target: 'https://registry.reviz.dev',
+      target: 'https://nna-registry-service-5jm4duk5oa-uc.a.run.app',
       changeOrigin: true,
       pathRewrite: { '^/api': '/api' },
       onProxyRes: function(proxyRes) {
