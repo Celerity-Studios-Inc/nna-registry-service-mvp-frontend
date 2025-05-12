@@ -569,7 +569,6 @@ class TaxonomyService {
     this.sequentialCounters.set(taxonomyPath, initialCounter);
     return initialCounter;
   }
-  }
   
   // A map to store counters for different taxonomy paths
   private sequentialCounters: Map<string, number> = new Map();
