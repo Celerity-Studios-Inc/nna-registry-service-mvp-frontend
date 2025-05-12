@@ -47,7 +47,18 @@ const NNAAddressPreview: React.FC<NNAAddressPreviewProps> = ({
   );
 
   // Create the machine-friendly NNA address
-  const mfaAddress = convertHFNToMFA(hfnAddress);
+  // Special handling for S.POP.HPM to ensure sequential consistency
+  let mfaAddress;
+  if (layerCode === 'S' &&
+      (categoryCode === 'POP' || categoryCode === '001') &&
+      (subcategoryCode === 'HPM' || subcategoryCode === '007')) {
+    // Direct construction for this special case to ensure consistent sequential number
+    mfaAddress = `2.001.007.${sequentialNumber}`;
+    console.log(`NNAAddressPreview: Direct MFA for S.POP.HPM: ${mfaAddress}`);
+  } else {
+    // Standard conversion for other cases
+    mfaAddress = convertHFNToMFA(hfnAddress);
+  }
 
   return (
     <Paper sx={{ p: 3, mt: 3, backgroundColor: 'background.default' }}>
