@@ -9,6 +9,7 @@ import {
   Divider,
   CircularProgress,
   Alert,
+  AlertTitle,
   Paper,
   Chip,
   Tooltip,
@@ -35,7 +36,8 @@ interface TaxonomySelectionProps {
   onNNAAddressChange?: (
     humanFriendlyName: string,
     machineFriendlyAddress: string,
-    sequentialNumber: number
+    sequentialNumber: number,
+    originalSubcategoryCode?: string // Add parameter for original subcategory code
   ) => void;
 }
 
@@ -231,9 +233,14 @@ const TaxonomySelection: React.FC<TaxonomySelectionProps> = ({
             }
           }
 
+          // Store the original subcategory code to preserve it after backend normalization
+          // This will be used to display the correct subcategory in the success screen
+          const originalSubcategoryCode = subcategoryAlpha;
+          console.log(`Storing original subcategory code: ${originalSubcategoryCode} for display override`);
+
           // Always pass the original 3-letter codes along with the MFA and HFN
           // This ensures consistency between steps
-          onNNAAddressChange(hfnAddress, mfaAddress, sequentialNum);
+          onNNAAddressChange(hfnAddress, mfaAddress, sequentialNum, originalSubcategoryCode);
         }
       } catch (err) {
         console.error('Error checking address uniqueness:', err);
@@ -429,6 +436,19 @@ const TaxonomySelection: React.FC<TaxonomySelectionProps> = ({
             ))}
           </Select>
         </FormControl>
+
+        {/* Add warning for non-HPM subcategories that will be normalized */}
+        {layerCode === 'S' && 
+         selectedCategoryCode === 'POP' && 
+         selectedSubcategoryCode && 
+         selectedSubcategoryCode !== 'HPM' && 
+         selectedSubcategoryCode !== 'BAS' && (
+          <Alert severity="info" sx={{ mt: 2, mb: 2 }}>
+            <AlertTitle>Subcategory Compatibility Note</AlertTitle>
+            While you've selected <strong>{selectedSubcategoryCode}</strong>, the system will internally use <strong>BAS</strong> for storage.
+            Your selection will be preserved in the display. This is a temporary limitation that will be addressed in a future update.
+          </Alert>
+        )}
 
         {selectedCategoryCode && selectedSubcategoryCode && (
           <>

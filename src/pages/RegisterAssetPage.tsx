@@ -24,6 +24,7 @@ import {
 import { 
   ChevronLeft as PreviousIcon, 
   ChevronRight as NextIcon,
+  Info as InfoIcon,
 } from '@mui/icons-material';
 import assetService from '../api/assetService';
 import LayerSelection from '../components/asset/LayerSelection';
@@ -545,15 +546,25 @@ const RegisterAssetPage: React.FC = () => {
     }
   };
 
+  // Track original subcategory for display override
+  const [originalSubcategoryCode, setOriginalSubcategoryCode] = useState<string>('');
+
   // Handle NNA address change
   const handleNNAAddressChange = (
     humanFriendlyName: string,
     machineFriendlyAddress: string,
-    sequentialNumber: number
+    sequentialNumber: number,
+    originalSubcategory?: string
   ) => {
     setValue('hfn', humanFriendlyName);
     setValue('mfa', machineFriendlyAddress);
     setValue('sequential', sequentialNumber.toString());
+    
+    // Store the original subcategory for display override in success screen
+    if (originalSubcategory) {
+      setOriginalSubcategoryCode(originalSubcategory);
+      console.log(`Stored original subcategory code: ${originalSubcategory} for display override`);
+    }
   };
 
   // Calculate a simple hash for a file (based on size, type, and first few bytes)
@@ -1392,21 +1403,35 @@ const RegisterAssetPage: React.FC = () => {
 
     console.log("Rendering success screen with asset:", createdAsset);
 
-    // EMERGENCY FIX: Directly use asset name for HFN and MFA
-
-    // Always use the name field from createdAsset as the HFN
-    // This is what's shown at the top of the success page
-    const hfn = createdAsset.name || '';
-
+    // ENHANCED DISPLAY FIX: Use original subcategory if available, otherwise use backend value
+    
+    // Get the HFN from the backend response
+    let hfn = createdAsset.name || '';
+    
     // Get the MFA directly from the asset (what the backend reported)
     const mfa = createdAsset.nnaAddress ||
                 createdAsset.metadata?.machineFriendlyAddress ||
                 createdAsset.metadata?.mfa ||
                 (createdAsset as any).nna_address || '';
+    
+    // Check if we need to override the display with original subcategory
+    if (originalSubcategoryCode && createdAsset.subcategory === 'Base' && createdAsset.layer === 'S') {
+      // Parse the backend HFN (e.g., "S.POP.BAS.015")
+      const parts = hfn.split('.');
+      if (parts.length === 4 && parts[2] === 'BAS') {
+        // Replace BAS with the original subcategory
+        parts[2] = originalSubcategoryCode;
+        const displayHfn = parts.join('.');
+        console.log(`DISPLAY OVERRIDE: Replacing backend HFN ${hfn} with original subcategory version ${displayHfn}`);
+        hfn = displayHfn;
+      }
+    }
 
     console.log('IMPORTANT: Created asset is using direct backend values:');
-    console.log(`Direct Asset Name/HFN: ${hfn}`);
+    console.log(`Direct Asset Name/HFN: ${createdAsset.name}`);
+    console.log(`Display HFN (with override): ${hfn}`);
     console.log(`Direct Asset MFA: ${mfa}`);
+    console.log(`Original subcategory (for display): ${originalSubcategoryCode}`);
 
     // Add clear logging for debugging
     console.log('Asset structure:', {
@@ -1737,9 +1762,16 @@ const RegisterAssetPage: React.FC = () => {
                       <Typography variant="subtitle2" color="text.secondary">
                         Human-Friendly Name (HFN)
                       </Typography>
-                      <Typography variant="body1" fontWeight="bold">
-                        {hfn}
-                      </Typography>
+                      <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                        <Typography variant="body1" fontWeight="bold">
+                          {hfn}
+                        </Typography>
+                        {originalSubcategoryCode && hfn !== createdAsset.name && (
+                          <Tooltip title="Adjusted display: Original subcategory preserved for better visibility">
+                            <InfoIcon color="info" fontSize="small" sx={{ ml: 1, width: 18, height: 18 }} />
+                          </Tooltip>
+                        )}
+                      </Box>
                     </Grid>
                     
                     <Grid item xs={12}>
