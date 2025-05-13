@@ -214,9 +214,12 @@ const TaxonomySelection: React.FC<TaxonomySelectionProps> = ({
             mfaAddress = convertHFNToMFA(hfnAddress);
           }
 
+          // IMPORTANT: For display in preview, we will show ".nnn" but we still need to pass
+          // the real sequential number to the form for backend API to ensure correct registration
           const sequentialNum = parseInt(sequential, 10) || 1;
 
-          console.log(`Generated NNA addresses: HFN=${hfnAddress}, MFA=${mfaAddress}, seq=${sequentialNum}`);
+          console.log(`Generated NNA addresses for form state: HFN=${hfnAddress}, MFA=${mfaAddress}, seq=${sequentialNum}`);
+          console.log(`Note: Preview will display with '.000' instead of the actual sequential number`);
 
           // Use the standard conversion for all cases
           console.log(`Using standard MFA conversion for ${hfnAddress} -> ${mfaAddress}`);

@@ -151,6 +151,13 @@ export function convertHFNToMFA(hfnAddress: string): string {
   }
 
   // Format as machine-friendly address with all numeric codes
+  // Special case for "000" placeholder in preview
+  if (sequential === "000") {
+    const result = `${layerNumeric}.${categoryNumeric}.${subcategoryNumeric}.${sequential}`;
+    return result;
+  }
+
+  // Normal case with actual sequential number
   const result = `${layerNumeric}.${categoryNumeric}.${subcategoryNumeric}.${sequential}`;
 
   // Add additional validation for S.POP.HPM
@@ -315,10 +322,17 @@ export function formatNNAAddress(
   if (subcategory === '002') subcategoryAlpha = 'GLB';
   if (subcategory === '003') subcategoryAlpha = 'TEN';
 
-  // Format sequential as 3 digits
-  const formattedSequential = typeof sequential === 'number'
-    ? sequential.toString().padStart(3, '0')
-    : sequential.padStart(3, '0');
+  // Format sequential as 3 digits, with "000" as a special preview display value
+  let formattedSequential;
+  if (sequential === "000") {
+    // Special case for preview: use "000" as is
+    formattedSequential = "000";
+  } else {
+    // Normal case: format as 3-digit number
+    formattedSequential = typeof sequential === 'number'
+      ? sequential.toString().padStart(3, '0')
+      : sequential.padStart(3, '0');
+  }
 
   return `${layer}.${categoryAlpha}.${subcategoryAlpha}.${formattedSequential}`;
 }

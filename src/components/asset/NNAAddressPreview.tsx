@@ -38,12 +38,16 @@ const NNAAddressPreview: React.FC<NNAAddressPreviewProps> = ({
   checkingUniqueness,
   validationError,
 }) => {
-  // Create the human-friendly NNA address
+  // Replace the actual sequential number with ".000" for preview display
+  // This indicates that the actual number will be determined by the backend after submission
+  const displaySequential = "000";
+
+  // Create the human-friendly NNA address - use the displaySequential for preview
   const hfnAddress = formatNNAAddress(
     layerCode,
     categoryCode,
     subcategoryCode,
-    sequentialNumber
+    displaySequential // Use "nnn" instead of the actual sequential number
   );
 
   // Create the machine-friendly NNA address
@@ -53,10 +57,10 @@ const NNAAddressPreview: React.FC<NNAAddressPreviewProps> = ({
       (categoryCode === 'POP' || categoryCode === '001') &&
       (subcategoryCode === 'HPM' || subcategoryCode === '007')) {
     // Direct construction for this special case to ensure consistent sequential number
-    mfaAddress = `2.001.007.${sequentialNumber}`;
+    mfaAddress = `2.001.007.${displaySequential}`; // Use "nnn" instead of the actual sequential number
     console.log(`NNAAddressPreview: Direct MFA for S.POP.HPM: ${mfaAddress}`);
   } else {
-    // Standard conversion for other cases
+    // Standard conversion for other cases - the conversion function will preserve "nnn"
     mfaAddress = convertHFNToMFA(hfnAddress);
   }
 
@@ -163,6 +167,12 @@ const NNAAddressPreview: React.FC<NNAAddressPreviewProps> = ({
         <Typography variant="body2" color="text.secondary">
           <strong>Format:</strong> Layer.Category.Subcategory.SequentialNumber
         </Typography>
+        <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
+          <InfoIcon fontSize="small" color="info" sx={{ mr: 1, width: 18, height: 18 }} />
+          <Typography variant="caption" color="info.main">
+            The sequential number (.000) will be assigned by the system when you submit the asset.
+          </Typography>
+        </Box>
       </Box>
     </Paper>
   );

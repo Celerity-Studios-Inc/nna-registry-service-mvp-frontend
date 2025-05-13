@@ -1760,10 +1760,10 @@ const RegisterAssetPage: React.FC = () => {
                     </Grid>
                     
                     <Grid item xs={12}>
-                      <Typography variant="subtitle2" color="text.secondary">
+                      <Typography variant="subtitle2" color="text.secondary" align="center">
                         Human-Friendly Name (HFN)
                       </Typography>
-                      <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         <Typography variant="body1" fontWeight="bold">
                           {hfn}
                         </Typography>
@@ -1776,10 +1776,10 @@ const RegisterAssetPage: React.FC = () => {
                     </Grid>
                     
                     <Grid item xs={12}>
-                      <Typography variant="subtitle2" color="text.secondary">
+                      <Typography variant="subtitle2" color="text.secondary" align="center">
                         Machine-Friendly Address (MFA)
                       </Typography>
-                      <Typography variant="body1" fontFamily="monospace" fontWeight="medium">
+                      <Typography variant="body1" fontFamily="monospace" fontWeight="medium" align="center">
                         {mfa}
                       </Typography>
                     </Grid>
