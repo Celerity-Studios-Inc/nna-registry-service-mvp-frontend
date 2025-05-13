@@ -1,6 +1,24 @@
 # Testing Mock Mode Configuration
 
-This document explains how to properly test the fix for the mock API mode issue.
+This document explains how to properly test the fix for the mock API mode issue and ensure the frontend connects to the correct backend.
+
+## Production Setup
+
+For production deployment, these settings must be correct:
+
+1. In `.env.production`: `REACT_APP_USE_MOCK_API=false`
+2. In `vercel.json`: 
+   ```json
+   "env": {
+     "REACT_APP_API_URL": "/api",
+     "REACT_APP_USE_MOCK_API": "false",
+     "BACKEND_API_URL": "https://registry.reviz.dev/api"
+   }
+   ```
+3. In `api/backend-url.ts`: 
+   ```javascript
+   const backendApiUrl = process.env.BACKEND_API_URL || 'https://registry.reviz.dev/api';
+   ```
 
 ## The Issue
 
@@ -14,6 +32,7 @@ The fix adds localStorage override capability to ensure the app respects the moc
 2. Added localStorage reading with key `forceMockApi`
 3. Updated `assetService.ts` to use this configuration
 4. Added explicit logging about the asset creation mode
+5. Updated backend URL to point to correct production backend
 
 ## Testing Steps
 
@@ -61,3 +80,24 @@ Then reload the page and check for "Asset creation mode: Mock".
 - When `forceMockApi` is 'true' or not set, the app will use the mock implementation based on .env settings
 
 The console should clearly indicate which mode is being used during asset creation.
+
+## Vercel Deployment Settings
+
+For Vercel deployments, make sure:
+
+1. The application is deployed from the main branch
+2. The environment variables in the Vercel project match the ones in vercel.json:
+   - REACT_APP_API_URL=/api
+   - REACT_APP_USE_MOCK_API=false
+   - BACKEND_API_URL=https://registry.reviz.dev/api
+3. The GitHub integration is properly configured to auto-deploy on commits to main
+
+To manually force a redeployment if needed:
+1. Go to the Vercel dashboard
+2. Navigate to the nna-registry-service-mvp-frontend project
+3. Click the "Deployments" tab
+4. Find the latest successful main branch deployment
+5. Click the three-dot menu
+6. Select "Redeploy" to trigger a fresh build
+
+This can be useful if you suspect the environment variables weren't properly applied in a previous deployment.
