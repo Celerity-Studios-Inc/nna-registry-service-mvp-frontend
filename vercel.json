@@ -7,6 +7,7 @@
   "env": {
     "REACT_APP_API_URL": "/api",
     "REACT_APP_USE_MOCK_API": "false",
+    "REACT_APP_REAL_BACKEND_API": "true",
     "BACKEND_API_URL": "https://registry.reviz.dev/api"
   },
   "routes": [
