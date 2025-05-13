@@ -3,6 +3,7 @@
 # This line triggers a build - attempt 3 - May 13, 2025
 # This line triggers a build - attempt 4 - May 13, 2025 - Using registry.reviz.dev/api backend
 # This line triggers a build - attempt 5 - May 13, 2025 - Subcategory display fix
+# This line triggers a build - attempt 6 - May 13, 2025 - Sequential number display as .000 in preview
 
 This file is created to trigger a new build and deployment of the NNA Registry Service Frontend.
 
@@ -22,3 +23,11 @@ After deployment, verify:
 5. NNA addresses show the correct numeric codes
 6. Warning alert appears for non-HPM subcategories
 7. Info icon appears next to adjusted subcategory displays
+8. Sequential numbers display as `.000` in the preview step
+9. Actual sequential numbers appear correctly in the success screen
+10. HFN and MFA are center-aligned in the success screen
+
+## Latest Changes
+- Replace sequential numbers with `.000` in NNA Address preview
+- Add explanatory tooltip about sequential number assignment
+- Center align HFN and MFA in success screen
