@@ -1,6 +1,6 @@
 # NNA Registry Service Frontend
 
-Frontend application for the Neural Network Architecture (NNA) Registry Service.
+Frontend application for the Naming, Numbering, and Addressing (NNA) Registry Service.
 
 [![Deployed on Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-black?style=for-the-badge&logo=vercel)](https://nna-registry-service-mvp-frontend.vercel.app)
 
