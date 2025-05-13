@@ -78,7 +78,7 @@ async function handler(req: VercelRequest, res: VercelResponse) {
   }
   
   // Define the backend API URL - hardcode it for reliability
-  const backendApiUrl = 'https://registry.reviz.dev/api';
+  const backendApiUrl = 'https://nna-registry-service-5jm4duk5oa-uc.a.run.app/api';
   
   // Ensure we have the correct API endpoint format
   const targetUrl = `${backendApiUrl}${cleanPath.startsWith('/') ? cleanPath : '/' + cleanPath}`;
@@ -114,7 +114,7 @@ async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     // Create a clean headers object to avoid TypeScript errors with incompatible headers
     const headers: HeadersInit = {
-      'host': 'registry.reviz.dev',
+      'host': 'nna-registry-service-5jm4duk5oa-uc.a.run.app',
     };
     
     // Copy over safe headers from the request

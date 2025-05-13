@@ -18,7 +18,7 @@ function handler(req: VercelRequest, res: VercelResponse) {
   }
   
   // Get backend URL from environment variable, or use default
-  const backendApiUrl = process.env.BACKEND_API_URL || 'https://registry.reviz.dev/api';
+  const backendApiUrl = process.env.BACKEND_API_URL || 'https://nna-registry-service-5jm4duk5oa-uc.a.run.app/api';
   
   // Return the configuration
   res.status(200).json({
