@@ -2,11 +2,17 @@
 
 This guide provides step-by-step instructions for verifying that core functionality works correctly in the production environment.
 
-## Prerequisite
+## Prerequisites
 
-1. Access to the production site at [registry-service-frontend.vercel.app](https://registry-service-frontend.vercel.app)
+1. Access to the production site at [nna-registry-service-mvp-frontend.vercel.app](https://nna-registry-service-mvp-frontend.vercel.app)
 2. A test account (create one if you don't have it)
 3. Sample test files for upload (preferably small images)
+
+## Recent Fixes to Verify (2025-05-13)
+
+1. **Backend URL Update**: The frontend should now connect to the production backend at registry.reviz.dev/api
+2. **Subcategory Normalization Fix**: The backend should now preserve selected subcategories instead of normalizing to "Base"
+3. **Sequential Numbering Fix**: NNA addresses should show the correct sequential numbers for each taxonomy path
 
 ## 1. Verifying Authentication
 
@@ -116,7 +122,48 @@ If API calls are failing:
 - Check for CORS errors in the console
 - Test the health endpoint
 
-## 5. Mock vs. Real Backend
+## 5. Verifying Recent Fixes
+
+### 5.1 Subcategory Normalization Fix
+
+To verify that the backend is now preserving subcategories:
+
+1. Login to your account
+2. Navigate to "Register Asset"
+3. In the Taxonomy Selection:
+   - Select "Stars" (S) as the layer
+   - Select "Pop" (POP) as the category
+   - Test each of these subcategories in separate asset registrations:
+     - "Human Pop Master" (HPM)
+     - "Legend Female" (LGF)
+     - "Legend Male" (LGM)
+     - "Diversity" (DIV)
+4. Complete the registration process
+5. **Expected Behavior**: The success screen should show the exact subcategory you selected
+   - Example: If you selected LGF, you should see "S.POP.LGF.xxx" in the MFA, not "S.POP.BAS.xxx"
+
+### 5.2 Sequential Numbering Fix
+
+To verify that sequential numbering is working correctly:
+
+1. Register multiple assets using the same taxonomy path (e.g., Stars/Pop/HPM)
+2. **Expected Behavior**:
+   - Sequential numbers should increment correctly (e.g., 001, 002, 003)
+   - The full MFA should follow this pattern: S.001.001.001.xxx (for Stars/Pop/HPM)
+3. Try a different taxonomy path
+   - The counter should start fresh for new combinations
+   - Example: S.POP.DIV.001 should start at 001 if it's the first asset with this combination
+
+### 5.3 Backend URL Verification
+
+To verify the frontend is connecting to the correct backend:
+
+1. Open browser developer tools (F12)
+2. Go to Network tab
+3. Refresh the page and look for API calls
+4. Verify they are pointing to https://registry.reviz.dev/api/
+
+## 6. Mock vs. Real Backend
 
 The application can run with either mock data or real backend data:
 
