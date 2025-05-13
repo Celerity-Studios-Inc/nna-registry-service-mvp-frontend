@@ -4,14 +4,16 @@
 # This line triggers a build - attempt 4 - May 13, 2025 - Using registry.reviz.dev/api backend
 # This line triggers a build - attempt 5 - May 13, 2025 - Subcategory display fix
 # This line triggers a build - attempt 6 - May 13, 2025 - Sequential number display as .000 in preview
+# This line triggers a build - attempt 7 - May 13, 2025 - Force REACT_APP_REAL_BACKEND_API=true
 
 This file is created to trigger a new build and deployment of the NNA Registry Service Frontend.
 
 ## Deployment Details
 
 - The frontend will be built and deployed to Vercel
-- API URL: `/api`
-- Mock API: Disabled
+- API URL: `/api` (routes to https://registry.reviz.dev/api/)
+- Mock API: Disabled (REACT_APP_USE_MOCK_API=false)
+- Real Backend: Enabled (REACT_APP_REAL_BACKEND_API=true)
 
 ## Verification Steps
 
