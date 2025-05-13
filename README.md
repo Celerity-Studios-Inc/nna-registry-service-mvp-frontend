@@ -2,11 +2,16 @@
 
 Frontend application for the Neural Network Architecture (NNA) Registry Service.
 
-[![Deployed on Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-black?style=for-the-badge&logo=vercel)](https://registry-service-frontend.vercel.app)
+[![Deployed on Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-black?style=for-the-badge&logo=vercel)](https://nna-registry-service-mvp-frontend.vercel.app)
+
+## Latest Update (2025-05-13)
+- Updated backend URL to use production API at registry.reviz.dev
+- Fixed subcategory normalization issues 
+- Improved sequential numbering for MFA display
 
 ## Production Deployment
 
-The production site is deployed at: [registry-service-frontend.vercel.app](https://registry-service-frontend.vercel.app)
+The production site is deployed at: [nna-registry-service-mvp-frontend.vercel.app](https://nna-registry-service-mvp-frontend.vercel.app)
 
 ## Development Setup
 
