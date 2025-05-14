@@ -33,7 +33,7 @@ import {
   Public as PublicIcon,
 } from '@mui/icons-material';
 import { FileUploadResponse } from '../../types/asset.types';
-import { formatNNAAddressForDisplay } from '../../api/codeMapping.enhanced';
+import taxonomyMapper from '../../api/taxonomyMapper';
 
 // Props interface
 interface ReviewSubmitProps {
@@ -122,14 +122,14 @@ const ReviewSubmit: React.FC<ReviewSubmitProps> = ({
     components = [],
   } = assetData;
 
-  // Use unified function to ensure consistent display with the preview
+  // Use taxonomy mapper to ensure consistent display across all components
   // But first check if we have valid layer, category and subcategory information
   let displayHfn = '';
   let displayMfa = '';
 
   if (layer && categoryCode && subcategoryCode) {
     // We have enough information to generate formatted addresses
-    const formattedAddresses = formatNNAAddressForDisplay(
+    const formattedAddresses = taxonomyMapper.formatNNAAddress(
       layer,
       categoryCode,
       subcategoryCode,
@@ -137,11 +137,20 @@ const ReviewSubmit: React.FC<ReviewSubmitProps> = ({
     );
     displayHfn = formattedAddresses.hfn;
     displayMfa = formattedAddresses.mfa;
+
+    // Ensure HFN always displays with alphabetic codes, never numeric
+    displayHfn = taxonomyMapper.normalizeAddressForDisplay(displayHfn, 'hfn');
+
     console.log(`ReviewSubmit: Generated formatted addresses - HFN=${displayHfn}, MFA=${displayMfa}`);
   } else {
     // Fallback to the values provided in props
     displayHfn = hfn ? hfn.replace(/\.\d+$/, '.000') : '';
     displayMfa = mfa ? mfa.replace(/\.\d+$/, '.000') : '';
+
+    // Even for fallback values, ensure consistent format
+    if (displayHfn) {
+      displayHfn = taxonomyMapper.normalizeAddressForDisplay(displayHfn, 'hfn');
+    }
   }
 
   // Validate that all required fields are present

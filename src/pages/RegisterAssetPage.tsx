@@ -22,13 +22,14 @@ import {
   FormHelperText,
   Tooltip,
 } from '@mui/material';
-import { 
-  ChevronLeft as PreviousIcon, 
+import {
+  ChevronLeft as PreviousIcon,
   ChevronRight as NextIcon,
   Info as InfoIcon,
 } from '@mui/icons-material';
 import assetService from '../api/assetService';
 import { formatNNAAddressForDisplay } from '../api/codeMapping.enhanced';
+import taxonomyMapper from '../api/taxonomyMapper';
 import LayerSelection from '../components/asset/LayerSelection';
 import TaxonomySelection from '../components/asset/TaxonomySelection';
 import FileUpload from '../components/asset/FileUpload';
@@ -1455,20 +1456,26 @@ const RegisterAssetPage: React.FC = () => {
 
     console.log(`Using layer=${layer}, category=${category}, subcategory=${subcategory}, sequential=${sequential}`);
 
-    // Use our unified formatter to generate consistent display format
-    const { hfn, mfa } = formatNNAAddressForDisplay(
+    // Use our enhanced taxonomy mapper to generate consistent display format
+    const { hfn, mfa } = taxonomyMapper.formatNNAAddress(
       layer,
       category,
       subcategory,
       sequential
     );
 
-    console.log(`Successfully formatted addresses using unified formatter:`);
+    console.log(`Successfully formatted addresses using enhanced taxonomy mapper:`);
     console.log(`HFN: ${hfn}, MFA: ${mfa}`);
 
     // For display in the success screen, replace the sequential number with the actual one
-    const displayHfn = hfn.replace(/\.000$/, `.${sequential}`);
+    // (in case sequential was formatted differently)
+    let displayHfn = hfn.replace(/\.000$/, `.${sequential}`);
     const displayMfa = mfa.replace(/\.000$/, `.${sequential}`);
+
+    // Normalize the HFN address to ensure it always uses alphabetic codes
+    // This fixes the issue where some categories might show as numeric codes
+    // (e.g., W.002.FES.001 should be W.STG.FES.001)
+    displayHfn = taxonomyMapper.normalizeAddressForDisplay(displayHfn, 'hfn');
 
     console.log('IMPORTANT: Created asset is using enhanced format:');
     console.log(`Original backend Name: ${createdAsset.name}`);

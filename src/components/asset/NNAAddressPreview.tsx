@@ -15,7 +15,7 @@ import {
   Error as ErrorIcon,
   Info as InfoIcon,
 } from '@mui/icons-material';
-import { formatNNAAddressForDisplay } from '../../api/codeMapping.enhanced';
+import taxonomyMapper from '../../api/taxonomyMapper';
 
 interface NNAAddressPreviewProps {
   layerCode: string;
@@ -41,9 +41,9 @@ const NNAAddressPreview: React.FC<NNAAddressPreviewProps> = ({
   // For debugging
   console.log(`NNAAddressPreview Input: layer=${layerCode}, category=${categoryCode}, subcategory=${subcategoryCode}`);
 
-  // Use the unified format function to ensure consistent display across components
+  // Use the enhanced taxonomy mapper to ensure consistent display across components
   // This handles all special cases internally and returns properly formatted addresses
-  const { hfn: hfnAddress, mfa: mfaAddress } = formatNNAAddressForDisplay(
+  const { hfn: hfnAddress, mfa: mfaAddress } = taxonomyMapper.formatNNAAddress(
     layerCode,
     categoryCode,
     subcategoryCode,
