@@ -1,8 +1,16 @@
 # Vercel Build Trigger
 
-Build triggered at: Wed May 14 13:15:00 MDT 2025
+Build triggered at: Wed May 14 13:30:00 MDT 2025
 
-## Latest Build - May 14, 2025 - Continued Improvements
+## Latest Build - May 14, 2025 - Further Improvements
+
+### Asset Browsing Improvements
+
+- Changed "Search Results" to "Recent Assets" when no search is performed
+- Added default sorting by creation date to show newest assets first
+- Limited initial load to 10 most recent assets for better performance
+- Made asset count text contextual ("found" vs "available")
+- Improved empty state display for better user experience
 
 ### File Preview Fixes
 
