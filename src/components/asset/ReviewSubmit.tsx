@@ -33,6 +33,7 @@ import {
   Public as PublicIcon,
 } from '@mui/icons-material';
 import { FileUploadResponse } from '../../types/asset.types';
+import { formatNNAAddressForDisplay } from '../../api/codeMapping';
 
 // Props interface
 interface ReviewSubmitProps {
@@ -121,10 +122,27 @@ const ReviewSubmit: React.FC<ReviewSubmitProps> = ({
     components = [],
   } = assetData;
 
-  // Create display versions of HFN and MFA with .000 as a placeholder for the sequential number
-  // This ensures consistency with the preview in Step 2 (TaxonomySelection)
-  const displayHfn = hfn ? hfn.replace(/\.\d+$/, '.000') : '';
-  const displayMfa = mfa ? mfa.replace(/\.\d+$/, '.000') : '';
+  // Use unified function to ensure consistent display with the preview
+  // But first check if we have valid layer, category and subcategory information
+  let displayHfn = '';
+  let displayMfa = '';
+
+  if (layer && categoryCode && subcategoryCode) {
+    // We have enough information to generate formatted addresses
+    const formattedAddresses = formatNNAAddressForDisplay(
+      layer,
+      categoryCode,
+      subcategoryCode,
+      "000" // Always use "000" for display consistency
+    );
+    displayHfn = formattedAddresses.hfn;
+    displayMfa = formattedAddresses.mfa;
+    console.log(`ReviewSubmit: Generated formatted addresses - HFN=${displayHfn}, MFA=${displayMfa}`);
+  } else {
+    // Fallback to the values provided in props
+    displayHfn = hfn ? hfn.replace(/\.\d+$/, '.000') : '';
+    displayMfa = mfa ? mfa.replace(/\.\d+$/, '.000') : '';
+  }
 
   // Validate that all required fields are present
   const isComplete = name && source && layer && categoryCode && subcategoryCode && files.length > 0;

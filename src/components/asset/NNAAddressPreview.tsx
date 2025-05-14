@@ -15,7 +15,7 @@ import {
   Error as ErrorIcon,
   Info as InfoIcon,
 } from '@mui/icons-material';
-import { convertHFNToMFA, formatNNAAddress } from '../../api/codeMapping';
+import { formatNNAAddressForDisplay } from '../../api/codeMapping';
 
 interface NNAAddressPreviewProps {
   layerCode: string;
@@ -38,43 +38,30 @@ const NNAAddressPreview: React.FC<NNAAddressPreviewProps> = ({
   checkingUniqueness,
   validationError,
 }) => {
-  // Replace the actual sequential number with ".000" for preview display
-  // This indicates that the actual number will be determined by the backend after submission
-  const displaySequential = "000";
-
   // For debugging
   console.log(`NNAAddressPreview Input: layer=${layerCode}, category=${categoryCode}, subcategory=${subcategoryCode}`);
 
-  // Ensure we're using alphabetic codes for the HFN where possible
-  // This is particularly important for layer W (Worlds) which often shows numeric codes
-  let displayCategoryCode = categoryCode;
-
-  // Special handling for layer W Nature (015)
-  if (layerCode === 'W' && categoryCode === '015') {
-    displayCategoryCode = 'NAT';
-    console.log(`NNAAddressPreview: Detected W layer with Nature category, using NAT instead of 015`);
-  }
-
-  // Create the human-friendly NNA address - use the displaySequential for preview
-  const hfnAddress = formatNNAAddress(
+  // Use the unified format function to ensure consistent display across components
+  // This handles all special cases internally and returns properly formatted addresses
+  const { hfn: hfnAddress, mfa: mfaAddress } = formatNNAAddressForDisplay(
     layerCode,
-    displayCategoryCode,
+    categoryCode,
     subcategoryCode,
-    displaySequential // Use "000" as the placeholder for sequential number
+    "000" // Always use "000" for display in the preview
   );
 
-  // Create the machine-friendly NNA address
-  // Special handling for S.POP.HPM to ensure sequential consistency
-  let mfaAddress;
-  if (layerCode === 'S' &&
-      (categoryCode === 'POP' || categoryCode === '001') &&
-      (subcategoryCode === 'HPM' || subcategoryCode === '007')) {
-    // Direct construction for this special case to ensure consistent sequential number
-    mfaAddress = `2.001.007.${displaySequential}`; // Use "nnn" instead of the actual sequential number
-    console.log(`NNAAddressPreview: Direct MFA for S.POP.HPM: ${mfaAddress}`);
-  } else {
-    // Standard conversion for other cases - the conversion function will preserve "nnn"
-    mfaAddress = convertHFNToMFA(hfnAddress);
+  // Log the formatted addresses for debugging
+  console.log(`NNAAddressPreview: Formatted HFN=${hfnAddress}, MFA=${mfaAddress}`);
+
+  // Store original subcategory for later use in the success screen
+  if (subcategoryNumericCode) {
+    // Store in sessionStorage to persist through the registration flow
+    try {
+      sessionStorage.setItem(`originalSubcategory_${layerCode}_${categoryCode}`, subcategoryCode);
+      console.log(`Stored original subcategory: ${subcategoryCode} for ${layerCode}.${categoryCode}`);
+    } catch (e) {
+      console.warn('Failed to store original subcategory in sessionStorage:', e);
+    }
   }
 
   return (

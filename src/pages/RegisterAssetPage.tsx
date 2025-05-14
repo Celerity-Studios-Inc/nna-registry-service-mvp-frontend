@@ -28,6 +28,7 @@ import {
   Info as InfoIcon,
 } from '@mui/icons-material';
 import assetService from '../api/assetService';
+import { formatNNAAddressForDisplay } from '../api/codeMapping';
 import LayerSelection from '../components/asset/LayerSelection';
 import TaxonomySelection from '../components/asset/TaxonomySelection';
 import FileUpload from '../components/asset/FileUpload';
@@ -1404,58 +1405,72 @@ const RegisterAssetPage: React.FC = () => {
 
     console.log("Rendering success screen with asset:", createdAsset);
 
-    // ENHANCED DISPLAY FIX: Use original subcategory if available, otherwise use backend value
-    
-    // Get the HFN from the backend response
-    let hfn = createdAsset.name || '';
+    // ENHANCED DISPLAY FIX: Use the unified formatter for consistent display
+
+    // Extract basic asset information from the backend response
+    const layer = createdAsset.layer || '';
 
     // Get the MFA directly from the asset (what the backend reported)
-    const mfa = createdAsset.nnaAddress ||
-                createdAsset.metadata?.machineFriendlyAddress ||
-                createdAsset.metadata?.mfa ||
-                (createdAsset as any).nna_address || '';
+    const rawMfa = createdAsset.nnaAddress ||
+                   createdAsset.metadata?.machineFriendlyAddress ||
+                   createdAsset.metadata?.mfa ||
+                   (createdAsset as any).nna_address || '';
 
-    // Handle HFN standardization for all layers
-    // This ensures consistent display of HFN addresses across all asset types
-    const isValidHFNFormat = hfn && /^[A-Z]\.[A-Z0-9]{3}\.[A-Z0-9]{3}\.\d{3}$/.test(hfn);
+    // Extract sequential number from MFA
+    const sequentialParts = rawMfa ? rawMfa.split('.') : [];
+    const sequential = sequentialParts.length > 3 ? sequentialParts[3] : '001';
 
-    if (!isValidHFNFormat || createdAsset.layer === 'W') {
-      // If not a valid HFN format or specifically for Worlds layer, reconstruct it properly
-      // Extract sequential from MFA (last part) if available
-      const sequentialParts = mfa ? mfa.split('.') : [];
-      const sequential = sequentialParts.length > 3 ? sequentialParts[3] : '001';
+    // Get category and subcategory from the asset response
+    const category = createdAsset.category || '001';
 
-      // Get layer code
-      const layer = createdAsset.layer || '';
+    // Try to retrieve the original subcategory from sessionStorage if it exists
+    let subcategory = '';
 
-      // Get category and subcategory
-      const category = createdAsset.category || '001';
-      const subcategory = originalSubcategoryCode || createdAsset.subcategory || 'BAS';
-
-      // Recreate proper HFN using the standard format
-      hfn = `${layer}.${category}.${subcategory}.${sequential}`;
-      console.log(`HFN FORMAT FIX: Recreating HFN for ${layer} layer: ${hfn}`);
+    // First check if we have originalSubcategoryCode from a prop
+    if (originalSubcategoryCode) {
+      subcategory = originalSubcategoryCode;
+      console.log(`Using originalSubcategoryCode prop: ${originalSubcategoryCode}`);
     }
-    // Check if we need to override the subcategory display (applies to any layer but focus on Stars)
-    else if (originalSubcategoryCode &&
-             (createdAsset.subcategory === 'Base' || createdAsset.subcategory === 'BAS') &&
-             (createdAsset.layer === 'S' || hfn.split('.')[2] === 'BAS')) {
-      // Parse the backend HFN (e.g., "S.POP.BAS.015")
-      const parts = hfn.split('.');
-      if (parts.length === 4 && (parts[2] === 'BAS' || parts[2] === 'Base')) {
-        // Replace BAS/Base with the original subcategory
-        parts[2] = originalSubcategoryCode;
-        const displayHfn = parts.join('.');
-        console.log(`DISPLAY OVERRIDE: Replacing backend HFN ${hfn} with original subcategory version ${displayHfn}`);
-        hfn = displayHfn;
+    // Then try retrieving from sessionStorage
+    else {
+      try {
+        const storedSubcategory = sessionStorage.getItem(`originalSubcategory_${layer}_${category}`);
+        if (storedSubcategory) {
+          subcategory = storedSubcategory;
+          console.log(`Retrieved original subcategory from sessionStorage: ${subcategory}`);
+        }
+      } catch (e) {
+        console.warn('Error accessing sessionStorage:', e);
       }
     }
 
-    console.log('IMPORTANT: Created asset is using direct backend values:');
-    console.log(`Direct Asset Name/HFN: ${createdAsset.name}`);
-    console.log(`Display HFN (with override): ${hfn}`);
-    console.log(`Direct Asset MFA: ${mfa}`);
-    console.log(`Original subcategory (for display): ${originalSubcategoryCode}`);
+    // If we don't have a subcategory from storage, use the one from the backend
+    if (!subcategory) {
+      subcategory = createdAsset.subcategory || 'BAS';
+    }
+
+    console.log(`Using layer=${layer}, category=${category}, subcategory=${subcategory}, sequential=${sequential}`);
+
+    // Use our unified formatter to generate consistent display format
+    const { hfn, mfa } = formatNNAAddressForDisplay(
+      layer,
+      category,
+      subcategory,
+      sequential
+    );
+
+    console.log(`Successfully formatted addresses using unified formatter:`);
+    console.log(`HFN: ${hfn}, MFA: ${mfa}`);
+
+    // For display in the success screen, replace the sequential number with the actual one
+    const displayHfn = hfn.replace(/\.000$/, `.${sequential}`);
+    const displayMfa = mfa.replace(/\.000$/, `.${sequential}`);
+
+    console.log('IMPORTANT: Created asset is using enhanced format:');
+    console.log(`Original backend Name: ${createdAsset.name}`);
+    console.log(`Display HFN: ${displayHfn}`);
+    console.log(`Display MFA: ${displayMfa}`);
+    console.log(`Original subcategory (for display): ${subcategory}`);
 
     // Add clear logging for debugging
     console.log('Asset structure:', {
@@ -1467,7 +1482,7 @@ const RegisterAssetPage: React.FC = () => {
       metadata: createdAsset.metadata
     });
 
-    console.log(`Success screen showing MFA: ${mfa} and HFN: ${hfn} from asset:`, createdAsset);
+    console.log(`Success screen showing MFA: ${displayMfa} and HFN: ${displayHfn} from asset:`, createdAsset);
                 
     const layerName = createdAsset.metadata?.layerName || 
                       `Layer ${createdAsset.layer}`;
@@ -1804,15 +1819,11 @@ const RegisterAssetPage: React.FC = () => {
                       </Typography>
                       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         <Typography variant="body1" fontWeight="bold">
-                          {hfn}
+                          {displayHfn}
                         </Typography>
-                        {(originalSubcategoryCode && hfn !== createdAsset.name) || createdAsset.layer === 'W' ? (
-                          <Tooltip title={createdAsset.layer === 'W'
-                            ? "NNA format corrected for Worlds asset"
-                            : "Adjusted display: Original subcategory preserved for better visibility"}>
-                            <InfoIcon color="info" fontSize="small" sx={{ ml: 1, width: 18, height: 18 }} />
-                          </Tooltip>
-                        ) : null}
+                        <Tooltip title="Using consistent NNA format from the unified formatter">
+                          <InfoIcon color="info" fontSize="small" sx={{ ml: 1, width: 18, height: 18 }} />
+                        </Tooltip>
                       </Box>
                     </Grid>
                     
@@ -1822,10 +1833,9 @@ const RegisterAssetPage: React.FC = () => {
                       </Typography>
                       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         <Typography variant="body1" fontFamily="monospace" fontWeight="medium" align="center">
-                          {/* Display with .000 for consistency with other steps */}
-                          {mfa ? mfa.replace(/\.\d{3}$/, '.000') : ''}
+                          {displayMfa}
                         </Typography>
-                        <Tooltip title="Showing placeholder .000 for sequential number">
+                        <Tooltip title="Using consistent NNA format from the unified formatter">
                           <InfoIcon color="info" fontSize="small" sx={{ ml: 1, width: 18, height: 18 }} />
                         </Tooltip>
                       </Box>

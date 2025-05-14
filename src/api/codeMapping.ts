@@ -1,20 +1,139 @@
 /**
  * Code mapping utilities for NNA Registry
  * Handles conversions between human-friendly codes and machine-friendly codes
+ *
+ * Based on the NNA Framework Whitepaper dual addressing scheme:
+ * - Human-Friendly Names (HFN): Uses three-character uppercase alphabetic codes (e.g., POP, NAT)
+ * - Machine-Friendly Addresses (MFA): Uses three-digit numeric codes (e.g., 001, 015)
  */
 
-// Layer mappings (if needed in the future)
-export const layerMappings: Record<string, { name: string, numeric: number }> = {
-  G: { name: 'Songs', numeric: 1 },
-  S: { name: 'Stars', numeric: 2 },
-  L: { name: 'Looks', numeric: 3 },
-  M: { name: 'Moves', numeric: 4 },
-  W: { name: 'Worlds', numeric: 5 },
-  B: { name: 'Branded', numeric: 6 },
-  P: { name: 'Personalize', numeric: 7 },
-  T: { name: 'Training Data', numeric: 8 },
-  C: { name: 'Composite', numeric: 9 },
-  R: { name: 'Rights', numeric: 10 },
+// Comprehensive layer mappings with full metadata
+export const layerMappings: Record<string, { name: string, numeric: number, description?: string }> = {
+  G: { name: 'Songs', numeric: 1, description: 'Licensed music tracks' },
+  S: { name: 'Stars', numeric: 2, description: 'Virtual avatars and characters' },
+  L: { name: 'Looks', numeric: 3, description: 'Wardrobe and styling assets' },
+  M: { name: 'Moves', numeric: 4, description: 'Choreography and dance assets' },
+  W: { name: 'Worlds', numeric: 5, description: 'Environmental backdrops' },
+  B: { name: 'Branded', numeric: 6, description: 'Premium virtual product placements' },
+  P: { name: 'Personalize', numeric: 7, description: 'User-uploaded customizations' },
+  T: { name: 'Training Data', numeric: 8, description: 'Datasets for AI training' },
+  C: { name: 'Composite', numeric: 9, description: 'Aggregated multi-layer assets' },
+  R: { name: 'Rights', numeric: 10, description: 'Provenance and rights tracking' },
+};
+
+// Comprehensive bidirectional category code mappings
+// Alphabetic to Numeric (used in HFN to MFA conversion)
+export const categoryAlphaToNumeric: Record<string, string> = {
+  'POP': '001', // Pop
+  'ROK': '002', 'RCK': '002', // Rock (with alternate code)
+  'HIP': '003', // Hip-Hop
+  'DNC': '004', // Dance
+  'DSF': '005', // Disco-Funk
+  'RNB': '006', // R&B
+  'JZZ': '007', // Jazz
+  'JPO': '008', // J-Pop
+  'BOL': '009', // Bollywood
+  'LAT': '010', // Latin
+  'IND': '011', // Indie
+  'ALT': '012', // Alternative
+  'WLD': '013', // World
+  'RFK': '014', // Retrofunk
+  'NAT': '015', // Nature (especially for Worlds)
+  'KPO': '016', // K-Pop
+  'HYP': '017', // Hyperpop
+  'AFB': '018', // Afrobeat
+  'MOD': '019', // Modern
+  'BLU': '020', // Blues
+  'CLS': '021', // Classical
+  'URL': '022', // Urban
+  'SPC': '023', // Space
+  'SCI': '024', // Science
+  'FAN': '025', // Fantasy
+  'BAS': '001', // Base (default for subcategories)
+};
+
+// Numeric to Alphabetic (used in MFA to HFN conversion)
+export const categoryNumericToAlpha: Record<string, string> = {
+  '001': 'POP', // Pop
+  '002': 'ROK', // Rock
+  '003': 'HIP', // Hip-Hop
+  '004': 'DNC', // Dance
+  '005': 'DSF', // Disco-Funk
+  '006': 'RNB', // R&B
+  '007': 'JZZ', // Jazz
+  '008': 'JPO', // J-Pop
+  '009': 'BOL', // Bollywood
+  '010': 'LAT', // Latin
+  '011': 'IND', // Indie
+  '012': 'ALT', // Alternative
+  '013': 'WLD', // World
+  '014': 'RFK', // Retrofunk
+  '015': 'NAT', // Nature (especially for Worlds)
+  '016': 'KPO', // K-Pop
+  '017': 'HYP', // Hyperpop
+  '018': 'AFB', // Afrobeat
+  '019': 'MOD', // Modern
+  '020': 'BLU', // Blues
+  '021': 'CLS', // Classical
+  '022': 'URL', // Urban
+  '023': 'SPC', // Space
+  '024': 'SCI', // Science
+  '025': 'FAN', // Fantasy
+};
+
+// Special subcategory mappings for different layers
+// This handles the case where the same numeric code maps to different
+// alphabetic codes depending on the layer and category
+export const layerSpecificSubcategoryMappings: Record<string, Record<string, Record<string, string>>> = {
+  // Stars layer subcategory mappings
+  'S': {
+    // POP category subcategories for Stars
+    'POP': {
+      // Alpha to Numeric
+      'BAS': '001', // Base
+      'DIV': '002', // Pop_Diva_Female_Stars
+      'IDF': '003', // Pop_Idol_Female_Stars
+      'LGF': '004', // Pop_Legend_Female_Stars
+      'LGM': '005', // Pop_Legend_Male_Stars
+      'ICM': '006', // Pop_Icon_Male_Stars
+      'HPM': '007', // Pop_Hipster_Male_Stars - Special case
+    },
+    // Numeric to Alpha for POP category in Stars layer
+    'POP_NUMERIC': {
+      '001': 'BAS', // Base
+      '002': 'DIV', // Pop_Diva_Female_Stars
+      '003': 'IDF', // Pop_Idol_Female_Stars
+      '004': 'LGF', // Pop_Legend_Female_Stars
+      '005': 'LGM', // Pop_Legend_Male_Stars
+      '006': 'ICM', // Pop_Icon_Male_Stars
+      '007': 'HPM', // Pop_Hipster_Male_Stars
+    }
+  },
+  // Worlds layer special subcategory mappings
+  'W': {
+    // For NAT (Nature) category in Worlds
+    'NAT': {
+      'BAS': '001', // Base/Default
+      'FOR': '002', // Forest
+      'OCN': '003', // Ocean
+      'MNT': '004', // Mountain
+      'DST': '005', // Desert
+    },
+    // Urban environments in Worlds
+    'HIP': {
+      'BAS': '001', // Base/Default
+      'STR': '002', // Street
+      'CBD': '003', // City Center
+      'SUB': '004', // Suburb
+      'FUT': '005', // Futuristic
+    }
+  },
+  // Default subcategory mappings for any layer/category combination
+  'default': {
+    'default': {
+      'BAS': '001', // Base is 001 in nearly all taxonomies
+    }
+  }
 };
 
 /**
@@ -323,8 +442,124 @@ export function convertMFAToHFN(mfaAddress: string): string {
 }
 
 /**
- * Generates a formatted NNA address string
- * 
+ * Unified format function for NNA addresses that ensures consistent display
+ * across all components. This should be used for all display purposes in the UI.
+ *
+ * @param layer Layer code (e.g., 'S', 'W')
+ * @param category Category code (can be alphabetic or numeric)
+ * @param subcategory Subcategory code (can be alphabetic or numeric)
+ * @param sequential Sequential number or placeholder (defaults to "000")
+ * @returns An object with properly formatted HFN and MFA addresses
+ */
+export function formatNNAAddressForDisplay(
+  layer: string,
+  category: string,
+  subcategory: string,
+  sequential: string | number = "000"
+): { hfn: string, mfa: string } {
+  // Ensure sequential is formatted properly
+  const formattedSequential = typeof sequential === 'number'
+    ? sequential.toString().padStart(3, '0')
+    : sequential.padStart(3, '0');
+
+  // Step 1: Get the proper alphabetic codes for HFN
+  const categoryAlpha = getAlphabeticCodeForDisplay(layer, category);
+  const subcategoryAlpha = getAlphabeticCodeForDisplay(layer, subcategory, categoryAlpha);
+
+  // Step 2: Format the HFN address
+  const hfn = `${layer}.${categoryAlpha}.${subcategoryAlpha}.${formattedSequential}`;
+
+  // Step 3: Handle special cases for MFA conversion
+  let mfa: string;
+
+  // Special handling for S.POP.HPM case
+  if (layer === 'S' &&
+      (categoryAlpha === 'POP' || category === '001') &&
+      (subcategoryAlpha === 'HPM' || subcategory === '007')) {
+    mfa = `2.001.007.${formattedSequential}`;
+  }
+  // Special handling for Worlds layer with Nature category
+  else if (layer === 'W' &&
+           (categoryAlpha === 'NAT' || category === '015')) {
+    mfa = `5.015.001.${formattedSequential}`;
+  }
+  // Special handling for Worlds layer with Urban/HIP category
+  else if (layer === 'W' &&
+           (categoryAlpha === 'HIP' || category === '003')) {
+    mfa = `5.003.001.${formattedSequential}`;
+  }
+  // Standard conversion for other cases
+  else {
+    mfa = convertHFNToMFA(hfn);
+  }
+
+  return { hfn, mfa };
+}
+
+/**
+ * Helper function to get the correct alphabetic code for display purposes,
+ * taking into account layer-specific mappings and special cases.
+ *
+ * @param layer Layer code
+ * @param code The category or subcategory code to convert (can be alphabetic or numeric)
+ * @param categoryContext The category context when processing a subcategory
+ * @returns The appropriate alphabetic code for display
+ */
+export function getAlphabeticCodeForDisplay(
+  layer: string,
+  code: string,
+  categoryContext?: string
+): string {
+  // If already alphabetic, uppercase it and return
+  if (/^[A-Za-z]+$/.test(code)) {
+    return code.toUpperCase();
+  }
+
+  // Handle numeric codes with comprehensive mapping
+  if (/^\d+$/.test(code)) {
+    // First, check for special cases by layer and category context
+
+    // Handle S.POP.007 (Stars layer, Pop category, Hipster Male subcategory)
+    if (layer === 'S' && categoryContext === 'POP' && code === '007') {
+      return 'HPM';
+    }
+
+    // Handle W.015 (Worlds layer, Nature category)
+    if (layer === 'W' && code === '015') {
+      return 'NAT';
+    }
+
+    // Handle W.003 (Worlds layer, Urban/Hip-Hop category)
+    if (layer === 'W' && code === '003') {
+      return 'HIP';
+    }
+
+    // Try the appropriate mapping table based on whether this is a category or subcategory
+    if (categoryContext) {
+      // This is a subcategory - try layer-specific mappings first
+      if (layer in layerSpecificSubcategoryMappings &&
+          categoryContext in layerSpecificSubcategoryMappings[layer] &&
+          code in layerSpecificSubcategoryMappings[layer][`${categoryContext}_NUMERIC`]) {
+        return layerSpecificSubcategoryMappings[layer][`${categoryContext}_NUMERIC`][code];
+      }
+
+      // Fallback to default subcategory mappings
+      return code === '001' ? 'BAS' : code;
+    } else {
+      // This is a category - use the category numeric-to-alpha map
+      return categoryNumericToAlpha[code] || code;
+    }
+  }
+
+  // If we can't determine a mapping, return the code as-is
+  return code;
+}
+
+/**
+ * Generates a formatted NNA address string (original implementation)
+ * Used primarily for internal processing, not display.
+ * For display purposes, use formatNNAAddressForDisplay instead.
+ *
  * @param layer Layer code
  * @param category Category code
  * @param subcategory Subcategory code
@@ -343,27 +578,8 @@ export function formatNNAAddress(
   // Handle numeric codes using a more comprehensive approach
   if (/^\d+$/.test(category)) {
     // Try to use the mapping table first
-    const numericToCategoryMap: Record<string, string> = {
-      '001': 'POP',
-      '002': 'ROK',
-      '003': 'HIP',
-      '004': 'RNB',
-      '005': 'DNC',
-      '006': 'LAT',
-      '007': 'IND',
-      '008': 'ALT',
-      '009': 'WLD',
-      '010': 'JZZ',
-      '011': 'JPO',
-      '012': 'BOL',
-      '013': 'KPO',
-      '014': 'RET', // Retro
-      '015': 'NAT', // Nature
-    };
-
-    // If we have a mapping for this numeric code, use it
-    if (numericToCategoryMap[category]) {
-      categoryAlpha = numericToCategoryMap[category];
+    if (categoryNumericToAlpha[category]) {
+      categoryAlpha = categoryNumericToAlpha[category];
       console.log(`formatNNAAddress: Converted numeric category ${category} to ${categoryAlpha}`);
     } else {
       // If not, try to use the first 3 letters of the name
@@ -377,21 +593,16 @@ export function formatNNAAddress(
 
   // Use a more comprehensive approach for subcategories too
   if (/^\d+$/.test(subcategory)) {
-    // Common subcategory mappings (expand as needed)
-    const numericToSubcategoryMap: Record<string, string> = {
-      '001': 'BAS', // Base (used in most categories)
-      '002': 'GLB', // Global_Pop (for POP category)
-      '003': 'TEN', // Teen_Pop (for POP category)
-      '004': 'LGF', // Legend_Female (for Stars/POP)
-      '005': 'LGM', // Legend_Male (for Stars/POP)
-      '006': 'ICM', // Icon_Male (for Stars/POP)
-      '007': 'HPM', // Hipster_Male (for Stars/POP)
-    };
-
-    // If we have a mapping for this numeric code, use it
-    if (numericToSubcategoryMap[subcategory]) {
-      subcategoryAlpha = numericToSubcategoryMap[subcategory];
-      console.log(`formatNNAAddress: Converted numeric subcategory ${subcategory} to ${subcategoryAlpha}`);
+    // Try layer-specific subcategory mappings first
+    if (layer === 'S' && categoryAlpha === 'POP' && subcategory === '007') {
+      subcategoryAlpha = 'HPM';
+    } else if (layer in layerSpecificSubcategoryMappings &&
+        categoryAlpha in layerSpecificSubcategoryMappings[layer] &&
+        subcategory in layerSpecificSubcategoryMappings[layer][`${categoryAlpha}_NUMERIC`]) {
+      subcategoryAlpha = layerSpecificSubcategoryMappings[layer][`${categoryAlpha}_NUMERIC`][subcategory];
+    } else if (subcategory === '001') {
+      // Most common mapping - 001 is almost always BAS (Base)
+      subcategoryAlpha = 'BAS';
     } else {
       // For now, we'll keep the numeric code if no mapping exists
       console.log(`formatNNAAddress: No mapping found for numeric subcategory ${subcategory}, keeping as is`);
@@ -419,6 +630,11 @@ if (typeof window !== 'undefined') {
     convertHFNToMFA,
     convertMFAToHFN,
     formatNNAAddress,
-    layerMappings
+    formatNNAAddressForDisplay,
+    getAlphabeticCodeForDisplay,
+    layerMappings,
+    categoryAlphaToNumeric,
+    categoryNumericToAlpha,
+    layerSpecificSubcategoryMappings
   };
 }
