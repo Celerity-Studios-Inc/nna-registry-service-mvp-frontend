@@ -20,10 +20,11 @@ const SearchAssetsPage: React.FC = () => {
           if (Array.isArray(response.data)) {
             // Old format: response.data is the array
             setAssets(response.data);
-          } else if (response.data.items && Array.isArray(response.data.items)) {
+          } else if (typeof response.data === 'object' && response.data !== null && 'items' in response.data && Array.isArray((response.data as any).items)) {
             // New format: response.data.items is the array
-            console.log("Using items array from API response:", response.data.items.length);
-            setAssets(response.data.items);
+            const dataWithItems = response.data as { items: Asset[] };
+            console.log("Using items array from API response:", dataWithItems.items.length);
+            setAssets(dataWithItems.items);
           } else {
             console.warn("Unexpected API response format:", response);
             setAssets([]);

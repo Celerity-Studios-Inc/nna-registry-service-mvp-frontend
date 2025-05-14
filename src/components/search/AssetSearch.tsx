@@ -70,11 +70,12 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
             // Old format: results.data is the array
             setSearchResults(results.data);
             setTotalAssets(results.pagination?.total || results.data.length);
-          } else if (results.data.items && Array.isArray(results.data.items)) {
+          } else if (typeof results.data === 'object' && results.data !== null && 'items' in results.data && Array.isArray((results.data as any).items)) {
             // New format: results.data.items is the array
-            console.log("Using items array from API response:", results.data.items.length);
-            setSearchResults(results.data.items);
-            setTotalAssets(results.data.total || results.data.items.length);
+            const dataWithItems = results.data as { items: Asset[], total?: number };
+            console.log("Using items array from API response:", dataWithItems.items.length);
+            setSearchResults(dataWithItems.items);
+            setTotalAssets(dataWithItems.total || dataWithItems.items.length);
           } else {
             console.warn("Unexpected API response format:", results);
             setSearchResults([]);
@@ -152,11 +153,12 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
           console.log("Search results:", results.data.length);
           setSearchResults(results.data);
           setTotalAssets(results.pagination?.total || results.data.length);
-        } else if (results.data.items && Array.isArray(results.data.items)) {
+        } else if (typeof results.data === 'object' && results.data !== null && 'items' in results.data && Array.isArray((results.data as any).items)) {
           // New format: results.data.items is the array
-          console.log("Search results from items array:", results.data.items.length);
-          setSearchResults(results.data.items);
-          setTotalAssets(results.data.total || results.data.items.length);
+          const dataWithItems = results.data as { items: Asset[], total?: number };
+          console.log("Search results from items array:", dataWithItems.items.length);
+          setSearchResults(dataWithItems.items);
+          setTotalAssets(dataWithItems.total || dataWithItems.items.length);
         } else {
           console.warn("Received unexpected format from assets search:", results);
           setSearchResults([]);

@@ -299,10 +299,10 @@ class AssetService {
       // Check response format and normalize it
       // If response.data.data.items exists, we have the new format where items is in a nested data property
       if (response.data && response.data.data) {
-        const responseData = response.data.data;
+        const responseData = response.data.data as any;
 
         // Handle the case where the backend API returns { items: [], total: number }
-        if (responseData.items && Array.isArray(responseData.items)) {
+        if (typeof responseData === 'object' && responseData !== null && 'items' in responseData && Array.isArray(responseData.items)) {
           // Convert to our PaginatedResponse format
           console.log("Converting backend items format to PaginatedResponse format");
           return {
