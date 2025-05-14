@@ -1755,7 +1755,23 @@ const RegisterAssetPage: React.FC = () => {
                         Layer
                       </Typography>
                       <Typography variant="body1" fontWeight="bold">
-                        {layerName}
+                        {(() => {
+                          // Map layer codes to full names
+                          const layerNames: Record<string, string> = {
+                            'G': 'Songs',
+                            'S': 'Stars',
+                            'L': 'Looks',
+                            'M': 'Moves',
+                            'W': 'Worlds',
+                            'V': 'Videos',
+                            'B': 'Branded Assets',
+                            'C': 'Composites',
+                            'T': 'Training Data',
+                            'P': 'Patterns',
+                          };
+                          const layer = createdAsset.layer;
+                          return `${layerNames[layer] || layerName || `Layer ${layer}`} (${layer})`;
+                        })()}
                       </Typography>
                     </Grid>
                     

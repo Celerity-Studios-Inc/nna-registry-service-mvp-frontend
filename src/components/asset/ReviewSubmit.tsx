@@ -121,6 +121,11 @@ const ReviewSubmit: React.FC<ReviewSubmitProps> = ({
     components = [],
   } = assetData;
 
+  // Create display versions of HFN and MFA with .000 as a placeholder for the sequential number
+  // This ensures consistency with the preview in Step 2 (TaxonomySelection)
+  const displayHfn = hfn ? hfn.replace(/\.\d+$/, '.000') : '';
+  const displayMfa = mfa ? mfa.replace(/\.\d+$/, '.000') : '';
+
   // Validate that all required fields are present
   const isComplete = name && source && layer && categoryCode && subcategoryCode && files.length > 0;
   
@@ -300,7 +305,7 @@ const ReviewSubmit: React.FC<ReviewSubmitProps> = ({
                 </ListItemIcon>
                 <ListItemText
                   primary="Human Friendly Name (HFN)"
-                  secondary={hfn || 'Not generated yet'}
+                  secondary={displayHfn || 'Not generated yet'}
                   primaryTypographyProps={{ variant: 'body2', color: 'text.secondary' }}
                   secondaryTypographyProps={{ variant: 'body1', fontWeight: 'bold' }}
                 />
@@ -312,7 +317,7 @@ const ReviewSubmit: React.FC<ReviewSubmitProps> = ({
                 </ListItemIcon>
                 <ListItemText
                   primary="Machine Friendly Address (MFA)"
-                  secondary={mfa || 'Not generated yet'}
+                  secondary={displayMfa || 'Not generated yet'}
                   primaryTypographyProps={{ variant: 'body2', color: 'text.secondary' }}
                   secondaryTypographyProps={{ variant: 'body1', fontFamily: 'monospace' }}
                 />
@@ -476,7 +481,7 @@ const ReviewSubmit: React.FC<ReviewSubmitProps> = ({
                 </ListItemIcon>
                 <ListItemText
                   primary="Human Friendly Name (HFN)"
-                  secondary={hfn || 'Not generated yet'}
+                  secondary={displayHfn || 'Not generated yet'}
                   primaryTypographyProps={{ variant: 'body2', color: 'text.secondary' }}
                   secondaryTypographyProps={{ variant: 'body1', fontWeight: 'bold' }}
                 />
@@ -488,7 +493,7 @@ const ReviewSubmit: React.FC<ReviewSubmitProps> = ({
                 </ListItemIcon>
                 <ListItemText
                   primary="Machine Friendly Address (MFA)"
-                  secondary={mfa || 'Not generated yet'}
+                  secondary={displayMfa || 'Not generated yet'}
                   primaryTypographyProps={{ variant: 'body2', color: 'text.secondary' }}
                   secondaryTypographyProps={{ variant: 'body1', fontFamily: 'monospace' }}
                 />

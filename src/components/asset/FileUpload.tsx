@@ -278,6 +278,31 @@ const FileUpload: React.FC<FileUploadProps> = ({
                 : ''
             }`}
       </Typography>
+
+      {/* Add layer name display */}
+      {layerCode && (
+        <Box sx={{ mb: 3, p: 2, bgcolor: 'background.default', borderRadius: 1, border: '1px solid rgba(0, 0, 0, 0.12)' }}>
+          <Typography variant="subtitle1" fontWeight="bold" color="primary">
+            {(() => {
+              // Map layer codes to full names
+              const layerNames: Record<string, string> = {
+                'G': 'Songs',
+                'S': 'Stars',
+                'L': 'Looks',
+                'M': 'Moves',
+                'W': 'Worlds',
+                'V': 'Videos',
+                'B': 'Branded Assets',
+                'C': 'Composites',
+                'T': 'Training Data',
+                'P': 'Patterns',
+              };
+              return `${layerNames[layerCode] || `Layer ${layerCode}`} (${layerCode})`;
+            })()}
+          </Typography>
+        </Box>
+      )}
+
       <Divider sx={{ mb: 3 }} />
 
       {error && (

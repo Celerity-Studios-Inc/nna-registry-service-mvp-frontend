@@ -22,4 +22,21 @@
 - Fixed subcategory validation in tests
 - Added detailed documentation of what's being tested
 
-The primary focus was on fixing the manifest logo errors and ensuring the asset creation functionality is properly implemented to match backend API expectations.
+## 5. UI Improvements (Latest)
+- **Consistent Sequential Number Display**
+  - Updated `ReviewSubmit.tsx` to display ".000" as a placeholder for sequence numbers in both HFN and MFA displays
+  - This ensures consistency with the preview shown in the TaxonomySelection step
+  - Both Human-Friendly Names (HFN) and Machine-Friendly Addresses (MFA) now consistently display with ".000" in the final review stage
+
+- **Layer Name Display Improvements**
+  - Added full layer name displays across multiple components:
+    - `TaxonomySelection.tsx` (Step 2): Shows the full layer name with code in parentheses (e.g., "Stars (S)")
+    - `FileUpload.tsx` (Step 3): Added the same format layer name display for better context
+    - Asset Created Success Screen: Updated to show full layer names instead of just codes
+  - This provides better context throughout the asset registration workflow
+
+- **Implementation Details**
+  - Added layer name mapping from codes to full names (G → Songs, S → Stars, etc.)
+  - Used consistent styling for the layer name displays across components
+  - Ensured fallback displays if a layer code doesn't have a mapped name
+  - These changes improve user understanding and workflow clarity
