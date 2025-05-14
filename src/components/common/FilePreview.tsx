@@ -68,17 +68,31 @@ const getFileIcon = (type: string | undefined) => {
 
 // Determine if file is previewable in browser
 const isPreviewable = (file: File | string | { url: string; type?: string; [key: string]: any }) => {
+  // Handle null or undefined file
+  if (!file) {
+    console.warn("Received null or undefined file in isPreviewable");
+    return false;
+  }
+
   // Handle string URLs - assume they are previewable if they have common media extensions
   if (typeof file === 'string') {
+    // Simple validation to avoid errors with malformed URLs
+    if (!file.includes('.') && !file.startsWith('data:')) {
+      console.warn("String URL doesn't contain a file extension or data URL format:", file);
+      return false;
+    }
+
     const url = file.toLowerCase();
     return url.endsWith('.jpg') || url.endsWith('.jpeg') || url.endsWith('.png') ||
            url.endsWith('.gif') || url.endsWith('.webp') || url.endsWith('.mp4') ||
            url.endsWith('.webm') || url.endsWith('.mp3') || url.endsWith('.wav') ||
-           url.endsWith('.ogg') || url.endsWith('.pdf');
+           url.endsWith('.ogg') || url.endsWith('.pdf') ||
+           url.startsWith('data:image/') || url.startsWith('data:video/') ||
+           url.startsWith('data:audio/') || url.includes('gcpStorageUrl');
   }
 
   // Handle object with url property
-  if (typeof file === 'object' && 'url' in file) {
+  if (typeof file === 'object' && file !== null && 'url' in file) {
     // If it has a type property, use that
     if (file.type) {
       return file.type.startsWith('image/') ||
@@ -87,12 +101,20 @@ const isPreviewable = (file: File | string | { url: string; type?: string; [key:
              file.type.startsWith('audio/');
     }
 
+    // Missing URL check (server response might have null URL)
+    if (!file.url) {
+      console.warn("Object with url property has null or undefined url:", file);
+      return false;
+    }
+
     // Otherwise check URL extension
     const url = file.url.toLowerCase();
     return url.endsWith('.jpg') || url.endsWith('.jpeg') || url.endsWith('.png') ||
            url.endsWith('.gif') || url.endsWith('.webp') || url.endsWith('.mp4') ||
            url.endsWith('.webm') || url.endsWith('.mp3') || url.endsWith('.wav') ||
-           url.endsWith('.ogg') || url.endsWith('.pdf');
+           url.endsWith('.ogg') || url.endsWith('.pdf') ||
+           url.startsWith('data:image/') || url.startsWith('data:video/') ||
+           url.startsWith('data:audio/') || url.includes('gcpStorageUrl');
   }
 
   // Handle File object
@@ -103,6 +125,7 @@ const isPreviewable = (file: File | string | { url: string; type?: string; [key:
            file.type.startsWith('audio/');
   }
 
+  console.warn("Unhandled file type in isPreviewable:", typeof file, file);
   return false;
 };
 
@@ -120,32 +143,77 @@ const FilePreview: React.FC<FilePreviewProps> = ({
 
   React.useEffect(() => {
     // Generate preview URL
-    if (file && isPreviewable(file)) {
+    if (!file) {
+      console.warn("File is null or undefined in useEffect");
+      setObjectUrl('');
+      return;
+    }
+
+    try {
       // Check if file is already a string URL (happens when editing an existing asset)
       if (typeof file === 'string') {
+        console.log("Setting object URL from string:", file);
         setObjectUrl(file);
         // No cleanup needed for string URLs
         return;
       }
 
+      // Special case for MongoDB's format in DB responses (gcpStorageUrl is common)
+      if (typeof file === 'object' && file !== null && 'gcpStorageUrl' in file) {
+        const url = file.gcpStorageUrl;
+        if (url) {
+          console.log("Setting object URL from gcpStorageUrl:", url);
+          setObjectUrl(url);
+          return;
+        }
+      }
+
       // Check if file already has a URL property (for uploaded files)
-      if ((file as any).url) {
-        setObjectUrl((file as any).url);
+      if (typeof file === 'object' && file !== null && 'url' in file && file.url) {
+        console.log("Setting object URL from file.url:", file.url);
+        setObjectUrl(file.url);
+        return;
+      }
+
+      // Try thumbnailUrl if available
+      if (typeof file === 'object' && file !== null && 'thumbnailUrl' in file && file.thumbnailUrl) {
+        console.log("Setting object URL from thumbnailUrl:", file.thumbnailUrl);
+        setObjectUrl(file.thumbnailUrl);
         return;
       }
 
       // Regular File object - create a blob URL
       if (file instanceof Blob) {
         const url = URL.createObjectURL(file);
+        console.log("Created blob URL for File object:", url);
         setObjectUrl(url);
 
         // Cleanup function to revoke object URL
         return () => {
           URL.revokeObjectURL(url);
         };
-      } else {
-        console.warn("Unable to create object URL for non-Blob object", file);
       }
+
+      // Fall back to checking for any URL-like property in the object
+      if (typeof file === 'object' && file !== null) {
+        // Check for common URL property names
+        const urlProps = ['imageUrl', 'fileUrl', 'src', 'source', 'link', 'href'];
+        for (const prop of urlProps) {
+          if (prop in file && typeof file[prop] === 'string' && file[prop]) {
+            console.log(`Setting object URL from ${prop}:`, file[prop]);
+            setObjectUrl(file[prop]);
+            return;
+          }
+        }
+      }
+
+      console.warn("Could not extract a valid URL from the provided file object:", file);
+
+      // If we get here, we couldn't extract a valid URL - set a blank URL
+      setObjectUrl('');
+    } catch (error) {
+      console.error("Error setting object URL:", error);
+      setObjectUrl('');
     }
   }, [file]);
 
@@ -321,23 +389,40 @@ const FilePreview: React.FC<FilePreviewProps> = ({
 
   // Render appropriate preview based on file type
   const renderPreview = () => {
-    if (!file) return null;
-
-    const fileType = getFileType();
-
-    if (!fileType) {
+    if (!file) {
+      console.warn("Attempting to render preview for null or undefined file");
       return renderGenericPreview();
     }
 
-    if (fileType.startsWith('image/')) {
-      return renderImagePreview();
-    } else if (fileType.startsWith('audio/')) {
-      return renderAudioPreview();
-    } else if (fileType.startsWith('video/')) {
-      return renderVideoPreview();
-    } else if (fileType === 'application/pdf') {
-      return renderPdfPreview();
-    } else {
+    try {
+      const fileType = getFileType();
+      console.log(`Rendering preview for file type: ${fileType}`);
+
+      if (!fileType) {
+        return renderGenericPreview();
+      }
+
+      // Detect GCP Storage URLs which should use image preview
+      if (typeof file === 'object' && file !== null && 'url' in file &&
+          typeof file.url === 'string' && file.url.includes('gcpStorageUrl')) {
+        console.log("Detected GCP Storage URL, using image preview");
+        return renderImagePreview();
+      }
+
+      // Normal file type detection
+      if (fileType.startsWith('image/')) {
+        return renderImagePreview();
+      } else if (fileType.startsWith('audio/')) {
+        return renderAudioPreview();
+      } else if (fileType.startsWith('video/')) {
+        return renderVideoPreview();
+      } else if (fileType === 'application/pdf') {
+        return renderPdfPreview();
+      } else {
+        return renderGenericPreview();
+      }
+    } catch (err) {
+      console.error("Error rendering file preview:", err);
       return renderGenericPreview();
     }
   };

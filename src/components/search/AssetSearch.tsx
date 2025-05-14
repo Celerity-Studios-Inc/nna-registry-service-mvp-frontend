@@ -178,9 +178,66 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
             // Check various fields for matches
             const nameMatch = asset.name?.toLowerCase().includes(searchLower) || false;
             const descMatch = asset.description?.toLowerCase().includes(searchLower) || false;
-            const tagMatch = asset.tags?.some(tag => tag.toLowerCase().includes(searchLower)) || false;
-            // Consider a match if any of the above is true
-            return nameMatch || descMatch || tagMatch;
+
+            // Improved tag matching - handle both string arrays and array-like objects
+            let tagMatch = false;
+
+            if (asset.tags) {
+              // Handle tags as an array of strings (most common format)
+              if (Array.isArray(asset.tags)) {
+                tagMatch = asset.tags.some(tag =>
+                  typeof tag === 'string' && tag.toLowerCase().includes(searchLower)
+                );
+              }
+              // Handle tags as a comma-separated string (sometimes returned from API)
+              else if (typeof asset.tags === 'string') {
+                tagMatch = asset.tags.toLowerCase().includes(searchLower);
+              }
+              // Handle tags as an object with values (rare but possible)
+              else if (typeof asset.tags === 'object') {
+                tagMatch = Object.values(asset.tags).some(tag =>
+                  typeof tag === 'string' && tag.toLowerCase().includes(searchLower)
+                );
+              }
+            }
+
+            // Handle subcategory matching, which is often related to search terms
+            const subcategoryMatch = asset.subcategory?.toLowerCase().includes(searchLower) ||
+                                   asset.subcategoryCode?.toLowerCase().includes(searchLower) ||
+                                   false;
+
+            // Consider other potentially relevant fields
+            const categoryMatch = asset.category?.toLowerCase().includes(searchLower) ||
+                                asset.categoryCode?.toLowerCase().includes(searchLower) ||
+                                false;
+
+            const idMatch = asset.id?.toLowerCase().includes(searchLower) ||
+                         (asset._id && asset._id.toLowerCase().includes(searchLower)) ||
+                         false;
+
+            // Check the NNA address too
+            const addressMatch = asset.nnaAddress?.toLowerCase().includes(searchLower) ||
+                             (asset.metadata?.humanFriendlyName &&
+                              asset.metadata.humanFriendlyName.toLowerCase().includes(searchLower)) ||
+                             false;
+
+            // Debug output for each asset to help troubleshoot matching issues
+            if (searchLower === 'sunset') {
+              console.log(`Checking asset "${asset.name}" for "sunset":`, {
+                nameMatch,
+                descMatch,
+                tagMatch,
+                subcategoryMatch,
+                categoryMatch,
+                tags: asset.tags,
+                subcategory: asset.subcategory,
+                category: asset.category
+              });
+            }
+
+            // Consider a match if any of the fields match
+            return nameMatch || descMatch || tagMatch || subcategoryMatch ||
+                   categoryMatch || idMatch || addressMatch;
           });
 
           console.log(`Filtered ${assetResults.length} results to ${filteredResults.length} relevant matches for "${searchQuery}"`);
