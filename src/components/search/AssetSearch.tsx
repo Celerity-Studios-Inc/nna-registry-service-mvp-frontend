@@ -191,11 +191,14 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
               }
               // Handle tags as a comma-separated string (sometimes returned from API)
               else if (typeof asset.tags === 'string') {
-                tagMatch = asset.tags.toLowerCase().includes(searchLower);
+                // Use type assertion to tell TypeScript that we know this is a string
+                tagMatch = (asset.tags as string).toLowerCase().includes(searchLower);
               }
               // Handle tags as an object with values (rare but possible)
-              else if (typeof asset.tags === 'object') {
-                tagMatch = Object.values(asset.tags).some(tag =>
+              else if (typeof asset.tags === 'object' && asset.tags !== null) {
+                // Cast the object to Record<string, any> to satisfy TypeScript
+                const tagsObj = asset.tags as Record<string, any>;
+                tagMatch = Object.values(tagsObj).some(tag =>
                   typeof tag === 'string' && tag.toLowerCase().includes(searchLower)
                 );
               }
