@@ -381,17 +381,24 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
         )}
       </Paper>
 
-      {/* Search results */}
+      {/* Results section - either search results or recent assets */}
       {searchResults.length > 0 && (
         <Box sx={{ mt: 4 }}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
             <Typography variant="h6">
-              Search Results
+              {/* Show "Search Results" if a search was performed, otherwise "Recent Assets" */}
+              {searchQuery || selectedLayer || selectedCategory || selectedSubcategory
+                ? "Search Results"
+                : "Recent Assets"}
             </Typography>
-            <Chip 
-              label={`${totalAssets} asset${totalAssets !== 1 ? 's' : ''} found`} 
-              color="primary" 
-              variant="outlined" 
+            <Chip
+              label={`${totalAssets} asset${totalAssets !== 1 ? 's' : ''} ${
+                searchQuery || selectedLayer || selectedCategory || selectedSubcategory
+                  ? 'found'
+                  : 'available'
+              }`}
+              color="primary"
+              variant="outlined"
             />
           </Box>
           <Grid container spacing={3}>

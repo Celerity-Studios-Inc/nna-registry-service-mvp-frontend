@@ -56,8 +56,17 @@ const SearchAssetsPage: React.FC = () => {
       <Typography variant="h5" gutterBottom>
         Browse Assets
       </Typography>
-      
-      <AssetSearch onSearch={handleSearch} />
+
+      <AssetSearch
+        onSearch={handleSearch}
+        initialParams={{
+          // Default to sorting by most recent
+          sort: "createdAt",
+          order: "desc",
+          // Limit to 10 most recent assets by default
+          limit: 10
+        }}
+      />
       
       {isLoading && (
         <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
