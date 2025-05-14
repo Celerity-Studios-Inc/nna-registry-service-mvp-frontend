@@ -28,7 +28,7 @@ import {
   Info as InfoIcon,
 } from '@mui/icons-material';
 import assetService from '../api/assetService';
-import { formatNNAAddressForDisplay } from '../api/codeMapping';
+import { formatNNAAddressForDisplay } from '../api/codeMapping.enhanced';
 import LayerSelection from '../components/asset/LayerSelection';
 import TaxonomySelection from '../components/asset/TaxonomySelection';
 import FileUpload from '../components/asset/FileUpload';
@@ -407,35 +407,39 @@ const RegisterAssetPage: React.FC = () => {
         tags: data.tags || [],
         files: data.files,  // Pass the original files
         // CRITICAL: Include nnaAddress at the root level for consistent access patterns
-        // For S.POP.HPM, always use the correct MFA value 2.001.007.001
-        // NOTE: While we're sending 'DIV' as the subcategory to the backend API,
-        // we still keep the correct MFA (2.001.007.001) for display purposes
-        nnaAddress: (data.layer === 'S' &&
-                    (data.categoryCode === 'POP' || data.categoryCode === '001') &&
-                    (data.subcategoryCode === 'HPM' || data.subcategoryCode === '007'))
-            ? '2.001.007.001' : data.mfa, // Set the MFA at the root level
+        // Use our enhanced formatter for generating the correct MFA address
+        // This ensures consistent MFA for all layer/category/subcategory combinations
+        nnaAddress: formatNNAAddressForDisplay(
+            data.layer,
+            data.categoryCode,
+            data.subcategoryCode,
+            '001' // Default sequential for display
+        ).mfa,
         metadata: {
           layerName: data.layerName,
           categoryName: data.categoryName,
           subcategoryName: data.subcategoryName,
-          humanFriendlyName: data.hfn,
-          machineFriendlyAddress: data.mfa,
-          hfn: data.hfn, // Include both versions of the property name
-          mfa: data.mfa, // Include both versions of the property name
           uploadedFiles: uploadedFiles,
           trainingData: data.trainingData,
-          // Special handling for S.POP.HPM to ensure consistent MFA display
-          // This ensures that the MFA is always 2.001.007.001 for S.POP.HPM
-          ...(data.layer === 'S' &&
-              (data.categoryCode === 'POP' || data.categoryCode === '001') &&
-              (data.subcategoryCode === 'HPM' || data.subcategoryCode === '007') && {
-            // Force the correct MFA for S.POP.HPM
-            mfa: '2.001.007.001',
-            machineFriendlyAddress: '2.001.007.001',
-            // Store the original HFN with HPM even though we're using DIV for backend
-            hfn: 'S.POP.HPM.001',
-            humanFriendlyName: 'S.POP.HPM.001'
-          }),
+          // Use our enhanced formatter to generate consistent addresses
+          // This eliminates the need for special cases while ensuring correct display
+          ...(() => {
+            // Generate formatted addresses using enhanced formatter
+            const { hfn, mfa } = formatNNAAddressForDisplay(
+              data.layer,
+              data.categoryCode,
+              data.subcategoryCode,
+              '001'
+            );
+            console.log(`Enhanced formatter generated HFN=${hfn}, MFA=${mfa}`);
+            return {
+              // Include both consistently formatted addresses
+              mfa: mfa,
+              machineFriendlyAddress: mfa,
+              hfn: hfn,
+              humanFriendlyName: hfn
+            };
+          })(),
           // For composite assets, include the component references
           ...(data.layer === 'C' && data.layerSpecificData?.components && {
             components: data.layerSpecificData.components

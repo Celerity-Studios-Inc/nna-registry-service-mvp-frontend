@@ -15,7 +15,7 @@ import {
   Error as ErrorIcon,
   Info as InfoIcon,
 } from '@mui/icons-material';
-import { formatNNAAddressForDisplay } from '../../api/codeMapping';
+import { formatNNAAddressForDisplay } from '../../api/codeMapping.enhanced';
 
 interface NNAAddressPreviewProps {
   layerCode: string;

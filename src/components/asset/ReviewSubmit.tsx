@@ -33,7 +33,7 @@ import {
   Public as PublicIcon,
 } from '@mui/icons-material';
 import { FileUploadResponse } from '../../types/asset.types';
-import { formatNNAAddressForDisplay } from '../../api/codeMapping';
+import { formatNNAAddressForDisplay } from '../../api/codeMapping.enhanced';
 
 // Props interface
 interface ReviewSubmitProps {
@@ -339,12 +339,7 @@ const ReviewSubmit: React.FC<ReviewSubmitProps> = ({
                   primaryTypographyProps={{ variant: 'body2', color: 'text.secondary' }}
                   secondaryTypographyProps={{ variant: 'body1', fontFamily: 'monospace' }}
                 />
-                {/* Extra validation for S.POP.HPM */}
-                {layer === 'S' && categoryCode === 'POP' && subcategoryCode === 'HPM' && mfa !== '2.001.007.001' && (
-                  <Typography variant="caption" color="error" sx={{ ml: 6 }}>
-                    Warning: Expected 2.001.007.001 for S.POP.HPM
-                  </Typography>
-                )}
+                {/* Special case warnings are no longer needed with enhanced formatter */}
               </ListItem>
               
               <ListItem disablePadding sx={{ mb: 1 }}>
@@ -515,12 +510,7 @@ const ReviewSubmit: React.FC<ReviewSubmitProps> = ({
                   primaryTypographyProps={{ variant: 'body2', color: 'text.secondary' }}
                   secondaryTypographyProps={{ variant: 'body1', fontFamily: 'monospace' }}
                 />
-                {/* Extra validation for S.POP.HPM */}
-                {layer === 'S' && categoryCode === 'POP' && subcategoryCode === 'HPM' && mfa !== '2.001.007.001' && (
-                  <Typography variant="caption" color="error" sx={{ ml: 6 }}>
-                    Warning: Expected 2.001.007.001 for S.POP.HPM
-                  </Typography>
-                )}
+                {/* Special case warnings are no longer needed with enhanced formatter */}
               </ListItem>
               
               <ListItem disablePadding sx={{ mb: 1 }}>
