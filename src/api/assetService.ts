@@ -307,7 +307,7 @@ class AssetService {
           console.log("Converting backend items format to PaginatedResponse format");
 
           // Map the items to ensure they have the frontend-expected property names
-          const mappedItems = responseData.items.map(item => {
+          const mappedItems = responseData.items.map((item: any) => {
             // Ensure each item has an id property (frontend uses id, backend uses _id)
             if (item._id && !item.id) {
               return {
