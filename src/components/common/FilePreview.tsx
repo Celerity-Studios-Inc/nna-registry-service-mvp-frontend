@@ -386,7 +386,7 @@ const FilePreview: React.FC<FilePreviewProps> = ({
                   size="small"
                   component="a"
                   href={objectUrl}
-                  download={file.name}
+                  download={getFileName()}
                   sx={{ bgcolor: 'rgba(255,255,255,0.7)', ml: 1 }}
                   color="primary"
                 >
