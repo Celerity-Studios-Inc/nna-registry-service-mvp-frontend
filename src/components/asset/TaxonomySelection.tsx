@@ -75,6 +75,15 @@ const TaxonomySelection: React.FC<TaxonomySelectionProps> = ({
         setLoading(true);
         const categoryOptions = taxonomyService.getCategories(layerCode);
 
+        // Enhanced debugging for category display
+        categoryOptions.forEach(category => {
+          // For numeric category codes, we need to make sure we display the alphabetic version
+          if (/^\d+$/.test(category.code)) {
+            console.log(`Category with numeric code: ${category.code} (${category.name})`);
+            console.log(`This will display as: ${getAlphabeticCode(layerCode, category.code, category.name)}`);
+          }
+        });
+
         setCategories(categoryOptions);
         setError(null);
       } catch (err) {
@@ -348,7 +357,7 @@ const TaxonomySelection: React.FC<TaxonomySelectionProps> = ({
                   <Box sx={{ display: 'flex', alignItems: 'center' }}>
                     <Tooltip title="Human-Friendly Name (3-letter code)">
                       <Chip
-                        label={category.code}
+                        label={getAlphabeticCode(layerCode, category.code, category.name)}
                         size="small"
                         color="primary"
                         variant="outlined"

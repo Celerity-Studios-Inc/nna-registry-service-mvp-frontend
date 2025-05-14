@@ -20,20 +20,58 @@ export const layerMappings: Record<string, { name: string, numeric: number }> = 
 /**
  * Attempts to convert a numeric code to an alphabetic one based on patterns
  * This is useful for generating human-friendly codes from numeric identifiers
- * 
+ *
  * @param layerCode The layer code (e.g., 'G', 'S', 'L', etc.)
  * @param code The code to process
+ * @param categoryName Optional category name to use for generating alphabetic code
  * @returns The alphabetic code or the original code if no transformation is needed
  */
-export function getAlphabeticCode(layerCode: string, code: string): string {
+export function getAlphabeticCode(layerCode: string, code: string, categoryName?: string): string {
   // If code is already alphabetic, return as is
   if (/^[A-Za-z]+$/.test(code)) {
     return code.toUpperCase();
   }
-  
-  // If code is numeric, check if we have a mapping for it in our taxonomy
-  // For now, just return the code as-is since we're using mock data
-  // In a full implementation, we would look up in the taxonomy service
+
+  // If code is numeric, try to convert to alphabetic
+  if (/^\d+$/.test(code)) {
+    // Special case for S.001 (Stars layer, Pop category)
+    if (layerCode === 'S' && code === '001') {
+      return 'POP';
+    }
+
+    // Known numeric to alphabetic mappings
+    const numericToAlphabeticMap: Record<string, string> = {
+      '001': 'POP',
+      '002': 'ROK', // Rock
+      '003': 'HIP', // Hip-Hop
+      '004': 'RNB', // R&B
+      '005': 'DNC', // Dance
+      '006': 'LAT', // Latin
+      '007': 'IND', // Indie
+      '008': 'ALT', // Alternative
+      '009': 'WLD', // World
+      '010': 'JZZ', // Jazz
+      '011': 'JPO', // J-Pop
+      '012': 'BOL', // Bollywood
+      '013': 'KPO'  // K-Pop
+    };
+
+    // If we have a mapping, use it
+    if (numericToAlphabeticMap[code]) {
+      console.log(`Mapped numeric code ${code} to alphabetic code ${numericToAlphabeticMap[code]}`);
+      return numericToAlphabeticMap[code];
+    }
+
+    // If we have a category name, generate an alphabetic code from it
+    if (categoryName) {
+      // Take first 3 letters of the name, uppercase
+      const generatedCode = categoryName.substring(0, 3).toUpperCase();
+      console.log(`Generated alphabetic code ${generatedCode} from category name ${categoryName}`);
+      return generatedCode;
+    }
+  }
+
+  // If all else fails, return the original code
   return code;
 }
 
