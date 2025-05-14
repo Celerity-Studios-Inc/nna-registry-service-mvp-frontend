@@ -14,7 +14,9 @@ import ConnectivityHelp from './pages/ConnectivityHelp';
 import { AuthProvider } from './contexts/AuthContext';
 import MainLayout from './components/layout/MainLayout';
 import { NotificationsProvider } from './contexts/NotificationsContext';
+import { ErrorProvider } from './contexts/ErrorContext';
 import ErrorBoundary from './components/common/ErrorBoundary';
+import GlobalErrorHandler from './components/common/GlobalErrorHandler';
 import TestComponent from './components/common/TestComponent';
 import ApiRouteAlert from './components/common/ApiRouteAlert';
 
@@ -117,45 +119,48 @@ const App: React.FC = () => {
       <StyledEngineProvider injectFirst>
         <ThemeProvider theme={theme}>
           <CssBaseline />
-          <ApiRouteAlert /> {/* Add alert for API routing issues */}
-          <NotificationsProvider>
-            <AuthProvider>
-              <Router>
-                <Routes>
-                  <Route path="/login" element={<LoginPage />} />
-                  <Route path="/register" element={<RegisterPage />} />
-                  <Route path="/api-test" element={<TestComponent />} />
-                  <Route path="/api-debug" element={<ApiDebugPage />} />
-                  <Route path="/debug" element={<ApiDebugPage />} />
-                  <Route path="/connect" element={<ConnectivityHelp />} />
-                  <Route path="/help" element={<ConnectivityHelp />} />
-                  <Route element={<MainLayout />}>
-                    <Route path="/dashboard" element={
-                      <ProtectedRoute>
-                        <DashboardPage />
-                      </ProtectedRoute>
-                    } />
-                    <Route path="/register-asset" element={
-                      <ProtectedRoute>
-                        <RegisterAssetPage />
-                      </ProtectedRoute>
-                    } />
-                    <Route path="/search-assets" element={
-                      <ProtectedRoute>
-                        <SearchAssetsPage />
-                      </ProtectedRoute>
-                    } />
-                    <Route path="/assets/:id" element={
-                      <ProtectedRoute>
-                        <AssetDetailPage />
-                      </ProtectedRoute>
-                    } />
-                    <Route path="/" element={<RootRedirect />} />
-                  </Route>
-                </Routes>
-              </Router>
-            </AuthProvider>
-          </NotificationsProvider>
+          <ErrorProvider>
+            <GlobalErrorHandler />
+            <ApiRouteAlert /> {/* Add alert for API routing issues */}
+            <NotificationsProvider>
+              <AuthProvider>
+                <Router>
+                  <Routes>
+                    <Route path="/login" element={<LoginPage />} />
+                    <Route path="/register" element={<RegisterPage />} />
+                    <Route path="/api-test" element={<TestComponent />} />
+                    <Route path="/api-debug" element={<ApiDebugPage />} />
+                    <Route path="/debug" element={<ApiDebugPage />} />
+                    <Route path="/connect" element={<ConnectivityHelp />} />
+                    <Route path="/help" element={<ConnectivityHelp />} />
+                    <Route element={<MainLayout />}>
+                      <Route path="/dashboard" element={
+                        <ProtectedRoute>
+                          <DashboardPage />
+                        </ProtectedRoute>
+                      } />
+                      <Route path="/register-asset" element={
+                        <ProtectedRoute>
+                          <RegisterAssetPage />
+                        </ProtectedRoute>
+                      } />
+                      <Route path="/search-assets" element={
+                        <ProtectedRoute>
+                          <SearchAssetsPage />
+                        </ProtectedRoute>
+                      } />
+                      <Route path="/assets/:id" element={
+                        <ProtectedRoute>
+                          <AssetDetailPage />
+                        </ProtectedRoute>
+                      } />
+                      <Route path="/" element={<RootRedirect />} />
+                    </Route>
+                  </Routes>
+                </Router>
+              </AuthProvider>
+            </NotificationsProvider>
+          </ErrorProvider>
         </ThemeProvider>
       </StyledEngineProvider>
     </ErrorBoundary>
