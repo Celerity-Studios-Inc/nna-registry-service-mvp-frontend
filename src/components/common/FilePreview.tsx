@@ -303,7 +303,7 @@ const FilePreview: React.FC<FilePreviewProps> = ({
   };
 
   // Get file size for display from different file types
-  const getFileSize = () => {
+  const getFileSize = (): number => {
     if (!file) return 0;
 
     // Handle File object
@@ -313,7 +313,7 @@ const FilePreview: React.FC<FilePreviewProps> = ({
 
     // Handle object with size property
     if (typeof file === 'object' && 'size' in file) {
-      return file.size;
+      return typeof file.size === 'number' ? file.size : 0;
     }
 
     return 0;
