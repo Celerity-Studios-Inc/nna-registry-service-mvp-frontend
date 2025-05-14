@@ -1,4 +1,4 @@
-import { ErrorSeverity } from '../contexts/ErrorContext';
+import { ErrorSeverity, ErrorMessage, ErrorHandler } from '../types/error.types';
 
 /**
  * Helper function to format API errors for display
@@ -85,7 +85,7 @@ export const formatApiError = (error: any): {
  */
 export const handleAsyncError = (
   error: any, 
-  errorHandler: (msg: string | any, severity?: ErrorSeverity) => void,
+  errorHandler: ErrorHandler,
   context?: string
 ): void => {
   console.error(`Error${context ? ` in ${context}` : ''}:`, error);

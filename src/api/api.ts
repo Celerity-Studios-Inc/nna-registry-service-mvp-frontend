@@ -1,15 +1,5 @@
 import axios from 'axios';
-import { ErrorSeverity } from '../contexts/ErrorContext';
-
-// Types for the error handler
-type ErrorMessage = {
-  title?: string;
-  message: string;
-  severity?: ErrorSeverity;
-  autoHide?: boolean;
-};
-
-type ErrorHandler = (message: string | ErrorMessage, severity?: ErrorSeverity) => void;
+import { ErrorSeverity, ErrorMessage, ErrorHandler } from '../types/error.types';
 
 // Create a global error handler for use outside React components
 let globalErrorHandler: ErrorHandler | null = null;
@@ -25,15 +15,12 @@ export const apiConfig = {
   // This ensures requests go through Vercel's proxy defined in vercel.json
   baseURL: '/api',
 
-  // Allow overriding mock mode via localStorage
-  useMockApi: process.env.REACT_APP_USE_MOCK_API === 'true',
-
-  // Direct connection causes CORS errors because our domain is not allowed
-  // baseURL: 'https://registry.reviz.dev/api',
+  // Explicitly set mock mode to false for production
+  useMockApi: false,
 
   // Define debugging information for the API
   debug: {
-    version: '1.2',
+    version: '1.3',
     timestamp: new Date().toISOString(),
     backendUrl: 'https://registry.reviz.dev/api'
   }

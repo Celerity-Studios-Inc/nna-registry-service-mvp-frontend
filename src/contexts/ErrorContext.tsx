@@ -1,18 +1,10 @@
 import React, { createContext, useState, useContext, ReactNode } from 'react';
 import { Snackbar, Alert, AlertTitle, IconButton } from '@mui/material';
 import { Close as CloseIcon } from '@mui/icons-material';
-
-export type ErrorSeverity = 'error' | 'warning' | 'info' | 'success';
-
-interface ErrorMessage {
-  message: string;
-  severity: ErrorSeverity;
-  title?: string;
-  autoHide?: boolean;
-}
+import { ErrorSeverity, ErrorMessage, ErrorHandler } from '../types/error.types';
 
 interface ErrorContextType {
-  setError: (message: string | ErrorMessage, severity?: ErrorSeverity) => void;
+  setError: ErrorHandler;
   clearError: () => void;
   currentError: ErrorMessage | null;
 }
