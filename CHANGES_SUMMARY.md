@@ -22,7 +22,7 @@
 - Fixed subcategory validation in tests
 - Added detailed documentation of what's being tested
 
-## 5. UI Improvements (Latest)
+## 5. UI Improvements and HFN/MFA Fixes (Latest)
 - **Consistent Sequential Number Display**
   - Updated `ReviewSubmit.tsx` to display ".000" as a placeholder for sequence numbers in both HFN and MFA displays
   - This ensures consistency with the preview shown in the TaxonomySelection step
@@ -41,8 +41,18 @@
   - Added specific error messages for each layer when invalid file types are selected
   - Created comprehensive documentation in ALLOWED_FILE_FORMATS.md
 
+- **Comprehensive HFN/MFA Format Fixes**
+  - Implemented universal HFN format standardization with regex validation
+  - Fixed Worlds layer HFN display to show proper W.XXX.YYY.ZZZ format instead of filenames
+  - Made subcategory override logic work for all layers, not just Stars
+  - Updated success screen to show MFA with consistent .000 placeholder
+  - Added tooltips to explain format modifications to users
+  - Documented all fixes in detail in HFN_MFA_FORMAT_FIXES.md
+
 - **Implementation Details**
   - Added layer name mapping from codes to full names (G → Songs, S → Stars, etc.)
   - Used consistent styling for the layer name displays across components
   - Ensured fallback displays if a layer code doesn't have a mapped name
+  - Improved error resilience and handling of unexpected data formats
+  - Added more detailed logging to help with debugging
   - These changes improve user understanding and workflow clarity
