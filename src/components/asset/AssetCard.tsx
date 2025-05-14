@@ -44,13 +44,33 @@ const AssetCard: React.FC<AssetCardProps> = ({
   const getFileTypeInfo = () => {
     // Check if asset has files
     if (!asset.files || asset.files.length === 0) {
+      // Try to use gcpStorageUrl if available (common in API responses)
+      if (asset.gcpStorageUrl) {
+        return {
+          icon: <ImageIcon sx={{ fontSize: 48 }} />,
+          color: theme.palette.primary.main,
+          previewUrl: asset.gcpStorageUrl,
+        };
+      }
       // Fall back to layer-based icons if no files
       return getLayerIcon();
     }
 
     const file = asset.files[0];
-    const contentType = file.contentType.toLowerCase();
 
+    // Handle case where contentType might be missing
+    const contentType = (file.contentType || '').toLowerCase();
+
+    // Check for thumbnail URL first (priority)
+    if (file.thumbnailUrl) {
+      return {
+        icon: <ImageIcon sx={{ fontSize: 48 }} />,
+        color: theme.palette.primary.main,
+        previewUrl: file.thumbnailUrl,
+      };
+    }
+
+    // Then check content type for images
     if (contentType.startsWith('image/')) {
       return {
         icon: <ImageIcon sx={{ fontSize: 48 }} />,

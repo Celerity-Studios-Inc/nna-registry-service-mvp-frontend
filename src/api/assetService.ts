@@ -305,8 +305,21 @@ class AssetService {
         if (typeof responseData === 'object' && responseData !== null && 'items' in responseData && Array.isArray(responseData.items)) {
           // Convert to our PaginatedResponse format
           console.log("Converting backend items format to PaginatedResponse format");
+
+          // Map the items to ensure they have the frontend-expected property names
+          const mappedItems = responseData.items.map(item => {
+            // Ensure each item has an id property (frontend uses id, backend uses _id)
+            if (item._id && !item.id) {
+              return {
+                ...item,
+                id: item._id // Map _id to id for frontend compatibility
+              };
+            }
+            return item;
+          });
+
           return {
-            data: responseData.items,
+            data: mappedItems,
             pagination: {
               total: responseData.total || responseData.items.length,
               page: responseData.page || 1,

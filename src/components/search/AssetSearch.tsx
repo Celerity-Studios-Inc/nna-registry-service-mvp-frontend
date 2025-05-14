@@ -148,21 +148,50 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
       
       // Update state with results
       if (results && results.data) {
+        // Extract search results using either format
+        let assetResults: Asset[] = [];
+        let totalCount = 0;
+
         if (Array.isArray(results.data)) {
           // Old format: results.data is the array
-          console.log("Search results:", results.data.length);
-          setSearchResults(results.data);
-          setTotalAssets(results.pagination?.total || results.data.length);
+          assetResults = results.data;
+          totalCount = results.pagination?.total || results.data.length;
+          console.log("Search results (old format):", assetResults.length);
         } else if (typeof results.data === 'object' && results.data !== null && 'items' in results.data && Array.isArray((results.data as any).items)) {
           // New format: results.data.items is the array
           const dataWithItems = results.data as { items: Asset[], total?: number };
-          console.log("Search results from items array:", dataWithItems.items.length);
-          setSearchResults(dataWithItems.items);
-          setTotalAssets(dataWithItems.total || dataWithItems.items.length);
+          assetResults = dataWithItems.items;
+          totalCount = dataWithItems.total || dataWithItems.items.length;
+          console.log("Search results from items array:", assetResults.length);
         } else {
           console.warn("Received unexpected format from assets search:", results);
           setSearchResults([]);
           setTotalAssets(0);
+          return;
+        }
+
+        // If we're doing a text search, ensure results are relevant
+        if (searchQuery) {
+          const searchLower = searchQuery.toLowerCase();
+          // Filter results client-side to ensure relevance
+          let filteredResults = assetResults.filter(asset => {
+            // Check various fields for matches
+            const nameMatch = asset.name?.toLowerCase().includes(searchLower) || false;
+            const descMatch = asset.description?.toLowerCase().includes(searchLower) || false;
+            const tagMatch = asset.tags?.some(tag => tag.toLowerCase().includes(searchLower)) || false;
+            // Consider a match if any of the above is true
+            return nameMatch || descMatch || tagMatch;
+          });
+
+          console.log(`Filtered ${assetResults.length} results to ${filteredResults.length} relevant matches for "${searchQuery}"`);
+
+          // Update state with filtered results
+          setSearchResults(filteredResults);
+          setTotalAssets(filteredResults.length);
+        } else {
+          // No text filtering needed
+          setSearchResults(assetResults);
+          setTotalAssets(totalCount);
         }
       } else {
         console.warn("Received empty or invalid results from assets search");
