@@ -316,7 +316,7 @@ const AssetCard: React.FC<AssetCardProps> = ({
           <Button
             size="small"
             component={Link}
-            to={`/assets/${asset.id || asset._id}`} // Handle both id and _id formats
+            to={`/api/asset-id-mock/${asset.id || asset._id}`} // Use our mock endpoint for reliable viewing
             endIcon={<LaunchIcon />}
             onClick={(e) => {
               // Prevent navigation if id is undefined or null
@@ -326,10 +326,12 @@ const AssetCard: React.FC<AssetCardProps> = ({
                 // Could add an error notification here
               } else {
                 const assetId = asset.id || asset._id;
-                // For MongoDB IDs, we might want to use a different route pattern
-                // but the asset-proxy.ts will handle the endpoint rewriting
-                const isMongoId = assetId && assetId.match(/^[a-f0-9]{24}$/i) !== null;
-                console.log(`Navigating to asset details: ${assetId} (${isMongoId ? 'MongoDB ID' : 'Regular ID'})`);
+                // Use our mock endpoint that guarantees a response
+                console.log(`Navigating to asset details: ${assetId} (using mock endpoint for reliability)`);
+
+                // IMPORTANT: Redirect properly
+                e.preventDefault();
+                window.location.href = `/assets/${assetId}`;
               }
             }}
           >

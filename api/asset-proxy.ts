@@ -68,15 +68,21 @@ async function handler(req: VercelRequest, res: VercelResponse) {
 
     // Special handling for MongoDB ID access
     if (endpoint.match(/\/assets\/[a-f0-9]{24}$/i)) {
-      // This looks like a MongoDB ID - rewrite to the alternative format
+      // This looks like a MongoDB ID - let's try both formats
       const assetId = endpoint.split('/').pop();
       console.log(`ASSET PROXY - MongoDB ID detected: ${assetId}`);
 
-      // CRITICAL FIX: Rewrite the endpoint to the format the backend expects
-      // Some backends expect /assets/id/<mongodb-id> format
-      const newEndpoint = `/assets/id/${assetId}`;
-      console.log(`ASSET PROXY - Rewriting MongoDB ID path from ${endpoint} to ${newEndpoint}`);
-      endpoint = newEndpoint;
+      // CRITICAL FIX: Use the path that actually works with the backend
+      // MongoDB IDs are accessed directly with /assets/<id>
+      // We'll keep the original format but log this clearly
+      console.log(`ASSET PROXY - MongoDB ID format will be preserved: ${endpoint}`);
+
+      // Just to be extra clear in the logs - we're using the standard format
+      console.log(`ASSET PROXY - This ID will be accessed via: ${backendApiUrl}${endpoint}`);
+
+      // If needed in the future, we can use this alternative format:
+      // const newEndpoint = `/assets/id/${assetId}`;
+      // endpoint = newEndpoint;
     }
   } else if (endpoint === '/assets' || endpoint === '/assets/') {
     // Root assets endpoint
@@ -90,6 +96,10 @@ async function handler(req: VercelRequest, res: VercelResponse) {
   
   // Define the backend API URL - hardcode it for reliability
   const backendApiUrl = 'https://registry.reviz.dev/api';
+
+  // Debug the target URL before request
+  console.log('ASSET_PROXY DEBUG: Endpoint before any modifications:', endpoint);
+  console.log('ASSET_PROXY DEBUG: Target backend URL will be:', backendApiUrl + endpoint);
   
   // Ensure we have the correct API endpoint format
   const targetUrl = `${backendApiUrl}${endpoint.startsWith('/') ? endpoint : '/' + endpoint}`;
