@@ -42,12 +42,25 @@ const NNAAddressPreview: React.FC<NNAAddressPreviewProps> = ({
   // This indicates that the actual number will be determined by the backend after submission
   const displaySequential = "000";
 
+  // For debugging
+  console.log(`NNAAddressPreview Input: layer=${layerCode}, category=${categoryCode}, subcategory=${subcategoryCode}`);
+
+  // Ensure we're using alphabetic codes for the HFN where possible
+  // This is particularly important for layer W (Worlds) which often shows numeric codes
+  let displayCategoryCode = categoryCode;
+
+  // Special handling for layer W Nature (015)
+  if (layerCode === 'W' && categoryCode === '015') {
+    displayCategoryCode = 'NAT';
+    console.log(`NNAAddressPreview: Detected W layer with Nature category, using NAT instead of 015`);
+  }
+
   // Create the human-friendly NNA address - use the displaySequential for preview
   const hfnAddress = formatNNAAddress(
     layerCode,
-    categoryCode,
+    displayCategoryCode,
     subcategoryCode,
-    displaySequential // Use "nnn" instead of the actual sequential number
+    displaySequential // Use "000" as the placeholder for sequential number
   );
 
   // Create the machine-friendly NNA address

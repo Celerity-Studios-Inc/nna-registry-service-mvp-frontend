@@ -339,15 +339,64 @@ export function formatNNAAddress(
 ): string {
   // Convert numeric category code to alphabetic if needed
   let categoryAlpha = category;
-  if (category === '001') categoryAlpha = 'POP';
-  if (category === '002') categoryAlpha = 'ROK';
-  if (category === '003') categoryAlpha = 'HIP';
+
+  // Handle numeric codes using a more comprehensive approach
+  if (/^\d+$/.test(category)) {
+    // Try to use the mapping table first
+    const numericToCategoryMap: Record<string, string> = {
+      '001': 'POP',
+      '002': 'ROK',
+      '003': 'HIP',
+      '004': 'RNB',
+      '005': 'DNC',
+      '006': 'LAT',
+      '007': 'IND',
+      '008': 'ALT',
+      '009': 'WLD',
+      '010': 'JZZ',
+      '011': 'JPO',
+      '012': 'BOL',
+      '013': 'KPO',
+      '014': 'RET', // Retro
+      '015': 'NAT', // Nature
+    };
+
+    // If we have a mapping for this numeric code, use it
+    if (numericToCategoryMap[category]) {
+      categoryAlpha = numericToCategoryMap[category];
+      console.log(`formatNNAAddress: Converted numeric category ${category} to ${categoryAlpha}`);
+    } else {
+      // If not, try to use the first 3 letters of the name
+      // For the preview, we'll keep the numeric code if no mapping exists
+      console.log(`formatNNAAddress: No mapping found for numeric category ${category}, keeping as is`);
+    }
+  }
 
   // Convert numeric subcategory code to alphabetic if needed
   let subcategoryAlpha = subcategory;
-  if (subcategory === '001') subcategoryAlpha = 'BAS';
-  if (subcategory === '002') subcategoryAlpha = 'GLB';
-  if (subcategory === '003') subcategoryAlpha = 'TEN';
+
+  // Use a more comprehensive approach for subcategories too
+  if (/^\d+$/.test(subcategory)) {
+    // Common subcategory mappings (expand as needed)
+    const numericToSubcategoryMap: Record<string, string> = {
+      '001': 'BAS', // Base (used in most categories)
+      '002': 'GLB', // Global_Pop (for POP category)
+      '003': 'TEN', // Teen_Pop (for POP category)
+      '004': 'LGF', // Legend_Female (for Stars/POP)
+      '005': 'LGM', // Legend_Male (for Stars/POP)
+      '006': 'ICM', // Icon_Male (for Stars/POP)
+      '007': 'HPM', // Hipster_Male (for Stars/POP)
+    };
+
+    // If we have a mapping for this numeric code, use it
+    if (numericToSubcategoryMap[subcategory]) {
+      subcategoryAlpha = numericToSubcategoryMap[subcategory];
+      console.log(`formatNNAAddress: Converted numeric subcategory ${subcategory} to ${subcategoryAlpha}`);
+    } else {
+      // For now, we'll keep the numeric code if no mapping exists
+      console.log(`formatNNAAddress: No mapping found for numeric subcategory ${subcategory}, keeping as is`);
+    }
+  }
 
   // Format sequential as 3 digits, with "000" as a special preview display value
   let formattedSequential;
