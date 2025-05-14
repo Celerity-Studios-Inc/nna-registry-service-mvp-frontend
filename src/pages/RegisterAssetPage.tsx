@@ -1408,15 +1408,31 @@ const RegisterAssetPage: React.FC = () => {
     
     // Get the HFN from the backend response
     let hfn = createdAsset.name || '';
-    
+
     // Get the MFA directly from the asset (what the backend reported)
     const mfa = createdAsset.nnaAddress ||
                 createdAsset.metadata?.machineFriendlyAddress ||
                 createdAsset.metadata?.mfa ||
                 (createdAsset as any).nna_address || '';
-    
-    // Check if we need to override the display with original subcategory
-    if (originalSubcategoryCode && createdAsset.subcategory === 'Base' && createdAsset.layer === 'S') {
+
+    // For Worlds layer (W), the backend sometimes returns the filename as HFN
+    // We need to reconstruct it from the layer, category, subcategory and sequential number
+    if (createdAsset.layer === 'W') {
+      // Reconstruct the proper W.XXX.YYY.ZZZ format
+      // Extract sequential from MFA (last part)
+      const sequentialParts = mfa ? mfa.split('.') : [];
+      const sequential = sequentialParts.length > 3 ? sequentialParts[3] : '001';
+
+      // Get category and subcategory
+      const category = createdAsset.category || '001';
+      const subcategory = originalSubcategoryCode || createdAsset.subcategory || 'BAS';
+
+      // Recreate proper HFN
+      hfn = `W.${category}.${subcategory}.${sequential}`;
+      console.log(`WORLDS LAYER FIX: Recreating HFN for Worlds layer: ${hfn}`);
+    }
+    // Check if we need to override the display with original subcategory for Stars layer
+    else if (originalSubcategoryCode && createdAsset.subcategory === 'Base' && createdAsset.layer === 'S') {
       // Parse the backend HFN (e.g., "S.POP.BAS.015")
       const parts = hfn.split('.');
       if (parts.length === 4 && parts[2] === 'BAS') {
@@ -1783,11 +1799,13 @@ const RegisterAssetPage: React.FC = () => {
                         <Typography variant="body1" fontWeight="bold">
                           {hfn}
                         </Typography>
-                        {originalSubcategoryCode && hfn !== createdAsset.name && (
-                          <Tooltip title="Adjusted display: Original subcategory preserved for better visibility">
+                        {(originalSubcategoryCode && hfn !== createdAsset.name) || createdAsset.layer === 'W' ? (
+                          <Tooltip title={createdAsset.layer === 'W'
+                            ? "NNA format corrected for Worlds asset"
+                            : "Adjusted display: Original subcategory preserved for better visibility"}>
                             <InfoIcon color="info" fontSize="small" sx={{ ml: 1, width: 18, height: 18 }} />
                           </Tooltip>
-                        )}
+                        ) : null}
                       </Box>
                     </Grid>
                     
