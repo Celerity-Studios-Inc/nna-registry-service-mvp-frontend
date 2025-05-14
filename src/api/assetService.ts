@@ -420,8 +420,67 @@ class AssetService {
    */
   async getAssetById(id: string): Promise<Asset> {
     try {
-      const response = await api.get<ApiResponse<Asset>>(`/assets/${id}`);
-      return response.data.data as Asset;
+      console.log(`Fetching asset with ID: ${id}`);
+
+      // Check for mock mode or backend unavailability
+      const authToken = localStorage.getItem('accessToken') || '';
+      const isMockToken = authToken.startsWith('MOCK-');
+
+      // Use mock implementation if needed
+      if (isMockToken || !isBackendAvailable) {
+        console.log(`Using mock implementation for getAssetById due to ${isMockToken ? 'mock token' : 'unavailable backend'}`);
+
+        // Simulate network delay
+        await new Promise(resolve => setTimeout(resolve, 300));
+
+        // Generate a mock asset
+        return {
+          id: id,
+          name: `Mock Asset ${id.substring(0, 6)}`,
+          friendlyName: `Mock Asset ${id.substring(0, 6)}`,
+          nnaAddress: `2.001.001.${id.substring(0, 3)}`,
+          type: 'standard',
+          layer: 'S',
+          categoryCode: 'POP',
+          subcategoryCode: 'DIV',
+          category: 'POP',
+          subcategory: 'DIV',
+          description: `This is a mock asset created for demonstration purposes.`,
+          tags: ['mock', 'demo', 'test'],
+          gcpStorageUrl: 'https://storage.googleapis.com/mock-bucket/',
+          files: [],
+          metadata: {
+            humanFriendlyName: `S.POP.DIV.001`,
+            machineFriendlyAddress: `2.001.004.001`,
+            layerName: 'Stars',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          },
+          status: 'active',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          createdBy: "user@example.com"
+        };
+      }
+
+      // Real API implementation with improved error handling
+      try {
+        const response = await api.get<ApiResponse<Asset>>(`/assets/${id}`);
+        return response.data.data as Asset;
+      } catch (firstError) {
+        console.warn(`Initial asset fetch failed for ID ${id}:`, firstError);
+        console.log('Trying alternative endpoint format...');
+
+        // Try alternative endpoint with MongoDB ID format
+        try {
+          // Some backends use a different endpoint format for MongoDB IDs
+          const alternativeResponse = await api.get<ApiResponse<Asset>>(`/assets/id/${id}`);
+          return alternativeResponse.data.data as Asset;
+        } catch (secondError) {
+          console.error('All asset fetch attempts failed:', secondError);
+          throw new Error(`Failed to fetch asset with ID: ${id}`);
+        }
+      }
     } catch (error) {
       console.error(`Error fetching asset ${id}:`, error);
       throw new Error('Failed to fetch asset');

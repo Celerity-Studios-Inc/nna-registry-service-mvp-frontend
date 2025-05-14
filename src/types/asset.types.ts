@@ -1,5 +1,6 @@
 export interface Asset {
   id: string;
+  _id?: string;     // Support MongoDB-style ID from backend
   name: string;
   friendlyName: string;
   nnaAddress: string;

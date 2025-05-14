@@ -316,8 +316,18 @@ const AssetCard: React.FC<AssetCardProps> = ({
           <Button
             size="small"
             component={Link}
-            to={`/assets/${asset.id}`}
+            to={`/assets/${asset.id || asset._id}`} // Handle both id and _id formats
             endIcon={<LaunchIcon />}
+            onClick={(e) => {
+              // Prevent navigation if id is undefined or null
+              if (!asset.id && !asset._id) {
+                e.preventDefault();
+                console.error('Asset ID is undefined, cannot navigate to details page', asset);
+                // Could add an error notification here
+              } else {
+                console.log(`Navigating to asset details: ${asset.id || asset._id}`);
+              }
+            }}
           >
             View Details
           </Button>

@@ -1,8 +1,16 @@
 # Vercel Build Trigger
 
-Build triggered at: Wed May 14 13:30:00 MDT 2025
+Build triggered at: Wed May 14 14:45:00 MDT 2025
 
-## Latest Build - May 14, 2025 - Further Improvements
+## Latest Build - May 14, 2025 (2) - Asset Detail View Fix
+
+### Asset Detail View Fix
+- Fixed 404 errors when viewing asset details
+- Added support for MongoDB ID format (_id) alongside regular IDs
+- Enhanced error handling with fallback to mock data when needed
+- Improved navigation from search results to detail views
+
+## Previous Build - May 14, 2025 (1) - Asset Browsing Improvements
 
 ### Asset Browsing Improvements
 

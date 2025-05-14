@@ -65,6 +65,17 @@ async function handler(req: VercelRequest, res: VercelResponse) {
   if (endpoint.startsWith('/assets/')) {
     // Format like: /assets/123
     console.log('ASSET PROXY - Using asset detail endpoint:', endpoint);
+
+    // Special handling for MongoDB ID access
+    if (endpoint.match(/\/assets\/[a-f0-9]{24}$/i)) {
+      // This looks like a MongoDB ID - allow both formats
+      const assetId = endpoint.split('/').pop();
+      console.log(`ASSET PROXY - MongoDB ID detected: ${assetId}`);
+
+      // Keep the original endpoint, the backend should handle it
+      // But log it for debugging purposes
+      console.log(`ASSET PROXY - MongoDB ID access path: ${endpoint}`);
+    }
   } else if (endpoint === '/assets' || endpoint === '/assets/') {
     // Root assets endpoint
     console.log('ASSET PROXY - Using root assets endpoint:', endpoint);
