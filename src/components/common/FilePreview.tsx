@@ -131,13 +131,17 @@ const FilePreview: React.FC<FilePreviewProps> = ({
       }
 
       // Regular File object - create a blob URL
-      const url = URL.createObjectURL(file);
-      setObjectUrl(url);
+      if (file instanceof Blob) {
+        const url = URL.createObjectURL(file);
+        setObjectUrl(url);
 
-      // Cleanup function to revoke object URL
-      return () => {
-        URL.revokeObjectURL(url);
-      };
+        // Cleanup function to revoke object URL
+        return () => {
+          URL.revokeObjectURL(url);
+        };
+      } else {
+        console.warn("Unable to create object URL for non-Blob object", file);
+      }
     }
   }, [file]);
 
