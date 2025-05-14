@@ -5,6 +5,7 @@
 # This line triggers a build - attempt 5 - May 13, 2025 - Subcategory display fix
 # This line triggers a build - attempt 6 - May 13, 2025 - Sequential number display as .000 in preview
 # This line triggers a build - attempt 7 - May 13, 2025 - Force REACT_APP_REAL_BACKEND_API=true
+# This line triggers a build - attempt 8 - May 13, 2025 - Remove special case handling for S.POP.HPM
 
 This file is created to trigger a new build and deployment of the NNA Registry Service Frontend.
 
@@ -30,6 +31,7 @@ After deployment, verify:
 10. HFN and MFA are center-aligned in the success screen
 
 ## Latest Changes
-- Replace sequential numbers with `.000` in NNA Address preview
-- Add explanatory tooltip about sequential number assignment
-- Center align HFN and MFA in success screen
+- Remove special case handling for S.POP.HPM subcategory in assetService.ts
+- Update codeMapping.ts to use generic approach for all subcategories
+- Fix taxonomyService.ts to remove special case handling for S.POP.HPM
+- All subcategories now use the same code path for conversion and registration
