@@ -1415,28 +1415,35 @@ const RegisterAssetPage: React.FC = () => {
                 createdAsset.metadata?.mfa ||
                 (createdAsset as any).nna_address || '';
 
-    // For Worlds layer (W), the backend sometimes returns the filename as HFN
-    // We need to reconstruct it from the layer, category, subcategory and sequential number
-    if (createdAsset.layer === 'W') {
-      // Reconstruct the proper W.XXX.YYY.ZZZ format
-      // Extract sequential from MFA (last part)
+    // Handle HFN standardization for all layers
+    // This ensures consistent display of HFN addresses across all asset types
+    const isValidHFNFormat = hfn && /^[A-Z]\.[A-Z0-9]{3}\.[A-Z0-9]{3}\.\d{3}$/.test(hfn);
+
+    if (!isValidHFNFormat || createdAsset.layer === 'W') {
+      // If not a valid HFN format or specifically for Worlds layer, reconstruct it properly
+      // Extract sequential from MFA (last part) if available
       const sequentialParts = mfa ? mfa.split('.') : [];
       const sequential = sequentialParts.length > 3 ? sequentialParts[3] : '001';
+
+      // Get layer code
+      const layer = createdAsset.layer || '';
 
       // Get category and subcategory
       const category = createdAsset.category || '001';
       const subcategory = originalSubcategoryCode || createdAsset.subcategory || 'BAS';
 
-      // Recreate proper HFN
-      hfn = `W.${category}.${subcategory}.${sequential}`;
-      console.log(`WORLDS LAYER FIX: Recreating HFN for Worlds layer: ${hfn}`);
+      // Recreate proper HFN using the standard format
+      hfn = `${layer}.${category}.${subcategory}.${sequential}`;
+      console.log(`HFN FORMAT FIX: Recreating HFN for ${layer} layer: ${hfn}`);
     }
-    // Check if we need to override the display with original subcategory for Stars layer
-    else if (originalSubcategoryCode && createdAsset.subcategory === 'Base' && createdAsset.layer === 'S') {
+    // Check if we need to override the subcategory display (applies to any layer but focus on Stars)
+    else if (originalSubcategoryCode &&
+             (createdAsset.subcategory === 'Base' || createdAsset.subcategory === 'BAS') &&
+             (createdAsset.layer === 'S' || hfn.split('.')[2] === 'BAS')) {
       // Parse the backend HFN (e.g., "S.POP.BAS.015")
       const parts = hfn.split('.');
-      if (parts.length === 4 && parts[2] === 'BAS') {
-        // Replace BAS with the original subcategory
+      if (parts.length === 4 && (parts[2] === 'BAS' || parts[2] === 'Base')) {
+        // Replace BAS/Base with the original subcategory
         parts[2] = originalSubcategoryCode;
         const displayHfn = parts.join('.');
         console.log(`DISPLAY OVERRIDE: Replacing backend HFN ${hfn} with original subcategory version ${displayHfn}`);
@@ -1813,9 +1820,15 @@ const RegisterAssetPage: React.FC = () => {
                       <Typography variant="subtitle2" color="text.secondary" align="center">
                         Machine-Friendly Address (MFA)
                       </Typography>
-                      <Typography variant="body1" fontFamily="monospace" fontWeight="medium" align="center">
-                        {mfa}
-                      </Typography>
+                      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <Typography variant="body1" fontFamily="monospace" fontWeight="medium" align="center">
+                          {/* Display with .000 for consistency with other steps */}
+                          {mfa ? mfa.replace(/\.\d{3}$/, '.000') : ''}
+                        </Typography>
+                        <Tooltip title="Showing placeholder .000 for sequential number">
+                          <InfoIcon color="info" fontSize="small" sx={{ ml: 1, width: 18, height: 18 }} />
+                        </Tooltip>
+                      </Box>
                     </Grid>
                     
                     {createdAsset.description && (
