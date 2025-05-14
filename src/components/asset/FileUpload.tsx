@@ -105,6 +105,45 @@ const getAcceptedFileTypesByLayer = (layerCode?: string): string => {
   }
 };
 
+// Format file size to human-readable format
+const formatFileSize = (bytes: number, decimals = 2) => {
+  if (bytes === 0) return '0 Bytes';
+
+  const k = 1024;
+  const dm = decimals < 0 ? 0 : decimals;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+};
+
+// Format file types for better display
+const formatFileTypes = (accept: string): string => {
+  const types = accept.split(',').map(t => t.trim());
+
+  // Group by major type
+  const imageTypes = types.filter(t => t.startsWith('image/')).map(t => t.replace('image/', ''));
+  const audioTypes = types.filter(t => t.startsWith('audio/')).map(t => t.replace('audio/', ''));
+  const videoTypes = types.filter(t => t.startsWith('video/')).map(t => t.replace('video/', ''));
+  const modelTypes = types.filter(t => t.includes('model/')).map(t => t.replace('model/', ''));
+  const otherTypes = types.filter(t =>
+    !t.startsWith('image/') &&
+    !t.startsWith('audio/') &&
+    !t.startsWith('video/') &&
+    !t.includes('model/')
+  );
+
+  const parts = [];
+  if (imageTypes.length > 0) parts.push(`Images (${imageTypes.join(', ')})`);
+  if (audioTypes.length > 0) parts.push(`Audio (${audioTypes.join(', ')})`);
+  if (videoTypes.length > 0) parts.push(`Video (${videoTypes.join(', ')})`);
+  if (modelTypes.length > 0) parts.push(`Models (${modelTypes.join(', ')})`);
+  if (otherTypes.length > 0) parts.push(`Other (${otherTypes.join(', ')})`);
+
+  return parts.join('; ');
+};
+
 const FileUpload: React.FC<FileUploadProps> = ({
   onFilesChange,
   onSourceChange,
@@ -151,6 +190,11 @@ const FileUpload: React.FC<FileUploadProps> = ({
   // For layer-specific validation
   const validateFile = useCallback(
     (file: File) => {
+      // Check file size first
+      if (file.size > maxSize) {
+        return `${file.name} exceeds the maximum size of ${formatFileSize(maxSize)}. Please upload a smaller file.`;
+      }
+
       // Add any layer-specific validation logic here
       if (layerCode === 'G' && !file.type.startsWith('audio/')) {
         return `${file.name} is not an audio file. Songs layer only accepts audio files.`;
@@ -174,7 +218,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
 
       return true;
     },
-    [layerCode]
+    [layerCode, maxSize]
   );
 
   // Handle file selection
@@ -423,6 +467,11 @@ const FileUpload: React.FC<FileUploadProps> = ({
       {/* Main uploader */}
       <Grid container spacing={3}>
         <Grid item xs={12} md={8}>
+          <Box sx={{ mb: 2 }}>
+            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
+              Maximum file size: {formatFileSize(maxSize)}
+            </Typography>
+          </Box>
           <FileUploader
             accept={accept}
             maxSize={maxSize}

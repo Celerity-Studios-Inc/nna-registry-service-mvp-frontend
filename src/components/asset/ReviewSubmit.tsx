@@ -293,19 +293,27 @@ const ReviewSubmit: React.FC<ReviewSubmitProps> = ({
                 </ListItemIcon>
                 <ListItemText
                   primary="Category"
-                  secondary={categoryName ? `${categoryName} (${categoryCode})` : categoryCode || 'Not specified'}
+                  secondary={categoryName && categoryCode ? (
+                    <>
+                      {categoryName} ({taxonomyMapper.getAlphabeticCode(categoryCode) || categoryCode})
+                    </>
+                  ) : (categoryCode || 'Not specified')}
                   primaryTypographyProps={{ variant: 'body2', color: 'text.secondary' }}
                   secondaryTypographyProps={{ variant: 'body1' }}
                 />
               </ListItem>
-              
+
               <ListItem disablePadding sx={{ mb: 1 }}>
                 <ListItemIcon sx={{ minWidth: 40 }}>
                   <CategoryIcon />
                 </ListItemIcon>
                 <ListItemText
                   primary="Subcategory"
-                  secondary={subcategoryName ? `${subcategoryName} (${subcategoryCode})` : subcategoryCode || 'Not specified'}
+                  secondary={subcategoryName && subcategoryCode ? (
+                    <>
+                      {subcategoryName} ({taxonomyMapper.getAlphabeticCode(subcategoryCode) || subcategoryCode})
+                    </>
+                  ) : (subcategoryCode || 'Not specified')}
                   primaryTypographyProps={{ variant: 'body2', color: 'text.secondary' }}
                   secondaryTypographyProps={{ variant: 'body1' }}
                 />

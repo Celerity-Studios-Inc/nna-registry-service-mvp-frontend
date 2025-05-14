@@ -13,6 +13,7 @@ import {
   ListItemIcon,
   ListItemText,
   ListItemSecondaryAction,
+  Chip,
 } from '@mui/material';
 import {
   CloudUpload as UploadIcon,
@@ -53,6 +54,40 @@ interface FileStatus {
   error?: string;
   response?: FileUploadResponse;
 }
+
+// Format accepted file types into more readable groups
+const formatAcceptedFileTypes = (accept: string): string => {
+  const types = accept.split(',').map(t => t.trim());
+
+  // Group by major type
+  const imageTypes = types.filter(t => t.startsWith('image/')).map(t => t.replace('image/', ''));
+  const audioTypes = types.filter(t => t.startsWith('audio/')).map(t => t.replace('audio/', ''));
+  const videoTypes = types.filter(t => t.startsWith('video/')).map(t => t.replace('video/', ''));
+  const modelTypes = types.filter(t => t.includes('model/')).map(t => t.replace('model/', ''));
+  const otherTypes = types.filter(t =>
+    !t.startsWith('image/') &&
+    !t.startsWith('audio/') &&
+    !t.startsWith('video/') &&
+    !t.includes('model/')
+  );
+
+  const parts = [];
+  if (imageTypes.length > 0) parts.push(`Images`); 
+  if (audioTypes.length > 0) parts.push(`Audio`); 
+  if (videoTypes.length > 0) parts.push(`Video`); 
+  if (modelTypes.length > 0) parts.push(`3D Models`); 
+  if (otherTypes.length > 0) {
+    // Further categorize other types
+    const jsonTypes = otherTypes.filter(t => t.includes('json'));
+    const octetTypes = otherTypes.filter(t => t.includes('octet'));
+    
+    if (jsonTypes.length > 0) parts.push('JSON');
+    if (octetTypes.length > 0) parts.push('Binary');
+    if (otherTypes.some(t => t.includes('pdf'))) parts.push('PDF');
+  }
+
+  return parts.join(', ');
+};
 
 const FileUploader: React.FC<FileUploaderProps> = ({
   accept = 'image/*,audio/*,video/*,application/pdf,application/json',
@@ -366,11 +401,27 @@ const FileUploader: React.FC<FileUploaderProps> = ({
             </Typography>
           )}
           <Typography variant="caption" color="text.secondary">
-            Allowed file types: {accept}
-          </Typography>
-          <Typography variant="caption" color="text.secondary">
             Maximum file size: {maxSize / (1024 * 1024)}MB
           </Typography>
+          <Box sx={{ mt: 1, px: 2, maxWidth: '100%', overflow: 'hidden' }}>
+            <Typography variant="caption" color="text.secondary" sx={{ 
+              display: 'flex', 
+              flexWrap: 'wrap', 
+              gap: 0.5, 
+              justifyContent: 'center',
+              fontSize: '0.75rem'
+            }}>
+              {formatAcceptedFileTypes(accept).split(',').map((group, idx) => (
+                <Chip 
+                  key={idx} 
+                  label={group.trim()} 
+                  size="small" 
+                  variant="outlined" 
+                  sx={{ fontSize: '0.65rem', height: 20 }}
+                />
+              ))}
+            </Typography>
+          </Box>
         </Box>
       </Paper>
 

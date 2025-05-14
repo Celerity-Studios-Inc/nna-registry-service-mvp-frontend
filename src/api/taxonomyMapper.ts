@@ -556,6 +556,48 @@ class TaxonomyMapper {
   /**
    * Clear the cache to refresh mappings
    */
+  /**
+   * General function to get alphabetic code for any code (category or subcategory)
+   * For use in consistent display in UI components
+   */
+  getAlphabeticCode(code: string): string {
+    // If already alphabetic, return as is
+    if (/^[A-Za-z]{3}$/.test(code)) {
+      return code;
+    }
+
+    // If numeric, convert to padded format for lookup
+    if (/^\d+$/.test(code)) {
+      const numericCode = parseInt(code, 10);
+      const paddedCode = String(numericCode).padStart(3, '0');
+
+      // Special cases
+      if (paddedCode === '003') return 'HIP'; // Urban
+      if (paddedCode === '001') return 'POP'; // Pop
+      if (paddedCode === '007') return 'HPM'; // Hipster Male
+
+      // Try to look up from taxonomy service - this would require knowledge of layer
+      // Since we don't have layer in this context, we'll use common mappings
+      const commonMappings: Record<string, string> = {
+        '001': 'POP', // Pop
+        '002': 'DCL', // Dance_Classical
+        '003': 'HIP', // Urban
+        '004': 'MDP', // Modern_Performance
+        '005': 'JZZ', // Jazz
+        '006': 'NAT', // Natural
+        '007': 'HPM', // Hipster Male
+        '008': 'ROK', // Rock
+        '009': 'CCH', // Contemporary_Choreography
+        '011': 'CDP', // Contemporary_Dance
+      };
+
+      return commonMappings[paddedCode] || paddedCode;
+    }
+
+    // If neither alphabetic nor numeric, return as is
+    return code;
+  }
+
   clearCache(): void {
     this.cache.categoryNames.clear();
     this.cache.subcategoryNames.clear();
@@ -565,7 +607,7 @@ class TaxonomyMapper {
     this.cache.subcategoryNumericCodes.clear();
     this.cache.validCombinations.clear();
     this.cache.formatCache.clear();
-    
+
     // Reload special cases
     this.preloadSpecialCases();
   }
