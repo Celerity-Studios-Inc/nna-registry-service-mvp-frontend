@@ -3,7 +3,6 @@ import { Container, Typography, Grid, Paper, Button, Box, Card, CardContent, Car
 import { Link as RouterLink } from 'react-router-dom';
 import { Add as AddIcon, Search as SearchIcon, Category as CategoryIcon, Edit as EditIcon, MoreVert as MoreVertIcon } from '@mui/icons-material';
 import BackendStatus from '../components/common/BackendStatus';
-import ErrorTestComponent from '../components/common/ErrorTestComponent';
 
 const mockUser = { username: 'ajaymadhok' };
 const mockIncompleteAssets = [
@@ -30,9 +29,6 @@ const DashboardPage: React.FC = () => {
       
       {/* Backend Status */}
       <BackendStatus />
-
-      {/* Error Testing Component */}
-      <ErrorTestComponent />
 
       {/* Quick Actions */}
       <Paper elevation={0} sx={{ p: 3, mb: 4, bgcolor: 'background.default' }}>

@@ -1,13 +1,16 @@
 import React, { useState, useContext } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import {
-  AppBar, Box, CssBaseline, Divider, Drawer, IconButton, List, ListItem, ListItemButton, ListItemIcon, ListItemText, Toolbar, Typography, Badge, Tooltip, Button
+  AppBar, Box, CssBaseline, Divider, Drawer, IconButton, List, ListItem, ListItemButton, ListItemIcon, ListItemText, Toolbar, Typography, Badge, Tooltip, Button, Dialog
 } from '@mui/material';
 import {
-  Menu as MenuIcon, Dashboard as DashboardIcon, Search as SearchIcon, Add as AddIcon, Collections as CollectionsIcon, Notifications as NotificationsIcon, ChevronLeft as ChevronLeftIcon, Upload as UploadIcon, ViewList as ViewListIcon, Category as CategoryIcon, DataObject as DataObjectIcon, Settings as SettingsIcon, Api as ApiIcon,
-  Logout as LogoutIcon, Login as LoginIcon
+  Menu as MenuIcon, Dashboard as DashboardIcon, Search as SearchIcon, Add as AddIcon, Collections as CollectionsIcon,
+  Notifications as NotificationsIcon, ChevronLeft as ChevronLeftIcon, Upload as UploadIcon, ViewList as ViewListIcon,
+  Category as CategoryIcon, DataObject as DataObjectIcon, Settings as SettingsIcon, Api as ApiIcon,
+  Logout as LogoutIcon, Login as LoginIcon, BugReport as BugReportIcon
 } from '@mui/icons-material';
 import { AuthContext } from '../../contexts/AuthContext';
+import ErrorTestComponent from '../common/ErrorTestComponent';
 
 const drawerWidth = 240;
 
@@ -26,8 +29,9 @@ const MainLayout: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [errorTestOpen, setErrorTestOpen] = useState(false);
   const authContext = useContext(AuthContext);
-  
+
   const handleLogout = () => {
     if (authContext) {
       authContext.logout();
@@ -38,13 +42,21 @@ const MainLayout: React.FC = () => {
       window.location.href = '/login';
     }
   };
-  
+
   const handleLogin = () => {
     navigate('/login');
   };
 
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
+  };
+
+  const openErrorTestDialog = () => {
+    setErrorTestOpen(true);
+  };
+
+  const closeErrorTestDialog = () => {
+    setErrorTestOpen(false);
   };
 
   const drawer = (
@@ -76,6 +88,12 @@ const MainLayout: React.FC = () => {
       </List>
       <Divider sx={{ mt: 'auto' }} />
       <List>
+        <ListItem disablePadding>
+          <ListItemButton onClick={openErrorTestDialog}>
+            <ListItemIcon><BugReportIcon /></ListItemIcon>
+            <ListItemText primary="Error Test" secondary="Test error handling" />
+          </ListItemButton>
+        </ListItem>
         <ListItem disablePadding>
           <ListItemButton>
             <ListItemIcon><ApiIcon /></ListItemIcon>
@@ -122,19 +140,19 @@ const MainLayout: React.FC = () => {
               </Badge>
             </IconButton>
           </Tooltip>
-          
+
           {/* Add Login/Logout button */}
           {authContext?.isAuthenticated ? (
-            <Button 
-              color="inherit" 
+            <Button
+              color="inherit"
               onClick={handleLogout}
               startIcon={<LogoutIcon />}
             >
               Logout
             </Button>
           ) : (
-            <Button 
-              color="inherit" 
+            <Button
+              color="inherit"
               onClick={handleLogin}
               startIcon={<LoginIcon />}
             >
@@ -166,6 +184,13 @@ const MainLayout: React.FC = () => {
         <Toolbar />
         <Outlet />
       </Box>
+
+      {/* Error Test Dialog that can be opened from the nav sidebar */}
+      <ErrorTestComponent
+        isDialog={true}
+        open={errorTestOpen}
+        onClose={closeErrorTestDialog}
+      />
     </Box>
   );
 };
