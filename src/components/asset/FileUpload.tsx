@@ -95,7 +95,7 @@ const getAcceptedFileTypesByLayer = (layerCode?: string): string => {
     case 'M': // Moves
       return 'video/mp4,video/webm,video/quicktime,application/json';
     case 'W': // Worlds
-      return 'application/json,model/gltf-binary,model/gltf+json,application/octet-stream';
+      return 'image/jpeg,image/png,image/gif,image/svg+xml,video/mp4,video/webm,video/quicktime,application/json,model/gltf-binary,model/gltf+json,application/octet-stream';
     case 'V': // Videos
       return 'video/mp4,video/webm,video/quicktime';
     case 'B': // Branded assets
@@ -158,6 +158,18 @@ const FileUpload: React.FC<FileUploadProps> = ({
 
       if (layerCode === 'S' && !file.type.startsWith('image/')) {
         return `${file.name} is not an image file. Stars layer only accepts image files.`;
+      }
+
+      if (layerCode === 'L' && !file.type.startsWith('image/')) {
+        return `${file.name} is not an image file. Looks layer only accepts image files.`;
+      }
+
+      if (layerCode === 'M' && !file.type.startsWith('video/') && file.type !== 'application/json') {
+        return `${file.name} is not a valid file type. Moves layer only accepts video files or JSON.`;
+      }
+
+      if (layerCode === 'V' && !file.type.startsWith('video/')) {
+        return `${file.name} is not a video file. Videos layer only accepts video files.`;
       }
 
       return true;
