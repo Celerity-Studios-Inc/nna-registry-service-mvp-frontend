@@ -63,10 +63,23 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
       try {
         setIsLoading(true);
         const results = await assetService.getAssets();
-        
+
+        // Handle both API response formats: results.data as array, or results.data.items as array
         if (results && results.data) {
-          setSearchResults(results.data);
-          setTotalAssets(results.pagination?.total || results.data.length);
+          if (Array.isArray(results.data)) {
+            // Old format: results.data is the array
+            setSearchResults(results.data);
+            setTotalAssets(results.pagination?.total || results.data.length);
+          } else if (results.data.items && Array.isArray(results.data.items)) {
+            // New format: results.data.items is the array
+            console.log("Using items array from API response:", results.data.items.length);
+            setSearchResults(results.data.items);
+            setTotalAssets(results.data.total || results.data.items.length);
+          } else {
+            console.warn("Unexpected API response format:", results);
+            setSearchResults([]);
+            setTotalAssets(0);
+          }
         }
       } catch (error) {
         console.error('Error loading initial assets:', error);
@@ -74,7 +87,7 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
         setIsLoading(false);
       }
     };
-    
+
     loadInitialAssets();
   }, []);
 
@@ -134,9 +147,21 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
       
       // Update state with results
       if (results && results.data) {
-        console.log("Search results:", results.data);
-        setSearchResults(results.data);
-        setTotalAssets(results.pagination?.total || results.data.length);
+        if (Array.isArray(results.data)) {
+          // Old format: results.data is the array
+          console.log("Search results:", results.data.length);
+          setSearchResults(results.data);
+          setTotalAssets(results.pagination?.total || results.data.length);
+        } else if (results.data.items && Array.isArray(results.data.items)) {
+          // New format: results.data.items is the array
+          console.log("Search results from items array:", results.data.items.length);
+          setSearchResults(results.data.items);
+          setTotalAssets(results.data.total || results.data.items.length);
+        } else {
+          console.warn("Received unexpected format from assets search:", results);
+          setSearchResults([]);
+          setTotalAssets(0);
+        }
       } else {
         console.warn("Received empty or invalid results from assets search");
         setSearchResults([]);

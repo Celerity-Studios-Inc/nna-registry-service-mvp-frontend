@@ -1,10 +1,45 @@
-# Search Feature Implementation Plan
+# Search Feature Implementation
 
-This document outlines the plan for implementing enhanced search functionality in the NNA Registry Service frontend.
+This document outlines the implementation of search functionality in the NNA Registry Service frontend application.
 
 ## Overview
 
-The search feature will allow users to find assets using various criteria, including name, layer, category, subcategory, tags, and date ranges. It will support both basic text search and advanced filtering options.
+The search feature allows users to find assets using various criteria, including name, layer, category, subcategory, tags, and date ranges. It supports both basic text search and advanced filtering options.
+
+## Recent Bugfixes (May 14, 2025)
+
+A critical bug was fixed related to backend API response handling. The frontend was expecting the asset search API response in one format, but the backend was returning data in a different format, causing the search functionality to fail.
+
+### Issue Details
+The frontend components were expecting the asset search API response to return data in the format:
+```json
+{
+  "data": [...assets...],
+  "pagination": { "total": number, "page": number, "limit": number, "pages": number }
+}
+```
+
+However, the backend API was actually returning data in the format:
+```json
+{
+  "success": true,
+  "data": {
+    "items": [...assets...],
+    "total": number,
+    "page": number,
+    "limit": number
+  }
+}
+```
+
+This mismatch caused the search functionality to show "Received empty or invalid results from assets search" even when results were actually returned by the API.
+
+### Fix Implemented
+The solution involved updating several components to handle both response formats:
+
+1. **AssetSearch.tsx**: Updated to handle both response structures when loading initial assets and when performing searches.
+2. **SearchAssetsPage.tsx**: Modified to handle both response formats when loading assets on the page.
+3. **assetService.ts**: Enhanced the `getAssets()` method to normalize API responses into a consistent format regardless of the input structure.
 
 ## Implementation Steps
 

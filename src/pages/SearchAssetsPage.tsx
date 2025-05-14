@@ -16,7 +16,18 @@ const SearchAssetsPage: React.FC = () => {
         setIsLoading(true);
         const response = await assetService.getAssets();
         if (response && response.data) {
-          setAssets(response.data);
+          // Handle both API response formats
+          if (Array.isArray(response.data)) {
+            // Old format: response.data is the array
+            setAssets(response.data);
+          } else if (response.data.items && Array.isArray(response.data.items)) {
+            // New format: response.data.items is the array
+            console.log("Using items array from API response:", response.data.items.length);
+            setAssets(response.data.items);
+          } else {
+            console.warn("Unexpected API response format:", response);
+            setAssets([]);
+          }
         } else {
           setAssets([]);
         }

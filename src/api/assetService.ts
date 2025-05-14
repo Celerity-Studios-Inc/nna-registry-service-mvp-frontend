@@ -289,13 +289,43 @@ class AssetService {
       // For complex search params with date objects, convert to ISO strings for API
       const apiParams = this.prepareSearchParams(params);
 
-      const response = await api.get<ApiResponse<PaginatedResponse<Asset>>>(
+      const response = await api.get<ApiResponse<any>>(
         '/assets',
         {
           params: apiParams,
         }
       );
-      return response.data.data as PaginatedResponse<Asset>;
+
+      // Check response format and normalize it
+      // If response.data.data.items exists, we have the new format where items is in a nested data property
+      if (response.data && response.data.data) {
+        const responseData = response.data.data;
+
+        // Handle the case where the backend API returns { items: [], total: number }
+        if (responseData.items && Array.isArray(responseData.items)) {
+          // Convert to our PaginatedResponse format
+          console.log("Converting backend items format to PaginatedResponse format");
+          return {
+            data: responseData.items,
+            pagination: {
+              total: responseData.total || responseData.items.length,
+              page: responseData.page || 1,
+              limit: responseData.limit || responseData.items.length,
+              pages: responseData.pages || 1
+            }
+          } as PaginatedResponse<Asset>;
+        }
+
+        // Traditional format: response.data.data is already a PaginatedResponse
+        return response.data.data as PaginatedResponse<Asset>;
+      }
+
+      // Fallback - something went wrong with format
+      console.warn("Unexpected API response format:", response.data);
+      return {
+        data: [],
+        pagination: { total: 0, page: 1, limit: 10, pages: 0 }
+      } as PaginatedResponse<Asset>;
     } catch (error) {
       console.error('Error fetching assets:', error);
       
