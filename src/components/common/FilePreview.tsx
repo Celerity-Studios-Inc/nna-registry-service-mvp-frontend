@@ -150,7 +150,7 @@ const FilePreview: React.FC<FilePreviewProps> = ({
     return (
       <img
         src={objectUrl}
-        alt={file.name}
+        alt={getFileName()}
         style={{
           width: '100%',
           height: '100%',
@@ -165,7 +165,7 @@ const FilePreview: React.FC<FilePreviewProps> = ({
     return (
       <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
         <audio controls style={{ width: '100%' }}>
-          <source src={objectUrl} type={file.type} />
+          <source src={objectUrl} type={getFileType()} />
           Your browser does not support the audio element.
         </audio>
       </Box>
@@ -175,11 +175,11 @@ const FilePreview: React.FC<FilePreviewProps> = ({
   // Video preview
   const renderVideoPreview = () => {
     return (
-      <video 
-        controls 
+      <video
+        controls
         style={{ width: '100%', height: '100%', objectFit: 'contain' }}
       >
-        <source src={objectUrl} type={file.type} />
+        <source src={objectUrl} type={getFileType()} />
         Your browser does not support the video element.
       </video>
     );
@@ -208,9 +208,9 @@ const FilePreview: React.FC<FilePreviewProps> = ({
         alignItems: 'center',
         height: '100%',
       }}>
-        {getFileIcon(file.type)}
+        {getFileIcon(getFileType())}
         <Typography variant="caption" sx={{ mt: 1 }}>
-          {file.type || 'Unknown file type'}
+          {getFileType() || 'Unknown file type'}
         </Typography>
       </Box>
     );
