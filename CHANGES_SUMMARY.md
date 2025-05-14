@@ -35,6 +35,12 @@
     - Asset Created Success Screen: Updated to show full layer names instead of just codes
   - This provides better context throughout the asset registration workflow
 
+- **File Type Validation Improvements**
+  - Fixed allowed file types for the Worlds (W) layer to accept both images and videos
+  - Enhanced file type validation for all layers to ensure appropriate file types
+  - Added specific error messages for each layer when invalid file types are selected
+  - Created comprehensive documentation in ALLOWED_FILE_FORMATS.md
+
 - **Implementation Details**
   - Added layer name mapping from codes to full names (G → Songs, S → Stars, etc.)
   - Used consistent styling for the layer name displays across components
