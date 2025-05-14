@@ -11,8 +11,8 @@ import * as codeMapping from './codeMapping.enhanced';
 jest.mock('./taxonomyService', () => ({
   __esModule: true,
   default: {
-    getLayer: jest.fn(layerCode => {
-      const mockLayers = {
+    getLayer: jest.fn((layerCode: string) => {
+      const mockLayers: Record<string, { name: string }> = {
         G: { name: 'Songs' },
         S: { name: 'Stars' },
         L: { name: 'Looks' },
@@ -20,8 +20,8 @@ jest.mock('./taxonomyService', () => ({
       };
       return mockLayers[layerCode] || null;
     }),
-    getCategories: jest.fn(layerCode => {
-      const mockCategories = {
+    getCategories: jest.fn((layerCode: string) => {
+      const mockCategories: Record<string, Array<{ code: string, name: string, numericCode: number }>> = {
         S: [
           { code: 'POP', name: 'Pop', numericCode: 1 },
           { code: 'ROK', name: 'Rock', numericCode: 2 },
@@ -34,7 +34,7 @@ jest.mock('./taxonomyService', () => ({
       };
       return mockCategories[layerCode] || [];
     }),
-    getSubcategories: jest.fn((layerCode, categoryCode) => {
+    getSubcategories: jest.fn((layerCode: string, categoryCode: string) => {
       // Special case for Stars layer with Pop category
       if (layerCode === 'S' && (categoryCode === 'POP' || categoryCode === '001')) {
         return [
@@ -43,7 +43,7 @@ jest.mock('./taxonomyService', () => ({
           { code: 'HPM', name: 'Pop_Hipster_Male_Stars', numericCode: 7 }
         ];
       }
-      
+
       // Special case for Worlds layer with Urban category
       if (layerCode === 'W' && (categoryCode === 'HIP' || categoryCode === '003')) {
         return [
@@ -51,30 +51,30 @@ jest.mock('./taxonomyService', () => ({
           { code: 'STR', name: 'Street', numericCode: 2 }
         ];
       }
-      
+
       // Default case
       return [
         { code: 'BAS', name: 'Base', numericCode: 1 }
       ];
     }),
-    getCategoryAlphabeticCode: jest.fn((layerCode, numericCode) => {
+    getCategoryAlphabeticCode: jest.fn((layerCode: string, numericCode: number) => {
       if (layerCode === 'S' && numericCode === 1) return 'POP';
       if (layerCode === 'W' && numericCode === 15) return 'NAT';
       if (layerCode === 'W' && numericCode === 3) return 'HIP';
       return '';
     }),
-    getSubcategoryAlphabeticCode: jest.fn((layerCode, categoryNumericCode, subcategoryNumericCode) => {
+    getSubcategoryAlphabeticCode: jest.fn((layerCode: string, categoryNumericCode: number, subcategoryNumericCode: number) => {
       if (layerCode === 'S' && categoryNumericCode === 1 && subcategoryNumericCode === 7) return 'HPM';
       if (layerCode === 'W' && categoryNumericCode === 3 && subcategoryNumericCode === 1) return 'BAS';
       return 'BAS';
     }),
-    getCategoryNumericCode: jest.fn((layerCode, categoryCode) => {
+    getCategoryNumericCode: jest.fn((layerCode: string, categoryCode: string) => {
       if (layerCode === 'S' && categoryCode === 'POP') return 1;
       if (layerCode === 'W' && categoryCode === 'NAT') return 15;
       if (layerCode === 'W' && categoryCode === 'HIP') return 3;
       return 1;
     }),
-    getSubcategoryNumericCode: jest.fn((layerCode, categoryCode, subcategoryCode) => {
+    getSubcategoryNumericCode: jest.fn((layerCode: string, categoryCode: string, subcategoryCode: string) => {
       if (layerCode === 'S' && categoryCode === 'POP' && subcategoryCode === 'HPM') return 7;
       return 1;
     })
