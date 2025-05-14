@@ -325,6 +325,10 @@ const FilePreview: React.FC<FilePreviewProps> = ({
 
     const fileType = getFileType();
 
+    if (!fileType) {
+      return renderGenericPreview();
+    }
+
     if (fileType.startsWith('image/')) {
       return renderImagePreview();
     } else if (fileType.startsWith('audio/')) {
