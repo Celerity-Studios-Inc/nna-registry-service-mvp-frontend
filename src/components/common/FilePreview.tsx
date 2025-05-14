@@ -21,7 +21,8 @@ import {
 } from '@mui/icons-material';
 
 interface FilePreviewProps {
-  file: File;
+  // Accept File object, URL string, or object with url property (for API responses)
+  file: File | string | { url: string; name?: string; size?: number; type?: string; [key: string]: any };
   height?: string;
   showInfo?: boolean;
   showControls?: boolean;
@@ -62,11 +63,43 @@ const getFileIcon = (type: string) => {
 };
 
 // Determine if file is previewable in browser
-const isPreviewable = (file: File) => {
-  return file.type.startsWith('image/') || 
-         file.type === 'application/pdf' || 
-         file.type.startsWith('video/') || 
-         file.type.startsWith('audio/');
+const isPreviewable = (file: File | string | { url: string; type?: string; [key: string]: any }) => {
+  // Handle string URLs - assume they are previewable if they have common media extensions
+  if (typeof file === 'string') {
+    const url = file.toLowerCase();
+    return url.endsWith('.jpg') || url.endsWith('.jpeg') || url.endsWith('.png') ||
+           url.endsWith('.gif') || url.endsWith('.webp') || url.endsWith('.mp4') ||
+           url.endsWith('.webm') || url.endsWith('.mp3') || url.endsWith('.wav') ||
+           url.endsWith('.ogg') || url.endsWith('.pdf');
+  }
+
+  // Handle object with url property
+  if (typeof file === 'object' && 'url' in file) {
+    // If it has a type property, use that
+    if (file.type) {
+      return file.type.startsWith('image/') ||
+             file.type === 'application/pdf' ||
+             file.type.startsWith('video/') ||
+             file.type.startsWith('audio/');
+    }
+
+    // Otherwise check URL extension
+    const url = file.url.toLowerCase();
+    return url.endsWith('.jpg') || url.endsWith('.jpeg') || url.endsWith('.png') ||
+           url.endsWith('.gif') || url.endsWith('.webp') || url.endsWith('.mp4') ||
+           url.endsWith('.webm') || url.endsWith('.mp3') || url.endsWith('.wav') ||
+           url.endsWith('.ogg') || url.endsWith('.pdf');
+  }
+
+  // Handle File object
+  if (file instanceof File) {
+    return file.type.startsWith('image/') ||
+           file.type === 'application/pdf' ||
+           file.type.startsWith('video/') ||
+           file.type.startsWith('audio/');
+  }
+
+  return false;
 };
 
 const FilePreview: React.FC<FilePreviewProps> = ({
@@ -84,6 +117,20 @@ const FilePreview: React.FC<FilePreviewProps> = ({
   React.useEffect(() => {
     // Generate preview URL
     if (file && isPreviewable(file)) {
+      // Check if file is already a string URL (happens when editing an existing asset)
+      if (typeof file === 'string') {
+        setObjectUrl(file);
+        // No cleanup needed for string URLs
+        return;
+      }
+
+      // Check if file already has a URL property (for uploaded files)
+      if ((file as any).url) {
+        setObjectUrl((file as any).url);
+        return;
+      }
+
+      // Regular File object - create a blob URL
       const url = URL.createObjectURL(file);
       setObjectUrl(url);
 
@@ -165,17 +212,118 @@ const FilePreview: React.FC<FilePreviewProps> = ({
     );
   };
 
+  // Get file type based on different file formats
+  const getFileType = () => {
+    if (!file) return '';
+
+    // Handle File object
+    if (file instanceof File) {
+      return file.type;
+    }
+
+    // Handle object with type property
+    if (typeof file === 'object' && 'type' in file) {
+      return file.type;
+    }
+
+    // Handle string URL by checking extension
+    if (typeof file === 'string') {
+      const url = file.toLowerCase();
+      if (url.endsWith('.jpg') || url.endsWith('.jpeg') || url.endsWith('.png') || url.endsWith('.gif') || url.endsWith('.webp')) {
+        return 'image/jpeg'; // Generic image type
+      } else if (url.endsWith('.mp4') || url.endsWith('.webm')) {
+        return 'video/mp4'; // Generic video type
+      } else if (url.endsWith('.mp3') || url.endsWith('.wav') || url.endsWith('.ogg')) {
+        return 'audio/mpeg'; // Generic audio type
+      } else if (url.endsWith('.pdf')) {
+        return 'application/pdf';
+      }
+    }
+
+    // Handle object with url property
+    if (typeof file === 'object' && 'url' in file) {
+      const url = file.url.toLowerCase();
+      if (url.endsWith('.jpg') || url.endsWith('.jpeg') || url.endsWith('.png') || url.endsWith('.gif') || url.endsWith('.webp')) {
+        return 'image/jpeg'; // Generic image type
+      } else if (url.endsWith('.mp4') || url.endsWith('.webm')) {
+        return 'video/mp4'; // Generic video type
+      } else if (url.endsWith('.mp3') || url.endsWith('.wav') || url.endsWith('.ogg')) {
+        return 'audio/mpeg'; // Generic audio type
+      } else if (url.endsWith('.pdf')) {
+        return 'application/pdf';
+      }
+    }
+
+    return '';
+  };
+
+  // Get file name for display from different file types
+  const getFileName = () => {
+    if (!file) return 'Unknown file';
+
+    // Handle File object
+    if (file instanceof File) {
+      return file.name;
+    }
+
+    // Handle object with name property
+    if (typeof file === 'object' && 'name' in file) {
+      return file.name;
+    }
+
+    // Handle object with filename property
+    if (typeof file === 'object' && 'filename' in file) {
+      return file.filename;
+    }
+
+    // Handle object with url property as fallback
+    if (typeof file === 'object' && 'url' in file) {
+      // Extract filename from URL
+      const url = file.url;
+      const parts = url.split('/');
+      return parts[parts.length - 1];
+    }
+
+    // Handle string URL
+    if (typeof file === 'string') {
+      // Extract filename from URL
+      const parts = file.split('/');
+      return parts[parts.length - 1];
+    }
+
+    return 'Unknown file';
+  };
+
+  // Get file size for display from different file types
+  const getFileSize = () => {
+    if (!file) return 0;
+
+    // Handle File object
+    if (file instanceof File) {
+      return file.size;
+    }
+
+    // Handle object with size property
+    if (typeof file === 'object' && 'size' in file) {
+      return file.size;
+    }
+
+    return 0;
+  };
+
   // Render appropriate preview based on file type
   const renderPreview = () => {
     if (!file) return null;
 
-    if (file.type.startsWith('image/')) {
+    const fileType = getFileType();
+
+    if (fileType.startsWith('image/')) {
       return renderImagePreview();
-    } else if (file.type.startsWith('audio/')) {
+    } else if (fileType.startsWith('audio/')) {
       return renderAudioPreview();
-    } else if (file.type.startsWith('video/')) {
+    } else if (fileType.startsWith('video/')) {
       return renderVideoPreview();
-    } else if (file.type === 'application/pdf') {
+    } else if (fileType === 'application/pdf') {
       return renderPdfPreview();
     } else {
       return renderGenericPreview();
@@ -241,18 +389,22 @@ const FilePreview: React.FC<FilePreviewProps> = ({
       {/* File info */}
       {showInfo && (
         <Box sx={{ mt: 1 }}>
-          <Typography variant="body2" noWrap title={file.name}>
-            {file.name}
+          <Typography variant="body2" noWrap title={getFileName()}>
+            {getFileName()}
           </Typography>
           <Stack direction="row" spacing={1} alignItems="center">
+            {getFileSize() > 0 && (
+              <>
+                <Typography variant="caption" color="text.secondary">
+                  {formatFileSize(getFileSize())}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  •
+                </Typography>
+              </>
+            )}
             <Typography variant="caption" color="text.secondary">
-              {formatFileSize(file.size)}
-            </Typography>
-            <Typography variant="caption" color="text.secondary">
-              •
-            </Typography>
-            <Typography variant="caption" color="text.secondary">
-              {file.type || 'Unknown type'}
+              {getFileType() || 'Unknown type'}
             </Typography>
           </Stack>
         </Box>

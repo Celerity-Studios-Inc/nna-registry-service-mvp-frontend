@@ -391,15 +391,15 @@ const ReviewSubmit: React.FC<ReviewSubmitProps> = ({
               <Alert severity="warning">No files have been uploaded.</Alert>
             ) : (
               <Box>
-                {/* File Preview */}
+                {/* Enhanced File Preview */}
                 {files.length > 0 && (
                   <Box sx={{ mb: 3, display: 'flex', justifyContent: 'center' }}>
                     {files[0].type.startsWith('image/') ? (
-                      <Box 
+                      <Box
                         component="img"
                         src={URL.createObjectURL(files[0])}
                         alt={files[0].name}
-                        sx={{ 
+                        sx={{
                           maxWidth: '100%',
                           maxHeight: '200px',
                           objectFit: 'contain',
@@ -407,6 +407,26 @@ const ReviewSubmit: React.FC<ReviewSubmitProps> = ({
                           border: '1px solid #eee'
                         }}
                       />
+                    ) : files[0].type.startsWith('video/') ? (
+                      <Box sx={{ width: '100%', maxHeight: '250px', border: '1px solid #eee', borderRadius: '4px' }}>
+                        <video
+                          controls
+                          style={{ width: '100%', maxHeight: '250px', objectFit: 'contain' }}
+                        >
+                          <source src={URL.createObjectURL(files[0])} type={files[0].type} />
+                          Your browser does not support the video element.
+                        </video>
+                      </Box>
+                    ) : files[0].type.startsWith('audio/') ? (
+                      <Box sx={{ width: '100%', p: 2, border: '1px solid #eee', borderRadius: '4px' }}>
+                        <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
+                          <AudioIcon sx={{ fontSize: 48, color: 'secondary.main' }} />
+                        </Box>
+                        <audio controls style={{ width: '100%' }}>
+                          <source src={URL.createObjectURL(files[0])} type={files[0].type} />
+                          Your browser does not support the audio element.
+                        </audio>
+                      </Box>
                     ) : (
                       <Box sx={{ textAlign: 'center', p: 3, border: '1px dashed #ccc', borderRadius: '4px' }}>
                         {getFileIcon(files[0].type)}
