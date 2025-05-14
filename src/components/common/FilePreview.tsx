@@ -45,7 +45,11 @@ const formatFileSize = (bytes: number, decimals = 2) => {
 };
 
 // Get icon based on file type
-const getFileIcon = (type: string) => {
+const getFileIcon = (type: string | undefined) => {
+  if (!type) {
+    return <FileIcon fontSize="large" />;
+  }
+
   if (type.startsWith('image/')) {
     return <ImageIcon fontSize="large" color="primary" />;
   } else if (type.startsWith('audio/')) {
