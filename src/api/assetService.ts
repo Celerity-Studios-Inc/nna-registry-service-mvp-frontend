@@ -791,27 +791,19 @@ class AssetService {
       // CRITICAL FIX: Convert the category/subcategory codes to names directly here
       // This ensures we always send names (not codes) to the backend
 
-      // Special handling for S.POP.HPM
-      if (assetData.layer === 'S' && (assetData.category === 'POP' || assetData.category === '001')
-          && (assetData.subcategory === 'HPM' || assetData.subcategory === '007')) {
-        console.log('CRITICAL FIX: Sending Pop name for category and Pop_Hipster_Male_Stars for subcategory');
-        formData.append('category', 'Pop');
-        formData.append('subcategory', 'Pop_Hipster_Male_Stars');
-      } else {
-        // For all other cases, use the converter
-        const categoryName = TaxonomyConverter.getBackendCategoryValue(assetData.layer, assetData.category);
-        const subcategoryName = TaxonomyConverter.getBackendSubcategoryValue(
-          assetData.layer,
-          assetData.category,
-          assetData.subcategory
-        );
+      // Use the TaxonomyConverter for all cases to consistently convert codes to names
+      const categoryName = TaxonomyConverter.getBackendCategoryValue(assetData.layer, assetData.category);
+      const subcategoryName = TaxonomyConverter.getBackendSubcategoryValue(
+        assetData.layer,
+        assetData.category,
+        assetData.subcategory
+      );
 
-        console.log(`Converting to names: category=${assetData.category} → ${categoryName}, subcategory=${assetData.subcategory} → ${subcategoryName}`);
+      console.log(`Converting to names: category=${assetData.category} → ${categoryName}, subcategory=${assetData.subcategory} → ${subcategoryName}`);
 
-        // Send taxonomy names to the backend instead of codes
-        formData.append('category', categoryName || 'Pop');
-        formData.append('subcategory', subcategoryName || 'Base');
-      }
+      // Send taxonomy names to the backend instead of codes
+      formData.append('category', categoryName || 'Pop');
+      formData.append('subcategory', subcategoryName || 'Base');
       formData.append('source', assetData.source || 'ReViz');
 
       // IMPORTANT: Backend validation requires the description field to be non-empty

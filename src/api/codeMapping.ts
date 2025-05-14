@@ -51,10 +51,9 @@ export function convertHFNToMFA(hfnAddress: string): string {
 
   const [layer, category, subcategory, sequential] = parts;
 
-  // Add debug logging for S.POP.HPM case
-  if (layer === 'S' && category === 'POP' && subcategory === 'HPM') {
-    console.log('CRITICAL PATH: Converting S.POP.HPM to MFA format');
-    console.log('This should generate 2.001.007.001');
+  // Debug logging for any taxonomy conversion to MFA format
+  if (process.env.NODE_ENV !== 'production') {
+    console.log(`Converting ${layer}.${category}.${subcategory}.${sequential} to MFA format`);
   }
 
   // Convert layer to numeric
@@ -160,22 +159,10 @@ export function convertHFNToMFA(hfnAddress: string): string {
   // Normal case with actual sequential number
   const result = `${layerNumeric}.${categoryNumeric}.${subcategoryNumeric}.${sequential}`;
 
-  // Add additional validation for S.POP.HPM
-  if (layer === 'S' && category === 'POP' && subcategory === 'HPM') {
-    console.log(`FINAL MFA for S.POP.HPM: ${result}`);
+  // Add validation for taxonomy conversion consistency (debug only)
+  if (process.env.NODE_ENV !== 'production') {
+    console.log(`Final MFA: ${result}`);
     console.log(`Verification: Layer=${layerNumeric}, Category=${categoryNumeric}, Subcategory=${subcategoryNumeric}`);
-
-    // For S.POP.HPM, we expect the category and subcategory to be correct
-    // But we allow the sequential number to vary
-    const expectedPrefix = '2.001.007.';
-
-    if (!result.startsWith(expectedPrefix)) {
-      console.error(`ERROR: Expected ${expectedPrefix}XXX for S.POP.HPM but got ${result}`);
-      console.error(`Subcategory mapping issue: POP.HPM should map to 007, but got ${subcategoryNumeric}`);
-
-      // Only force the prefix, keep the original sequential number
-      return expectedPrefix + sequential;
-    }
   }
 
   return result;
@@ -279,9 +266,11 @@ export function convertMFAToHFN(mfaAddress: string): string {
       '007': 'HPM'  // Pop_Hipster_Male_Stars - IMPORTANT: Special case that must map to 007
     };
     subcategoryAlpha = starsPOPSubcategories[subcategoryNumeric] || 'BAS';
-
-    // Log the standard conversion result
-    console.log(`Converted MFA: ${layerNumeric}.${categoryNumeric}.${subcategoryNumeric}.${sequential} to HFN: ${layerAlpha}.${categoryAlpha}.${subcategoryAlpha}.${sequential}`);
+    
+    // Log the standard conversion result in development mode only
+    if (process.env.NODE_ENV !== 'production') {
+      console.log(`Converted MFA: ${layerNumeric}.${categoryNumeric}.${subcategoryNumeric}.${sequential} to HFN: ${layerAlpha}.${categoryAlpha}.${subcategoryAlpha}.${sequential}`);
+    }
   } else {
     // Try to get subcategory mapping for the category, or fall back to default
     if (subcategoryMappings[categoryAlpha]) {

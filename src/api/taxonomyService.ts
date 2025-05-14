@@ -528,18 +528,8 @@ class TaxonomyService {
 
     // In a real implementation, this would query the API to get the actual next available number
 
-    // For specific testing paths, use hardcoded values to match expected behavior
-    if (layerCode === 'S' && categoryKey === 'POP' && subcategoryKey === 'HPM') {
-      // Increment only once if not already set, to simulate a more stable counter
-      const counter = this.sequentialCounters.has(taxonomyPath) ?
-                     this.sequentialCounters.get(taxonomyPath)! :
-                     this.initializePathCounter(taxonomyPath);
-
-      // Format the counter as a 3-digit string (001, 002, etc.)
-      const sequential = String(counter).padStart(3, '0');
-      console.log(`Generated sequential number: ${sequential} for path: ${taxonomyPath}`);
-      return { sequential };
-    }
+    // Use a common approach for all taxonomy paths
+    // No special handling for specific paths needed anymore
 
     // For all other paths, use a simple incrementing counter
     // but don't increment on every call (only once per component lifecycle)
@@ -557,13 +547,8 @@ class TaxonomyService {
 
   // Helper method to initialize a counter for a path (only called once per path)
   private initializePathCounter(taxonomyPath: string): number {
-    // Start at a reasonable number (1 for most paths, higher for known paths like S.POP.HPM)
-    let initialCounter = 1;
-
-    // For S.POP.HPM, start at 23 to avoid rapid increment
-    if (taxonomyPath === 'S.POP.HPM') {
-      initialCounter = 23;  // An arbitrary starting point to avoid confusion with previous assets
-    }
+    // Start at a reasonable number (1 for most paths)
+    const initialCounter = 1;
 
     // Store the initial counter
     this.sequentialCounters.set(taxonomyPath, initialCounter);
