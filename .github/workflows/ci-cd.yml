@@ -77,6 +77,12 @@ jobs:
     needs: build
     if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
+    # Add permissions for GitHub token to allow PR comments
+    permissions:
+      contents: read
+      deployments: write
+      pull-requests: write
+      issues: write
     # Check if secrets are available
     env:
       HAS_SECRETS: ${{ secrets.VERCEL_TOKEN != '' && secrets.VERCEL_ORG_ID != '' && secrets.VERCEL_PROJECT_ID != '' }}
@@ -115,6 +121,7 @@ jobs:
           vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
           working-directory: ./
           vercel-args: '--prod'
+          github-comment: false  # Turn off built-in comments since we use sticky-pull-request-comment
       
       # Alternative: Deploy with Vercel CLI (backup method)
       - name: Install Vercel CLI (Fallback)
