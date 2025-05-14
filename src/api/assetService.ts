@@ -425,9 +425,15 @@ class AssetService {
       // Check for mock mode or backend unavailability
       const authToken = localStorage.getItem('accessToken') || '';
       const isMockToken = authToken.startsWith('MOCK-');
+      // DIRECT FIX: Explicitly check localStorage for override
+      const forceRealMode = localStorage.getItem('forceMockApi') === 'false';
+      const useMock = forceRealMode ? false : (apiConfig.useMockApi || isMockToken || !isBackendAvailable);
+
+      console.log('Asset detail mode:', useMock ? 'Mock' : 'Real API');
+      console.log('Force real mode:', forceRealMode);
 
       // Use mock implementation if needed
-      if (isMockToken || !isBackendAvailable) {
+      if (useMock) {
         console.log(`Using mock implementation for getAssetById due to ${isMockToken ? 'mock token' : 'unavailable backend'}`);
 
         // Simulate network delay
@@ -436,6 +442,7 @@ class AssetService {
         // Generate a mock asset
         return {
           id: id,
+          _id: id.match(/^[a-f0-9]{24}$/i) ? id : undefined, // Add MongoDB ID if format matches
           name: `Mock Asset ${id.substring(0, 6)}`,
           friendlyName: `Mock Asset ${id.substring(0, 6)}`,
           nnaAddress: `2.001.001.${id.substring(0, 3)}`,
@@ -448,10 +455,22 @@ class AssetService {
           description: `This is a mock asset created for demonstration purposes.`,
           tags: ['mock', 'demo', 'test'],
           gcpStorageUrl: 'https://storage.googleapis.com/mock-bucket/',
-          files: [],
+          files: [
+            {
+              id: `file-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+              filename: 'mock-asset.png',
+              contentType: 'image/png',
+              size: 12345,
+              url: 'https://via.placeholder.com/300',
+              uploadedAt: new Date().toISOString(),
+              thumbnailUrl: 'https://via.placeholder.com/150'
+            }
+          ],
           metadata: {
             humanFriendlyName: `S.POP.DIV.001`,
             machineFriendlyAddress: `2.001.004.001`,
+            hfn: `S.POP.DIV.001`, // Include both formats for compatibility
+            mfa: `2.001.004.001`, // Include both formats for compatibility
             layerName: 'Stars',
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString(),
@@ -463,21 +482,49 @@ class AssetService {
         };
       }
 
+      // Determine if this looks like a MongoDB ID (24 hex characters)
+      const isMongoId = id.match(/^[a-f0-9]{24}$/i) !== null;
+      console.log(`ID format check: ${id} is ${isMongoId ? 'a MongoDB ID' : 'a regular ID'}`);
+
       // Real API implementation with improved error handling
       try {
-        const response = await api.get<ApiResponse<Asset>>(`/assets/${id}`);
-        return response.data.data as Asset;
-      } catch (firstError) {
-        console.warn(`Initial asset fetch failed for ID ${id}:`, firstError);
-        console.log('Trying alternative endpoint format...');
+        // For MongoDB IDs, try the /assets/id/{id} endpoint first
+        if (isMongoId) {
+          console.log('Trying MongoDB ID endpoint first since this looks like a MongoDB ID');
+          try {
+            // Some backends require this specific endpoint for MongoDB IDs
+            const mongoResponse = await api.get<ApiResponse<Asset>>(`/assets/id/${id}`);
+            console.log('Successfully fetched asset using MongoDB ID endpoint');
+            return mongoResponse.data.data as Asset;
+          } catch (mongoError) {
+            console.warn(`MongoDB ID endpoint fetch failed, falling back to standard endpoint:`, mongoError);
+            // Fall through to standard endpoint
+          }
+        }
 
-        // Try alternative endpoint with MongoDB ID format
-        try {
-          // Some backends use a different endpoint format for MongoDB IDs
-          const alternativeResponse = await api.get<ApiResponse<Asset>>(`/assets/id/${id}`);
-          return alternativeResponse.data.data as Asset;
-        } catch (secondError) {
-          console.error('All asset fetch attempts failed:', secondError);
+        // Standard endpoint as fallback
+        console.log('Trying standard asset endpoint');
+        const response = await api.get<ApiResponse<Asset>>(`/assets/${id}`);
+        console.log('Successfully fetched asset using standard endpoint');
+        return response.data.data as Asset;
+      } catch (primaryError) {
+        console.warn(`Primary asset fetch failed for ID ${id}:`, primaryError);
+
+        // If we already tried the MongoDB ID endpoint based on the ID format,
+        // try the other endpoint format as a last resort
+        if (!isMongoId) {
+          console.log('Trying MongoDB ID endpoint as fallback...');
+          try {
+            const fallbackResponse = await api.get<ApiResponse<Asset>>(`/assets/id/${id}`);
+            console.log('Successfully fetched asset using MongoDB ID endpoint fallback');
+            return fallbackResponse.data.data as Asset;
+          } catch (fallbackError) {
+            console.error('All asset fetch attempts failed:', fallbackError);
+            throw new Error(`Failed to fetch asset with ID: ${id}`);
+          }
+        } else {
+          // We've already tried both endpoints
+          console.error('All asset fetch attempts failed, no more fallbacks available');
           throw new Error(`Failed to fetch asset with ID: ${id}`);
         }
       }

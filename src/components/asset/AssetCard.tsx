@@ -325,7 +325,11 @@ const AssetCard: React.FC<AssetCardProps> = ({
                 console.error('Asset ID is undefined, cannot navigate to details page', asset);
                 // Could add an error notification here
               } else {
-                console.log(`Navigating to asset details: ${asset.id || asset._id}`);
+                const assetId = asset.id || asset._id;
+                // For MongoDB IDs, we might want to use a different route pattern
+                // but the asset-proxy.ts will handle the endpoint rewriting
+                const isMongoId = assetId && assetId.match(/^[a-f0-9]{24}$/i) !== null;
+                console.log(`Navigating to asset details: ${assetId} (${isMongoId ? 'MongoDB ID' : 'Regular ID'})`);
               }
             }}
           >

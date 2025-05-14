@@ -68,13 +68,15 @@ async function handler(req: VercelRequest, res: VercelResponse) {
 
     // Special handling for MongoDB ID access
     if (endpoint.match(/\/assets\/[a-f0-9]{24}$/i)) {
-      // This looks like a MongoDB ID - allow both formats
+      // This looks like a MongoDB ID - rewrite to the alternative format
       const assetId = endpoint.split('/').pop();
       console.log(`ASSET PROXY - MongoDB ID detected: ${assetId}`);
 
-      // Keep the original endpoint, the backend should handle it
-      // But log it for debugging purposes
-      console.log(`ASSET PROXY - MongoDB ID access path: ${endpoint}`);
+      // CRITICAL FIX: Rewrite the endpoint to the format the backend expects
+      // Some backends expect /assets/id/<mongodb-id> format
+      const newEndpoint = `/assets/id/${assetId}`;
+      console.log(`ASSET PROXY - Rewriting MongoDB ID path from ${endpoint} to ${newEndpoint}`);
+      endpoint = newEndpoint;
     }
   } else if (endpoint === '/assets' || endpoint === '/assets/') {
     // Root assets endpoint
