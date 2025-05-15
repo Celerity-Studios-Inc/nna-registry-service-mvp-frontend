@@ -231,18 +231,32 @@ class AssetService {
       if (params.order) queryParams.append('sortOrder', params.order);
       
       // Convert date objects to ISO strings
-      if (params.startDate) {
-        const dateStr = params.startDate instanceof Date 
-          ? params.startDate.toISOString() 
-          : params.startDate.toString();
-        queryParams.append('startDate', dateStr);
+      if (params.createdAfter) {
+        const dateStr = params.createdAfter instanceof Date
+          ? params.createdAfter.toISOString()
+          : params.createdAfter.toString();
+        queryParams.append('createdAfter', dateStr);
       }
-      
-      if (params.endDate) {
-        const dateStr = params.endDate instanceof Date 
-          ? params.endDate.toISOString() 
-          : params.endDate.toString();
-        queryParams.append('endDate', dateStr);
+
+      if (params.createdBefore) {
+        const dateStr = params.createdBefore instanceof Date
+          ? params.createdBefore.toISOString()
+          : params.createdBefore.toString();
+        queryParams.append('createdBefore', dateStr);
+      }
+
+      if (params.updatedAfter) {
+        const dateStr = params.updatedAfter instanceof Date
+          ? params.updatedAfter.toISOString()
+          : params.updatedAfter.toString();
+        queryParams.append('updatedAfter', dateStr);
+      }
+
+      if (params.updatedBefore) {
+        const dateStr = params.updatedBefore instanceof Date
+          ? params.updatedBefore.toISOString()
+          : params.updatedBefore.toString();
+        queryParams.append('updatedBefore', dateStr);
       }
       
       // Add tags if they exist
