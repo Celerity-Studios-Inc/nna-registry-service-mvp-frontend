@@ -25,6 +25,7 @@ import { Asset, AssetSearchParams } from '../../types/asset.types';
 import assetService from '../../api/assetService';
 import taxonomyService from '../../api/taxonomyService';
 import { LayerOption, CategoryOption, SubcategoryOption } from '../../types/taxonomy.types';
+import PaginationControls from '../common/PaginationControls';
 
 interface AssetSearchProps {
   onSearch: (query: string) => void;
@@ -47,6 +48,11 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
   const [layers, setLayers] = useState<LayerOption[]>([]);
   const [totalAssets, setTotalAssets] = useState<number>(0);
 
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [itemsPerPage, setItemsPerPage] = useState<number>(12);
+  const [totalPages, setTotalPages] = useState<number>(1);
+
   // Load layers for filtering
   useEffect(() => {
     try {
@@ -59,37 +65,8 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
   
   // Load initial assets when component mounts
   useEffect(() => {
-    const loadInitialAssets = async () => {
-      try {
-        setIsLoading(true);
-        const results = await assetService.getAssets();
-
-        // Handle both API response formats: results.data as array, or results.data.items as array
-        if (results && results.data) {
-          if (Array.isArray(results.data)) {
-            // Old format: results.data is the array
-            setSearchResults(results.data);
-            setTotalAssets(results.pagination?.total || results.data.length);
-          } else if (typeof results.data === 'object' && results.data !== null && 'items' in results.data && Array.isArray((results.data as any).items)) {
-            // New format: results.data.items is the array
-            const dataWithItems = results.data as { items: Asset[], total?: number };
-            console.log("Using items array from API response:", dataWithItems.items.length);
-            setSearchResults(dataWithItems.items);
-            setTotalAssets(dataWithItems.total || dataWithItems.items.length);
-          } else {
-            console.warn("Unexpected API response format:", results);
-            setSearchResults([]);
-            setTotalAssets(0);
-          }
-        }
-      } catch (error) {
-        console.error('Error loading initial assets:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadInitialAssets();
+    loadAssets(currentPage, itemsPerPage);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Load categories when layer changes
@@ -125,183 +102,96 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
     }
   }, [selectedLayer, selectedCategory]);
 
-  const handleSearch = async () => {
-    if (!searchQuery && !selectedLayer && !selectedCategory && !selectedSubcategory) {
-      return;
-    }
-
-    setIsLoading(true);
-
+  // Common function to load assets with pagination
+  const loadAssets = async (page: number, limit: number) => {
     try {
+      setIsLoading(true);
+      
       // Construct search parameters
       const searchParams: AssetSearchParams = {
         search: searchQuery || undefined,
         layer: selectedLayer || undefined,
         category: selectedCategory || undefined,
         subcategory: selectedSubcategory || undefined,
+        page: page,
+        limit: limit,
+        sortBy: 'createdAt',
+        order: 'desc' // Show newest assets first
       };
-
-      console.log("Searching with params:", searchParams);
-
-      // Call the search API
+      
+      console.log("Fetching assets with params:", searchParams);
+      
       const results = await assetService.getAssets(searchParams);
       
-      // Update state with results
+      // Normalize the API response consistently
       if (results && results.data) {
-        // Extract search results using either format
-        let assetResults: Asset[] = [];
-        let totalCount = 0;
+        let assets: Asset[] = [];
+        let total = 0;
 
+        // Handle both API response formats
         if (Array.isArray(results.data)) {
           // Old format: results.data is the array
-          assetResults = results.data;
-          totalCount = results.pagination?.total || results.data.length;
-          console.log("Search results (old format):", assetResults.length);
+          assets = results.data;
+          total = results.pagination?.total || results.data.length;
         } else if (typeof results.data === 'object' && results.data !== null && 'items' in results.data && Array.isArray((results.data as any).items)) {
           // New format: results.data.items is the array
           const dataWithItems = results.data as { items: Asset[], total?: number };
-          assetResults = dataWithItems.items;
-          totalCount = dataWithItems.total || dataWithItems.items.length;
-          console.log("Search results from items array:", assetResults.length);
+          console.log("Using items array from API response:", dataWithItems.items.length);
+          assets = dataWithItems.items;
+          total = dataWithItems.total || dataWithItems.items.length;
         } else {
-          console.warn("Received unexpected format from assets search:", results);
-          setSearchResults([]);
-          setTotalAssets(0);
-          return;
+          console.warn("Unexpected API response format:", results);
         }
 
-        // If we're doing a text search, ensure results are relevant
-        if (searchQuery) {
-          const searchLower = searchQuery.toLowerCase();
+        // Ensure all assets have required properties
+        const normalizedAssets = assets.map(asset => ({
+          ...asset,
+          // Ensure id exists (use _id as fallback)
+          id: asset.id || asset._id || `temp-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+          // Ensure these properties exist for UI rendering
+          name: asset.name || asset.friendlyName || 'Unnamed Asset',
+          description: asset.description || 'No description provided',
+          createdAt: asset.createdAt || new Date().toISOString(),
+          layer: asset.layer || 'Unknown',
+          nnaAddress: asset.nnaAddress || ''
+        }));
 
-          // BETTER APPROACH: Instead of adding mock assets for specific terms,
-          // we'll improve our search algorithm to be more comprehensive
-
-          // Log the number of results before filtering
-          console.log(`Starting search with ${assetResults.length} assets from the backend`);
-
-          // If we have no results at all, log this clearly
-          if (assetResults.length === 0) {
-            console.log('No assets returned from backend to search through');
-          }
-
-          // Filter results client-side to ensure relevance
-          let filteredResults = assetResults.filter(asset => {
-            // Check various fields for matches
-            const nameMatch = asset.name?.toLowerCase().includes(searchLower) || false;
-            const descMatch = asset.description?.toLowerCase().includes(searchLower) || false;
-
-            // Improved tag matching - handle both string arrays and array-like objects
-            let tagMatch = false;
-
-            if (asset.tags) {
-              // Handle tags as an array of strings (most common format)
-              if (Array.isArray(asset.tags)) {
-                tagMatch = asset.tags.some(tag =>
-                  typeof tag === 'string' && tag.toLowerCase().includes(searchLower)
-                );
-              }
-              // Handle tags as a comma-separated string (sometimes returned from API)
-              else if (typeof asset.tags === 'string') {
-                // Use type assertion to tell TypeScript that we know this is a string
-                tagMatch = (asset.tags as string).toLowerCase().includes(searchLower);
-              }
-              // Handle tags as an object with values (rare but possible)
-              else if (typeof asset.tags === 'object' && asset.tags !== null) {
-                // Cast the object to Record<string, any> to satisfy TypeScript
-                const tagsObj = asset.tags as Record<string, any>;
-                tagMatch = Object.values(tagsObj).some(tag =>
-                  typeof tag === 'string' && tag.toLowerCase().includes(searchLower)
-                );
-              }
-            }
-
-            // Handle subcategory matching, which is often related to search terms
-            const subcategoryMatch = asset.subcategory?.toLowerCase().includes(searchLower) ||
-                                   asset.subcategoryCode?.toLowerCase().includes(searchLower) ||
-                                   false;
-
-            // Consider other potentially relevant fields
-            const categoryMatch = asset.category?.toLowerCase().includes(searchLower) ||
-                                asset.categoryCode?.toLowerCase().includes(searchLower) ||
-                                false;
-
-            const idMatch = asset.id?.toLowerCase().includes(searchLower) ||
-                         (asset._id && asset._id.toLowerCase().includes(searchLower)) ||
-                         false;
-
-            // Check the NNA address too
-            const addressMatch = asset.nnaAddress?.toLowerCase().includes(searchLower) ||
-                             (asset.metadata?.humanFriendlyName &&
-                              asset.metadata.humanFriendlyName.toLowerCase().includes(searchLower)) ||
-                             false;
-
-            // Enhanced search matching - check more fields that might contain the search term
-
-            // Check all metadata fields
-            let metadataMatch = false;
-            if (asset.metadata) {
-              metadataMatch = Object.entries(asset.metadata).some(([key, value]) => {
-                if (typeof value === 'string') {
-                  return value.toLowerCase().includes(searchLower);
-                }
-                return false;
-              });
-            }
-
-            // Check file names
-            let fileNameMatch = false;
-            if (asset.files && Array.isArray(asset.files)) {
-              fileNameMatch = asset.files.some(file =>
-                file.filename && file.filename.toLowerCase().includes(searchLower)
-              );
-            }
-
-            // Log comprehensive search match information for troubleshooting
-            console.log(`Checking asset "${asset.name}" for "${searchLower}":`, {
-              nameMatch,
-              descMatch,
-              tagMatch,
-              subcategoryMatch,
-              categoryMatch,
-              metadataMatch,
-              fileNameMatch,
-              tags: asset.tags,
-              subcategory: asset.subcategory,
-              category: asset.category
-            });
-
-            // Consider a match if any of the fields match
-            // Include our new matching fields for more comprehensive results
-            return nameMatch || descMatch || tagMatch || subcategoryMatch ||
-                   categoryMatch || idMatch || addressMatch || metadataMatch || fileNameMatch;
-          });
-
-          console.log(`Filtered ${assetResults.length} results to ${filteredResults.length} relevant matches for "${searchQuery}"`);
-
-          // Update state with filtered results
-          setSearchResults(filteredResults);
-          setTotalAssets(filteredResults.length);
-        } else {
-          // No text filtering needed
-          setSearchResults(assetResults);
-          setTotalAssets(totalCount);
+        setSearchResults(normalizedAssets);
+        setTotalAssets(total);
+        
+        // Update pagination data
+        if (results.pagination) {
+          setTotalPages(results.pagination.pages || Math.ceil(total / limit));
         }
       } else {
-        console.warn("Received empty or invalid results from assets search");
+        // Handle empty response
+        console.warn("Empty response from asset service");
         setSearchResults([]);
         setTotalAssets(0);
+        setTotalPages(1);
       }
-      
-      // Call the onSearch callback with the query
-      onSearch(searchQuery);
     } catch (error) {
-      console.error('Error searching assets:', error);
+      console.error('Error loading assets:', error);
+      // In case of error, show a helpful message
       setSearchResults([]);
       setTotalAssets(0);
+      setTotalPages(1);
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleSearch = () => {
+    if (!searchQuery && !selectedLayer && !selectedCategory && !selectedSubcategory) {
+      return;
+    }
+
+    // Reset to first page when performing a new search
+    setCurrentPage(1);
+    loadAssets(1, itemsPerPage);
+    
+    // Call the onSearch callback with the query
+    onSearch(searchQuery);
   };
 
   const handleClearSearch = () => {
@@ -309,7 +199,11 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
     setSelectedLayer('');
     setSelectedCategory('');
     setSelectedSubcategory('');
-    setSearchResults([]);
+    setCurrentPage(1);
+    
+    // Load initial assets (first page)
+    loadAssets(1, itemsPerPage);
+    
     setShowAdvancedFilters(false);
   };
 
@@ -332,6 +226,19 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
 
   const handleSubcategoryChange = (event: SelectChangeEvent<string>) => {
     setSelectedSubcategory(event.target.value);
+  };
+
+  // Handle page change
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    loadAssets(page, itemsPerPage);
+  };
+
+  // Handle items per page change
+  const handleItemsPerPageChange = (newItemsPerPage: number) => {
+    setItemsPerPage(newItemsPerPage);
+    setCurrentPage(1); // Reset to first page when changing items per page
+    loadAssets(1, newItemsPerPage);
   };
 
   return (
@@ -502,6 +409,22 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
               </Grid>
             ))}
           </Grid>
+          
+          {/* Pagination Controls */}
+          {totalAssets > 0 && (
+            <Box sx={{ mt: 4 }}>
+              <PaginationControls
+                page={currentPage}
+                totalPages={totalPages}
+                totalItems={totalAssets}
+                itemsPerPage={itemsPerPage}
+                onPageChange={handlePageChange}
+                onItemsPerPageChange={handleItemsPerPageChange}
+                itemsPerPageOptions={[12, 24, 48, 96]}
+                disabled={isLoading}
+              />
+            </Box>
+          )}
         </Box>
       )}
 

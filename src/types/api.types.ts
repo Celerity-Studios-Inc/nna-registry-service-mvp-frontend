@@ -27,6 +27,11 @@ export interface PaginatedResponse<T = any> {
     pages: number;
     hasMore?: boolean;
   };
+  error?: {
+    code: number | string;
+    message: string;
+    details?: string;
+  };
 }
 
 /**
