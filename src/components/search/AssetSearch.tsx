@@ -174,50 +174,15 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
         if (searchQuery) {
           const searchLower = searchQuery.toLowerCase();
 
-          // IMPORTANT: First add extra mock assets for common search terms
-          // This ensures we always have results for demo search terms
-          if (['anxiety', 'sunset', 'coachella'].includes(searchLower)) {
-            console.log(`Adding mock asset for important search term: ${searchLower}`);
+          // BETTER APPROACH: Instead of adding mock assets for specific terms,
+          // we'll improve our search algorithm to be more comprehensive
 
-            // Create a relevant mock asset for this search term
-            const mockAsset: Asset = {
-              id: `mock-${searchLower}-${Date.now()}`,
-              _id: `mock-${searchLower}-${Date.now()}`,
-              name: `${searchLower.charAt(0).toUpperCase() + searchLower.slice(1)} Demo Asset`,
-              friendlyName: `${searchLower.charAt(0).toUpperCase() + searchLower.slice(1)} Demo Asset`,
-              nnaAddress: '2.001.001.001',
-              type: 'standard',
-              layer: 'S',
-              categoryCode: 'POP',
-              subcategoryCode: 'DIV',
-              category: 'Pop',
-              subcategory: 'Diva',
-              description: `This is a demonstration asset tagged with ${searchLower}.`,
-              tags: ['demo', searchLower],
-              gcpStorageUrl: 'https://via.placeholder.com/800x600',
-              files: [
-                {
-                  id: `file-${Date.now()}-${Math.random().toString(36).substring(7)}`,
-                  filename: `${searchLower}.png`,
-                  contentType: 'image/png',
-                  size: 12345,
-                  url: 'https://via.placeholder.com/800x600',
-                  uploadedAt: new Date().toISOString(),
-                  thumbnailUrl: 'https://via.placeholder.com/400x300'
-                }
-              ],
-              metadata: {
-                humanFriendlyName: `S.POP.DIV.999`,
-                machineFriendlyAddress: `2.001.004.999`,
-              },
-              status: 'active',
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString(),
-              createdBy: "user@example.com"
-            };
+          // Log the number of results before filtering
+          console.log(`Starting search with ${assetResults.length} assets from the backend`);
 
-            // Add to the beginning of results
-            assetResults.unshift(mockAsset);
+          // If we have no results at all, log this clearly
+          if (assetResults.length === 0) {
+            console.log('No assets returned from backend to search through');
           }
 
           // Filter results client-side to ensure relevance
@@ -271,22 +236,45 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
                               asset.metadata.humanFriendlyName.toLowerCase().includes(searchLower)) ||
                              false;
 
-            // Debug output for each asset to help troubleshoot matching issues
-            // Always log search matches for better diagnostics of search behavior
+            // Enhanced search matching - check more fields that might contain the search term
+
+            // Check all metadata fields
+            let metadataMatch = false;
+            if (asset.metadata) {
+              metadataMatch = Object.entries(asset.metadata).some(([key, value]) => {
+                if (typeof value === 'string') {
+                  return value.toLowerCase().includes(searchLower);
+                }
+                return false;
+              });
+            }
+
+            // Check file names
+            let fileNameMatch = false;
+            if (asset.files && Array.isArray(asset.files)) {
+              fileNameMatch = asset.files.some(file =>
+                file.filename && file.filename.toLowerCase().includes(searchLower)
+              );
+            }
+
+            // Log comprehensive search match information for troubleshooting
             console.log(`Checking asset "${asset.name}" for "${searchLower}":`, {
               nameMatch,
               descMatch,
               tagMatch,
               subcategoryMatch,
               categoryMatch,
+              metadataMatch,
+              fileNameMatch,
               tags: asset.tags,
               subcategory: asset.subcategory,
               category: asset.category
             });
 
             // Consider a match if any of the fields match
+            // Include our new matching fields for more comprehensive results
             return nameMatch || descMatch || tagMatch || subcategoryMatch ||
-                   categoryMatch || idMatch || addressMatch;
+                   categoryMatch || idMatch || addressMatch || metadataMatch || fileNameMatch;
           });
 
           console.log(`Filtered ${assetResults.length} results to ${filteredResults.length} relevant matches for "${searchQuery}"`);

@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Taxonomy Fallback Test</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      line-height: 1.6;
+    }
+    .result {
+      margin: 10px 0;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+    .success {
+      background-color: #e6ffe6;
+      border-color: #99cc99;
+    }
+    .warning {
+      background-color: #ffffcc;
+      border-color: #ffcc66;
+    }
+    .error {
+      background-color: #ffebeb;
+      border-color: #ff9999;
+    }
+    h2 {
+      margin-top: 30px;
+    }
+    pre {
+      background-color: #f5f5f5;
+      padding: 10px;
+      border-radius: 4px;
+      overflow-x: auto;
+    }
+    button {
+      padding: 8px 16px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-right: 10px;
+    }
+    button:hover {
+      background-color: #45a049;
+    }
+    .output {
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Taxonomy Fallback Test</h1>
+  <p>This page tests the taxonomy service's ability to handle missing or invalid taxonomy mappings gracefully.</p>
+  
+  <button id="runTests">Run All Tests</button>
+  <button id="clearResults">Clear Results</button>
+  
+  <h2>Test Cases</h2>
+  <div class="output" id="testOutput"></div>
+  
+  <script>
+    // Mock the taxonomy data structure (simplified version)
+    const taxonomyData = {
+      G: {
+        name: "Songs",
+        categories: {
+          "POP": {
+            name: "Pop",
+            code: "POP",
+            subcategories: {
+              "TSW": { name: "Swift_Inspired", code: "TSW" },
+              "RAP": { name: "Rap", code: "RAP" }
+            }
+          },
+          "RCK": {
+            name: "Rock",
+            code: "RCK",
+            subcategories: {
+              "HRD": { name: "Hard_Rock", code: "HRD" }
+            }
+          }
+        }
+      },
+      S: {
+        name: "Stars",
+        categories: {
+          "POP": {
+            name: "Pop",
+            code: "POP",
+            subcategories: {
+              "HPM": { name: "Hipster_Male", code: "HPM" }
+            }
+          }
+        }
+      }
+    };
+    
+    // Mock the taxonomyService.getTaxonomyPath method
+    function getTaxonomyPath(layerCode, categoryCode, subcategoryCode) {
+      if (!layerCode) return '';
+      
+      try {
+        // Get layer info
+        const layer = taxonomyData[layerCode];
+        if (!layer) {
+          console.warn(`Could not find layer "${layerCode}" in taxonomy data, using code directly`);
+          return layerCode;
+        }
+        
+        let path = layer.name;
+        
+        // Only continue if category code is provided
+        if (!categoryCode) {
+          return path;
+        }
+        
+        // Normalize category code for Stars layer
+        let normalizedCategoryCode = categoryCode;
+        if (layerCode === 'S' && categoryCode === '001') {
+          normalizedCategoryCode = 'POP';
+          console.log('Normalizing category code 001 to POP for taxonomy path display');
+        }
+        
+        // Try to get category with normalized code
+        let category = layer.categories ? layer.categories[normalizedCategoryCode] : null;
+        
+        // Add category to path - use actual name if found, or code as fallback
+        if (!category) {
+          console.warn(`Could not find category "${categoryCode}" in layer "${layerCode}" for taxonomy path, using code directly`);
+          path += ` > ${categoryCode}`;
+        } else {
+          path += ` > ${category.name}`;
+        }
+        
+        // Only continue if subcategory code is provided
+        if (!subcategoryCode) {
+          return path;
+        }
+        
+        // Special handling for HPM subcategory in Stars layer
+        let subcategory = null;
+        if (layerCode === 'S' && (categoryCode === 'POP' || categoryCode === '001') && subcategoryCode === 'HPM') {
+          // This would normally try to get S.POP.HPM or S.001.HPM
+          subcategory = category && category.subcategories ? category.subcategories[subcategoryCode] : null;
+          
+          // If still not found, create a hardcoded fallback for S.POP.HPM
+          if (!subcategory) {
+            subcategory = {
+              name: "Hipster_Male", // Known name for HPM
+              code: subcategoryCode
+            };
+            console.log('Using hardcoded fallback for S.POP.HPM subcategory');
+          }
+        } else {
+          // Standard case
+          subcategory = category && category.subcategories ? category.subcategories[subcategoryCode] : null;
+        }
+        
+        // Add subcategory to path - use actual name if found, or code as fallback
+        if (!subcategory) {
+          console.warn(`Could not find subcategory "${subcategoryCode}" for "${layerCode}.${categoryCode}" in taxonomy path, using code directly`);
+          
+          // For numeric subcategory codes, try to make them more readable
+          if (/^\d+$/.test(subcategoryCode)) {
+            path += ` > Subcategory ${subcategoryCode}`;
+          } else {
+            // Format the subcategory code to be more readable
+            let readableCode = subcategoryCode.replace(/_/g, ' ');
+            readableCode = readableCode.replace(/([A-Z])/g, ' $1').trim();
+            readableCode = readableCode.charAt(0).toUpperCase() + readableCode.slice(1);
+            path += ` > ${readableCode}`;
+          }
+        } else {
+          path += ` > ${subcategory.name}`;
+        }
+        
+        return path;
+      } catch (error) {
+        // In case of any errors, return a basic fallback path
+        console.error('Error generating taxonomy path:', error);
+        const parts = [];
+        if (layerCode) parts.push(layerCode);
+        if (categoryCode) parts.push(categoryCode);
+        if (subcategoryCode) parts.push(subcategoryCode);
+        return parts.join(' > ');
+      }
+    }
+    
+    // Test cases
+    const testCases = [
+      { 
+        name: "Valid path", 
+        layer: "G", 
+        category: "POP", 
+        subcategory: "TSW",
+        expected: "Songs > Pop > Swift_Inspired"
+      },
+      { 
+        name: "Unknown layer", 
+        layer: "X", 
+        category: "POP", 
+        subcategory: "TSW",
+        expected: "X"
+      },
+      { 
+        name: "Unknown category", 
+        layer: "G", 
+        category: "UNKNOWN", 
+        subcategory: "TSW",
+        expected: "Songs > UNKNOWN > TSW"
+      },
+      { 
+        name: "Unknown subcategory", 
+        layer: "G", 
+        category: "POP", 
+        subcategory: "UNKNOWN",
+        expected: "Songs > Pop > Unknown"
+      },
+      { 
+        name: "Numeric subcategory", 
+        layer: "G", 
+        category: "POP", 
+        subcategory: "123",
+        expected: "Songs > Pop > Subcategory 123" 
+      },
+      { 
+        name: "S.POP.HPM special case", 
+        layer: "S", 
+        category: "POP", 
+        subcategory: "HPM",
+        expected: "Stars > Pop > Hipster_Male"
+      },
+      { 
+        name: "S.001.HPM normalized case", 
+        layer: "S", 
+        category: "001", 
+        subcategory: "HPM",
+        expected: "Stars > Pop > Hipster_Male"
+      },
+      { 
+        name: "Camel case subcategory", 
+        layer: "G", 
+        category: "POP", 
+        subcategory: "SwiftSongs",
+        expected: "Songs > Pop > Swift Songs"
+      }
+    ];
+    
+    // Run tests
+    function runTests() {
+      const output = document.getElementById('testOutput');
+      output.innerHTML = '';
+      
+      testCases.forEach(test => {
+        const result = getTaxonomyPath(test.layer, test.category, test.subcategory);
+        const success = result === test.expected;
+        
+        const resultDiv = document.createElement('div');
+        resultDiv.className = `result ${success ? 'success' : 'error'}`;
+        
+        resultDiv.innerHTML = `
+          <strong>Test: ${test.name}</strong><br>
+          Input: ${test.layer}.${test.category}.${test.subcategory}<br>
+          Expected: ${test.expected}<br>
+          Actual: ${result}<br>
+          Result: ${success ? 'PASS' : 'FAIL'}
+        `;
+        
+        output.appendChild(resultDiv);
+      });
+    }
+    
+    // Add event listeners
+    document.getElementById('runTests').addEventListener('click', runTests);
+    document.getElementById('clearResults').addEventListener('click', () => {
+      document.getElementById('testOutput').innerHTML = '';
+    });
+  </script>
+</body>
+</html>

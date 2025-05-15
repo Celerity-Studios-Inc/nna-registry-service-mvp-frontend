@@ -217,174 +217,138 @@ class AssetService {
     params: AssetSearchParams = {}
   ): Promise<PaginatedResponse<Asset>> {
     try {
-      // Check if we should use mock data based on token and backend availability
-      const authToken = localStorage.getItem('accessToken') || '';
-      // const hasAuthToken = !!authToken; // Commented out unused variable
-      const isMockToken = authToken.startsWith('MOCK-');
+      console.log('Fetching assets with params:', params);
       
-      // Use mock data if using a mock token or backend isn't available
-      if (isMockToken || !isBackendAvailable) {
-        console.log("Using mock implementation for getAssets due to mock token or unavailable backend");
-        
-        // Simulate network delay
-        await new Promise(resolve => setTimeout(resolve, 300));
-        
-        // Generate some mock assets based on search params
-        const mockAssets: Asset[] = [];
-        
-        // Add some demo assets
-        for (let i = 1; i <= 5; i++) {
-          mockAssets.push({
-            id: `mock-asset-${Date.now()}-${i}`,
-            name: `Mock Asset ${i}`,
-            friendlyName: `Mock Asset ${i}`,
-            nnaAddress: `2.001.001.00${i}`,
-            type: 'standard',
-            layer: params.layer || 'S',
-            categoryCode: params.category || 'POP',
-            subcategoryCode: params.subcategory || 'BAS',
-            category: params.category || 'POP',
-            subcategory: params.subcategory || 'BAS',
-            description: `This is a mock asset created for demonstration purposes.`,
-            tags: ['mock', 'demo', 'test'],
-            gcpStorageUrl: 'https://storage.googleapis.com/mock-bucket/',
-            files: [],
-            metadata: {
-              humanFriendlyName: `S.POP.BAS.00${i}`,
-              machineFriendlyAddress: `2.001.001.00${i}`,
-              layerName: 'Stars',
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString(),
-            },
-            status: 'active',
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-            createdBy: "user@example.com"
-          });
-        }
-        
-        // Filter by search term if provided
-        let filteredAssets = mockAssets;
-        if (params.search) {
-          const searchLower = params.search.toLowerCase();
-          filteredAssets = mockAssets.filter(asset => 
-            asset.name.toLowerCase().includes(searchLower) || 
-            (asset.description && asset.description.toLowerCase().includes(searchLower))
-          );
-        }
-        
-        // Return as paginated response
-        return {
-          data: filteredAssets,
-          pagination: {
-            total: filteredAssets.length,
-            page: 1,
-            limit: 10,
-            pages: 1
-          }
-        };
+      // Create query parameters
+      const queryParams = new URLSearchParams();
+      if (params.search) queryParams.append('search', params.search);
+      if (params.layer) queryParams.append('layer', params.layer);
+      if (params.category) queryParams.append('category', params.category);
+      if (params.subcategory) queryParams.append('subcategory', params.subcategory);
+      if (params.page) queryParams.append('page', params.page.toString());
+      if (params.limit) queryParams.append('limit', params.limit.toString());
+      if (params.sortBy) queryParams.append('sortBy', params.sortBy);
+      if (params.sortOrder) queryParams.append('sortOrder', params.sortOrder);
+      if (params.status) queryParams.append('status', params.status);
+      
+      // Convert date objects to ISO strings
+      if (params.startDate) {
+        const dateStr = params.startDate instanceof Date 
+          ? params.startDate.toISOString() 
+          : params.startDate.toString();
+        queryParams.append('startDate', dateStr);
       }
       
-      // Real API implementation
-      // For complex search params with date objects, convert to ISO strings for API
-      const apiParams = this.prepareSearchParams(params);
-
-      const response = await api.get<ApiResponse<any>>(
-        '/assets',
-        {
-          params: apiParams,
-        }
-      );
-
-      // Check response format and normalize it
-      // If response.data.data.items exists, we have the new format where items is in a nested data property
-      if (response.data && response.data.data) {
-        const responseData = response.data.data as any;
-
-        // Handle the case where the backend API returns { items: [], total: number }
-        if (typeof responseData === 'object' && responseData !== null && 'items' in responseData && Array.isArray(responseData.items)) {
-          // Convert to our PaginatedResponse format
-          console.log("Converting backend items format to PaginatedResponse format");
-
-          // Map the items to ensure they have the frontend-expected property names
-          const mappedItems = responseData.items.map((item: any) => {
-            // Ensure each item has an id property (frontend uses id, backend uses _id)
-            if (item._id && !item.id) {
-              return {
-                ...item,
-                id: item._id // Map _id to id for frontend compatibility
-              };
-            }
-            return item;
-          });
-
-          return {
-            data: mappedItems,
-            pagination: {
-              total: responseData.total || responseData.items.length,
-              page: responseData.page || 1,
-              limit: responseData.limit || responseData.items.length,
-              pages: responseData.pages || 1
-            }
-          } as PaginatedResponse<Asset>;
-        }
-
-        // Traditional format: response.data.data is already a PaginatedResponse
-        return response.data.data as PaginatedResponse<Asset>;
+      if (params.endDate) {
+        const dateStr = params.endDate instanceof Date 
+          ? params.endDate.toISOString() 
+          : params.endDate.toString();
+        queryParams.append('endDate', dateStr);
       }
-
-      // Fallback - something went wrong with format
-      console.warn("Unexpected API response format:", response.data);
-      return {
-        data: [],
-        pagination: { total: 0, page: 1, limit: 10, pages: 0 }
-      } as PaginatedResponse<Asset>;
-    } catch (error) {
-      console.error('Error fetching assets:', error);
       
-      // Fallback to mock data on error
-      console.log("Falling back to mock implementation for getAssets due to error");
-      
-      // Create mock assets
-      const mockAssets: Asset[] = [];
-      for (let i = 1; i <= 5; i++) {
-        mockAssets.push({
-          id: `mock-asset-${Date.now()}-${i}`,
-          name: `Mock Asset ${i}`,
-          friendlyName: `Mock Asset ${i}`,
-          nnaAddress: `2.001.001.00${i}`,
-          type: 'standard',
-          layer: params.layer || 'S',
-          categoryCode: params.category || 'POP',
-          subcategoryCode: params.subcategory || (params.layer === 'S' && params.category === 'POP' ? 'DIV' : 'BAS'),
-          category: params.category || 'POP',
-          subcategory: params.subcategory || (params.layer === 'S' && params.category === 'POP' ? 'DIV' : 'BAS'),
-          description: `This is a mock asset created for demonstration purposes.`,
-          tags: ['mock', 'demo', 'test'],
-          gcpStorageUrl: 'https://storage.googleapis.com/mock-bucket/',
-          files: [],
-          metadata: {
-            humanFriendlyName: `S.POP.BAS.00${i}`,
-            machineFriendlyAddress: `2.001.001.00${i}`,
-            layerName: 'Stars',
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-          },
-          status: 'active',
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-          createdBy: "user@example.com"
+      // Add tags if they exist
+      if (params.tags && Array.isArray(params.tags)) {
+        params.tags.forEach(tag => {
+          queryParams.append('tags[]', tag);
         });
       }
       
-      // Return as paginated response
+      console.log('Query params:', queryParams.toString());
+      
+      // Get auth token
+      const authToken = localStorage.getItem('accessToken') || '';
+      
+      // Make the API request
+      const response = await fetch(`/api/assets?${queryParams.toString()}`, {
+        headers: {
+          'Authorization': `Bearer ${authToken}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch assets: ${response.statusText}`);
+      }
+      
+      // Parse the response
+      const responseData = await response.json();
+      console.log('Asset search response:', responseData);
+      
+      let assets: Asset[] = [];
+      let pagination = {
+        total: 0,
+        page: params.page || 1,
+        limit: params.limit || 10,
+        pages: 1
+      };
+      
+      // Handle different response formats
+      if (responseData.success && responseData.data) {
+        // New backend format: { success: true, data: { items: [], total: number, page: number, limit: number } }
+        if (responseData.data.items && Array.isArray(responseData.data.items)) {
+          assets = responseData.data.items.map((item: any) => {
+            // Ensure each item has an id property (frontend uses id, backend uses _id)
+            const normalizedAsset = { ...item };
+            if (item._id && !item.id) {
+              normalizedAsset.id = item._id;
+            }
+            return normalizedAsset as Asset;
+          });
+          
+          pagination = {
+            total: responseData.data.total || assets.length,
+            page: responseData.data.page || 1,
+            limit: responseData.data.limit || assets.length,
+            pages: Math.ceil((responseData.data.total || assets.length) / 
+                             (responseData.data.limit || 10)) || 1
+          };
+        } else if (Array.isArray(responseData.data)) {
+          // Traditional format: response.data.data is an array of assets
+          assets = responseData.data;
+          pagination = {
+            total: assets.length,
+            page: 1,
+            limit: assets.length,
+            pages: 1
+          };
+        }
+      } else if (Array.isArray(responseData)) {
+        // Direct array response
+        assets = responseData;
+        pagination = {
+          total: assets.length,
+          page: 1,
+          limit: assets.length,
+          pages: 1
+        };
+      } else {
+        console.warn('Unexpected API response format:', responseData);
+      }
+      
+      // Ensure all assets have an id property
+      assets = assets.map(asset => {
+        if (asset._id && !asset.id) {
+          return { ...asset, id: asset._id };
+        }
+        return asset;
+      });
+      
+      console.log(`Retrieved ${assets.length} assets`);
+      
       return {
-        data: mockAssets,
+        data: assets,
+        pagination: pagination
+      };
+    } catch (error) {
+      console.error('Error fetching assets:', error);
+      // Return empty result set rather than mock data
+      return {
+        data: [],
         pagination: {
-          total: mockAssets.length,
+          total: 0,
           page: 1,
           limit: 10,
-          pages: 1
+          pages: 0
         }
       };
     }
@@ -421,113 +385,73 @@ class AssetService {
   async getAssetById(id: string): Promise<Asset> {
     try {
       console.log(`Fetching asset with ID: ${id}`);
-
-      // Check for mock mode or backend unavailability
+      
+      // Check for invalid or empty IDs
+      if (!id || id.trim() === '') {
+        throw new Error('Asset ID is required and cannot be empty');
+      }
+      
+      // Get auth token
       const authToken = localStorage.getItem('accessToken') || '';
-      const isMockToken = authToken.startsWith('MOCK-');
-      // DIRECT FIX: Explicitly check localStorage for override
-      const forceRealMode = localStorage.getItem('forceMockApi') === 'false';
-      const useMock = forceRealMode ? false : (apiConfig.useMockApi || isMockToken || !isBackendAvailable);
-
-      console.log('Asset detail mode:', useMock ? 'Mock' : 'Real API');
-      console.log('Force real mode:', forceRealMode);
-
-      // Use mock implementation if needed
-      if (useMock) {
-        console.log(`Using mock implementation for getAssetById due to ${isMockToken ? 'mock token' : 'unavailable backend'}`);
-
-        // Simulate network delay
-        await new Promise(resolve => setTimeout(resolve, 300));
-
-        // Generate a mock asset
-        return {
-          id: id,
-          _id: id.match(/^[a-f0-9]{24}$/i) ? id : undefined, // Add MongoDB ID if format matches
-          name: `Mock Asset ${id.substring(0, 6)}`,
-          friendlyName: `Mock Asset ${id.substring(0, 6)}`,
-          nnaAddress: `2.001.001.${id.substring(0, 3)}`,
-          type: 'standard',
-          layer: 'S',
-          categoryCode: 'POP',
-          subcategoryCode: 'DIV',
-          category: 'POP',
-          subcategory: 'DIV',
-          description: `This is a mock asset created for demonstration purposes.`,
-          tags: ['mock', 'demo', 'test'],
-          gcpStorageUrl: 'https://storage.googleapis.com/mock-bucket/',
-          files: [
-            {
-              id: `file-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-              filename: 'mock-asset.png',
-              contentType: 'image/png',
-              size: 12345,
-              url: 'https://via.placeholder.com/300',
-              uploadedAt: new Date().toISOString(),
-              thumbnailUrl: 'https://via.placeholder.com/150'
-            }
-          ],
-          metadata: {
-            humanFriendlyName: `S.POP.DIV.001`,
-            machineFriendlyAddress: `2.001.004.001`,
-            hfn: `S.POP.DIV.001`, // Include both formats for compatibility
-            mfa: `2.001.004.001`, // Include both formats for compatibility
-            layerName: 'Stars',
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-          },
-          status: 'active',
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-          createdBy: "user@example.com"
-        };
-      }
-
-      // Determine if this looks like a MongoDB ID (24 hex characters)
-      const isMongoId = id.match(/^[a-f0-9]{24}$/i) !== null;
-      console.log(`ID format check: ${id} is ${isMongoId ? 'a MongoDB ID' : 'a regular ID'}`);
-
-      // Real API implementation with improved error handling
-      try {
-        // For MongoDB IDs, try the /assets/id/{id} endpoint first
-        if (isMongoId) {
-          console.log('Trying MongoDB ID endpoint first since this looks like a MongoDB ID');
-          try {
-            // Some backends require this specific endpoint for MongoDB IDs
-            const mongoResponse = await api.get<ApiResponse<Asset>>(`/assets/id/${id}`);
-            console.log('Successfully fetched asset using MongoDB ID endpoint');
-            return mongoResponse.data.data as Asset;
-          } catch (mongoError) {
-            console.warn(`MongoDB ID endpoint fetch failed, falling back to standard endpoint:`, mongoError);
-            // Fall through to standard endpoint
-          }
+      
+      // Use the correct endpoint for the backend - /api/asset/{id}
+      const response = await fetch(`/api/asset/${id}`, {
+        headers: {
+          'Authorization': `Bearer ${authToken}`,
+          'Content-Type': 'application/json'
         }
-
-        // Standard endpoint as fallback
-        console.log('Trying standard asset endpoint');
-        const response = await api.get<ApiResponse<Asset>>(`/assets/${id}`);
-        console.log('Successfully fetched asset using standard endpoint');
-        return response.data.data as Asset;
-      } catch (primaryError) {
-        console.warn(`Primary asset fetch failed for ID ${id}:`, primaryError);
-
-        // If we already tried the MongoDB ID endpoint based on the ID format,
-        // try the other endpoint format as a last resort
-        if (!isMongoId) {
-          console.log('Trying MongoDB ID endpoint as fallback...');
-          try {
-            const fallbackResponse = await api.get<ApiResponse<Asset>>(`/assets/id/${id}`);
-            console.log('Successfully fetched asset using MongoDB ID endpoint fallback');
-            return fallbackResponse.data.data as Asset;
-          } catch (fallbackError) {
-            console.error('All asset fetch attempts failed:', fallbackError);
-            throw new Error(`Failed to fetch asset with ID: ${id}`);
+      });
+      
+      if (!response.ok) {
+        // If the first attempt fails, try the alternative endpoint format
+        console.log(`Primary endpoint /api/asset/${id} failed, trying alternative endpoint`);
+        
+        const alternativeResponse = await fetch(`/api/assets/${id}`, {
+          headers: {
+            'Authorization': `Bearer ${authToken}`,
+            'Content-Type': 'application/json'
           }
-        } else {
-          // We've already tried both endpoints
-          console.error('All asset fetch attempts failed, no more fallbacks available');
-          throw new Error(`Failed to fetch asset with ID: ${id}`);
+        });
+        
+        if (!alternativeResponse.ok) {
+          throw new Error(`Failed to fetch asset: ${alternativeResponse.statusText}`);
         }
+        
+        const responseData = await alternativeResponse.json();
+        console.log('Asset fetch response from alternative endpoint:', responseData);
+        
+        if (!responseData.data && !responseData.success) {
+          throw new Error('Invalid API response format');
+        }
+        
+        // Extract the asset data based on response format
+        const asset = responseData.data || responseData;
+        
+        // Normalize IDs
+        if (asset._id && !asset.id) {
+          asset.id = asset._id;
+        }
+        
+        return asset as Asset;
       }
+      
+      // Parse the response from primary endpoint
+      const responseData = await response.json();
+      console.log('Asset fetch response:', responseData);
+      
+      if (!responseData.data && !responseData.success) {
+        throw new Error('Invalid API response format');
+      }
+      
+      // Extract the asset data based on response format
+      const asset = responseData.data || responseData;
+      
+      // Normalize IDs
+      if (asset._id && !asset.id) {
+        asset.id = asset._id;
+      }
+      
+      return asset as Asset;
     } catch (error) {
       console.error(`Error fetching asset ${id}:`, error);
       throw new Error('Failed to fetch asset');

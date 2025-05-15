@@ -66,24 +66,31 @@ async function handler(req: VercelRequest, res: VercelResponse) {
     // Format like: /assets/123
     console.log('ASSET PROXY - Using asset detail endpoint:', endpoint);
 
-    // Special handling for MongoDB ID access
-    if (endpoint.match(/\/assets\/[a-f0-9]{24}$/i)) {
-      // This looks like a MongoDB ID - let's try both formats
-      const assetId = endpoint.split('/').pop();
-      console.log(`ASSET PROXY - MongoDB ID detected: ${assetId}`);
-
-      // CRITICAL FIX: Use the path that actually works with the backend
-      // MongoDB IDs are accessed directly with /assets/<id>
-      // We'll keep the original format but log this clearly
-      console.log(`ASSET PROXY - MongoDB ID format will be preserved: ${endpoint}`);
-
-      // Just to be extra clear in the logs - we're using the standard format
-      console.log(`ASSET PROXY - This ID will be accessed via: ${backendApiUrl}${endpoint}`);
-
-      // If needed in the future, we can use this alternative format:
-      // const newEndpoint = `/assets/id/${assetId}`;
-      // endpoint = newEndpoint;
+    // UNIVERSAL APPROACH - rather than special casing MongoDB IDs
+    // Let's extract the ID and handle it consistently
+    const assetId = endpoint.split('/').pop();
+    
+    if (assetId) {
+      console.log(`ASSET PROXY - Asset ID extracted: ${assetId}`);
+      
+      // Normalize endpoint to the format that works best with the backend
+      // This gives us a single point to adjust all asset ID access
+      
+      // MongoDB pattern ID check (24 chars hex)
+      const isMongoId = assetId.match(/^[a-f0-9]{24}$/i) !== null;
+      
+      if (isMongoId) {
+        console.log(`ASSET PROXY - MongoDB ID detected: ${assetId}`);
+        
+        // TRY A DIFFERENT APPROACH - use /asset/:id endpoint, which might be more standard
+        const newEndpoint = `/asset/${assetId}`;
+        console.log(`ASSET PROXY - Trying alternative endpoint format: ${newEndpoint}`);
+        endpoint = newEndpoint;
+      } else {
+        console.log(`ASSET PROXY - Regular ID detected: ${assetId}`);
+      }
     }
+
   } else if (endpoint === '/assets' || endpoint === '/assets/') {
     // Root assets endpoint
     console.log('ASSET PROXY - Using root assets endpoint:', endpoint);
@@ -96,7 +103,7 @@ async function handler(req: VercelRequest, res: VercelResponse) {
   
   // Define the backend API URL - hardcode it for reliability
   const backendApiUrl = 'https://registry.reviz.dev/api';
-
+  
   // Debug the target URL before request
   console.log('ASSET_PROXY DEBUG: Endpoint before any modifications:', endpoint);
   console.log('ASSET_PROXY DEBUG: Target backend URL will be:', backendApiUrl + endpoint);

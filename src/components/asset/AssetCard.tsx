@@ -316,7 +316,7 @@ const AssetCard: React.FC<AssetCardProps> = ({
           <Button
             size="small"
             component={Link}
-            to={`/api/asset-id-mock/${asset.id || asset._id}`} // Use our mock endpoint for reliable viewing
+            to={`/assets/${asset.id || asset._id}`} // Use standard asset route
             endIcon={<LaunchIcon />}
             onClick={(e) => {
               // Prevent navigation if id is undefined or null
@@ -326,12 +326,7 @@ const AssetCard: React.FC<AssetCardProps> = ({
                 // Could add an error notification here
               } else {
                 const assetId = asset.id || asset._id;
-                // Use our mock endpoint that guarantees a response
-                console.log(`Navigating to asset details: ${assetId} (using mock endpoint for reliability)`);
-
-                // IMPORTANT: Redirect properly
-                e.preventDefault();
-                window.location.href = `/assets/${assetId}`;
+                console.log(`Navigating to asset details: ${assetId}`);
               }
             }}
           >
