@@ -294,12 +294,54 @@ const FilePreview: React.FC<FilePreviewProps> = ({
 
     // Handle File object
     if (file instanceof File) {
-      return file.type;
+      const fileType = file.type;
+
+      // Fix for video files that might have incorrect or missing MIME types
+      if (!fileType || fileType === 'application/octet-stream') {
+        const name = file.name.toLowerCase();
+        if (name.endsWith('.mp4') || name.endsWith('.mov') || name.endsWith('.webm') || name.endsWith('.avi')) {
+          console.log(`Detected video file by extension: ${name}`);
+          return 'video/mp4';
+        }
+      }
+
+      return fileType;
+    }
+
+    // Handle object with contentType property (common in our API responses)
+    if (typeof file === 'object' && 'contentType' in file) {
+      const contentType = file.contentType;
+
+      // Fix for video files that might have incorrect MIME types
+      if (!contentType || contentType === 'application/octet-stream') {
+        if (typeof file.filename === 'string') {
+          const name = file.filename.toLowerCase();
+          if (name.endsWith('.mp4') || name.endsWith('.mov') || name.endsWith('.webm') || name.endsWith('.avi')) {
+            console.log(`Detected video file by extension in contentType object: ${name}`);
+            return 'video/mp4';
+          }
+        }
+      }
+
+      return contentType;
     }
 
     // Handle object with type property
     if (typeof file === 'object' && 'type' in file) {
-      return file.type;
+      const fileType = file.type;
+
+      // Fix for video files with incorrect MIME types
+      if (!fileType || fileType === 'application/octet-stream') {
+        if (typeof file.name === 'string') {
+          const name = file.name.toLowerCase();
+          if (name.endsWith('.mp4') || name.endsWith('.mov') || name.endsWith('.webm') || name.endsWith('.avi')) {
+            console.log(`Detected video file by extension in type object: ${name}`);
+            return 'video/mp4';
+          }
+        }
+      }
+
+      return fileType;
     }
 
     // Handle string URL by checking extension
@@ -307,7 +349,8 @@ const FilePreview: React.FC<FilePreviewProps> = ({
       const url = file.toLowerCase();
       if (url.endsWith('.jpg') || url.endsWith('.jpeg') || url.endsWith('.png') || url.endsWith('.gif') || url.endsWith('.webp')) {
         return 'image/jpeg'; // Generic image type
-      } else if (url.endsWith('.mp4') || url.endsWith('.webm')) {
+      } else if (url.endsWith('.mp4') || url.endsWith('.mov') || url.endsWith('.webm') || url.endsWith('.avi')) {
+        console.log(`Detected video file by extension in string URL: ${url}`);
         return 'video/mp4'; // Generic video type
       } else if (url.endsWith('.mp3') || url.endsWith('.wav') || url.endsWith('.ogg')) {
         return 'audio/mpeg'; // Generic audio type
@@ -318,15 +361,25 @@ const FilePreview: React.FC<FilePreviewProps> = ({
 
     // Handle object with url property
     if (typeof file === 'object' && 'url' in file) {
-      const url = file.url.toLowerCase();
+      const url = file.url?.toLowerCase() || '';
       if (url.endsWith('.jpg') || url.endsWith('.jpeg') || url.endsWith('.png') || url.endsWith('.gif') || url.endsWith('.webp')) {
         return 'image/jpeg'; // Generic image type
-      } else if (url.endsWith('.mp4') || url.endsWith('.webm')) {
+      } else if (url.endsWith('.mp4') || url.endsWith('.mov') || url.endsWith('.webm') || url.endsWith('.avi')) {
+        console.log(`Detected video file by extension in url object: ${url}`);
         return 'video/mp4'; // Generic video type
       } else if (url.endsWith('.mp3') || url.endsWith('.wav') || url.endsWith('.ogg')) {
         return 'audio/mpeg'; // Generic audio type
       } else if (url.endsWith('.pdf')) {
         return 'application/pdf';
+      }
+    }
+
+    // Additional override for filename-based detection as a last resort
+    if (typeof file === 'object' && 'filename' in file && typeof file.filename === 'string') {
+      const filename = file.filename.toLowerCase();
+      if (filename.endsWith('.mp4') || filename.endsWith('.mov') || filename.endsWith('.webm') || filename.endsWith('.avi')) {
+        console.log(`Last resort: Detected video file by filename: ${filename}`);
+        return 'video/mp4';
       }
     }
 
