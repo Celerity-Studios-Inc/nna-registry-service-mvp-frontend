@@ -106,7 +106,7 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
   const loadAssets = async (page: number, limit: number) => {
     try {
       setIsLoading(true);
-      
+
       // Construct search parameters
       const searchParams: AssetSearchParams = {
         search: searchQuery || undefined,
@@ -118,11 +118,31 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
         sortBy: 'createdAt',
         order: 'desc' // Show newest assets first
       };
-      
+
       console.log("Fetching assets with params:", searchParams);
-      
-      const results = await assetService.getAssets(searchParams);
-      
+
+      // Check if we should use mock mode
+      const urlParams = new URLSearchParams(window.location.search);
+      const useMockMode = urlParams.get('mock') === 'true' || localStorage.getItem('useMockFallback') === 'true';
+
+      let results;
+      if (useMockMode) {
+        // Import the mock service dynamically to avoid loading it unnecessarily
+        const mockAssetService = (await import('../../api/assetService.mock')).default;
+        results = mockAssetService.getAssets(searchParams);
+        console.log("Using MOCK data service for assets");
+      } else {
+        // Use the real asset service
+        results = await assetService.getAssets(searchParams);
+      }
+
+      // If there's an error in the results and we have actionable instructions,
+      // show them to the user
+      if (results.error && results.error.actionable) {
+        console.warn("API Error with actionable advice:", results.error.actionable);
+        // Could display this to the user in a more friendly way
+      }
+
       // Normalize the API response consistently
       if (results && results.data) {
         let assets: Asset[] = [];
@@ -158,7 +178,7 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
 
         setSearchResults(normalizedAssets);
         setTotalAssets(total);
-        
+
         // Update pagination data
         if (results.pagination) {
           setTotalPages(results.pagination.pages || Math.ceil(total / limit));
@@ -241,13 +261,37 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
     loadAssets(1, newItemsPerPage);
   };
 
+  // Check if we should enable mock mode
+  const urlParams = new URLSearchParams(window.location.search);
+  const isMockMode = urlParams.get('mock') === 'true' || localStorage.getItem('useMockFallback') === 'true';
+
+  // Function to toggle mock mode
+  const toggleMockMode = () => {
+    const currentSetting = localStorage.getItem('useMockFallback') === 'true';
+    localStorage.setItem('useMockFallback', (!currentSetting).toString());
+    // Reload the page to apply the change
+    window.location.reload();
+  };
+
   return (
     <Box sx={{ width: '100%' }}>
       <Paper elevation={3} sx={{ p: 3, mb: 4 }}>
-        <Typography variant="h6" gutterBottom>
-          Search NNA Assets
-        </Typography>
-        
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
+          <Typography variant="h6" gutterBottom>
+            Search NNA Assets
+          </Typography>
+
+          {/* Mock Mode Indicator */}
+          {isMockMode && (
+            <Chip
+              label="MOCK MODE"
+              color="warning"
+              onClick={toggleMockMode}
+              sx={{ ml: 2 }}
+            />
+          )}
+        </Box>
+
         <Box sx={{ display: 'flex', mb: 2 }}>
           <TextField
             fullWidth
@@ -286,14 +330,27 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
         </Box>
 
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Button
-            startIcon={<FilterListIcon />}
-            onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
-            sx={{ mb: 2 }}
-          >
-            {showAdvancedFilters ? 'Hide Filters' : 'Show Filters'}
-          </Button>
-          
+          <Box>
+            <Button
+              startIcon={<FilterListIcon />}
+              onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
+              sx={{ mb: 2, mr: 1 }}
+            >
+              {showAdvancedFilters ? 'Hide Filters' : 'Show Filters'}
+            </Button>
+
+            {/* Mock mode toggle */}
+            <Button
+              size="small"
+              variant={isMockMode ? "outlined" : "text"}
+              color={isMockMode ? "warning" : "primary"}
+              onClick={toggleMockMode}
+              sx={{ mb: 2 }}
+            >
+              {isMockMode ? "Disable Mock Mode" : "Enable Mock Mode"}
+            </Button>
+          </Box>
+
           {(searchQuery || selectedLayer || selectedCategory || selectedSubcategory) && (
             <Button
               color="secondary"

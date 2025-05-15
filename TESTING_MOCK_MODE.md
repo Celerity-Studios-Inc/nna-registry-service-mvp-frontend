@@ -1,103 +1,95 @@
-# Testing Mock Mode Configuration
+# Testing with Mock Mode
 
-This document explains how to properly test the fix for the mock API mode issue and ensure the frontend connects to the correct backend.
+This document explains how to use the Mock Mode feature to test the Browse Assets functionality with pagination.
 
-## Production Setup
+## Background
 
-For production deployment, these settings must be correct:
+The connection to the backend API is currently resulting in 500 errors when attempting to fetch assets. To facilitate testing and development of the frontend, we've implemented a Mock Mode that provides realistic test data with full pagination support.
 
-1. In `.env.production`: `REACT_APP_USE_MOCK_API=false`
-2. In `vercel.json`: 
-   ```json
-   "env": {
-     "REACT_APP_API_URL": "/api",
-     "REACT_APP_USE_MOCK_API": "false",
-     "BACKEND_API_URL": "https://registry.reviz.dev/api"
-   }
+## How to Enable Mock Mode
+
+You can enable Mock Mode in any of the following ways:
+
+1. **URL Parameter**: Add `?mock=true` to the URL
    ```
-3. In `api/backend-url.ts`: 
+   https://nna-registry-service-mvp-frontend.vercel.app/search-assets?mock=true
+   ```
+
+2. **UI Toggle**: Click the "Enable Mock Mode" button in the Browse Assets page
+
+3. **LocalStorage**: Set the following value in browser's LocalStorage:
    ```javascript
-   const backendApiUrl = process.env.BACKEND_API_URL || 'https://registry.reviz.dev/api';
+   localStorage.setItem('useMockFallback', 'true');
    ```
 
-## The Issue
+## Features of Mock Mode
 
-The application was using mock implementation for asset creation even though `.env` has `REACT_APP_USE_MOCK_API=false`. This was causing assets to be created as mock assets instead of real assets in the backend.
+When Mock Mode is enabled:
 
-## The Fix
+1. **Mock Data Generation**: 100 mock assets with realistic data are generated
+2. **Search Support**: You can search by keyword (e.g., "sunset")
+3. **Taxonomy Filtering**: Layer, Category, and Subcategory filters work
+4. **Full Pagination**: Navigate between pages and change items per page
+5. **Visual Indicator**: A "MOCK MODE" chip appears in the UI to indicate you're using mock data
 
-The fix adds localStorage override capability to ensure the app respects the mock API setting:
+## Implementation Details
 
-1. Added `apiConfig.useMockApi` in `api.ts`
-2. Added localStorage reading with key `forceMockApi`
-3. Updated `assetService.ts` to use this configuration
-4. Added explicit logging about the asset creation mode
-5. Updated backend URL to point to correct production backend
+The Mock Mode implementation includes:
+
+1. **Mock Service**: A dedicated mock implementation in `assetService.mock.ts`
+2. **Dynamic Loading**: The mock service is only loaded when needed (lazy loading)
+3. **UI Indicator**: Clear visibility of when mock mode is active
+4. **Toggle Control**: Easy switching between real and mock data
+5. **Consistent API**: The mock service implements the same interface as the real service
 
 ## Testing Steps
 
-To properly test this fix:
+To properly test the pagination with mock data:
 
-1. **Check Current Settings**:
-   ```bash
-   node scripts/check-mock-mode.js
-   ```
-   This will show current settings in `.env` file
+1. **Enable Mock Mode** using one of the methods above
 
-2. **Override in Browser**:
-   - Open your browser's developer console (F12)
-   - Set localStorage to force non-mock mode:
-   ```javascript
-   localStorage.setItem('forceMockApi', 'false');
-   ```
+2. **Browse Assets**:
+   - Navigate to the Browse Assets page
+   - Verify you see the "MOCK MODE" indicator
+   - Check that mock assets are displayed
 
-3. **Verify Setting**:
-   ```javascript
-   localStorage.getItem('forceMockApi'); // Should show "false"
-   ```
+3. **Test Pagination**:
+   - Navigate between pages using the pagination controls
+   - Change items per page (12, 24, 48, 96)
+   - Verify correct number of items are shown
+   - Verify pagination info ("Showing X-Y of Z") is accurate
 
-4. **Reload and Test**:
-   - Reload the page
-   - Look in the console for:
-   ```
-   Asset creation mode: Real API
-   ```
-   - Create an asset and verify it's using the real API implementation
+4. **Test Search**:
+   - Search for "sunset" (several mock items have this tag)
+   - Verify search results are paginated correctly
+   - Verify filtering by taxonomy works with pagination
 
-## Reverting to Mock Mode (if needed)
+## API Configuration
 
-If you need to switch back to mock mode for testing:
+The current backend settings in the environment:
 
-```javascript
-localStorage.setItem('forceMockApi', 'true');
-```
+1. In `.env.production`: `REACT_APP_USE_MOCK_API=false`
+2. In `vercel.json`: Backend API URL is set to `https://registry.reviz.dev/api`
+3. In `api/backend-url.ts`: Points to the production backend
 
-Then reload the page and check for "Asset creation mode: Mock".
+The Mock Mode implementation works as an override on top of these settings.
 
-## Expected Behavior
+## Troubleshooting
 
-- When `forceMockApi` is 'false' in localStorage, the app should use the real API implementation
-- When `forceMockApi` is 'true' or not set, the app will use the mock implementation based on .env settings
+If you encounter issues with Mock Mode:
 
-The console should clearly indicate which mode is being used during asset creation.
+1. Check the browser console for any errors
+2. Verify that the `useMockFallback` value is set correctly in localStorage
+3. Try clearing your browser cache and reloading
+4. If all else fails, use the URL parameter method (`?mock=true`)
 
-## Vercel Deployment Settings
+## Next Steps
 
-For Vercel deployments, make sure:
+While Mock Mode allows testing of the frontend functionality, the following steps should be taken to resolve the backend issues:
 
-1. The application is deployed from the main branch
-2. The environment variables in the Vercel project match the ones in vercel.json:
-   - REACT_APP_API_URL=/api
-   - REACT_APP_USE_MOCK_API=false
-   - BACKEND_API_URL=https://registry.reviz.dev/api
-3. The GitHub integration is properly configured to auto-deploy on commits to main
+1. Investigate the 500 errors coming from the backend API
+2. Verify the API endpoint configuration in the serverless functions
+3. Ensure authentication is properly configured for asset retrieval
+4. Update the API endpoints to match the expected backend formats
 
-To manually force a redeployment if needed:
-1. Go to the Vercel dashboard
-2. Navigate to the nna-registry-service-mvp-frontend project
-3. Click the "Deployments" tab
-4. Find the latest successful main branch deployment
-5. Click the three-dot menu
-6. Select "Redeploy" to trigger a fresh build
-
-This can be useful if you suspect the environment variables weren't properly applied in a previous deployment.
+Refer to `BACKEND_API_FIX.md` for a detailed analysis of the backend API issues and proposed solutions.
