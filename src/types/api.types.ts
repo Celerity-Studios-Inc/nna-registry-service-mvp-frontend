@@ -31,6 +31,7 @@ export interface PaginatedResponse<T = any> {
     code: number | string;
     message: string;
     details?: string;
+    actionable?: string;
   };
 }
 
