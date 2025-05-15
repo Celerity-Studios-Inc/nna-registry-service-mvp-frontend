@@ -459,9 +459,18 @@ class AssetService {
         }
       }
 
+      // Add some variety to the dummy assets - mix of images and videos
+      const isVideo = i % 3 === 0; // Every third asset is a video
+
+      // Use placeholder images from Lorem Picsum
+      const imageUrl = `https://picsum.photos/id/${(i + 10) * 5}/300/300`;
+
+      // Generate asset ID that's stable across refreshes
+      const stableId = `dummy-${i}-${layer}-${category}-${subcategory}`;
+
       const asset: Asset = {
-        id: `dummy-${i}-${Date.now()}`,
-        _id: `dummy-${i}-${Date.now()}`,
+        id: stableId,
+        _id: stableId,
         name: `${name} (${nnaAddress})`,
         friendlyName: name,
         nnaAddress: nnaAddress,
@@ -470,17 +479,25 @@ class AssetService {
         subcategoryCode: subcategory,
         category: this.getCategoryNameForCode(layer, category),
         subcategory: this.getSubcategoryNameForCode(layer, category, subcategory),
-        type: 'image',
-        gcpStorageUrl: 'https://storage.googleapis.com/cloud-samples-data/video/gbike.mp4',
+        type: isVideo ? 'video' : 'image',
+        gcpStorageUrl: isVideo ?
+          'https://storage.googleapis.com/cloud-samples-data/video/gbike.mp4' :
+          imageUrl,
         files: [
           {
-            id: `file-${i}`,
-            filename: `${name.toLowerCase().replace(/\s+/g, '-')}.mp4`,
-            contentType: 'video/mp4',
-            size: 1024 * 1024 * (Math.floor(Math.random() * 10) + 1), // 1-10MB
-            url: 'https://storage.googleapis.com/cloud-samples-data/video/gbike.mp4',
+            id: `file-${stableId}`,
+            filename: isVideo ?
+              `${name.toLowerCase().replace(/\s+/g, '-')}.mp4` :
+              `${name.toLowerCase().replace(/\s+/g, '-')}.jpg`,
+            contentType: isVideo ? 'video/mp4' : 'image/jpeg',
+            size: 1024 * 1024 * (Math.floor(Math.random() * 5) + 1), // 1-5MB
+            url: isVideo ?
+              'https://storage.googleapis.com/cloud-samples-data/video/gbike.mp4' :
+              imageUrl,
             uploadedAt: new Date().toISOString(),
-            thumbnailUrl: 'https://storage.googleapis.com/cloud-samples-data/video/gbike.jpg'
+            thumbnailUrl: isVideo ?
+              'https://storage.googleapis.com/cloud-samples-data/video/gbike.jpg' :
+              imageUrl
           }
         ],
         metadata: {
@@ -492,7 +509,7 @@ class AssetService {
         tags: assetTags,
         createdAt: new Date(Date.now() - Math.floor(Math.random() * 30 * 24 * 60 * 60 * 1000)).toISOString(), // Random date in last 30 days
         updatedAt: new Date().toISOString(),
-        createdBy: 'system',
+        createdBy: this.getCurrentUsername() || 'system',
         status: 'active' as any
       };
 
@@ -539,6 +556,67 @@ class AssetService {
     };
 
     return commonNames[code] || code;
+  }
+
+  /**
+   * Helper to get the current user's username
+   * @returns The current username or a meaningful fallback
+   */
+  private getCurrentUsername(): string {
+    try {
+      // Try to get the user profile from localStorage
+      const userProfileStr = localStorage.getItem('userProfile');
+      if (userProfileStr) {
+        const userProfile = JSON.parse(userProfileStr);
+        if (userProfile.username || userProfile.email) {
+          return userProfile.username || userProfile.email;
+        }
+      }
+
+      // If no user profile, check token for embedded username
+      const token = localStorage.getItem('accessToken');
+      if (token) {
+        // Simple JWT parsing - split token into parts and decode the payload
+        const parts = token.split('.');
+        if (parts.length === 3) {
+          try {
+            const payload = JSON.parse(atob(parts[1]));
+            if (payload.username || payload.email || payload.sub) {
+              return payload.username || payload.email || payload.sub;
+            }
+          } catch (e) {
+            console.warn('Error parsing JWT payload:', e);
+          }
+        }
+      }
+
+      // Try to get a name from localStorage (for persisting the dummy creator name)
+      const savedCreator = localStorage.getItem('dummyCreatorName');
+      if (savedCreator) {
+        return savedCreator;
+      }
+    } catch (e) {
+      console.warn('Error getting username:', e);
+    }
+
+    // Create more personalized creator names with roles
+    const creators = [
+      'Alex (Content Creator)',
+      'Jordan (Digital Artist)',
+      'Taylor (Designer)',
+      'Morgan (Producer)',
+      'Casey (Developer)'
+    ];
+
+    // Select a creator name and save it to localStorage for consistency
+    const selectedCreator = creators[Math.floor(Math.random() * creators.length)];
+    try {
+      localStorage.setItem('dummyCreatorName', selectedCreator);
+    } catch (e) {
+      // Ignore localStorage errors
+    }
+
+    return selectedCreator;
   }
 
   /**
@@ -651,25 +729,49 @@ class AssetService {
     } catch (error) {
       console.error(`Error fetching asset ${id}:`, error);
 
-      // Create a minimal asset object with the ID so the UI doesn't crash
+      // Create a better fallback asset with the ID
+      const dummyId = `dummy-${id}`;
+
+      // Add variety with random image
+      const randomNum = Math.floor(Math.random() * 100);
+      const imageUrl = `https://picsum.photos/id/${randomNum}/300/300`;
+
+      // Use mongoDB-like ID if the original looks like a MongoDB ID
+      const useMongoId = /^[0-9a-f]{24}$/.test(id);
+
+      // Get a createdBy value
+      const creator = this.getCurrentUsername();
+
       const fallbackAsset: Asset = {
-        id: id,
-        _id: id,
-        name: "Asset not found",
-        friendlyName: "Asset not found",
-        nnaAddress: id,
-        layer: "",
-        categoryCode: "",
-        subcategoryCode: "",
-        type: "unknown",
-        gcpStorageUrl: "",
-        files: [],
-        metadata: {},
+        id: useMongoId ? id : dummyId,
+        _id: useMongoId ? id : dummyId,
+        name: "Placeholder Asset",
+        friendlyName: "Placeholder Asset",
+        nnaAddress: id.includes('.') ? id : 'S.POP.BAS.001',
+        layer: id.includes('.') ? id.split('.')[0] : 'S',
+        categoryCode: id.includes('.') ? id.split('.')[1] : 'POP',
+        subcategoryCode: id.includes('.') ? id.split('.')[2] : 'BAS',
+        type: "image",
+        gcpStorageUrl: imageUrl,
+        files: [{
+          id: `file-${dummyId}`,
+          filename: "placeholder-image.jpg",
+          contentType: "image/jpeg",
+          size: 1024 * 100,
+          url: imageUrl,
+          uploadedAt: new Date().toISOString(),
+          thumbnailUrl: imageUrl
+        }],
+        metadata: {
+          humanFriendlyName: "Placeholder Asset",
+          machineFriendlyAddress: id.includes('.') ? id : 'S.POP.BAS.001',
+          note: "This is a placeholder asset generated because the original could not be loaded."
+        },
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
-        createdBy: "",
+        createdBy: creator,
         status: "inactive" as any,
-        description: "This asset could not be loaded from the backend."
+        description: "This placeholder asset was created because the requested asset could not be loaded from the backend."
       };
 
       return fallbackAsset;
@@ -690,25 +792,61 @@ class AssetService {
     } catch (error) {
       console.error(`Error fetching asset with NNA address ${nnaAddress}:`, error);
 
-      // Create a minimal asset object with the NNA address so the UI doesn't crash
+      // Create a better fallback asset with the NNA address
+      const dummyId = `dummy-${nnaAddress.replace(/\./g, '-')}`;
+
+      // Add variety with random image
+      const randomNum = Math.floor(Math.random() * 100);
+      const imageUrl = `https://picsum.photos/id/${randomNum}/300/300`;
+
+      // Parse NNA address parts
+      const parts = nnaAddress.split('.');
+      const layer = parts[0] || 'S';
+      const category = parts[1] || 'POP';
+      const subcategory = parts[2] || 'BAS';
+      const sequence = parts[3] || '001';
+
+      // Generate a user-friendly name based on the taxonomy
+      const layerNames: Record<string, string> = {
+        'S': 'Star', 'G': 'Song', 'L': 'Look', 'M': 'Move', 'W': 'World'
+      };
+      const layerName = layerNames[layer] || layer;
+
+      // Get a createdBy value
+      const creator = this.getCurrentUsername();
+
+      const friendlyName = `${layerName} ${category} ${subcategory} ${sequence}`;
+
       const fallbackAsset: Asset = {
-        id: nnaAddress.replace(/\./g, '-'),
-        _id: nnaAddress.replace(/\./g, '-'),
-        name: "Asset not found",
-        friendlyName: "Asset not found",
+        id: dummyId,
+        _id: dummyId,
+        name: friendlyName,
+        friendlyName: friendlyName,
         nnaAddress: nnaAddress,
-        layer: nnaAddress.split('.')[0] || "",
-        categoryCode: nnaAddress.split('.')[1] || "",
-        subcategoryCode: nnaAddress.split('.')[2] || "",
-        type: "unknown",
-        gcpStorageUrl: "",
-        files: [],
-        metadata: {},
+        layer: layer,
+        categoryCode: category,
+        subcategoryCode: subcategory,
+        type: "image",
+        gcpStorageUrl: imageUrl,
+        files: [{
+          id: `file-${dummyId}`,
+          filename: `${friendlyName.toLowerCase().replace(/\s+/g, '-')}.jpg`,
+          contentType: "image/jpeg",
+          size: 1024 * 100,
+          url: imageUrl,
+          uploadedAt: new Date().toISOString(),
+          thumbnailUrl: imageUrl
+        }],
+        metadata: {
+          humanFriendlyName: friendlyName,
+          machineFriendlyAddress: nnaAddress,
+          note: "This is a placeholder asset generated because the original could not be loaded."
+        },
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
-        createdBy: "",
+        createdBy: creator,
         status: "inactive" as any,
-        description: `Asset with NNA address ${nnaAddress} could not be loaded from the backend.`
+        description: `This placeholder asset was created because the asset with NNA address ${nnaAddress} could not be loaded from the backend.`
       };
 
       return fallbackAsset;

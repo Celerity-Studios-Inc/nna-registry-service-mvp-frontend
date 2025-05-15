@@ -189,6 +189,9 @@ const AssetCard: React.FC<AssetCardProps> = ({
     );
   };
 
+  // Check if this is a dummy asset
+  const isDummyAsset = asset.id?.toString().startsWith('dummy-') || false;
+
   // Truncate description
   const truncateDescription = (text: string, maxLength: number) => {
     if (!text) return 'No description provided';
@@ -247,17 +250,22 @@ const AssetCard: React.FC<AssetCardProps> = ({
           )}
 
           {/* Layer badge */}
-          <Chip
-            label={asset.layer}
-            size="small"
-            color="primary"
-            sx={{
-              position: 'absolute',
-              top: 8,
-              right: 8,
-              fontWeight: 'bold',
-            }}
-          />
+          <Box sx={{ position: 'absolute', top: 8, right: 8, display: 'flex', gap: 1 }}>
+            {isDummyAsset && (
+              <Chip
+                label="Placeholder"
+                size="small"
+                color="warning"
+                sx={{ fontWeight: 'medium' }}
+              />
+            )}
+            <Chip
+              label={asset.layer}
+              size="small"
+              color="primary"
+              sx={{ fontWeight: 'bold' }}
+            />
+          </Box>
         </Box>
 
         {/* Content */}
@@ -304,9 +312,35 @@ const AssetCard: React.FC<AssetCardProps> = ({
 
           <Divider sx={{ my: 1 }} />
 
-          <Typography variant="caption" color="text.secondary">
-            Created: {formatDate(asset.createdAt)}
-          </Typography>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <Typography variant="caption" color="text.secondary">
+                Created: {formatDate(asset.createdAt)}
+              </Typography>
+            </Box>
+
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <Typography
+                variant="caption"
+                sx={{
+                  fontWeight: 'medium',
+                  color: isDummyAsset ? 'text.secondary' : 'primary.main'
+                }}
+              >
+                Created By: {asset.createdBy || 'Unknown'}
+              </Typography>
+
+              {isDummyAsset && (
+                <Typography
+                  variant="caption"
+                  color="warning.main"
+                  sx={{ fontSize: '0.65rem' }}
+                >
+                  (placeholder)
+                </Typography>
+              )}
+            </Box>
+          </Box>
         </CardContent>
       </CardActionArea>
 

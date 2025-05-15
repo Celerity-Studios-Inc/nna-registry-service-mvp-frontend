@@ -138,6 +138,9 @@ const AssetDetail: React.FC = () => {
     );
   }
 
+  // Check if this is a dummy asset (created as a fallback)
+  const isDummyAsset = asset.id?.toString().startsWith('dummy-') || false;
+
   // Extract NNA addressing information from asset data with proper fallbacks
   const hfn = asset.metadata?.humanFriendlyName || asset.metadata?.hfn || asset.friendlyName || asset.name;
 
@@ -145,12 +148,15 @@ const AssetDetail: React.FC = () => {
   // Using consistent fallback pattern across all components
   const mfa = asset.nnaAddress || asset.metadata?.machineFriendlyAddress || asset.metadata?.mfa;
 
-  console.log(`Asset detail showing HFN: ${hfn}, MFA: ${mfa}`);
+  console.log(`Asset detail showing HFN: ${hfn}, MFA: ${mfa}, isDummyAsset: ${isDummyAsset}`);
 
   // If we don't have a valid MFA, log a warning
-  if (!mfa) {
+  if (!mfa && !isDummyAsset) {
     console.warn('Warning: No MFA found in asset! Asset ID:', asset.id || asset._id);
   }
+
+  // Get creator information with proper fallback
+  const createdBy = asset.createdBy || 'Unknown';
 
   // Get preview URL if available
   const getPreviewUrl = () => {
@@ -175,10 +181,17 @@ const AssetDetail: React.FC = () => {
       </Button>
 
       <Paper elevation={3} sx={{ p: 4 }}>
-        <Box sx={{ mb: 3, display: 'flex', alignItems: 'center', gap: 2 }}>
+        <Box sx={{ mb: 3, display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
           <Typography variant="h4">
             {asset.name}
           </Typography>
+          {isDummyAsset && (
+            <Chip
+              label="Placeholder"
+              color="warning"
+              sx={{ fontWeight: 'medium' }}
+            />
+          )}
           <Chip
             label={asset.status || 'active'}
             color={asset.status === 'active' ? 'success' : 'default'}
@@ -191,6 +204,12 @@ const AssetDetail: React.FC = () => {
           variant="outlined"
           sx={{ mb: 3 }}
         />
+
+        {isDummyAsset && (
+          <Alert severity="info" sx={{ mb: 3 }}>
+            This is a placeholder asset generated because the actual asset could not be retrieved from the backend. It contains simulated data for display purposes.
+          </Alert>
+        )}
 
         <Grid container spacing={3}>
           {/* Left column with preview */}
@@ -329,18 +348,21 @@ const AssetDetail: React.FC = () => {
                     primaryTypographyProps={{ variant: 'body2', color: 'text.secondary' }}
                   />
                 </ListItem>
-                {asset.createdBy && (
-                  <>
-                    <Divider component="li" />
-                    <ListItem disablePadding sx={{ py: 1 }}>
-                      <ListItemText
-                        primary="Created By"
-                        secondary={asset.createdBy}
-                        primaryTypographyProps={{ variant: 'body2', color: 'text.secondary' }}
-                      />
-                    </ListItem>
-                  </>
-                )}
+                <>
+                  <Divider component="li" />
+                  <ListItem disablePadding sx={{ py: 1 }}>
+                    <ListItemText
+                      primary="Created By"
+                      secondary={createdBy}
+                      primaryTypographyProps={{ variant: 'body2', color: 'text.secondary' }}
+                      secondaryTypographyProps={{
+                        variant: 'body2',
+                        fontWeight: 'medium',
+                        color: isDummyAsset ? 'text.secondary' : 'primary.main'
+                      }}
+                    />
+                  </ListItem>
+                </>
               </List>
             </Paper>
 
