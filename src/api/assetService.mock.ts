@@ -23,10 +23,10 @@ export class MockAssetService {
     
     if (params.search) {
       const searchLower = params.search.toLowerCase();
-      filteredAssets = allAssets.filter(asset => 
-        asset.name.toLowerCase().includes(searchLower) ||
-        asset.description.toLowerCase().includes(searchLower) ||
-        (asset.tags && asset.tags.some(tag => tag.toLowerCase().includes(searchLower)))
+      filteredAssets = allAssets.filter(asset =>
+        (asset.name?.toLowerCase().includes(searchLower) || false) ||
+        (asset.description?.toLowerCase().includes(searchLower) || false) ||
+        (asset.tags && asset.tags.some(tag => (tag?.toLowerCase().includes(searchLower)) || false))
       );
     }
     
