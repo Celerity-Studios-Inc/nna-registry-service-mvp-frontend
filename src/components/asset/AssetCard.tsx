@@ -24,7 +24,7 @@ import {
   TextSnippet as TextIcon,
 } from '@mui/icons-material';
 import { Asset } from '../../types/asset.types';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import taxonomyService from '../../api/taxonomyService';
 
 interface AssetCardProps {
@@ -39,6 +39,7 @@ const AssetCard: React.FC<AssetCardProps> = ({
   showActions = true,
 }) => {
   const theme = useTheme();
+  const navigate = useNavigate ? useNavigate() : null; // Use navigate if available
 
   // Determine file type for preview
   const getFileTypeInfo = () => {
@@ -199,8 +200,27 @@ const AssetCard: React.FC<AssetCardProps> = ({
     return text.substring(0, maxLength) + '...';
   };
 
+  // Handle card click for navigation
+  const handleCardClick = () => {
+    console.log('Card clicked for asset:', asset.id || asset._id);
+
+    // If custom onClick handler provided, use that
+    if (onClick) {
+      onClick();
+      return;
+    }
+
+    // Otherwise navigate to the asset details page
+    if ((asset.id || asset._id) && navigate) {
+      navigate(`/assets/${asset.id || asset._id}`);
+    } else {
+      console.warn('Navigation not possible - no asset ID or navigation function available');
+    }
+  };
+
   return (
     <Card
+      onClick={handleCardClick}
       sx={{
         height: '100%',
         display: 'flex',
@@ -209,10 +229,14 @@ const AssetCard: React.FC<AssetCardProps> = ({
         '&:hover': {
           transform: 'translateY(-4px)',
           boxShadow: 4,
+          cursor: 'pointer'
         },
       }}
     >
-      <CardActionArea onClick={onClick} sx={{ flexGrow: 1 }}>
+      <CardActionArea sx={{ flexGrow: 1 }} onClick={(e) => {
+        e.stopPropagation(); // Prevent the Card's onClick from firing too
+        handleCardClick();
+      }}>
         {/* Media section */}
         <Box
           sx={{
@@ -349,18 +373,25 @@ const AssetCard: React.FC<AssetCardProps> = ({
         <CardActions>
           <Button
             size="small"
-            component={Link}
-            to={`/assets/${asset.id || asset._id}`} // Use standard asset route
             endIcon={<LaunchIcon />}
             onClick={(e) => {
+              e.stopPropagation(); // Prevent the Card's onClick from firing too
+
               // Prevent navigation if id is undefined or null
               if (!asset.id && !asset._id) {
-                e.preventDefault();
                 console.error('Asset ID is undefined, cannot navigate to details page', asset);
                 // Could add an error notification here
+                return;
+              }
+
+              const assetId = asset.id || asset._id;
+              console.log(`Navigating to asset details: ${assetId}`);
+
+              // Use navigate hook if available, otherwise use Link component
+              if (navigate) {
+                navigate(`/assets/${assetId}`);
               } else {
-                const assetId = asset.id || asset._id;
-                console.log(`Navigating to asset details: ${assetId}`);
+                window.location.href = `/assets/${assetId}`;
               }
             }}
           >

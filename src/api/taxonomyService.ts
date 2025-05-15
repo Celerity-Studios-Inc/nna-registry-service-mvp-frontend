@@ -247,6 +247,11 @@ class TaxonomyService {
     try {
       this.checkInitialized();
 
+      if (!layerCode || !categoryCode) {
+        console.warn(`Missing required parameters: layerCode=${layerCode}, categoryCode=${categoryCode}`);
+        return null;
+      }
+
       const layer = this.getLayer(layerCode);
       if (!layer || !layer.categories) {
         console.warn(`Layer ${layerCode} not found or has no categories`);
@@ -273,6 +278,14 @@ class TaxonomyService {
       if (!category && layerCode === 'S' && normalizedCategoryCode === '001') {
         category = layer.categories['POP'];
         console.log('Falling back to alphabetic category code POP for 001 in layer S');
+      }
+
+      // Handle special case for W (Worlds) layer with CST/002 (Concert Stage) category
+      if (!category && layerCode === 'W' && (normalizedCategoryCode === 'CST' || normalizedCategoryCode === '002')) {
+        // Try the alternate code
+        const altCode = normalizedCategoryCode === 'CST' ? '002' : 'CST';
+        category = layer.categories[altCode];
+        console.log(`Falling back to alternate category code ${altCode} for ${normalizedCategoryCode} in layer W`);
       }
 
       // If we couldn't find the category but we have a alphanumeric code (like "Beach"),
@@ -302,6 +315,35 @@ class TaxonomyService {
         }
       }
 
+      // If still not found, check if category code is a number (like '001', '002')
+      // and try to find a category at that index
+      if (!category && /^\d+$/.test(categoryCode)) {
+        const numericIndex = parseInt(categoryCode, 10) - 1; // Convert to 0-based index
+        if (numericIndex >= 0) {
+          const categoryKeys = Object.keys(layer.categories);
+          if (numericIndex < categoryKeys.length) {
+            const keyAtIndex = categoryKeys[numericIndex];
+            category = layer.categories[keyAtIndex];
+            console.log(`Found category at numeric index ${numericIndex} (key: ${keyAtIndex}) for code ${categoryCode} in layer ${layerCode}`);
+          }
+        }
+      }
+
+      // If we still couldn't find the category, provide a fallback placeholder
+      // This helps with rendering partial data even when taxonomy mappings are incomplete
+      if (!category) {
+        console.warn(`Category ${categoryCode} not found in layer ${layerCode}. Creating fallback placeholder.`);
+
+        // Create a placeholder category with minimal info
+        return {
+          id: `${layerCode}.${categoryCode}`,
+          name: this.getHumanReadableName(categoryCode),
+          code: categoryCode,
+          numericCode: parseInt(categoryCode, 10) || 0,
+          subcategories: {} // Empty subcategories map
+        };
+      }
+
       return category;
     } catch (error) {
       console.error(`Error in getCategory for ${layerCode}.${categoryCode}:`, error);
@@ -323,6 +365,12 @@ class TaxonomyService {
   ): Subcategory | null {
     try {
       this.checkInitialized();
+
+      // Validate inputs
+      if (!layerCode || !categoryCode || !subcategoryCode) {
+        console.warn(`Missing required parameters: layerCode=${layerCode}, categoryCode=${categoryCode}, subcategoryCode=${subcategoryCode}`);
+        return null;
+      }
 
       // Special case for S.POP.HPM / S.001.HPM - hardcoded fallback
       if (layerCode === 'S' && (categoryCode === 'POP' || categoryCode === '001') && subcategoryCode === 'HPM') {
@@ -392,9 +440,14 @@ class TaxonomyService {
       }
 
       const category = this.getCategory(layerCode, normalizedCategoryCode);
-      if (!category || !category.subcategories) {
-        console.warn(`Category ${categoryCode} (normalized: ${normalizedCategoryCode}) not found or has no subcategories in layer ${layerCode}`);
-        return null;
+      if (!category) {
+        console.warn(`Category ${categoryCode} (normalized: ${normalizedCategoryCode}) not found in layer ${layerCode}`);
+        return this.createFallbackSubcategory(layerCode, categoryCode, subcategoryCode);
+      }
+
+      if (!category.subcategories) {
+        console.warn(`Category ${categoryCode} (normalized: ${normalizedCategoryCode}) has no subcategories in layer ${layerCode}`);
+        return this.createFallbackSubcategory(layerCode, categoryCode, subcategoryCode);
       }
 
       // Direct lookup by subcategory code
@@ -452,13 +505,67 @@ class TaxonomyService {
         };
       }
 
-      // If all lookups fail, return null
-      console.warn(`Subcategory ${subcategoryCode} not found in ${layerCode}.${categoryCode}`);
-      return null;
+      // 4. If subcategory code is numeric, try to find a subcategory at that index
+      if (/^\d+$/.test(subcategoryCode)) {
+        const numericIndex = parseInt(subcategoryCode, 10) - 1; // Convert to 0-based index
+        if (numericIndex >= 0) {
+          const subcategoryKeys = Object.keys(category.subcategories);
+          if (numericIndex < subcategoryKeys.length) {
+            const keyAtIndex = subcategoryKeys[numericIndex];
+            const subcategory = category.subcategories[keyAtIndex];
+            console.log(`Found subcategory at numeric index ${numericIndex} (key: ${keyAtIndex}) for code ${subcategoryCode}`);
+            return {
+              ...subcategory,
+              id: `${layerCode}.${category.code}.${subcategory.code}`,
+            };
+          }
+        }
+      }
+
+      // If all lookups fail, create a fallback placeholder
+      console.warn(`Subcategory ${subcategoryCode} not found in ${layerCode}.${categoryCode}, creating fallback`);
+      return this.createFallbackSubcategory(layerCode, categoryCode, subcategoryCode);
     } catch (error) {
       console.error(`Error in getSubcategory for ${layerCode}.${categoryCode}.${subcategoryCode}:`, error);
-      return null;
+      return this.createFallbackSubcategory(layerCode, categoryCode, subcategoryCode);
     }
+  }
+
+  /**
+   * Create a fallback subcategory when the actual one is not found
+   * @param layerCode The layer code
+   * @param categoryCode The category code
+   * @param subcategoryCode The subcategory code
+   * @returns A placeholder subcategory object
+   */
+  private createFallbackSubcategory(
+    layerCode: string,
+    categoryCode: string,
+    subcategoryCode: string
+  ): Subcategory {
+    // Generate a sensible name from the code
+    const name = this.getHumanReadableName(subcategoryCode);
+
+    // Determine a reasonable numeric code - if it's already numeric, use that
+    let numericCode = 0;
+    if (/^\d+$/.test(subcategoryCode)) {
+      numericCode = parseInt(subcategoryCode, 10);
+    } else {
+      // Otherwise generate a hash-based code (1-99 range)
+      let hash = 0;
+      for (let i = 0; i < subcategoryCode.length; i++) {
+        hash = ((hash << 5) - hash) + subcategoryCode.charCodeAt(i);
+        hash = hash & hash; // Convert to 32bit integer
+      }
+      numericCode = Math.abs(hash % 99) + 1;
+    }
+
+    return {
+      id: `${layerCode}.${categoryCode}.${subcategoryCode}`,
+      name: name,
+      code: subcategoryCode,
+      numericCode: numericCode
+    };
   }
 
   /**
@@ -1068,6 +1175,50 @@ class TaxonomyService {
 
       return parts.join(' > ');
     }
+  }
+
+  /**
+   * Convert code to human-readable name
+   * @param code The code to convert
+   * @returns Human-readable name
+   */
+  private getHumanReadableName(code: string): string {
+    if (!code) return 'Unknown';
+
+    // If it's all caps, assume it's an abbreviation
+    if (code === code.toUpperCase() && code.length <= 4) {
+      // Special cases for common abbreviations
+      const specialCases: Record<string, string> = {
+        'POP': 'Pop',
+        'ROK': 'Rock',
+        'HIP': 'Hip-Hop',
+        'CST': 'Concert Stage',
+        'DIV': 'Diva',
+        'HPM': 'Hipster Male',
+        'BAS': 'Base'
+      };
+
+      if (specialCases[code]) {
+        return specialCases[code];
+      }
+    }
+
+    // Handle numeric codes
+    if (/^\d+$/.test(code)) {
+      return `Category ${code}`;
+    }
+
+    // Intelligently format camelCase or snake_case
+    return code
+      // Insert a space before all caps and uppercase the first character
+      .replace(/([A-Z])/g, ' $1')
+      // Replace underscores with spaces
+      .replace(/_/g, ' ')
+      // Replace multiple spaces with a single space
+      .replace(/\s+/g, ' ')
+      // Trim leading/trailing spaces and uppercase first letter
+      .trim()
+      .replace(/^\w/, c => c.toUpperCase());
   }
 
   /**

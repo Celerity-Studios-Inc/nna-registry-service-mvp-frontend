@@ -284,17 +284,22 @@ class AssetService {
         if (!response.ok) {
           console.warn(`API returned error status ${response.status}: ${response.statusText}`);
 
-          // If back end is failing with 500 error, create realistic placeholder assets
+          // If back end is failing with 500 error, return empty results and log error details
           if (response.status === 500) {
-            console.log("Generating placeholder assets due to server error");
-            const dummyAssets = this.generateDummyAssets(10);
+            console.error("Backend server returned 500 error, unable to fetch assets");
+            // Empty asset response with detailed error information
             return {
-              data: dummyAssets,
+              data: [],
+              error: {
+                code: response.status,
+                message: "The server encountered an error while processing your request. Please try again later.",
+                details: response.statusText
+              },
               pagination: {
-                total: dummyAssets.length,
+                total: 0,
                 page: params.page || 1,
                 limit: params.limit || 10,
-                pages: 1
+                pages: 0
               }
             };
           }
@@ -395,16 +400,19 @@ class AssetService {
       };
     } catch (error) {
       console.error('Error fetching assets:', error);
-      // Generate dummy assets as fallback when API fails
-      console.log("Generating placeholder assets due to connection error");
-      const dummyAssets = this.generateDummyAssets(10);
+      // Return empty array with error information
       return {
-        data: dummyAssets,
+        data: [],
+        error: {
+          code: 'CONNECTION_ERROR',
+          message: 'Unable to connect to the asset service. Please check your network connection and try again.',
+          details: error instanceof Error ? error.message : String(error)
+        },
         pagination: {
-          total: dummyAssets.length,
+          total: 0,
           page: params.page || 1,
           limit: params.limit || 10,
-          pages: 1
+          pages: 0
         }
       };
     }
