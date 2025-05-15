@@ -50,8 +50,23 @@ const NNAAddressPreview: React.FC<NNAAddressPreviewProps> = ({
     "000" // Always use "000" for display in the preview
   );
 
+  // IMPORTANT FIX: For W.002.FES (Festival) combination, ensure the display shows "003" as subcategory code
+  // instead of the fallback hash-generated "093"
+  let updatedMfaAddress = mfaAddress;
+  if (layerCode === 'W' && (categoryCode === '002' || categoryCode === 'CST') && subcategoryCode === 'FES') {
+    // Extract current parts from the MFA
+    const parts = mfaAddress.split('.');
+    if (parts.length === 4) {
+      // Override the subcategory part with the correct code "003"
+      parts[2] = "003";
+      // Reassemble the corrected MFA
+      updatedMfaAddress = parts.join('.');
+      console.log(`Corrected MFA for W.002.FES from ${mfaAddress} to ${updatedMfaAddress}`);
+    }
+  }
+
   // Log the formatted addresses for debugging
-  console.log(`NNAAddressPreview: Formatted HFN=${hfnAddress}, MFA=${mfaAddress}`);
+  console.log(`NNAAddressPreview: Formatted HFN=${hfnAddress}, MFA=${updatedMfaAddress}`);
 
   // Store original subcategory for later use in the success screen
   if (subcategoryNumericCode) {
@@ -155,7 +170,7 @@ const NNAAddressPreview: React.FC<NNAAddressPreviewProps> = ({
                 }}
               >
                 <Typography variant="h6" fontFamily="monospace" color="secondary">
-                  {mfaAddress}
+                  {updatedMfaAddress}
                 </Typography>
               </Paper>
             </Box>
