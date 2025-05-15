@@ -24,7 +24,7 @@ import {
   TextSnippet as TextIcon,
 } from '@mui/icons-material';
 import { Asset } from '../../types/asset.types';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import taxonomyService from '../../api/taxonomyService';
 
 interface AssetCardProps {
@@ -39,7 +39,8 @@ const AssetCard: React.FC<AssetCardProps> = ({
   showActions = true,
 }) => {
   const theme = useTheme();
-  const navigate = useNavigate ? useNavigate() : null; // Use navigate if available
+  // Always use the hook unconditionally, as required by React rules of hooks
+  const navigate = useNavigate();
 
   // Determine file type for preview
   const getFileTypeInfo = () => {
@@ -211,10 +212,11 @@ const AssetCard: React.FC<AssetCardProps> = ({
     }
 
     // Otherwise navigate to the asset details page
-    if ((asset.id || asset._id) && navigate) {
-      navigate(`/assets/${asset.id || asset._id}`);
+    const assetId = asset.id || asset._id;
+    if (assetId) {
+      navigate(`/assets/${assetId}`);
     } else {
-      console.warn('Navigation not possible - no asset ID or navigation function available');
+      console.warn('Navigation not possible - no asset ID available');
     }
   };
 
@@ -387,12 +389,8 @@ const AssetCard: React.FC<AssetCardProps> = ({
               const assetId = asset.id || asset._id;
               console.log(`Navigating to asset details: ${assetId}`);
 
-              // Use navigate hook if available, otherwise use Link component
-              if (navigate) {
-                navigate(`/assets/${assetId}`);
-              } else {
-                window.location.href = `/assets/${assetId}`;
-              }
+              // Always use the navigate hook since we're using it unconditionally
+              navigate(`/assets/${assetId}`);
             }}
           >
             View Details
