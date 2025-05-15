@@ -229,7 +229,6 @@ class AssetService {
       if (params.limit) queryParams.append('limit', params.limit.toString());
       if (params.sortBy) queryParams.append('sortBy', params.sortBy);
       if (params.order) queryParams.append('sortOrder', params.order);
-      if (params.status) queryParams.append('status', params.status);
       
       // Convert date objects to ISO strings
       if (params.startDate) {
