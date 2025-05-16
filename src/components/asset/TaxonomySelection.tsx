@@ -16,7 +16,7 @@ import {
 } from '@mui/material';
 import { SelectChangeEvent } from '@mui/material/Select';
 import taxonomyService from '../../services/taxonomyService';
-import { CategoryOption, SubcategoryOption } from '../../services/taxonomyService';
+import { CategoryOption, SubcategoryOption } from '../../types/taxonomy.types';
 import NNAAddressPreview from './NNAAddressPreview';
 import { logger } from '../../utils/logger';
 

@@ -1,6 +1,6 @@
 /**
  * Taxonomy Service for NNA Registry
- * 
+ *
  * Provides centralized management of taxonomy data and mapping between
  * Human-Friendly Names (HFN) and Machine-Friendly Addresses (MFA).
  */
@@ -8,6 +8,7 @@
 import taxonomyData from '../assets/enriched_nna_layer_taxonomy_v1.3.json';
 import { logger } from '../utils/logger';
 import { validateTaxonomyData } from '../utils/taxonomyValidator';
+import { CategoryOption, SubcategoryOption, LayerOption as TypeLayerOption } from '../types/taxonomy.types';
 
 /**
  * Category in the taxonomy hierarchy
@@ -28,41 +29,12 @@ export interface TaxonomySubcategory {
 }
 
 /**
- * Option for category selection in UI
- */
-export interface CategoryOption {
-  code: string;
-  numericCode: string;
-  name: string;
-  label: string;
-}
-
-/**
- * Option for subcategory selection in UI
- */
-export interface SubcategoryOption {
-  code: string;
-  numericCode: string;
-  name: string;
-  label: string;
-}
-
-/**
  * Layer information including name and code
  */
 export interface LayerInfo {
   code: string;
   name: string;
   numericCode: string;
-}
-
-/**
- * Layer option for UI selection
- */
-export interface LayerOption {
-  code: string;
-  name: string;
-  label: string;
 }
 
 /**
@@ -176,13 +148,14 @@ class TaxonomyService {
   /**
    * Get all available layers as options for UI
    */
-  public getLayers(): LayerOption[] {
+  public getLayers(): TypeLayerOption[] {
     this.checkInitialized();
-    
+
     return Object.keys(this.LAYER_NAMES).map(code => ({
+      id: code,
       code,
       name: this.LAYER_NAMES[code],
-      label: `${code} - ${this.LAYER_NAMES[code]}`
+      numericCode: parseInt(this.LAYER_NUMERIC_CODES[code])
     }));
   }
   
@@ -251,41 +224,41 @@ class TaxonomyService {
    */
   public getCategories(layerCode: string): CategoryOption[] {
     this.checkInitialized();
-    
+
     // Check cache first
     const cacheKey = layerCode;
     if (this.categoriesCache.has(cacheKey)) {
       return this.categoriesCache.get(cacheKey) || [];
     }
-    
+
     const layer = this.getLayer(layerCode);
     if (!layer || !taxonomyData[layerCode]) {
       return [];
     }
-    
+
     const categories: CategoryOption[] = [];
-    
+
     Object.keys(taxonomyData[layerCode]).forEach(categoryCode => {
       const subcategories = taxonomyData[layerCode][categoryCode] as any[];
       if (subcategories && subcategories.length > 0) {
         // Use the first subcategory's numeric code to determine category numeric code
         const firstSubcategory = subcategories[0];
         const numericPrefix = firstSubcategory.numericCode.substring(0, 3);
-        
+
         const name = this.getCategoryDisplayName(layerCode, categoryCode);
-        
+
         categories.push({
+          id: `${layerCode}.${categoryCode}`,
           code: categoryCode,
-          numericCode: numericPrefix,
+          numericCode: parseInt(numericPrefix),
           name,
-          label: `${categoryCode} (${numericPrefix}) - ${name}`
         });
       }
     });
-    
+
     // Sort categories by numeric code
-    categories.sort((a, b) => parseInt(a.numericCode) - parseInt(b.numericCode));
-    
+    categories.sort((a, b) => (a.numericCode || 0) - (b.numericCode || 0));
+
     this.categoriesCache.set(cacheKey, categories);
     return categories;
   }
@@ -432,36 +405,36 @@ class TaxonomyService {
    */
   public getSubcategories(layerCode: string, categoryCode: string): SubcategoryOption[] {
     this.checkInitialized();
-    
+
     // Check cache first
     const cacheKey = `${layerCode}.${categoryCode}`;
     if (this.subcategoriesCache.has(cacheKey)) {
       return this.subcategoriesCache.get(cacheKey) || [];
     }
-    
+
     if (!taxonomyData[layerCode] || !taxonomyData[layerCode][categoryCode]) {
       return [];
     }
-    
+
     const subcategories: SubcategoryOption[] = [];
     const subcategoryList = taxonomyData[layerCode][categoryCode] as any[];
-    
+
     subcategoryList.forEach(subcategory => {
       // Check if there's an override for this subcategory's numeric code
       const overrideKey = `${layerCode}.${categoryCode}.${subcategory.code}`;
       const numericCode = this.SUBCATEGORY_OVERRIDES[overrideKey] || subcategory.numericCode;
-      
+
       subcategories.push({
+        id: `${layerCode}.${categoryCode}.${subcategory.code}`,
         code: subcategory.code,
-        numericCode,
-        name: subcategory.name,
-        label: `${subcategory.code} (${numericCode}) - ${subcategory.name}`
+        numericCode: parseInt(numericCode),
+        name: subcategory.name
       });
     });
-    
+
     // Sort subcategories by numeric code
-    subcategories.sort((a, b) => parseInt(a.numericCode) - parseInt(b.numericCode));
-    
+    subcategories.sort((a, b) => (a.numericCode || 0) - (b.numericCode || 0));
+
     this.subcategoriesCache.set(cacheKey, subcategories);
     return subcategories;
   }
