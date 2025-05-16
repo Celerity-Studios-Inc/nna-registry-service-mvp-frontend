@@ -380,7 +380,7 @@ const TaxonomySelection: React.FC<TaxonomySelectionProps> = ({
                   <Box sx={{ display: 'flex', alignItems: 'center' }}>
                     <Tooltip title="Human-Friendly Name (3-letter code)">
                       <Chip
-                        label={taxonomyMapper.getAlphabeticCode(category.code)}
+                        label={category.code}
                         size="small"
                         color="primary"
                         variant="outlined"
@@ -449,7 +449,7 @@ const TaxonomySelection: React.FC<TaxonomySelectionProps> = ({
                   <Box sx={{ display: 'flex', alignItems: 'center' }}>
                     <Tooltip title="Human-Friendly Name (3-letter code)">
                       <Chip
-                        label={taxonomyMapper.getAlphabeticCode(subcategory.code)}
+                        label={subcategory.code}
                         size="small"
                         color="secondary"
                         variant="outlined"
