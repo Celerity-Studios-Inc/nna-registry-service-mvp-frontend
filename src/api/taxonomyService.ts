@@ -183,9 +183,64 @@ class TaxonomyService {
         numericCode = Object.keys(layer.categories).indexOf(categoryCode) + 1;
       }
 
+      // IMPORTANT: Use alphabetic codes for HFN display
+      // If the category code is numeric, we need to use the code property from the category
+      // or generate an alphabetic code if not available
+      let alphaCode = categoryCode;
+
+      // If the category has a code property, use that instead of the numeric key
+      if (/^\d+$/.test(categoryCode) && category.code) {
+        alphaCode = category.code;
+        console.log(`Using category.code (${alphaCode}) instead of numeric categoryCode (${categoryCode})`);
+      }
+      // If we don't have a code property but the code is numeric, generate from name
+      else if (/^\d+$/.test(categoryCode) && !category.code) {
+        // Try to generate a 3-letter code from the name
+        if (category.name) {
+          // First check if we can extract from the name
+          // e.g., "Pop" -> "POP", "Hip Hop" -> "HIP", "Dance_Electronic" -> "DNE"
+          const nameParts = category.name.split(/[\s_-]/);
+          if (nameParts.length >= 3) {
+            // Use first letter of each of the first 3 parts
+            alphaCode = (nameParts[0][0] + nameParts[1][0] + nameParts[2][0]).toUpperCase();
+          } else if (nameParts.length === 2) {
+            // Use first two letters of first part + first letter of second part
+            alphaCode = (nameParts[0].substring(0, 2) + nameParts[1][0]).toUpperCase();
+          } else if (category.name.length >= 3) {
+            // Use first 3 letters of the name
+            alphaCode = category.name.substring(0, 3).toUpperCase();
+          }
+        }
+        console.log(`Generated alphabetic code ${alphaCode} for numeric category ${categoryCode}`);
+      }
+
+      // Standard mappings for common numeric codes to override generated ones
+      // These mappings ensure consistency across the application
+      const numericToAlpha: Record<string, string> = {
+        '001': 'POP', // Pop
+        '002': 'ROK', // Rock
+        '003': 'HIP', // Hip_Hop
+        '004': 'RNB', // RnB
+        '005': 'JZZ', // Jazz
+        '006': 'LAT', // Latin
+        '007': 'IND', // Indie
+        '008': 'ALT', // Alternative
+        '009': 'WLD', // World
+        '010': 'DSC', // Disco
+        '011': 'EDM', // Electronic
+        '012': 'CLB', // Club
+        '013': 'URB', // Urban
+      };
+
+      // Override with standard mapping if available
+      if (/^\d+$/.test(categoryCode) && numericToAlpha[categoryCode]) {
+        alphaCode = numericToAlpha[categoryCode];
+        console.log(`Using standard mapping for numeric code ${categoryCode} -> ${alphaCode}`);
+      }
+
       categories.push({
         id: `${layerCode}.${categoryCode}`,
-        code: categoryCode,
+        code: alphaCode,
         name: category.name,
         numericCode,
       });
@@ -260,11 +315,78 @@ class TaxonomyService {
         numericCode = Object.keys(category.subcategories).indexOf(subcategoryCode) + 1;
       }
 
+      // IMPORTANT: Use alphabetic codes for HFN display
+      // If the subcategory code is numeric, we need to use the code property from the subcategory
+      // or generate an alphabetic code if not available
+      let alphaCode = subcategoryCode;
+
+      // If the subcategory has a code property, use that instead of the numeric key
+      if (/^\d+$/.test(subcategoryCode) && subcategory.code) {
+        alphaCode = subcategory.code;
+        console.log(`Using subcategory.code (${alphaCode}) instead of numeric subcategoryCode (${subcategoryCode})`);
+      }
+      // If we don't have a code property but the code is numeric, generate from name
+      else if (/^\d+$/.test(subcategoryCode) && !subcategory.code) {
+        // Try to generate a 3-letter code from the name
+        if (subcategory.name) {
+          // First check if we can extract from the name
+          // e.g., "Base" -> "BAS", "Hip Hop" -> "HIP", "Dance_Electronic" -> "DNE"
+          const nameParts = subcategory.name.split(/[\s_-]/);
+          if (nameParts.length >= 3) {
+            // Use first letter of each of the first 3 parts
+            alphaCode = (nameParts[0][0] + nameParts[1][0] + nameParts[2][0]).toUpperCase();
+          } else if (nameParts.length === 2) {
+            // Use first two letters of first part + first letter of second part
+            alphaCode = (nameParts[0].substring(0, 2) + nameParts[1][0]).toUpperCase();
+          } else if (subcategory.name.length >= 3) {
+            // Use first 3 letters of the name
+            alphaCode = subcategory.name.substring(0, 3).toUpperCase();
+          }
+        }
+        console.log(`Generated alphabetic code ${alphaCode} for numeric subcategory ${subcategoryCode}`);
+      }
+
+      // Standard mappings for common numeric codes to override generated ones
+      // These mappings ensure consistency across the application
+      const numericToAlpha: Record<string, string> = {
+        '001': 'BAS', // Base
+        '002': 'STA', // Standard
+        '003': 'PRO', // Professional
+        '004': 'EXP', // Expert
+        '005': 'MAS', // Master
+        '006': 'LEG', // Legend
+        '007': 'ELI', // Elite
+      };
+
+      // Override with standard mapping if available
+      if (/^\d+$/.test(subcategoryCode) && numericToAlpha[subcategoryCode]) {
+        alphaCode = numericToAlpha[subcategoryCode];
+        console.log(`Using standard mapping for numeric subcategory code ${subcategoryCode} -> ${alphaCode}`);
+      }
+
+      // Special case for Stars.Pop categories
+      if (layerCode === 'S' && normalizedCategoryCode === 'POP' && /^\d+$/.test(subcategoryCode)) {
+        const starsPOPMapping: Record<string, string> = {
+          '001': 'BAS', // Base
+          '002': 'DIV', // Pop_Diva_Female_Stars
+          '003': 'IDF', // Pop_Idol_Female_Stars
+          '004': 'LGF', // Pop_Legend_Female_Stars
+          '005': 'LGM', // Pop_Legend_Male_Stars
+          '006': 'ICM', // Pop_Icon_Male_Stars
+          '007': 'HPM', // Pop_Hipster_Male_Stars
+        };
+
+        if (starsPOPMapping[subcategoryCode]) {
+          alphaCode = starsPOPMapping[subcategoryCode];
+          console.log(`Using Stars.POP mapping for numeric subcategory code ${subcategoryCode} -> ${alphaCode}`);
+        }
+      }
+
       subcategories.push({
-        code: subcategory.code || '',
+        code: alphaCode,
         name: subcategory.name,
         numericCode,
-        id: `${layerCode}.${category.code}.${subcategory.code}`,
+        id: `${layerCode}.${category.code}.${alphaCode}`,
       });
     }
 
