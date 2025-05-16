@@ -5,10 +5,10 @@ Frontend application for the Naming, Numbering, and Addressing (NNA) Registry Se
 [![Deployed on Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-black?style=for-the-badge&logo=vercel)](https://nna-registry-service-mvp-frontend.vercel.app)
 
 ## Latest Update (2025-05-16)
-- Restored robust taxonomy mapping system with fallback mechanisms
-- Removed hardcoded special cases to ensure consistent behavior for all taxonomy combinations
-- Fixed W.BCH.SUN mapping to use code 003 through intelligent fallback system
-- Improved error handling and debugging for taxonomy mapping edge cases
+- Restored taxonomy mapping system to a clean state
+- Using direct lookups from taxonomy data for all mappings
+- Removed unnecessary special case handling
+- Fixed W.BCH.SUN mapping by ensuring correct taxonomy data is used
 
 ## Production Deployment
 
