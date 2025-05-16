@@ -9,6 +9,7 @@ Frontend application for the Naming, Numbering, and Addressing (NNA) Registry Se
 - Fixed subcategory normalization issues
 - Improved sequential numbering for MFA display
 - Restored to working version with correct taxonomy display
+- Fixed W.BCH.SUN mapping to correctly use code 003 instead of 77
 
 ## Production Deployment
 

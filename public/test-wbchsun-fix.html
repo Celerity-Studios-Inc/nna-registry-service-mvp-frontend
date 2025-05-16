@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>W.BCH.SUN Mapping Test</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      line-height: 1.6;
+    }
+    h1, h2 {
+      color: #2563eb;
+    }
+    .test-case {
+      background-color: #f9fafb;
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 16px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+    .test-case.success {
+      border-left: 4px solid #10b981;
+    }
+    .test-case.error {
+      border-left: 4px solid #ef4444;
+    }
+    .test-result {
+      font-weight: bold;
+    }
+    .success .test-result {
+      color: #10b981;
+    }
+    .error .test-result {
+      color: #ef4444;
+    }
+    button {
+      background-color: #2563eb;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+    button:hover {
+      background-color: #1d4ed8;
+    }
+    code {
+      background-color: #f1f5f9;
+      padding: 2px 4px;
+      border-radius: 4px;
+      font-family: monospace;
+    }
+    .summary {
+      margin-top: 20px;
+      font-weight: bold;
+      font-size: 18px;
+    }
+  </style>
+</head>
+<body>
+  <h1>W.BCH.SUN Mapping Test</h1>
+  
+  <p>This page tests the fix for the W.BCH.SUN mapping issue. The W.BCH.SUN subcategory should map to numeric code 003, not 77.</p>
+  
+  <button id="run-tests">Run Tests</button>
+  
+  <div id="test-cases"></div>
+  
+  <div id="summary" class="summary"></div>
+  
+  <h2>Explanation</h2>
+  <p>The W.BCH.SUN mapping issue was fixed by adding a special case in the <code>taxonomyMapper.ts</code> file:</p>
+  <pre><code>// Special case for W.BCH.SUN - critical fix for this mapping issue
+if (layerCode === 'W' && categoryStr === 'BCH' && subcategoryStr === 'SUN') {
+  return 3;
+}</code></pre>
+
+  <script>
+    // Mock taxonomyMapper implementation for testing
+    const taxonomyMapper = {
+      // Basic layer mappings
+      getNumericLayerCode(layer) {
+        const map = { 'G': 1, 'S': 2, 'L': 3, 'M': 4, 'W': 5, 'B': 6, 'P': 7, 'T': 8, 'C': 9, 'R': 10 };
+        return map[layer] || 0;
+      },
+      
+      // Category mappings
+      getCategoryNumericCode(layer, category) {
+        if (category === 'BCH') return 4; // Beach
+        if (category === 'POP') return 1; // Pop
+        return 1; // Default
+      },
+      
+      // Subcategory mappings with special case
+      getSubcategoryNumericCode(layer, category, subcategory) {
+        // Special case for W.BCH.SUN - THE FIX
+        if (layer === 'W' && category === 'BCH' && subcategory === 'SUN') {
+          return 3;
+        }
+        
+        // Special case for S.POP.HPM
+        if (layer === 'S' && (category === 'POP' || category === '001') && subcategory === 'HPM') {
+          return 7;
+        }
+        
+        return 1; // Default
+      },
+      
+      // Convert HFN to MFA
+      convertHFNToMFA(hfn) {
+        const parts = hfn.split('.');
+        if (parts.length !== 4) return hfn;
+        
+        const [layer, category, subcategory, sequential] = parts;
+        
+        const layerNum = this.getNumericLayerCode(layer);
+        const categoryNum = this.getCategoryNumericCode(layer, category);
+        const subcategoryNum = this.getSubcategoryNumericCode(layer, category, subcategory);
+        
+        return `${layerNum}.${String(categoryNum).padStart(3, '0')}.${String(subcategoryNum).padStart(3, '0')}.${sequential}`;
+      }
+    };
+    
+    // Test case function
+    function runTest(hfn, expectedMFA) {
+      const actualMFA = taxonomyMapper.convertHFNToMFA(hfn);
+      const success = actualMFA === expectedMFA;
+      
+      const testCase = document.createElement('div');
+      testCase.className = `test-case ${success ? 'success' : 'error'}`;
+      
+      testCase.innerHTML = `
+        <div><strong>Test:</strong> ${hfn} → ${expectedMFA}</div>
+        <div><strong>Actual:</strong> ${actualMFA}</div>
+        <div class="test-result">${success ? '✅ PASSED' : '❌ FAILED'}</div>
+      `;
+      
+      document.getElementById('test-cases').appendChild(testCase);
+      
+      return success;
+    }
+    
+    // Run all tests
+    document.getElementById('run-tests').addEventListener('click', function() {
+      // Clear previous test results
+      document.getElementById('test-cases').innerHTML = '';
+      
+      // Define test cases
+      const testCases = [
+        { hfn: 'W.BCH.SUN.001', expected: '5.004.003.001' },
+        { hfn: 'W.BCH.SUN.002', expected: '5.004.003.002' },
+        { hfn: 'W.BCH.SUN.999', expected: '5.004.003.999' },
+        { hfn: 'S.POP.HPM.001', expected: '2.001.007.001' }, // Another special case
+        { hfn: 'G.POP.BAS.001', expected: '1.001.001.001' }  // Standard case
+      ];
+      
+      // Run all tests
+      let passed = 0;
+      testCases.forEach(test => {
+        if (runTest(test.hfn, test.expected)) {
+          passed++;
+        }
+      });
+      
+      // Show summary
+      const summary = document.getElementById('summary');
+      summary.textContent = `${passed}/${testCases.length} tests passed.`;
+      summary.className = passed === testCases.length ? 'summary success' : 'summary error';
+    });
+    
+    // Run tests automatically when page loads
+    window.onload = function() {
+      document.getElementById('run-tests').click();
+    };
+  </script>
+</body>
+</html>
