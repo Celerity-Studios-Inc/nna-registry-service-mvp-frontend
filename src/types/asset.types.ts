@@ -65,7 +65,11 @@ export interface AssetSearchParams {
   sort?: string;
   order?: string;
   sortBy?: string;
+  sortOrder?: string;
   sortDirection?: 'asc' | 'desc';
+  status?: string;
+  startDate?: Date | string;
+  endDate?: Date | string;
 }
 
 /**
