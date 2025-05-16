@@ -10,6 +10,12 @@ import { logger } from '../utils/logger';
 import { validateTaxonomyData } from '../utils/taxonomyValidator';
 import { CategoryOption, SubcategoryOption, LayerOption as TypeLayerOption } from '../types/taxonomy.types';
 
+// Type definition for taxonomy data to allow string indexing
+interface TaxonomyDataType {
+  [key: string]: any;
+}
+const typedTaxonomyData = taxonomyData as TaxonomyDataType;
+
 /**
  * Category in the taxonomy hierarchy
  */
@@ -98,12 +104,12 @@ class TaxonomyService {
   private initialize(): void {
     try {
       // Validate taxonomy data structure
-      const validation = validateTaxonomyData(taxonomyData);
-      
+      const validation = validateTaxonomyData(typedTaxonomyData);
+
       if (!validation.valid) {
         logger.warn('Taxonomy data validation issues:', validation.issues);
       }
-      
+
       this.isInitialized = true;
       logger.info('Taxonomy service initialized successfully');
     } catch (error) {
@@ -131,7 +137,7 @@ class TaxonomyService {
       return this.layerCache.get(layerCode) || null;
     }
     
-    if (!taxonomyData[layerCode]) {
+    if (!typedTaxonomyData[layerCode]) {
       return null;
     }
     
@@ -167,7 +173,7 @@ class TaxonomyService {
       this.checkInitialized();
       
       const layer = this.getLayer(layerCode);
-      if (!layer || !taxonomyData[layerCode]) {
+      if (!layer || !typedTaxonomyData[layerCode]) {
         logger.warn(`Layer ${layerCode} not found or has no categories`);
         return null;
       }
@@ -180,10 +186,10 @@ class TaxonomyService {
       }
       
       // Try to get category by normalized code first
-      const categories = Object.keys(taxonomyData[layerCode]);
+      const categories = Object.keys(typedTaxonomyData[layerCode]);
       
       if (categories.includes(normalizedCategoryCode)) {
-        const subcategories = taxonomyData[layerCode][normalizedCategoryCode] as any[];
+        const subcategories = typedTaxonomyData[layerCode][normalizedCategoryCode] as any[];
         if (subcategories && subcategories.length > 0) {
           // Use the first subcategory's numeric code to determine category numeric code
           const firstSubcategory = subcategories[0];
@@ -199,7 +205,7 @@ class TaxonomyService {
       
       // If not found and we're looking for POP, try 001
       if (!categories.includes(normalizedCategoryCode) && layerCode === 'S' && normalizedCategoryCode === 'POP') {
-        const subcategories = taxonomyData[layerCode]['001'] as any[];
+        const subcategories = typedTaxonomyData[layerCode]['001'] as any[];
         if (subcategories && subcategories.length > 0) {
           const firstSubcategory = subcategories[0];
           const numericPrefix = firstSubcategory.numericCode.substring(0, 3);
@@ -232,14 +238,14 @@ class TaxonomyService {
     }
 
     const layer = this.getLayer(layerCode);
-    if (!layer || !taxonomyData[layerCode]) {
+    if (!layer || !typedTaxonomyData[layerCode]) {
       return [];
     }
 
     const categories: CategoryOption[] = [];
 
-    Object.keys(taxonomyData[layerCode]).forEach(categoryCode => {
-      const subcategories = taxonomyData[layerCode][categoryCode] as any[];
+    Object.keys(typedTaxonomyData[layerCode]).forEach(categoryCode => {
+      const subcategories = typedTaxonomyData[layerCode][categoryCode] as any[];
       if (subcategories && subcategories.length > 0) {
         // Use the first subcategory's numeric code to determine category numeric code
         const firstSubcategory = subcategories[0];
@@ -318,8 +324,8 @@ class TaxonomyService {
         
         // First try direct lookup
         const category = this.getCategory(layerCode, categoryCode);
-        if (category && taxonomyData[layerCode][categoryCode]) {
-          const subcategories = taxonomyData[layerCode][categoryCode] as any[];
+        if (category && typedTaxonomyData[layerCode][categoryCode]) {
+          const subcategories = typedTaxonomyData[layerCode][categoryCode] as any[];
           const subcategory = subcategories.find(sc => sc.code === subcategoryCode);
           
           if (subcategory) {
@@ -343,7 +349,7 @@ class TaxonomyService {
       // Check override for W.BCH.SUN
       if (layerCode === 'W' && categoryCode === 'BCH' && subcategoryCode === 'SUN') {
         // First try direct lookup
-        const subcategories = taxonomyData[layerCode][categoryCode] as any[];
+        const subcategories = typedTaxonomyData[layerCode][categoryCode] as any[];
         const subcategory = subcategories.find(sc => sc.code === subcategoryCode);
         
         if (subcategory) {
@@ -366,12 +372,12 @@ class TaxonomyService {
       
       // Standard case
       const category = this.getCategory(layerCode, categoryCode);
-      if (!category || !taxonomyData[layerCode][categoryCode]) {
+      if (!category || !typedTaxonomyData[layerCode][categoryCode]) {
         logger.warn(`Category ${categoryCode} not found in layer ${layerCode}`);
         return null;
       }
       
-      const subcategories = taxonomyData[layerCode][categoryCode] as any[];
+      const subcategories = typedTaxonomyData[layerCode][categoryCode] as any[];
       const subcategory = subcategories.find(sc => sc.code === subcategoryCode);
       
       if (!subcategory) {
@@ -412,12 +418,12 @@ class TaxonomyService {
       return this.subcategoriesCache.get(cacheKey) || [];
     }
 
-    if (!taxonomyData[layerCode] || !taxonomyData[layerCode][categoryCode]) {
+    if (!typedTaxonomyData[layerCode] || !typedTaxonomyData[layerCode][categoryCode]) {
       return [];
     }
 
     const subcategories: SubcategoryOption[] = [];
-    const subcategoryList = taxonomyData[layerCode][categoryCode] as any[];
+    const subcategoryList = typedTaxonomyData[layerCode][categoryCode] as any[];
 
     subcategoryList.forEach(subcategory => {
       // Check if there's an override for this subcategory's numeric code
