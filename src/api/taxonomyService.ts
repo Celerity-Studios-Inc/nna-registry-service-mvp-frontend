@@ -220,28 +220,62 @@ class TaxonomyService {
         'G': {
           '001': 'POP', // Pop
           '002': 'ROK', // Rock
-          '003': 'HIP', // Hip Hop
-          '004': 'RNB', // R&B
-          '005': 'JZZ', // Jazz
-          '006': 'LAT', // Latin
-          '007': 'IND', // Indie
-          '008': 'ALT', // Alternative
-          '009': 'WLD', // World
-          '010': 'DSC', // Disco
-          '011': 'EDM', // Electronic
-          '012': 'CLB', // Club
-          '013': 'URB', // Urban
+          '003': 'RNB', // R&B
+          '004': 'HIP', // Hip Hop
+          '005': 'EDM', // EDM
+          '006': 'CTY', // Country
+          '007': 'LTN', // Latin
+          '008': 'REG', // Reggae
+          '009': 'IND', // Indie
+          '010': 'ALT', // Alternative
+          '011': 'JAZ', // Jazz
+          '012': 'CLS', // Classical
+          '013': 'FLK', // Folk
+          '014': 'MET', // Metal
+          '015': 'BLU', // Blues
+          '016': 'FNK', // Funk
+          '017': 'DNC', // Dance
+          '018': 'SOU', // Soul
+          '019': 'ORB', // Orbit
         },
         // Stars layer mappings
         'S': {
           '001': 'POP', // Pop
           '002': 'ROK', // Rock
-          '003': 'HIP', // Hip Hop
-          '004': 'RNB', // R&B
-          '005': 'JZZ', // Jazz
-          '006': 'LAT', // Latin
-          '007': 'IND', // Indie
-          '008': 'ALT', // Alternative
+          '003': 'RNB', // R&B
+          '004': 'HIP', // Hip Hop
+          '005': 'EDM', // EDM
+          '006': 'CTY', // Country
+          '007': 'LTN', // Latin
+          '008': 'REG', // Reggae
+          '009': 'IND', // Indie
+          '010': 'ALT', // Alternative
+          '011': 'JAZ', // Jazz
+          '012': 'CLS', // Classical
+          '013': 'FLK', // Folk
+          '014': 'MET', // Metal
+          '015': 'BLU', // Blues
+          '016': 'FNK', // Funk
+          '017': 'DNC', // Dance
+          '018': 'SOU', // Soul
+          '019': 'ORB', // Orbit
+        },
+        // Looks layer mappings
+        'L': {
+          '001': 'POP', // Modern_Performance
+          '002': 'ROK', // Traditional_Attire
+          '003': 'HIP', // Stage_Ready
+          '004': 'RNB', // Casual
+          '005': 'JZZ', // Designer
+          '006': 'LAT', // Urban
+          '007': 'IND', // Vintage
+          '008': 'ALT', // Cultural
+          '009': 'WLD', // Futuristic
+          '010': 'DSC', // Fantasy
+          '011': 'EDM', // Y2K_Fashion
+          '012': 'CLB', // Sustainable_Fashion
+          '013': 'URB', // Digital_Fashion
+          '014': 'SPO', // Sportswear
         },
         // Worlds layer mappings
         'W': {
@@ -249,28 +283,40 @@ class TaxonomyService {
           '002': 'STG', // Concert Stages
           '003': 'URB', // Urban
           '004': 'BCH', // Beach
-          '005': 'NAT', // Natural
-          '006': 'FAN', // Fantasy
-          '007': 'FUT', // Futuristic
-          '008': 'VIR', // Virtual
-          '009': 'IND', // Industrial
-          '010': 'RUR', // Rural
-          '011': 'HIS', // Historical
-          '012': 'CUL', // Cultural
-          '013': 'ABS', // Abstract
-          '014': 'RET', // Retro
-          '015': 'NTR', // Nature
+          '005': 'FES', // Festival
+          '006': 'TRL', // Trailer
+          '007': 'SPC', // Space
+          '008': 'VRT', // Virtual
+          '009': 'CCH', // Coachella
+          '010': 'NAT', // Natural
+          '011': 'FAN', // Fantasy
+          '012': 'FUT', // Futuristic
+          '013': 'IND', // Industrial
+          '014': 'RUR', // Rural
+          '015': 'HIS', // Historical
+          '016': 'CUL', // Cultural
+          '017': 'ABS', // Abstract
+          '018': 'RET', // Retro
+          '019': 'NTR', // Nature
         },
         // Moves layer mappings
         'M': {
-          '001': 'POP', // Pop Dance
-          '002': 'HIP', // Hip Hop Dance
-          '003': 'BLK', // Ballet/Classical
-          '004': 'JAZ', // Jazz Dance
-          '005': 'CNT', // Contemporary
-          '006': 'LAT', // Latin Dance
-          '007': 'BRK', // Breakdance
-          '008': 'STR', // Street Dance
+          '001': 'DNC', // Dance
+          '002': 'POS', // Pose
+          '003': 'FIT', // Fitness
+          '004': 'MRT', // Martial Arts
+          '005': 'SPT', // Sports
+          '006': 'GYM', // Gymnastics
+          '007': 'YGA', // Yoga
+          '008': 'AER', // Aerobics
+          '009': 'POP', // Pop Dance
+          '010': 'HIP', // Hip Hop Dance
+          '011': 'BLK', // Ballet/Classical
+          '012': 'JAZ', // Jazz Dance
+          '013': 'CNT', // Contemporary
+          '014': 'LAT', // Latin Dance
+          '015': 'BRK', // Breakdance
+          '016': 'STR', // Street Dance
         }
       };
 
@@ -285,17 +331,23 @@ class TaxonomyService {
         const numericToAlpha: Record<string, string> = {
           '001': 'POP', // Pop
           '002': 'ROK', // Rock
-          '003': 'HIP', // Hip_Hop
-          '004': 'RNB', // RnB
-          '005': 'JZZ', // Jazz
-          '006': 'LAT', // Latin
-          '007': 'IND', // Indie
-          '008': 'ALT', // Alternative
-          '009': 'WLD', // World
-          '010': 'DSC', // Disco
-          '011': 'EDM', // Electronic
-          '012': 'CLB', // Club
-          '013': 'URB', // Urban
+          '003': 'RNB', // R&B
+          '004': 'HIP', // Hip Hop
+          '005': 'EDM', // EDM
+          '006': 'CTY', // Country
+          '007': 'LTN', // Latin
+          '008': 'REG', // Reggae
+          '009': 'IND', // Indie
+          '010': 'ALT', // Alternative
+          '011': 'JAZ', // Jazz
+          '012': 'CLS', // Classical
+          '013': 'FLK', // Folk
+          '014': 'MET', // Metal
+          '015': 'BLU', // Blues
+          '016': 'FNK', // Funk
+          '017': 'DNC', // Dance
+          '018': 'SOU', // Soul
+          '019': 'ORB', // Orbit
         };
 
       // Override with standard mapping if available
@@ -467,6 +519,14 @@ class TaxonomyService {
           '005': 'MAS', // Master
           '006': 'LEG', // Legend
           '007': 'ELI', // Elite
+          '008': 'LUX', // Luxury
+          '009': 'PRE', // Premium
+          '010': 'ULT', // Ultimate
+          '011': 'CLS', // Classic
+          '012': 'SPE', // Special
+          '013': 'LIM', // Limited
+          '014': 'TRA', // Traditional
+          '015': 'MOD', // Modern
         };
 
         // Override with standard mapping if available

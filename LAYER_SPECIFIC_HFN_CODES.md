@@ -61,6 +61,25 @@ Each layer has its own set of categories with specific three-letter codes:
 | 018 | SOU | Soul Star |
 | 019 | ORB | Orbit Star |
 
+### L (Looks) Layer
+
+| Numeric Code | Alphabetic Code | Category Name |
+|--------------|-----------------|---------------|
+| 001 | POP | Modern_Performance |
+| 002 | ROK | Traditional_Attire |
+| 003 | HIP | Stage_Ready |
+| 004 | RNB | Casual |
+| 005 | JZZ | Designer |
+| 006 | LAT | Urban |
+| 007 | IND | Vintage |
+| 008 | ALT | Cultural |
+| 009 | WLD | Futuristic |
+| 010 | DSC | Fantasy |
+| 011 | EDM | Y2K_Fashion |
+| 012 | CLB | Sustainable_Fashion |
+| 013 | URB | Digital_Fashion |
+| 014 | SPO | Sportswear |
+
 ### W (Worlds) Layer
 
 | Numeric Code | Alphabetic Code | Category Name |
