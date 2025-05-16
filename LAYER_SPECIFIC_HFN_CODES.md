@@ -19,66 +19,29 @@ Each layer has its own set of categories with specific three-letter codes:
 |--------------|-----------------|---------------|
 | 001 | POP | Pop |
 | 002 | ROK | Rock |
-| 003 | RNB | R&B |
-| 004 | HIP | Hip Hop |
-| 005 | EDM | EDM |
-| 006 | CTY | Country |
-| 007 | LTN | Latin |
-| 008 | REG | Reggae |
-| 009 | IND | Indie |
-| 010 | ALT | Alternative |
-| 011 | JAZ | Jazz |
-| 012 | CLS | Classical |
-| 013 | FLK | Folk |
-| 014 | MET | Metal |
-| 015 | BLU | Blues |
-| 016 | FNK | Funk |
-| 017 | DNC | Dance |
-| 018 | SOU | Soul |
-| 019 | ORB | Orbit |
+| 003 | HIP | Hip Hop |
+| 004 | RNB | R&B |
+| 005 | JZZ | Jazz |
+| 006 | LAT | Latin |
+| 007 | IND | Indie |
+| 008 | ALT | Alternative |
+| 009 | WLD | World |
+| 010 | DSC | Disco |
+| 011 | EDM | Electronic |
 
 ### S (Stars) Layer
 
 | Numeric Code | Alphabetic Code | Category Name |
 |--------------|-----------------|---------------|
-| 001 | POP | Pop Star |
-| 002 | ROK | Rock Star |
-| 003 | RNB | R&B Star |
-| 004 | HIP | Hip Hop Star |
-| 005 | EDM | EDM Star |
-| 006 | CTY | Country Star |
-| 007 | LTN | Latin Star |
-| 008 | REG | Reggae Star |
-| 009 | IND | Indie Star |
-| 010 | ALT | Alternative Star |
-| 011 | JAZ | Jazz Star |
-| 012 | CLS | Classical Star |
-| 013 | FLK | Folk Star |
-| 014 | MET | Metal Star |
-| 015 | BLU | Blues Star |
-| 016 | FNK | Funk Star |
-| 017 | DNC | Dance Star |
-| 018 | SOU | Soul Star |
-| 019 | ORB | Orbit Star |
+| 001 | POP | Pop |
+| 002 | ROK | Rock |
+| 003 | HIP | Hip Hop |
+| 004 | RNB | R&B |
+| 005 | JZZ | Jazz |
+| 006 | LAT | Latin |
+| 007 | IND | Indie |
+| 008 | ALT | Alternative |
 
-### L (Looks) Layer
-
-| Numeric Code | Alphabetic Code | Category Name |
-|--------------|-----------------|---------------|
-| 001 | POP | Modern_Performance |
-| 002 | ROK | Traditional_Attire |
-| 003 | HIP | Stage_Ready |
-| 004 | RNB | Casual |
-| 005 | JZZ | Designer |
-| 006 | LAT | Urban |
-| 007 | IND | Vintage |
-| 008 | ALT | Cultural |
-| 009 | WLD | Futuristic |
-| 010 | DSC | Fantasy |
-| 011 | EDM | Y2K_Fashion |
-| 012 | CLB | Sustainable_Fashion |
-| 013 | URB | Digital_Fashion |
-| 014 | SPO | Sportswear |
 
 ### W (Worlds) Layer
 
@@ -108,22 +71,14 @@ Each layer has its own set of categories with specific three-letter codes:
 
 | Numeric Code | Alphabetic Code | Category Name |
 |--------------|-----------------|---------------|
-| 001 | DNC | Dance |
-| 002 | POS | Pose |
-| 003 | FIT | Fitness |
-| 004 | MRT | Martial Arts |
-| 005 | SPT | Sports |
-| 006 | GYM | Gymnastics |
-| 007 | YGA | Yoga |
-| 008 | AER | Aerobics |
-| 009 | POP | Pop Dance |
-| 010 | HIP | Hip Hop Dance |
-| 011 | BLK | Ballet/Classical |
-| 012 | JAZ | Jazz Dance |
-| 013 | CNT | Contemporary |
-| 014 | LAT | Latin Dance |
-| 015 | BRK | Breakdance |
-| 016 | STR | Street Dance |
+| 001 | POP | Pop Dance |
+| 002 | HIP | Hip Hop Dance |
+| 003 | BLK | Ballet/Classical |
+| 004 | JAZ | Jazz Dance |
+| 005 | CNT | Contemporary |
+| 006 | LAT | Latin Dance |
+| 007 | BRK | Breakdance |
+| 008 | STR | Street Dance |
 
 ## Layer-Specific Subcategory Codes
 
