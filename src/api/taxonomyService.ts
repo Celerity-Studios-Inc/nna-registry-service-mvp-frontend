@@ -188,17 +188,109 @@ class TaxonomyService {
       // or generate an alphabetic code if not available
       let alphaCode = categoryCode;
 
-      // If the category has a code property, use that instead of the numeric key
-      if (/^\d+$/.test(categoryCode) && category.code) {
+      // If the category has a code property, always use it
+      if (category.code) {
         alphaCode = category.code;
-        console.log(`Using category.code (${alphaCode}) instead of numeric categoryCode (${categoryCode})`);
+        console.log(`Using category.code (${alphaCode}) from taxonomy data for category ${category.name}`);
       }
-      // If we don't have a code property but the code is numeric, generate from name
-      else if (/^\d+$/.test(categoryCode) && !category.code) {
-        // Try to generate a 3-letter code from the name
-        if (category.name) {
-          // First check if we can extract from the name
-          // e.g., "Pop" -> "POP", "Hip Hop" -> "HIP", "Dance_Electronic" -> "DNE"
+      // If we don't have a code property, try to get it from our predefined mappings
+      else {
+        // Fixed mappings for each layer and numeric code
+        // These mappings are based on screenshots and existing data
+        const layerNumericToHFN: Record<string, Record<string, string>> = {
+          // Song layer (G) mappings
+          'G': {
+            '001': 'POP', // Pop
+            '002': 'ROK', // Rock
+            '003': 'HIP', // Hip Hop
+            '004': 'RNB', // R&B
+            '005': 'JZZ', // Jazz
+            '006': 'CTY', // Country/Latin
+            '007': 'LTN', // Latin
+            '008': 'REG', // Reggae
+            '009': 'IND', // Indie
+            '010': 'ALT', // Alternative
+            '011': 'JAZ', // Jazz
+            '012': 'CLS', // Classical
+            '013': 'FLK', // Folk
+            '014': 'MET', // Metal
+            '015': 'BLU', // Blues
+            '016': 'FNK', // Funk
+          },
+          // Star layer (S) mappings
+          'S': {
+            '001': 'POP', // Pop
+            '002': 'ROK', // Rock
+            '003': 'HIP', // Hip Hop
+            '004': 'RNB', // R&B
+            '005': 'JZZ', // Jazz
+            '006': 'CTY', // Country
+            '007': 'LTN', // Latin
+            '008': 'REG', // Reggae
+          },
+          // World layer (W) mappings
+          'W': {
+            '001': 'CLB', // Dance Clubs
+            '002': 'STG', // Concert Stages
+            '003': 'URB', // Urban
+            '004': 'BCH', // Beach
+            '005': 'FES', // Festival
+            '006': 'TRL', // Trailer
+            '007': 'SPC', // Space
+            '008': 'VRT', // Virtual
+            '009': 'CCH', // Coachella
+            '010': 'NAT', // Natural
+            '011': 'FAN', // Fantasy/Historical
+            '012': 'FUT', // Futuristic/Cultural
+            '013': 'IND', // Industrial/Abstract
+            '014': 'RUR', // Rural/Retro
+            '015': 'HIS', // Historical/Nature
+          },
+          // Looks layer (L) mappings
+          'L': {
+            '001': 'POP', // Modern_Performance
+            '002': 'ROK', // Traditional_Attire
+            '003': 'HIP', // Stage_Ready
+            '004': 'RNB', // Casual
+            '005': 'JZZ', // Designer
+            '006': 'LAT', // Urban
+            '007': 'IND', // Vintage
+            '008': 'ALT', // Cultural
+            '009': 'WLD', // Futuristic
+            '010': 'DSC', // Fantasy
+            '011': 'EDM', // Y2K_Fashion
+            '012': 'CLB', // Sustainable_Fashion
+            '013': 'URB', // Digital_Fashion
+            '014': 'SPO', // Sportswear
+          },
+          // Moves layer (M) mappings
+          'M': {
+            '001': 'DNC', // Dance/Pop_Dance
+            '002': 'POS', // Pose/Jazz_Dance
+            '003': 'FIT', // Fitness/Hip_Hop_Dance
+            '004': 'MRT', // Martial Arts/Latin_Dance
+            '005': 'SPT', // Sports/EDM_Dance
+            '006': 'GYM', // Gymnastics/Rock_Dance
+            '007': 'YGA', // Yoga/RnB_Dance
+            '008': 'AER', // Aerobics/Bollywood_Dance
+            '009': 'POP', // Pop Dance
+            '010': 'HIP', // Hip Hop Dance
+            '011': 'BLK', // Ballet/Classical
+            '012': 'JAZ', // Jazz Dance
+            '013': 'CNT', // Contemporary Dance
+            '014': 'LAT', // Latin Dance
+            '015': 'BRK', // Breakdance
+            '016': 'STR', // Street Dance
+          }
+        };
+
+        // Use correct mapping for the layer and numeric code
+        if (layerNumericToHFN[layerCode] && layerNumericToHFN[layerCode][categoryCode]) {
+          alphaCode = layerNumericToHFN[layerCode][categoryCode];
+          console.log(`Using fixed mapping for ${layerCode}.${categoryCode} -> ${alphaCode}`);
+        }
+        // If not found in mappings, generate from name as last resort
+        else if (/^\d+$/.test(categoryCode) && category.name) {
           const nameParts = category.name.split(/[\s_-]/);
           if (nameParts.length >= 3) {
             // Use first letter of each of the first 3 parts
@@ -210,99 +302,8 @@ class TaxonomyService {
             // Use first 3 letters of the name
             alphaCode = category.name.substring(0, 3).toUpperCase();
           }
+          console.log(`Generated alphabetic code ${alphaCode} for numeric category ${categoryCode} as last resort`);
         }
-        console.log(`Generated alphabetic code ${alphaCode} for numeric category ${categoryCode}`);
-      }
-
-      // Layer-specific mappings for each layer's standard category numbering
-      const layerSpecificMappings: Record<string, Record<string, string>> = {
-        // Song layer mappings
-        'G': {
-          '001': 'POP', // Pop
-          '002': 'ROK', // Rock
-          '003': 'HIP', // Hip Hop
-          '004': 'RNB', // R&B
-          '005': 'JZZ', // Jazz
-          '006': 'LAT', // Latin
-          '007': 'IND', // Indie
-          '008': 'ALT', // Alternative
-          '009': 'WLD', // World
-          '010': 'DSC', // Disco
-          '011': 'EDM', // Electronic
-          '012': 'CLB', // Club
-          '013': 'URB', // Urban
-        },
-        // Stars layer mappings
-        'S': {
-          '001': 'POP', // Pop
-          '002': 'ROK', // Rock
-          '003': 'HIP', // Hip Hop
-          '004': 'RNB', // R&B
-          '005': 'JZZ', // Jazz
-          '006': 'LAT', // Latin
-          '007': 'IND', // Indie
-          '008': 'ALT', // Alternative
-        },
-        // Worlds layer mappings
-        'W': {
-          '001': 'CLB', // Dance Clubs
-          '002': 'STG', // Concert Stages
-          '003': 'URB', // Urban
-          '004': 'BCH', // Beach
-          '005': 'NAT', // Natural
-          '006': 'FAN', // Fantasy
-          '007': 'FUT', // Futuristic
-          '008': 'VIR', // Virtual
-          '009': 'IND', // Industrial
-          '010': 'RUR', // Rural
-          '011': 'HIS', // Historical
-          '012': 'CUL', // Cultural
-          '013': 'ABS', // Abstract
-          '014': 'RET', // Retro
-          '015': 'NTR', // Nature
-        },
-        // Moves layer mappings
-        'M': {
-          '001': 'POP', // Pop Dance
-          '002': 'HIP', // Hip Hop Dance
-          '003': 'BLK', // Ballet/Classical
-          '004': 'JAZ', // Jazz Dance
-          '005': 'CNT', // Contemporary
-          '006': 'LAT', // Latin Dance
-          '007': 'BRK', // Breakdance
-          '008': 'STR', // Street Dance
-        }
-      };
-
-      // First try layer-specific mapping
-      if (layerSpecificMappings[layerCode] && layerSpecificMappings[layerCode][categoryCode]) {
-        alphaCode = layerSpecificMappings[layerCode][categoryCode];
-        console.log(`Using layer-specific mapping for ${layerCode}.${categoryCode} -> ${alphaCode}`);
-      }
-      // If no layer-specific mapping, use generic fallbacks
-      else {
-        // Generic fallback mappings
-        const numericToAlpha: Record<string, string> = {
-          '001': 'POP', // Pop
-          '002': 'ROK', // Rock
-          '003': 'HIP', // Hip_Hop
-          '004': 'RNB', // RnB
-          '005': 'JZZ', // Jazz
-          '006': 'LAT', // Latin
-          '007': 'IND', // Indie
-          '008': 'ALT', // Alternative
-          '009': 'WLD', // World
-          '010': 'DSC', // Disco
-          '011': 'EDM', // Electronic
-          '012': 'CLB', // Club
-          '013': 'URB', // Urban
-        };
-
-      // Override with standard mapping if available
-      if (/^\d+$/.test(categoryCode) && numericToAlpha[categoryCode]) {
-        alphaCode = numericToAlpha[categoryCode];
-        console.log(`Using standard mapping for numeric code ${categoryCode} -> ${alphaCode}`);
-      }
       }
 
       categories.push({
@@ -384,115 +385,121 @@ class TaxonomyService {
 
       // IMPORTANT: Use alphabetic codes for HFN display
       // If the subcategory code is numeric, we need to use the code property from the subcategory
-      // or generate an alphabetic code if not available
+      // or get it from our mapping
       let alphaCode = subcategoryCode;
 
-      // If the subcategory has a code property, use that instead of the numeric key
-      if (/^\d+$/.test(subcategoryCode) && subcategory.code) {
+      // If the subcategory has a code property, always use it
+      if (subcategory.code) {
         alphaCode = subcategory.code;
-        console.log(`Using subcategory.code (${alphaCode}) instead of numeric subcategoryCode (${subcategoryCode})`);
+        console.log(`Using subcategory.code (${alphaCode}) from taxonomy data for subcategory ${subcategory.name}`);
       }
-      // If we don't have a code property but the code is numeric, generate from name
-      else if (/^\d+$/.test(subcategoryCode) && !subcategory.code) {
-        // Try to generate a 3-letter code from the name
-        if (subcategory.name) {
-          // First check if we can extract from the name
-          // e.g., "Base" -> "BAS", "Hip Hop" -> "HIP", "Dance_Electronic" -> "DNE"
-          const nameParts = subcategory.name.split(/[\s_-]/);
-          if (nameParts.length >= 3) {
-            // Use first letter of each of the first 3 parts
-            alphaCode = (nameParts[0][0] + nameParts[1][0] + nameParts[2][0]).toUpperCase();
-          } else if (nameParts.length === 2) {
-            // Use first two letters of first part + first letter of second part
-            alphaCode = (nameParts[0].substring(0, 2) + nameParts[1][0]).toUpperCase();
-          } else if (subcategory.name.length >= 3) {
-            // Use first 3 letters of the name
-            alphaCode = subcategory.name.substring(0, 3).toUpperCase();
-          }
-        }
-        console.log(`Generated alphabetic code ${alphaCode} for numeric subcategory ${subcategoryCode}`);
-      }
-
-      // Layer-specific mappings for different category/subcategory combinations
-      const layerSpecificMappings: Record<string, Record<string, Record<string, string>>> = {
-        // World layer has special subcategories
-        'W': {
-          // Dance Clubs subcategories
-          '001': {
-            '001': 'BAS', // Base
-            '002': 'NEO', // Neon
-            '003': 'VIP', // VIP Lounge
-            '004': 'RTF', // Rooftop
-            '005': 'UND', // Underground
-            '006': 'RET', // Retro
-            '007': 'BCH', // Beach Club
-          },
-          // Concert Stages subcategories
-          '002': {
-            '001': 'BAS', // Base
-            '002': 'ARE', // Arena
-            '003': 'FES', // Festival
-            '004': 'THE', // Theater
-            '005': 'STD', // Stadium
-            '006': 'UND', // Underground
-            '007': 'OUT', // Outdoor
-          },
-          // Beach subcategories
-          '004': {
-            '001': 'BAS', // Base
-            '002': 'TRO', // Tropical
-            '003': 'SUN', // Sunset
-            '004': 'WAV', // Waves
-            '005': 'PAL', // Palm
-          }
-        }
-      };
-
-      // Try to find a layer-specific mapping first
-      if (layerCode in layerSpecificMappings &&
-          categoryCode in layerSpecificMappings[layerCode] &&
-          subcategoryCode in layerSpecificMappings[layerCode][categoryCode]) {
-        alphaCode = layerSpecificMappings[layerCode][categoryCode][subcategoryCode];
-        console.log(`Using layer-specific mapping for ${layerCode}.${categoryCode}.${subcategoryCode} -> ${alphaCode}`);
-      }
-      // If not found, use generic mappings
+      // If no code property, use our fixed mappings
       else {
-        // Standard mappings for common numeric codes to override generated ones
-        // These mappings ensure consistency across the application
-        const numericToAlpha: Record<string, string> = {
-          '001': 'BAS', // Base
-          '002': 'STA', // Standard
-          '003': 'PRO', // Professional
-          '004': 'EXP', // Expert
-          '005': 'MAS', // Master
-          '006': 'LEG', // Legend
-          '007': 'ELI', // Elite
+        // Layer-specific mappings for different category/subcategory combinations
+        const layerCategorySubcategoryMappings: Record<string, Record<string, Record<string, string>>> = {
+          // World layer subcategories
+          'W': {
+            // Dance Clubs subcategories (001/CLB)
+            '001': {
+              '001': 'BAS', // Base
+              '002': 'NEO', // Neon
+              '003': 'BLK', // Black
+              '004': 'VIP', // VIP Lounge
+              '005': 'RTF', // Rooftop
+              '006': 'UND', // Underground
+              '007': 'RET', // Retro
+              '008': 'BCH', // Beach Club
+            },
+            // Concert Stages subcategories (002/STG)
+            '002': {
+              '001': 'BAS', // Base
+              '002': 'NBA', // NBA
+              '003': 'NFL', // NFL
+              '004': 'ROY', // Royal
+              '005': 'ARE', // Arena
+              '006': 'FES', // Festival
+              '007': 'THE', // Theater
+              '008': 'STD', // Stadium
+              '009': 'UND', // Underground
+              '010': 'OUT', // Outdoor
+            },
+            // Beach subcategories (004/BCH)
+            '004': {
+              '001': 'BAS', // Base
+              '002': 'TRO', // Tropical
+              '003': 'SUN', // Sunset
+              '004': 'WAV', // Waves
+              '005': 'PAL', // Palm
+            }
+          },
+          // Star layer subcategories
+          'S': {
+            // Pop Star subcategories (001/POP)
+            '001': {
+              '001': 'BAS', // Base
+              '002': 'DIV', // Pop_Diva_Female_Stars
+              '003': 'IDF', // Pop_Idol_Female_Stars
+              '004': 'LGF', // Pop_Legend_Female_Stars
+              '005': 'LGM', // Pop_Legend_Male_Stars
+              '006': 'ICM', // Pop_Icon_Male_Stars
+              '007': 'HPM', // Pop_Hipster_Male_Stars
+            }
+          }
         };
 
-        // Override with standard mapping if available
-        if (/^\d+$/.test(subcategoryCode) && numericToAlpha[subcategoryCode]) {
-          alphaCode = numericToAlpha[subcategoryCode];
-          console.log(`Using standard mapping for numeric subcategory code ${subcategoryCode} -> ${alphaCode}`);
+        // First try layer-category-specific mapping
+        if (layerCategorySubcategoryMappings[layerCode] &&
+            layerCategorySubcategoryMappings[layerCode][categoryCode] &&
+            layerCategorySubcategoryMappings[layerCode][categoryCode][subcategoryCode]) {
+          alphaCode = layerCategorySubcategoryMappings[layerCode][categoryCode][subcategoryCode];
+          console.log(`Using layer-category-specific mapping for ${layerCode}.${categoryCode}.${subcategoryCode} -> ${alphaCode}`);
+        }
+        // If not found, use standard mappings for common subcategories
+        else {
+          // Standard mappings for common numeric codes
+          const standardSubcategoryMappings: Record<string, string> = {
+            '001': 'BAS', // Base
+            '002': 'STA', // Standard
+            '003': 'PRO', // Professional
+            '004': 'EXP', // Expert
+            '005': 'MAS', // Master
+            '006': 'LEG', // Legend
+            '007': 'ELI', // Elite
+            '008': 'LUX', // Luxury
+            '009': 'PRE', // Premium
+            '010': 'ULT', // Ultimate
+          };
+
+          // Use standard mapping if available
+          if (/^\d+$/.test(subcategoryCode) && standardSubcategoryMappings[subcategoryCode]) {
+            alphaCode = standardSubcategoryMappings[subcategoryCode];
+            console.log(`Using standard subcategory mapping for numeric code ${subcategoryCode} -> ${alphaCode}`);
+          }
+          // Generate from name as last resort
+          else if (/^\d+$/.test(subcategoryCode) && subcategory.name) {
+            const nameParts = subcategory.name.split(/[\s_-]/);
+            if (nameParts.length >= 3) {
+              // Use first letter of each of the first 3 parts
+              alphaCode = (nameParts[0][0] + nameParts[1][0] + nameParts[2][0]).toUpperCase();
+            } else if (nameParts.length === 2) {
+              // Use first two letters of first part + first letter of second part
+              alphaCode = (nameParts[0].substring(0, 2) + nameParts[1][0]).toUpperCase();
+            } else if (subcategory.name.length >= 3) {
+              // Use first 3 letters of the name
+              alphaCode = subcategory.name.substring(0, 3).toUpperCase();
+            }
+            console.log(`Generated alphabetic code ${alphaCode} for numeric subcategory ${subcategoryCode} as last resort`);
+          }
         }
       }
 
-      // Special case for Stars.Pop categories
+      // We no longer need this special case as it's handled in the layerCategorySubcategoryMappings
+      // but keeping a comment for reference in case it needs to be restored
+      /*
       if (layerCode === 'S' && normalizedCategoryCode === 'POP' && /^\d+$/.test(subcategoryCode)) {
-        const starsPOPMapping: Record<string, string> = {
-          '001': 'BAS', // Base
-          '002': 'DIV', // Pop_Diva_Female_Stars
-          '003': 'IDF', // Pop_Idol_Female_Stars
-          '004': 'LGF', // Pop_Legend_Female_Stars
-          '005': 'LGM', // Pop_Legend_Male_Stars
-          '006': 'ICM', // Pop_Icon_Male_Stars
-          '007': 'HPM', // Pop_Hipster_Male_Stars
-        };
-
-        if (starsPOPMapping[subcategoryCode]) {
-          alphaCode = starsPOPMapping[subcategoryCode];
-          console.log(`Using Stars.POP mapping for numeric subcategory code ${subcategoryCode} -> ${alphaCode}`);
-        }
+        // Now handled by the layerCategorySubcategoryMappings above
       }
+      */
 
       subcategories.push({
         code: alphaCode,
