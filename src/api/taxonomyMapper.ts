@@ -48,23 +48,15 @@ class TaxonomyMapper {
   }
 
   /**
-   * Preload cache with known special mappings
+   * Initialize cache
    */
   private preloadSpecialCases(): void {
-    // S.POP.HPM special case
-    this.cache.subcategoryNumericCodes.set('S_POP_HPM', 7);
-    this.cache.subcategoryAlphaCodes.set('S_001_007', 'HPM');
-    this.cache.subcategoryAlphaCodes.set('S_POP_007', 'HPM');
+    // Clear any existing cache entries
+    this.clearCache();
 
-    // W.URB/HIP special cases
-    this.cache.categoryAlphaCodes.set('W_003', 'HIP');
-    this.cache.categoryNumericCodes.set('W_HIP', 3);
-
-    // W.BCH special case - make sure it maps to 003 (not 009/CCH)
-    this.cache.categoryAlphaCodes.set('W_003', 'BCH');
-    this.cache.categoryNumericCodes.set('W_BCH', 3);
-
-    console.log('Preloaded special case mappings into taxonomy mapper cache');
+    // We no longer need special mappings - we'll rely on the taxonomy service
+    // for proper lookups directly from the taxonomy data
+    console.log('Initialized taxonomy mapper cache - using direct lookups from taxonomy data');
   }
 
   /**
@@ -153,23 +145,23 @@ class TaxonomyMapper {
    * Gets the alphabetic code for a subcategory from its numeric code or name
    */
   getSubcategoryAlphabeticCode(
-    layerCode: string, 
-    categoryValue: string | number, 
+    layerCode: string,
+    categoryValue: string | number,
     subcategoryValue: string | number
   ): string {
     const categoryStr = typeof categoryValue === 'number' ? categoryValue.toString() : categoryValue;
     const subcategoryStr = typeof subcategoryValue === 'number' ? subcategoryValue.toString() : subcategoryValue;
-    
+
     // If already alphabetic, return as is
     if (/^[A-Za-z]{3}$/.test(subcategoryStr)) {
       return subcategoryStr.toUpperCase();
     }
-    
-    // Special case handling - direct cache lookup for S.POP.HPM / S.001.007
-    if (layerCode === 'S' && 
-        (categoryStr === 'POP' || categoryStr === '001') && 
+
+    // Debug log for important subcategories
+    if (layerCode === 'S' &&
+        (categoryStr === 'POP' || categoryStr === '001') &&
         (subcategoryStr === '7' || subcategoryStr === '007')) {
-      return 'HPM';
+      console.log(`Looking up alphabetic code for ${layerCode}.${categoryStr}.${subcategoryStr}`);
     }
     
     // Normalize category code
@@ -228,15 +220,15 @@ class TaxonomyMapper {
    */
   getCategoryNumericCode(layerCode: string, categoryValue: string | number): number {
     const categoryStr = typeof categoryValue === 'number' ? categoryValue.toString() : categoryValue;
-    
+
     // If already numeric, parse and return
     if (/^\d+$/.test(categoryStr)) {
       return parseInt(categoryStr, 10);
     }
-    
-    // Special case for W.HIP or W.BCH mapping to 003
-    if (layerCode === 'W' && (categoryStr === 'HIP' || categoryStr === 'BCH')) {
-      return 3;
+
+    // Debug log for important categories
+    if (layerCode === 'W' && (categoryStr === 'BCH' || categoryStr === 'HIP')) {
+      console.log(`Looking up numeric code for ${layerCode}.${categoryStr}`);
     }
     
     // Check cache for code lookups
@@ -276,23 +268,21 @@ class TaxonomyMapper {
    * Gets the numeric code for a subcategory from its alphabetic code or name
    */
   getSubcategoryNumericCode(
-    layerCode: string, 
-    categoryValue: string | number, 
+    layerCode: string,
+    categoryValue: string | number,
     subcategoryValue: string | number
   ): number {
     const categoryStr = typeof categoryValue === 'number' ? categoryValue.toString() : categoryValue;
     const subcategoryStr = typeof subcategoryValue === 'number' ? subcategoryValue.toString() : subcategoryValue;
-    
+
     // If already numeric, parse and return
     if (/^\d+$/.test(subcategoryStr)) {
       return parseInt(subcategoryStr, 10);
     }
-    
-    // Special case for S.POP.HPM / S.001.HPM always mapping to 7
-    if (layerCode === 'S' && 
-        (categoryStr === 'POP' || categoryStr === '001') && 
-        subcategoryStr === 'HPM') {
-      return 7;
+
+    // Debug log for important subcategories
+    if (layerCode === 'S' && (categoryStr === 'POP' || categoryStr === '001') && subcategoryStr === 'HPM') {
+      console.log(`Looking up numeric code for ${layerCode}.${categoryStr}.${subcategoryStr}`);
     }
     
     // Normalize category code
@@ -461,24 +451,24 @@ class TaxonomyMapper {
    * Gets the subcategory name from a subcategory code
    */
   getSubcategoryName(
-    layerCode: string, 
-    categoryValue: string | number, 
+    layerCode: string,
+    categoryValue: string | number,
     subcategoryValue: string | number
   ): string {
     const categoryStr = typeof categoryValue === 'number' ? categoryValue.toString() : categoryValue;
     const subcategoryStr = typeof subcategoryValue === 'number' ? subcategoryValue.toString() : subcategoryValue;
     const cacheKey = this.getCacheKey([layerCode, categoryStr, subcategoryStr]);
-    
+
     // Check cache first
     if (this.cache.subcategoryNames.has(cacheKey)) {
       return this.cache.subcategoryNames.get(cacheKey)!;
     }
-    
-    // Special case for S.POP.HPM / S.001.HPM combination
-    if (layerCode === 'S' && 
-        (categoryStr === 'POP' || categoryStr === '001') && 
+
+    // Debug log for important lookups
+    if (layerCode === 'S' &&
+        (categoryStr === 'POP' || categoryStr === '001') &&
         (subcategoryStr === 'HPM' || subcategoryStr === '7' || subcategoryStr === '007')) {
-      return 'Hipster_Male_Pop_Star';
+      console.log(`Looking up name for ${layerCode}.${categoryStr}.${subcategoryStr}`);
     }
     
     // Normalize category code to alphabetic
@@ -594,27 +584,30 @@ class TaxonomyMapper {
       const numericCode = parseInt(code, 10);
       const paddedCode = String(numericCode).padStart(3, '0');
 
-      // Special cases
-      if (paddedCode === '003') return 'BCH'; // Beach
-      if (paddedCode === '001') return 'POP'; // Pop
-      if (paddedCode === '007') return 'HPM'; // Hipster Male
+      console.log(`Looking up alphabetic code for numeric code ${paddedCode}`);
 
-      // Try to look up from taxonomy service - this would require knowledge of layer
-      // Since we don't have layer in this context, we'll use common mappings
-      const commonMappings: Record<string, string> = {
-        '001': 'POP', // Pop
-        '002': 'DCL', // Dance_Classical
-        '003': 'BCH', // Beach (for World layer) or HIP (Urban for other layers)
-        '004': 'MDP', // Modern_Performance
-        '005': 'JZZ', // Jazz
-        '006': 'NAT', // Natural
-        '007': 'HPM', // Hipster Male
-        '008': 'ROK', // Rock
-        '009': 'CCH', // Contemporary_Choreography
-        '011': 'CDP', // Contemporary_Dance
-      };
+      // Since we don't have layer context here, we need to do a best-effort lookup
+      // Try to get the code from all available layers in a specific order
+      // World layer is most important for our W.BCH.SUN fix
+      const layersToTry = ['W', 'S', 'G', 'L', 'M'];
 
-      return commonMappings[paddedCode] || paddedCode;
+      for (const layerCode of layersToTry) {
+        const alphabeticCode = taxonomyService.getCategoryAlphabeticCode(layerCode, numericCode);
+        if (alphabeticCode) {
+          console.log(`Found alphabetic code ${alphabeticCode} for numeric code ${paddedCode} in layer ${layerCode}`);
+          return alphabeticCode;
+        }
+      }
+
+      // If we couldn't find a mapping in any layer, use a generic mapping based on common codes
+      console.log(`Could not find alphabetic code for numeric code ${paddedCode} in any layer`);
+
+      // Fallback common mappings (intentionally minimal)
+      if (paddedCode === '001') return 'POP'; // Pop is 001 in most layers
+      if (paddedCode === '007') return 'HPM'; // Hipster Male is 007 in Stars layer
+
+      // Last resort: return the padded code itself
+      return paddedCode;
     }
 
     // If neither alphabetic nor numeric, return as is
@@ -631,8 +624,7 @@ class TaxonomyMapper {
     this.cache.validCombinations.clear();
     this.cache.formatCache.clear();
 
-    // Reload special cases
-    this.preloadSpecialCases();
+    console.log('Taxonomy mapper cache cleared');
   }
 }
 
