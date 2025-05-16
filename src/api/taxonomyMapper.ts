@@ -266,10 +266,15 @@ class TaxonomyMapper {
     }
     
     // Special case for S.POP.HPM / S.001.HPM always mapping to 7
-    if (layerCode === 'S' && 
-        (categoryStr === 'POP' || categoryStr === '001') && 
+    if (layerCode === 'S' &&
+        (categoryStr === 'POP' || categoryStr === '001') &&
         subcategoryStr === 'HPM') {
       return 7;
+    }
+
+    // Special case for W.BCH.SUN - critical fix for this mapping issue
+    if (layerCode === 'W' && categoryStr === 'BCH' && subcategoryStr === 'SUN') {
+      return 3;
     }
     
     // Normalize category code

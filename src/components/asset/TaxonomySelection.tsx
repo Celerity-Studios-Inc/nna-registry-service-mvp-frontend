@@ -473,15 +473,25 @@ const TaxonomySelection: React.FC<TaxonomySelectionProps> = ({
         </FormControl>
 
         {/* Add warning for non-HPM subcategories that will be normalized */}
-        {layerCode === 'S' && 
-         selectedCategoryCode === 'POP' && 
-         selectedSubcategoryCode && 
-         selectedSubcategoryCode !== 'HPM' && 
+        {layerCode === 'S' &&
+         selectedCategoryCode === 'POP' &&
+         selectedSubcategoryCode &&
+         selectedSubcategoryCode !== 'HPM' &&
          selectedSubcategoryCode !== 'BAS' && (
           <Alert severity="info" sx={{ mt: 2, mb: 2 }}>
             <AlertTitle>Subcategory Compatibility Note</AlertTitle>
             While you've selected <strong>{selectedSubcategoryCode}</strong>, the system will internally use <strong>BAS</strong> for storage.
             Your selection will be preserved in the display. This is a temporary limitation that will be addressed in a future update.
+          </Alert>
+        )}
+
+        {/* Special case alert for W.BCH.SUN */}
+        {layerCode === 'W' &&
+         selectedCategoryCode === 'BCH' &&
+         selectedSubcategoryCode === 'SUN' && (
+          <Alert severity="info" sx={{ mt: 2, mb: 2 }}>
+            <AlertTitle>Special Case Mapping</AlertTitle>
+            W.BCH.SUN will map to 5.004.003 (Beach/Sunset in Worlds layer).
           </Alert>
         )}
 
