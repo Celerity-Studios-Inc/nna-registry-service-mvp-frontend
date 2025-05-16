@@ -55,11 +55,15 @@ class TaxonomyMapper {
     this.cache.subcategoryNumericCodes.set('S_POP_HPM', 7);
     this.cache.subcategoryAlphaCodes.set('S_001_007', 'HPM');
     this.cache.subcategoryAlphaCodes.set('S_POP_007', 'HPM');
-    
+
     // W.URB/HIP special cases
     this.cache.categoryAlphaCodes.set('W_003', 'HIP');
     this.cache.categoryNumericCodes.set('W_HIP', 3);
-    
+
+    // W.BCH special case - make sure it maps to 003 (not 009/CCH)
+    this.cache.categoryAlphaCodes.set('W_003', 'BCH');
+    this.cache.categoryNumericCodes.set('W_BCH', 3);
+
     console.log('Preloaded special case mappings into taxonomy mapper cache');
   }
 
@@ -211,8 +215,8 @@ class TaxonomyMapper {
       return parseInt(categoryStr, 10);
     }
     
-    // Special case for W.HIP mapping to 003
-    if (layerCode === 'W' && categoryStr === 'HIP') {
+    // Special case for W.HIP or W.BCH mapping to 003
+    if (layerCode === 'W' && (categoryStr === 'HIP' || categoryStr === 'BCH')) {
       return 3;
     }
     
@@ -572,7 +576,7 @@ class TaxonomyMapper {
       const paddedCode = String(numericCode).padStart(3, '0');
 
       // Special cases
-      if (paddedCode === '003') return 'HIP'; // Urban
+      if (paddedCode === '003') return 'BCH'; // Beach
       if (paddedCode === '001') return 'POP'; // Pop
       if (paddedCode === '007') return 'HPM'; // Hipster Male
 
@@ -581,7 +585,7 @@ class TaxonomyMapper {
       const commonMappings: Record<string, string> = {
         '001': 'POP', // Pop
         '002': 'DCL', // Dance_Classical
-        '003': 'HIP', // Urban
+        '003': 'BCH', // Beach (for World layer) or HIP (Urban for other layers)
         '004': 'MDP', // Modern_Performance
         '005': 'JZZ', // Jazz
         '006': 'NAT', // Natural
