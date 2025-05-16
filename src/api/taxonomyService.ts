@@ -26,6 +26,12 @@ class TaxonomyService {
    */
   private initialize(): void {
     try {
+      // Clear all caches when initializing to ensure fresh values
+      this.layerCache.clear();
+      this.categoriesCache.clear();
+      this.subcategoriesCache.clear();
+      this.sequentialCounters = new Map();
+
       // Basic validation to ensure taxonomy data is structured correctly
       if (!this.taxonomyData) {
         throw new Error('Taxonomy data is empty or invalid');
@@ -38,6 +44,35 @@ class TaxonomyService {
           throw new Error(
             `Required layer ${layer} is missing from taxonomy data`
           );
+        }
+      }
+
+      // Analyze taxonomy data for debugging
+      console.log('Checking World layer category codes...');
+      const worldLayer = this.taxonomyData['W'];
+      if (worldLayer && worldLayer.categories) {
+        console.log('World layer categories:', Object.keys(worldLayer.categories).join(', '));
+
+        // Check BCH category explicitly
+        if ('BCH' in worldLayer.categories) {
+          const bchCategory = worldLayer.categories['BCH'];
+          console.log('Found BCH category in World layer:', {
+            name: bchCategory.name,
+            numericCode: bchCategory.numericCode || 'undefined'
+          });
+        } else {
+          console.log('BCH category not found directly in World layer');
+        }
+
+        // Check 003 numeric code
+        if ('003' in worldLayer.categories) {
+          const code003Category = worldLayer.categories['003'];
+          console.log('Found 003 numeric code in World layer:', {
+            name: code003Category.name,
+            code: code003Category.code || 'undefined'
+          });
+        } else {
+          console.log('003 numeric code not found directly in World layer');
         }
       }
 
@@ -135,10 +170,18 @@ class TaxonomyService {
     for (const categoryCode in layer.categories) {
       const category = layer.categories[categoryCode];
 
-      // Use numeric index + 1 as a fallback numeric code
-      const numericCode =
-        parseInt(categoryCode, 10) ||
-        Object.keys(layer.categories).indexOf(categoryCode) + 1;
+      // IMPORTANT: Get numeric code properly from the taxonomy data
+      // First try to parse the category code directly if it's numeric
+      let numericCode = parseInt(categoryCode, 10);
+
+      // If category has an explicit numericCode property, use that instead
+      if (category.numericCode !== undefined) {
+        numericCode = category.numericCode;
+      }
+      // If we couldn't parse it and there's no explicit numeric code, use position as fallback
+      else if (isNaN(numericCode)) {
+        numericCode = Object.keys(layer.categories).indexOf(categoryCode) + 1;
+      }
 
       categories.push({
         id: `${layerCode}.${categoryCode}`,
@@ -203,10 +246,19 @@ class TaxonomyService {
     const subcategories: SubcategoryOption[] = [];
     for (const subcategoryCode in category.subcategories) {
       const subcategory = category.subcategories[subcategoryCode];
-      // Use numeric index + 1 as a fallback numeric code
-      const numericCode =
-        parseInt(subcategoryCode, 10) ||
-        Object.keys(category.subcategories).indexOf(subcategoryCode) + 1;
+
+      // IMPORTANT: Get numeric code properly from the taxonomy data
+      // First try to parse the subcategory code directly if it's numeric
+      let numericCode = parseInt(subcategoryCode, 10);
+
+      // If subcategory has an explicit numericCode property, use that instead
+      if (subcategory.numericCode !== undefined) {
+        numericCode = subcategory.numericCode;
+      }
+      // If we couldn't parse it and there's no explicit numeric code, use position as fallback
+      else if (isNaN(numericCode)) {
+        numericCode = Object.keys(category.subcategories).indexOf(subcategoryCode) + 1;
+      }
 
       subcategories.push({
         code: subcategory.code || '',
@@ -253,6 +305,12 @@ class TaxonomyService {
         return null;
       }
 
+      // Debug logging for important categories
+      if (layerCode === 'W' && (categoryCode === 'BCH' || categoryCode === '003')) {
+        console.log(`Looking up category code ${categoryCode} in World layer`);
+        console.log('Available category codes:', Object.keys(layer.categories).join(', '));
+      }
+
       // Handle special case for S.001/S.POP combinations
       let normalizedCategoryCode = categoryCode;
       if (layerCode === 'S' && categoryCode === '001') {
@@ -275,11 +333,40 @@ class TaxonomyService {
         console.log('Falling back to alphabetic category code POP for 001 in layer S');
       }
 
+      // For numeric W layer codes, also normalize between code 003 and BCH
+      if (!category && layerCode === 'W') {
+        if (categoryCode === 'BCH') {
+          category = layer.categories['003'];
+          console.log('Looking up Beach (BCH) by numeric code 003 in World layer');
+        } else if (categoryCode === '003') {
+          category = layer.categories['BCH'];
+          console.log('Looking up numeric code 003 by Beach (BCH) in World layer');
+        }
+      }
+
       // If we couldn't find the category but we have a alphanumeric code (like "Beach"),
       // try to find it by comparing names case-insensitively
       if (!category && isNaN(Number(categoryCode)) && categoryCode !== '001') {
-        // Try to match by case-insensitive name comparison
+        // Try to match by code case-insensitively
+        const matchByCode = Object.entries(layer.categories).find(([code]) =>
+          code.toLowerCase() === categoryCode.toLowerCase()
+        );
+
+        if (matchByCode) {
+          console.log(`Found category with code matching "${categoryCode}" (case-insensitive) in layer ${layerCode}`);
+          return matchByCode[1];
+        }
+
+        // Try to match by exact name
         const categoryValues = Object.values(layer.categories);
+        const matchByExactName = categoryValues.find(c => c.name === categoryCode);
+
+        if (matchByExactName) {
+          console.log(`Found category with exact name "${categoryCode}" in layer ${layerCode}`);
+          return matchByExactName;
+        }
+
+        // Try to match by case-insensitive name comparison
         const matchByName = categoryValues.find(c =>
           c.name.toLowerCase() === categoryCode.toLowerCase() ||
           c.name.toLowerCase().replace(/[_\s-]/g, '') === categoryCode.toLowerCase().replace(/[_\s-]/g, '')

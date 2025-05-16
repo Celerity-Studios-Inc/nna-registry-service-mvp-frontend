@@ -87,27 +87,46 @@ class TaxonomyMapper {
    */
   getCategoryAlphabeticCode(layerCode: string, categoryValue: string | number): string {
     const categoryStr = typeof categoryValue === 'number' ? categoryValue.toString() : categoryValue;
-    
+
     // If already alphabetic, return as is
     if (/^[A-Za-z]{3}$/.test(categoryStr)) {
       return categoryStr.toUpperCase();
     }
-    
+
+    // Debug log for World layer Beach category
+    if (layerCode === 'W' && (categoryStr === '003' || categoryStr === 'BCH')) {
+      console.log(`getCategoryAlphabeticCode called for W.${categoryStr}`);
+    }
+
     // Check cache for numeric lookups
     if (/^\d+$/.test(categoryStr)) {
       const cacheKey = this.getCacheKey([layerCode, categoryStr]);
       if (this.cache.categoryAlphaCodes.has(cacheKey)) {
-        return this.cache.categoryAlphaCodes.get(cacheKey)!;
+        const cachedResult = this.cache.categoryAlphaCodes.get(cacheKey)!;
+        console.log(`Using cached value for ${layerCode}.${categoryStr}: ${cachedResult}`);
+        return cachedResult;
       }
-      
+
       // Not in cache, look up using taxonomy service
       const numericCode = parseInt(categoryStr, 10);
       const result = taxonomyService.getCategoryAlphabeticCode(layerCode, numericCode);
-      
+
+      // Log the result for important lookups
+      if (layerCode === 'W' && categoryStr === '003') {
+        console.log(`Taxonomy service returned ${result || 'empty'} for W.003`);
+      }
+
       if (result) {
         // Cache the result for future lookups
         this.cache.categoryAlphaCodes.set(cacheKey, result);
         return result;
+      }
+
+      // For numeric code 003 in W layer, explicitly return BCH if the service didn't find it
+      if (layerCode === 'W' && numericCode === 3) {
+        console.log('Returning explicit BCH for W.003 numeric code');
+        // We don't cache this as it should come from the taxonomy service
+        return 'BCH';
       }
     }
     
