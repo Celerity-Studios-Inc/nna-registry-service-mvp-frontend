@@ -7,6 +7,7 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { useTaxonomy } from '../../hooks/useTaxonomy';
 import { logger } from '../../utils/logger';
+import LayerIcon from '../common/LayerIcon';
 import '../../styles/LayerSelector.css';
 
 interface LayerSelectorV2Props {
@@ -132,9 +133,9 @@ const LayerSelectorV2: React.FC<LayerSelectorV2Props> = ({
             >
               <div className="layer-header">
                 <span className="layer-code">{layer}</span>
-                <span className="layer-icon" style={{ fontSize: '24px', marginLeft: '8px' }}>
-                  {layerEmoji}
-                </span>
+                <div className="layer-card-icon">
+                  <LayerIcon layer={layer} size="large" />
+                </div>
               </div>
               <div className="layer-content">
                 <h4>{layerName}</h4>
