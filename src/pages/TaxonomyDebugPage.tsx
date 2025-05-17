@@ -1,6 +1,5 @@
 import React from 'react';
-import { Container, Typography, Box, Paper, Divider } from '@mui/material';
-import MainLayout from '../components/layout/MainLayout';
+import { Container, Typography, Box, Paper, Divider, CssBaseline } from '@mui/material';
 import TaxonomyDebug from '../components/TaxonomyDebug';
 import LayerSelector from '../components/asset/LayerSelector';
 import SimpleTaxonomySelection from '../components/asset/SimpleTaxonomySelection';
@@ -29,10 +28,11 @@ const TaxonomyDebugPage: React.FC = () => {
   };
 
   return (
-    <MainLayout>
+    <Box sx={{ minHeight: '100vh', bgcolor: '#f5f5f5', pt: 3 }}>
+      <CssBaseline />
       <Container>
         <Typography variant="h4" sx={{ my: 4 }}>Taxonomy Debug Page</Typography>
-        
+
         <Paper elevation={3} sx={{ p: 3, mb: 4 }}>
           <Typography variant="h5" gutterBottom>Test Layer Selector</Typography>
           <LayerSelector
@@ -40,16 +40,16 @@ const TaxonomyDebugPage: React.FC = () => {
             onLayerSelect={handleLayerSelect}
           />
         </Paper>
-        
+
         <Divider sx={{ my: 4 }} />
-        
+
         {selectedLayer && (
           <Paper elevation={3} sx={{ p: 3, mb: 4 }}>
             <Typography variant="h5" gutterBottom>Test Taxonomy Selection</Typography>
             <Box sx={{ p: 2 }}>
               <Typography variant="subtitle1">
-                Selected Layer: {selectedLayer} | 
-                Selected Category: {selectedCategory || 'None'} | 
+                Selected Layer: {selectedLayer} |
+                Selected Category: {selectedCategory || 'None'} |
                 Selected Subcategory: {selectedSubcategory || 'None'}
               </Typography>
             </Box>
@@ -62,10 +62,10 @@ const TaxonomyDebugPage: React.FC = () => {
             />
           </Paper>
         )}
-        
+
         <TaxonomyDebug />
       </Container>
-    </MainLayout>
+    </Box>
   );
 };
 
