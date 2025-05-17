@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import './App.css';
 import './styles/ErrorHandling.css';
+import './styles/TaxonomyExample.css';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider, createTheme, StyledEngineProvider } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
@@ -26,6 +27,7 @@ import ApiRouteAlert from './components/common/ApiRouteAlert';
 import TaxonomyValidator from './components/TaxonomyValidator';
 import AssetRegistrationWrapper from './components/AssetRegistrationWrapper';
 import TaxonomyInitProvider from './components/providers/TaxonomyInitProvider';
+import TaxonomyExample from './components/examples/TaxonomyExample';
 
 // Force initialization of the flattened taxonomy service is now handled by TaxonomyInitProvider
 import { taxonomyService } from './services/simpleTaxonomyService';
@@ -157,6 +159,7 @@ const App: React.FC = () => {
                         <Route path="/error-test" element={<ErrorTestPage />} />
                         <Route path="/taxonomy-validator" element={<TaxonomyValidator />} />
                         <Route path="/taxonomy-debug" element={<TaxonomyDebugPage />} />
+                        <Route path="/taxonomy-example" element={<TaxonomyExample />} />
                         <Route element={<MainLayout />}>
                           <Route path="/dashboard" element={
                             <ProtectedRoute>
