@@ -36,7 +36,7 @@ import assetService from '../api/assetService';
 
 // Import components
 import LayerSelector from '../components/asset/LayerSelectorV2';
-import SimpleTaxonomySelection from '../components/asset/SimpleTaxonomySelection';
+import SimpleTaxonomySelection from '../components/asset/SimpleTaxonomySelectionV2';
 import FileUpload from '../components/asset/FileUpload';
 import ReviewSubmit from '../components/asset/ReviewSubmit';
 import TrainingDataCollection from '../components/asset/TrainingDataCollection';
@@ -482,7 +482,7 @@ const RegisterAssetPage: React.FC = () => {
                 finalMfa = '5.004.003.001';
               } else {
                 // Default fallback
-                const layerCode = LAYER_NUMERIC_CODES[data.layer] || '0';
+                const layerCode = taxonomyService.getLayerNumericCode(data.layer);
                 finalMfa = `${layerCode}.000.000.001`;
               }
               console.log(`Using fallback MFA: ${finalMfa}`);

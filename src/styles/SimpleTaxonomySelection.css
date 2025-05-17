@@ -1,3 +1,10 @@
+.simple-taxonomy-selection {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 15px;
+}
+
 .taxonomy-selection {
   display: flex;
   flex-direction: column;
@@ -8,8 +15,27 @@
 .taxonomy-section {
   border: 1px solid #ddd;
   border-radius: 8px;
-  padding: 15px;
-  background-color: white;
+  overflow: hidden;
+}
+
+.taxonomy-section-title {
+  margin: 0;
+  padding: 12px 15px;
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #ddd;
+  font-size: 1.2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.layer-indicator, .category-indicator {
+  font-size: 0.9rem;
+  font-weight: normal;
+  color: #6c757d;
+  background-color: #e9ecef;
+  padding: 4px 8px;
+  border-radius: 4px;
 }
 
 .taxonomy-grid {
@@ -19,21 +45,32 @@
   margin-top: 15px;
 }
 
+.taxonomy-items {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 10px;
+  padding: 15px;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
 .taxonomy-item {
+  padding: 10px;
   border: 1px solid #eee;
   border-radius: 6px;
-  padding: 12px;
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: all 0.2s ease;
+  background-color: #fff;
 }
 
 .taxonomy-item:hover {
-  background-color: #f0f7ff;
+  border-color: #ccc;
+  background-color: #f8f9fa;
 }
 
-.taxonomy-item.selected {
-  background-color: #e6f7ff;
-  border-color: #91d5ff;
+.taxonomy-item.active {
+  border-color: #007bff;
+  background-color: #e8f4ff;
 }
 
 .taxonomy-item .code {
@@ -51,11 +88,81 @@
   font-size: 14px;
 }
 
+.taxonomy-item-code {
+  font-weight: bold;
+  margin-bottom: 5px;
+}
+
+.taxonomy-item-numeric {
+  font-size: 0.8rem;
+  color: #6c757d;
+  margin-bottom: 3px;
+}
+
+.taxonomy-item-name {
+  font-size: 0.9rem;
+  color: #6c757d;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.taxonomy-loading, .taxonomy-empty, .taxonomy-error {
+  padding: 20px;
+  text-align: center;
+  color: #6c757d;
+}
+
+.taxonomy-error {
+  color: #721c24;
+  background-color: #f8d7da;
+}
+
+.taxonomy-empty {
+  color: #856404;
+  background-color: #fff3cd;
+}
+
 .error-message {
   color: #f5222d;
   padding: 10px;
   background-color: #fff1f0;
   border: 1px solid #ffccc7;
   border-radius: 4px;
+  margin-bottom: 15px;
+}
+
+.retry-button {
+  margin-top: 10px;
+  padding: 5px 10px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.retry-button:hover {
+  background-color: #0069d9;
+}
+
+.taxonomy-selection-summary {
+  padding: 15px;
+  background-color: #e8f4ff;
+  border-radius: 8px;
+  border-left: 4px solid #007bff;
+}
+
+.taxonomy-debug {
+  margin-top: 20px;
+  font-size: 12px;
+  color: #666;
+  border-top: 1px solid #eee;
+  padding-top: 10px;
+  padding-left: 15px;
+}
+
+.error-container {
+  padding: 15px;
   margin-bottom: 15px;
 }
