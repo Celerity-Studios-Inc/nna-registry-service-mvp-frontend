@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useForm, SubmitHandler, FormProvider } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
@@ -32,6 +32,9 @@ import { formatNNAAddressForDisplay } from '../api/codeMapping.enhanced';
 import taxonomyMapper from '../api/taxonomyMapper';
 import LayerSelection from '../components/asset/LayerSelection';
 import TaxonomySelection from '../components/asset/TaxonomySelection';
+import SimpleTaxonomySelection from '../components/asset/SimpleTaxonomySelection';
+import { taxonomyService } from '../services/simpleTaxonomyService';
+import '../styles/SimpleTaxonomySelection.css';
 import FileUpload from '../components/asset/FileUpload';
 import ReviewSubmit from '../components/asset/ReviewSubmit';
 import TrainingDataCollection from '../components/asset/TrainingDataCollection';
@@ -229,12 +232,12 @@ const RegisterAssetPage: React.FC = () => {
     } as FormData,
   });
 
-  const { 
-    register, 
-    handleSubmit, 
-    setValue, 
-    getValues, 
-    formState: { errors, isSubmitting }, 
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    getValues,
+    formState: { errors, isSubmitting },
     watch,
     reset,
   } = methods;
@@ -244,6 +247,15 @@ const RegisterAssetPage: React.FC = () => {
   const watchCategoryCode = watch('categoryCode');
   const watchSubcategoryCode = watch('subcategoryCode');
   const watchFiles = watch('files');
+
+  // Create a formData object for the useEffect dependencies
+  const formData = {
+    layer: watchLayer,
+    categoryCode: watchCategoryCode,
+    subcategoryCode: watchSubcategoryCode,
+    sequential: watch('sequential') || '001',
+    fileType: watchFiles && watchFiles.length > 0 ? watchFiles[0].name.split('.').pop() : ''
+  };
 
   // Handle form submission
   const onSubmit: SubmitHandler<FormData> = async (data) => {
@@ -342,28 +354,47 @@ const RegisterAssetPage: React.FC = () => {
       // Use the new TaxonomyConverter utility for reliable code conversion
       console.log(`Converting taxonomy codes for layer: ${data.layer}`);
 
-      // Convert category code to alphabetic form if needed
+      // For W layer, use the simplified taxonomy service
       let convertedCategory = data.categoryCode;
-      if (data.layer === 'S' && (data.categoryCode === '001' || /^\d+$/.test(data.categoryCode))) {
+      let convertedSubcategory = data.subcategoryCode;
+
+      if (data.layer === 'W') {
+        // For W layer, we don't need to convert as we're already using alphabetic codes
+        console.log(`W layer detected: Using simplified taxonomy service with codes ${data.categoryCode} and ${data.subcategoryCode}`);
+
+        // No conversion needed, but add additional logging for verification
+        if (data.categoryCode === 'BCH' && data.subcategoryCode === 'SUN') {
+          console.log('IMPORTANT - W.BCH.SUN case detected - will use simplified taxonomy service');
+          console.log(`MFA should be 5.004.003.001, actual: ${data.mfa}`);
+        }
+      } else if (data.layer === 'S' && (data.categoryCode === '001' || /^\d+$/.test(data.categoryCode))) {
+        // Special case for S layer POP category
         convertedCategory = 'POP';
         console.log(`CRITICAL PATH: Force mapped category code ${data.categoryCode} → POP for Stars layer`);
+
+        // Convert subcategory code to alphabetic form if needed
+        if (data.categoryCode === 'POP' || data.categoryCode === '001') {
+          if (data.subcategoryCode === '007' || (/^\d+$/.test(data.subcategoryCode) && data.subcategoryCode === '007')) {
+            convertedSubcategory = 'HPM';
+            console.log(`CRITICAL PATH: Force mapped subcategory code ${data.subcategoryCode} → HPM for S.POP layer`);
+          } else {
+            // Normal conversion path for other S.POP subcategories
+            convertedSubcategory = TaxonomyConverter.getAlphabeticCode(
+              data.layer,
+              'subcategory',
+              data.subcategoryCode,
+              convertedCategory // Use the already converted category
+            );
+          }
+        }
       } else {
-        // Normal conversion path
+        // Normal conversion path for other layers
         convertedCategory = TaxonomyConverter.getAlphabeticCode(
           data.layer,
           'category',
           data.categoryCode
         );
-      }
 
-      // Convert subcategory code to alphabetic form if needed
-      let convertedSubcategory = data.subcategoryCode;
-      if (data.layer === 'S' && (data.categoryCode === 'POP' || data.categoryCode === '001') &&
-          (data.subcategoryCode === '007' || (/^\d+$/.test(data.subcategoryCode) && data.subcategoryCode === '007'))) {
-        convertedSubcategory = 'HPM';
-        console.log(`CRITICAL PATH: Force mapped subcategory code ${data.subcategoryCode} → HPM for S.POP layer`);
-      } else {
-        // Normal conversion path
         convertedSubcategory = TaxonomyConverter.getAlphabeticCode(
           data.layer,
           'subcategory',
@@ -408,31 +439,44 @@ const RegisterAssetPage: React.FC = () => {
         tags: data.tags || [],
         files: data.files,  // Pass the original files
         // CRITICAL: Include nnaAddress at the root level for consistent access patterns
-        // Use our enhanced formatter for generating the correct MFA address
-        // This ensures consistent MFA for all layer/category/subcategory combinations
-        nnaAddress: formatNNAAddressForDisplay(
-            data.layer,
-            data.categoryCode,
-            data.subcategoryCode,
-            '001' // Default sequential for display
-        ).mfa,
+        // Use our simplified taxonomy service for W layer and enhanced formatter for others
+        nnaAddress: data.layer === 'W'
+          ? taxonomyService.convertHFNtoMFA(`${data.layer}.${data.categoryCode}.${data.subcategoryCode}.001`)
+          : formatNNAAddressForDisplay(
+              data.layer,
+              data.categoryCode,
+              data.subcategoryCode,
+              '001' // Default sequential for display
+            ).mfa,
         metadata: {
           layerName: data.layerName,
           categoryName: data.categoryName,
           subcategoryName: data.subcategoryName,
           uploadedFiles: uploadedFiles,
           trainingData: data.trainingData,
-          // Use our enhanced formatter to generate consistent addresses
-          // This eliminates the need for special cases while ensuring correct display
+          // Use either simplified taxonomy service or enhanced formatter
+          // depending on the layer type to generate consistent addresses
           ...(() => {
-            // Generate formatted addresses using enhanced formatter
-            const { hfn, mfa } = formatNNAAddressForDisplay(
-              data.layer,
-              data.categoryCode,
-              data.subcategoryCode,
-              '001'
-            );
-            console.log(`Enhanced formatter generated HFN=${hfn}, MFA=${mfa}`);
+            let hfn, mfa;
+
+            if (data.layer === 'W') {
+              // Use our simplified taxonomy service for W layer
+              hfn = `${data.layer}.${data.categoryCode}.${data.subcategoryCode}.001`;
+              mfa = taxonomyService.convertHFNtoMFA(hfn);
+              console.log(`Simplified taxonomy service generated HFN=${hfn}, MFA=${mfa}`);
+            } else {
+              // Use enhanced formatter for other layers
+              const result = formatNNAAddressForDisplay(
+                data.layer,
+                data.categoryCode,
+                data.subcategoryCode,
+                '001'
+              );
+              hfn = result.hfn;
+              mfa = result.mfa;
+              console.log(`Enhanced formatter generated HFN=${hfn}, MFA=${mfa}`);
+            }
+
             return {
               // Include both consistently formatted addresses
               mfa: mfa,
@@ -566,13 +610,62 @@ const RegisterAssetPage: React.FC = () => {
     setValue('hfn', humanFriendlyName);
     setValue('mfa', machineFriendlyAddress);
     setValue('sequential', sequentialNumber.toString());
-    
+
     // Store the original subcategory for display override in success screen
     if (originalSubcategory) {
       setOriginalSubcategoryCode(originalSubcategory);
       console.log(`Stored original subcategory code: ${originalSubcategory} for display override`);
     }
   };
+
+  // Generate HFN and MFA using simplified taxonomy service
+  useEffect(() => {
+    if (formData.layer && formData.categoryCode && formData.subcategoryCode) {
+      // Use formatted sequential number (pad with leading zeros if needed)
+      const sequentialFormatted = formData.sequential.padStart(3, '0');
+
+      // Create properly formatted HFN
+      const newHfn = `${formData.layer}.${formData.categoryCode}.${formData.subcategoryCode}.${sequentialFormatted}${formData.fileType ? '.' + formData.fileType : ''}`;
+      setValue('hfn', newHfn);
+
+      try {
+        // For the W layer, use our SimpleTaxonomyService
+        if (formData.layer === 'W') {
+          const newMfa = taxonomyService.convertHFNtoMFA(newHfn);
+          if (newMfa) {
+            setValue('mfa', newMfa);
+            console.log(`SimpleTaxonomyService HFN to MFA conversion: ${newHfn} -> ${newMfa}`);
+          } else {
+            // Fallback to traditional conversion if simplified service fails
+            const traditionalMfa = formatNNAAddressForDisplay(
+              formData.layer,
+              formData.categoryCode,
+              formData.subcategoryCode,
+              sequentialFormatted
+            ).mfa;
+            setValue('mfa', traditionalMfa);
+            console.log(`Fallback HFN to MFA conversion: ${newHfn} -> ${traditionalMfa}`);
+          }
+        } else {
+          // For other layers, use traditional conversion
+          const { mfa } = formatNNAAddressForDisplay(
+            formData.layer,
+            formData.categoryCode,
+            formData.subcategoryCode,
+            sequentialFormatted
+          );
+          setValue('mfa', mfa);
+          console.log(`Traditional HFN to MFA conversion: ${newHfn} -> ${mfa}`);
+        }
+      } catch (error) {
+        console.error('Error converting HFN to MFA:', error);
+        setValue('mfa', '');
+      }
+    } else {
+      setValue('hfn', '');
+      setValue('mfa', '');
+    }
+  }, [formData.layer, formData.categoryCode, formData.subcategoryCode, formData.sequential, formData.fileType, setValue]);
 
   // Calculate a simple hash for a file (based on size, type, and first few bytes)
   const calculateFileHash = async (file: File): Promise<string> => {
@@ -815,17 +908,52 @@ const RegisterAssetPage: React.FC = () => {
         );
       case 1:
         return (
-          <TaxonomySelection
-            layerCode={watchLayer}
-            onCategorySelect={handleCategorySelect}
-            onSubcategorySelect={handleSubcategorySelect}
-            selectedCategoryCode={watchCategoryCode}
-            selectedSubcategoryCode={watchSubcategoryCode}
-            subcategoryNumericCode={getValues('subcategoryNumericCode')}
-            categoryName={getValues('categoryName')}
-            subcategoryName={getValues('subcategoryName')}
-            onNNAAddressChange={handleNNAAddressChange}
-          />
+          <>
+            {watchLayer === 'W' ? (
+              <SimpleTaxonomySelection
+                layer={watchLayer}
+                selectedCategory={watchCategoryCode}
+                selectedSubcategory={watchSubcategoryCode}
+                onCategorySelect={(categoryCode) => {
+                  const category = taxonomyService.getCategories(watchLayer).find(c => c.code === categoryCode);
+                  if (category) {
+                    handleCategorySelect({
+                      id: categoryCode,
+                      code: categoryCode,
+                      name: category.name,
+                      numericCode: parseInt(category.numericCode)
+                    });
+                  }
+                }}
+                onSubcategorySelect={(subcategoryCode) => {
+                  const subcategories = taxonomyService.getSubcategories(watchLayer, watchCategoryCode);
+                  const subcategory = subcategories.find(s => s.code === subcategoryCode);
+
+                  if (subcategory) {
+                    // Add an id field to match the SubcategoryOption interface
+                    handleSubcategorySelect({
+                      id: `${watchCategoryCode}_${subcategoryCode}`,
+                      code: subcategory.code,
+                      name: subcategory.name,
+                      numericCode: parseInt(subcategory.numericCode)
+                    });
+                  }
+                }}
+              />
+            ) : (
+              <TaxonomySelection
+                layerCode={watchLayer}
+                onCategorySelect={handleCategorySelect}
+                onSubcategorySelect={handleSubcategorySelect}
+                selectedCategoryCode={watchCategoryCode}
+                selectedSubcategoryCode={watchSubcategoryCode}
+                subcategoryNumericCode={getValues('subcategoryNumericCode')}
+                categoryName={getValues('categoryName')}
+                subcategoryName={getValues('subcategoryName')}
+                onNNAAddressChange={handleNNAAddressChange}
+              />
+            )}
+          </>
         );
       case 2:
         // For composite assets, display the component selection form
