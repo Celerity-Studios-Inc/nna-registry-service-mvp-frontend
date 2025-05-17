@@ -67,7 +67,7 @@ const SimpleTaxonomySelection: React.FC<SimpleTaxonomySelectionProps> = ({
 
       // Get categories with retry mechanism
       let retryCount = 0;
-      let layerCategories = [];
+      let layerCategories: TaxonomyItem[] = [];
 
       while (retryCount < 3 && layerCategories.length === 0) {
         layerCategories = taxonomyService.getCategories(layer);
@@ -83,7 +83,7 @@ const SimpleTaxonomySelection: React.FC<SimpleTaxonomySelectionProps> = ({
               { code: 'POP', numericCode: '001', name: 'Pop' },
               { code: 'RCK', numericCode: '002', name: 'Rock' },
               { code: 'HIP', numericCode: '003', name: 'Hip-Hop' }
-            ];
+            ] as TaxonomyItem[];
             layerCategories = fallbackStarCategories;
           }
         }
@@ -130,7 +130,7 @@ const SimpleTaxonomySelection: React.FC<SimpleTaxonomySelectionProps> = ({
 
       // Get subcategories with retry mechanism
       let retryCount = 0;
-      let categorySubcategories = [];
+      let categorySubcategories: TaxonomyItem[] = [];
 
       while (retryCount < 3 && categorySubcategories.length === 0) {
         categorySubcategories = taxonomyService.getSubcategories(layer, selectedCategory);
@@ -143,7 +143,7 @@ const SimpleTaxonomySelection: React.FC<SimpleTaxonomySelectionProps> = ({
           if (retryCount === 2) {
             if (layer === 'S' && selectedCategory === 'POP') {
               console.log('Manually adding S.POP subcategories...');
-              categorySubcategories = [
+              const popSubcategories: TaxonomyItem[] = [
                 { code: 'BAS', numericCode: '001', name: 'Base' },
                 { code: 'DIV', numericCode: '002', name: 'Pop Diva Female' },
                 { code: 'IDF', numericCode: '003', name: 'Pop Idol Female' },
@@ -152,16 +152,19 @@ const SimpleTaxonomySelection: React.FC<SimpleTaxonomySelectionProps> = ({
                 { code: 'ICM', numericCode: '006', name: 'Pop Icon Male' },
                 { code: 'HPM', numericCode: '007', name: 'Pop Hipster Male' }
               ];
+              categorySubcategories = popSubcategories;
             } else if (layer === 'S' && selectedCategory === 'RCK') {
               console.log('Manually adding S.RCK subcategories...');
-              categorySubcategories = [
+              const rockSubcategories: TaxonomyItem[] = [
                 { code: 'BAS', numericCode: '001', name: 'Base' }
               ];
+              categorySubcategories = rockSubcategories;
             } else if (layer === 'W' && selectedCategory === 'BCH') {
               console.log('Manually adding W.BCH subcategories...');
-              categorySubcategories = [
+              const beachSubcategories: TaxonomyItem[] = [
                 { code: 'SUN', numericCode: '003', name: 'Sunny' }
               ];
+              categorySubcategories = beachSubcategories;
             }
           }
         }

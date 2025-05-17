@@ -305,7 +305,10 @@ export function getCategoryNumericCode(layerCode: string, categoryValue: string)
     },
     'W': {
       'NAT': 15,
-      'HIP': 3
+      'HIP': 3,
+      'STG': 2, // Add missing STG mapping for concert_stages
+      'BCH': 4, // Add missing BCH mapping for beach
+      'URB': 3  // Alias for HIP in Worlds layer
     },
     'G': {
       'POP': 1,
@@ -406,6 +409,18 @@ export function getSubcategoryNumericCode(
       },
       'NAT': {
         'BAS': 1
+      },
+      'STG': {
+        'BAS': 1,
+        'FES': 3  // Add mapping for Festival in Stage category
+      },
+      'BCH': {
+        'BAS': 1,
+        'SUN': 3  // Add mapping for Sunny in Beach category
+      },
+      'URB': {  // Alias for HIP
+        'BAS': 1,
+        'STR': 2
       }
     }
   };

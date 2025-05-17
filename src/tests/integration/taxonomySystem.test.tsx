@@ -4,7 +4,7 @@
 import React from 'react';
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
-import { TaxonomyExample } from '../../components/examples/TaxonomyExample';
+import TaxonomyExample from '../../components/examples/TaxonomyExample';
 import { FeedbackProvider } from '../../contexts/FeedbackContext';
 import {
   SPECIAL_HFN_MFA_TEST_CASES,
