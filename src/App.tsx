@@ -22,6 +22,7 @@ import GlobalErrorHandler from './components/common/GlobalErrorHandler';
 import TestComponent from './components/common/TestComponent';
 import ApiRouteAlert from './components/common/ApiRouteAlert';
 import TaxonomyValidator from './components/TaxonomyValidator';
+import AssetRegistrationWrapper from './components/AssetRegistrationWrapper';
 
 // Force initialization of the flattened taxonomy service
 // Import and initialize the simplified taxonomy service
@@ -161,7 +162,7 @@ const App: React.FC = () => {
                       } />
                       <Route path="/register-asset" element={
                         <ProtectedRoute>
-                          <RegisterAssetPage />
+                          <AssetRegistrationWrapper />
                         </ProtectedRoute>
                       } />
                       <Route path="/search-assets" element={
