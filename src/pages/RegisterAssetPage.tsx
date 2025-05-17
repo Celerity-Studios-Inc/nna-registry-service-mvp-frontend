@@ -602,6 +602,7 @@ const RegisterAssetPage: React.FC = () => {
 
   // Handle NNA address change - kept for future reference
   // Prefixed with underscore to indicate intentionally unused
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const _handleNNAAddressChange = (
     humanFriendlyName: string,
     machineFriendlyAddress: string,
