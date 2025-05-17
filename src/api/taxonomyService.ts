@@ -391,12 +391,16 @@ class TaxonomyService {
     if (!category || !category.subcategories) {
       console.log(`No subcategories found for ${layerCode}.${categoryCode}`);
 
-      // Special case: create mock subcategories for Looks, Moves, and Worlds for testing
-      if (['L', 'M', 'W'].includes(layerCode)) {
+      // Generate mock subcategories for all layers and categories except S.POP which should already have proper subcategories
+      // Skip S.POP as it already has real subcategories
+      if (!(layerCode === 'S' && (categoryCode === 'POP' || categoryCode === '001'))) {
         console.log(`Creating mock subcategories for ${layerCode}.${categoryCode}`);
 
-        // Mock subcategories to temporarily work around missing taxonomy data
-        const mockSubcategories: SubcategoryOption[] = [
+        // Determine appropriate mock subcategories based on layer and category
+        let mockSubcategories: SubcategoryOption[] = [];
+
+        // Default mock subcategories for all layers
+        const defaultMockSubcategories: SubcategoryOption[] = [
           {
             id: `${layerCode}.${categoryCode}.BAS`,
             code: 'BAS',
@@ -416,6 +420,124 @@ class TaxonomyService {
             numericCode: 3
           }
         ];
+
+        // Layer-specific mock subcategories
+        if (layerCode === 'G') {
+          // Songs layer
+          mockSubcategories = [
+            {
+              id: `${layerCode}.${categoryCode}.BAS`,
+              code: 'BAS',
+              name: 'Base',
+              numericCode: 1
+            },
+            {
+              id: `${layerCode}.${categoryCode}.RMX`,
+              code: 'RMX',
+              name: 'Remix',
+              numericCode: 2
+            },
+            {
+              id: `${layerCode}.${categoryCode}.ACU`,
+              code: 'ACU',
+              name: 'Acoustic',
+              numericCode: 3
+            },
+            {
+              id: `${layerCode}.${categoryCode}.LIV`,
+              code: 'LIV',
+              name: 'Live',
+              numericCode: 4
+            }
+          ];
+        } else if (layerCode === 'S' && categoryCode !== 'POP' && categoryCode !== '001') {
+          // Stars layer (non-POP categories)
+          mockSubcategories = [
+            {
+              id: `${layerCode}.${categoryCode}.BAS`,
+              code: 'BAS',
+              name: 'Base',
+              numericCode: 1
+            },
+            {
+              id: `${layerCode}.${categoryCode}.LEG`,
+              code: 'LEG',
+              name: 'Legend',
+              numericCode: 2
+            },
+            {
+              id: `${layerCode}.${categoryCode}.ICO`,
+              code: 'ICO',
+              name: 'Icon',
+              numericCode: 3
+            },
+            {
+              id: `${layerCode}.${categoryCode}.MOD`,
+              code: 'MOD',
+              name: 'Modern',
+              numericCode: 4
+            }
+          ];
+        } else if (layerCode === 'W') {
+          // World layer - special cases by category
+          if (categoryCode === 'BCH' || categoryCode === '004') {
+            // Beach
+            mockSubcategories = [
+              {
+                id: `${layerCode}.${categoryCode}.BAS`,
+                code: 'BAS',
+                name: 'Base',
+                numericCode: 1
+              },
+              {
+                id: `${layerCode}.${categoryCode}.TRO`,
+                code: 'TRO',
+                name: 'Tropical',
+                numericCode: 2
+              },
+              {
+                id: `${layerCode}.${categoryCode}.SUN`,
+                code: 'SUN',
+                name: 'Sunset',
+                numericCode: 3
+              }
+            ];
+          } else if (categoryCode === 'CLB' || categoryCode === '001') {
+            // Dance Clubs
+            mockSubcategories = [
+              {
+                id: `${layerCode}.${categoryCode}.BAS`,
+                code: 'BAS',
+                name: 'Base',
+                numericCode: 1
+              },
+              {
+                id: `${layerCode}.${categoryCode}.NEO`,
+                code: 'NEO',
+                name: 'Neon',
+                numericCode: 2
+              },
+              {
+                id: `${layerCode}.${categoryCode}.BLK`,
+                code: 'BLK',
+                name: 'Black',
+                numericCode: 3
+              },
+              {
+                id: `${layerCode}.${categoryCode}.VIP`,
+                code: 'VIP',
+                name: 'VIP',
+                numericCode: 4
+              }
+            ];
+          } else {
+            // Other World categories
+            mockSubcategories = defaultMockSubcategories;
+          }
+        } else {
+          // All other layers and categories
+          mockSubcategories = defaultMockSubcategories;
+        }
 
         // Cache the mock subcategories
         this.subcategoriesCache.set(cacheKey, mockSubcategories);
