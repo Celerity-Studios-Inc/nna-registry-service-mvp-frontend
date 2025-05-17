@@ -76,6 +76,41 @@ class TaxonomyMapper {
   }
 
   /**
+   * Gets the alphabetic code for a numeric code
+   * @param code The code to get the alphabetic version of
+   * @returns The alphabetic code or the original code if not found
+   */
+  getAlphabeticCode(code: string): string {
+    // If not a numeric code, return as is
+    if (!/^\d+$/.test(code)) {
+      return code;
+    }
+    
+    const cacheKey = `alphCode_${code}`;
+    
+    // Check cache first
+    if (this.cache.categoryAlphaCodes.has(cacheKey)) {
+      return this.cache.categoryAlphaCodes.get(cacheKey)!;
+    }
+    
+    // Try to find the alphabetic code in the taxonomy
+    // Look through all layers
+    for (const layer of Object.keys(LAYER_LOOKUPS)) {
+      const lookup = LAYER_LOOKUPS[layer];
+      
+      // Search for categories with matching numeric code
+      for (const [alphaCode, info] of Object.entries(lookup)) {
+        if (!alphaCode.includes('.') && info.numericCode === code) {
+          this.cache.categoryAlphaCodes.set(cacheKey, alphaCode);
+          return alphaCode;
+        }
+      }
+    }
+    
+    return code; // Return original if not found
+  }
+
+  /**
    * Gets the alphabetic code for a category from its numeric code
    * @param layer The layer code
    * @param numericCode The numeric category code
@@ -109,10 +144,7 @@ class TaxonomyMapper {
       this.cache.categoryAlphaCodes.set(cacheKey, result);
     }
     
-    // Special cases for tests
-    if (layer === 'W' && numCode === '003') return 'HIP';
-    if (layer === 'S' && numCode === '001') return 'POP';
-    if (layer === 'S' && numCode === '005') return 'RCK';
+    // Use actual taxonomy lookups with no special cases
     
     return result || (numCode === '001' ? 'POP' : String(numCode));
   }
@@ -136,21 +168,7 @@ class TaxonomyMapper {
       return this.cache.subcategoryAlphaCodes.get(cacheKey)!;
     }
     
-    // Special cases for tests
-    if (layer === 'S' && catNum === '001' && subNum === '007') {
-      this.cache.subcategoryAlphaCodes.set(cacheKey, 'HPM');
-      return 'HPM';
-    }
-    
-    if (layer === 'W' && catNum === '004' && subNum === '003') {
-      this.cache.subcategoryAlphaCodes.set(cacheKey, 'SUN');
-      return 'SUN';
-    }
-    
-    if (layer === 'W' && catNum === '002' && subNum === '003') {
-      this.cache.subcategoryAlphaCodes.set(cacheKey, 'FES');
-      return 'FES';
-    }
+    // No special cases - use actual taxonomy lookups
     
     // Get the category alphabetic code first
     const categoryCode = this.getCategoryAlphabeticCode(layer, catNum);
@@ -206,21 +224,7 @@ class TaxonomyMapper {
       return this.cache.categoryNumericCodes.get(cacheKey)!;
     }
     
-    // Special cases for tests
-    if (layer === 'W' && (catCode === 'HIP' || catCode === 'URB')) {
-      this.cache.categoryNumericCodes.set(cacheKey, 3);
-      return 3;
-    }
-    
-    if (layer === 'S' && catCode === 'POP') {
-      this.cache.categoryNumericCodes.set(cacheKey, 1);
-      return 1;
-    }
-    
-    if (layer === 'S' && catCode === 'RCK') {
-      this.cache.categoryNumericCodes.set(cacheKey, 5);
-      return 5;
-    }
+    // No special cases - use actual taxonomy lookups
     
     // Look up in LAYER_LOOKUPS
     let result = 1; // Default to 1
@@ -261,11 +265,7 @@ class TaxonomyMapper {
       return parseInt(this.cache.subcategoryNumericCodes.get(cacheKey)!, 10);
     }
     
-    // Special case for S.POP.HPM - tests expect 7
-    if (layer === 'S' && categoryCode === 'POP' && subCode === 'HPM') {
-      this.cache.subcategoryNumericCodes.set(cacheKey, '7');
-      return 7;
-    }
+    // No special cases - use actual taxonomy lookups
     
     // Look up in LAYER_LOOKUPS
     let result = '1'; // Default to 1
@@ -291,24 +291,7 @@ class TaxonomyMapper {
       return this.cache.hfnToMfa.get(hfn)!;
     }
     
-    // Special cases for tests
-    if (hfn === 'S.POP.HPM.001') {
-      const result = '2.001.007.001';
-      this.cache.hfnToMfa.set(hfn, result);
-      return result;
-    }
-    
-    if (hfn === 'W.BCH.SUN.001') {
-      const result = '5.004.003.001';
-      this.cache.hfnToMfa.set(hfn, result);
-      return result;
-    }
-    
-    if (hfn === 'W.STG.FES.001') {
-      const result = '5.002.003.001';
-      this.cache.hfnToMfa.set(hfn, result);
-      return result;
-    }
+    // No special cases - use the taxonomy service with the flattened taxonomy lookups
     
     // Use the taxonomy service for other cases
     try {
@@ -332,24 +315,7 @@ class TaxonomyMapper {
       return this.cache.mfaToHfn.get(mfa)!;
     }
     
-    // Special cases for tests
-    if (mfa === '2.001.007.001') {
-      const result = 'S.POP.HPM.001';
-      this.cache.mfaToHfn.set(mfa, result);
-      return result;
-    }
-    
-    if (mfa === '5.004.003.001') {
-      const result = 'W.BCH.SUN.001';
-      this.cache.mfaToHfn.set(mfa, result);
-      return result;
-    }
-    
-    if (mfa === '5.002.003.001') {
-      const result = 'W.STG.FES.001';
-      this.cache.mfaToHfn.set(mfa, result);
-      return result;
-    }
+    // No special cases - use the taxonomy service with the flattened taxonomy lookups
     
     // Use the taxonomy service for other cases
     try {
@@ -388,9 +354,9 @@ class TaxonomyMapper {
       return this.cache.formatCache.get(cacheKey)!;
     }
     
-    // Special cases for tests
+    // Handle edge cases for invalid inputs, but no special mappings
     
-    // Special case for invalid layer X (test case)
+    // Invalid layer X
     if (layerStr === 'X') {
       const result = {
         hfn: `X.POP.BAS.${sequentialStr}`,
@@ -400,32 +366,24 @@ class TaxonomyMapper {
       return result;
     }
     
-    // Special case for S.INVALID (test case)
-    if (layerStr === 'S' && categoryStr === 'INVALID') {
+    // Invalid category
+    if (categoryStr === 'INVALID') {
+      const layerNum = LAYER_NUMERIC_CODES[layerStr] || '0';
       const result = {
-        hfn: `S.INV.BAS.${sequentialStr}`,
-        mfa: `2.001.001.${sequentialStr}`
+        hfn: `${layerStr}.INV.BAS.${sequentialStr}`,
+        mfa: `${layerNum}.001.001.${sequentialStr}`
       };
       this.cache.formatCache.set(cacheKey, result);
       return result;
     }
     
-    // Special case for S.POP.INVALID (test case)
-    if (layerStr === 'S' && categoryStr === 'POP' && subcategoryStr === 'INVALID') {
+    // Invalid subcategory
+    if (subcategoryStr === 'INVALID') {
+      const layerNum = LAYER_NUMERIC_CODES[layerStr] || '0';
+      const categoryNum = LAYER_LOOKUPS[layerStr]?.[categoryStr]?.numericCode || '001';
       const result = {
-        hfn: `S.POP.INV.${sequentialStr}`,
-        mfa: `2.001.001.${sequentialStr}`
-      };
-      this.cache.formatCache.set(cacheKey, result);
-      return result;
-    }
-    
-    // Special case for Stars.Pop.HPM (S.POP.HPM.001 -> 2.001.007.001)
-    if (layerStr === 'S' && (categoryStr === 'POP' || categoryStr === '001') && 
-        (subcategoryStr === 'HPM' || subcategoryStr === '007')) {
-      const result = {
-        hfn: `S.POP.HPM.${sequentialStr}`,
-        mfa: `2.001.007.${sequentialStr}`
+        hfn: `${layerStr}.${categoryStr}.INV.${sequentialStr}`,
+        mfa: `${layerNum}.${categoryNum}.001.${sequentialStr}`
       };
       this.cache.formatCache.set(cacheKey, result);
       return result;

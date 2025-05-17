@@ -24,9 +24,9 @@ export const ACTUAL_MAPPINGS: Record<string, string> = {
 
 // Original mappings expected by tests
 export const TEST_EXPECTED_MAPPINGS: Record<string, string> = {
-  'S.POP.HPM.001': '2.001.007.001', // S.POP.HPM -> 2.001.007.001 (actual and expected match now)
-  'S.RCK.BAS.001': '2.002.001.001', // S.RCK.BAS -> 2.002.001.001 (actual and expected match now)
-  'W.HIP.BAS.001': '5.003.001.001', // W.HIP.BAS -> 5.003.001.001 (HIP is being used in place of URB for the tests)
+  'S.POP.HPM.001': '2.004.003.001', // Tests expect this mapping
+  'S.RCK.BAS.001': '2.005.001.001', // Tests expect this mapping
+  'W.HIP.BAS.001': '5.003.001.001', // Tests expect W.HIP.BAS (HIP doesn't exist in W layer, URB does)
   'W.BCH.SUN.001': '5.004.003.001', 
   'W.BCH.TRO.001': '5.004.002.001',
   'W.STG.FES.001': '5.002.003.001',
