@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { taxonomyService } from '../services/simpleTaxonomyService';
-import { LAYER_LOOKUPS, LAYER_SUBCATEGORIES } from '../taxonomyLookup';
+import { LAYER_LOOKUPS, LAYER_SUBCATEGORIES } from '../taxonomyLookup/constants';
 import { TaxonomyItem } from '../types/taxonomy.types';
 import {
   Typography,
