@@ -330,9 +330,6 @@ class TaxonomyService {
   ): SubcategoryOption[] {
     this.checkInitialized();
 
-    // Debug for troubleshooting subcategory issues
-    console.log(`getSubcategories called for layer:${layerCode}, category:${categoryCode}`);
-
     // Handle special case for S.001/S.POP combinations
     let normalizedCategoryCode = categoryCode;
     if (layerCode === 'S' && categoryCode === '001') {
@@ -342,208 +339,30 @@ class TaxonomyService {
 
     const cacheKey = `${layerCode}.${normalizedCategoryCode}`;
     if (this.subcategoriesCache.has(cacheKey)) {
-      console.log(`Returning cached subcategories for ${cacheKey}`);
       return this.subcategoriesCache.get(cacheKey) || [];
     }
 
     const layer = this.getLayer(layerCode);
     if (!layer || !layer.categories) {
-      console.log(`No layer or categories found for layer ${layerCode}`);
       return [];
     }
 
-    // Debug the layer's categories
-    console.log(`Available categories for layer ${layerCode}:`, Object.keys(layer.categories));
-
     // Try to get category by normalized code first
     let category = layer.categories[normalizedCategoryCode];
-    console.log(`Looking up category ${normalizedCategoryCode} in layer ${layerCode}:`, category ? 'FOUND' : 'NOT FOUND');
 
     // If not found and we're looking for POP, try 001
     if (!category && layerCode === 'S' && normalizedCategoryCode === 'POP') {
       category = layer.categories['001'];
-      console.log('Falling back to numeric category code 001 for POP in layer S:', category ? 'FOUND' : 'STILL NOT FOUND');
+      console.log('Falling back to numeric category code 001 for POP in layer S');
     }
 
     // If not found and we're looking for 001, try POP
     if (!category && layerCode === 'S' && normalizedCategoryCode === '001') {
       category = layer.categories['POP'];
-      console.log('Falling back to alphabetic category code POP for 001 in layer S:', category ? 'FOUND' : 'STILL NOT FOUND');
-    }
-
-    // For Looks, Moves, and Worlds layers, let's try some additional fallbacks
-    if (!category && (layerCode === 'L' || layerCode === 'M' || layerCode === 'W')) {
-      // Try numeric code if an alphabetic code was provided
-      if (!/^\d+$/.test(categoryCode)) {
-        console.log(`Trying to find category by numeric code for ${layerCode}`);
-        // Try to find the category by looking through the layer.categories for matching code property
-        for (const catKey in layer.categories) {
-          const cat = layer.categories[catKey];
-          if (cat.code === categoryCode) {
-            category = cat;
-            console.log(`Found category ${categoryCode} by code property match:`, categoryCode);
-            break;
-          }
-        }
-      }
+      console.log('Falling back to alphabetic category code POP for 001 in layer S');
     }
 
     if (!category || !category.subcategories) {
-      console.log(`No subcategories found for ${layerCode}.${categoryCode}`);
-
-      // Generate mock subcategories for all layers and categories except S.POP which should already have proper subcategories
-      // Skip S.POP as it already has real subcategories
-      if (!(layerCode === 'S' && (categoryCode === 'POP' || categoryCode === '001'))) {
-        console.log(`Creating mock subcategories for ${layerCode}.${categoryCode}`);
-
-        // Determine appropriate mock subcategories based on layer and category
-        let mockSubcategories: SubcategoryOption[] = [];
-
-        // Default mock subcategories for all layers
-        const defaultMockSubcategories: SubcategoryOption[] = [
-          {
-            id: `${layerCode}.${categoryCode}.BAS`,
-            code: 'BAS',
-            name: 'Base',
-            numericCode: 1
-          },
-          {
-            id: `${layerCode}.${categoryCode}.STD`,
-            code: 'STD',
-            name: 'Standard',
-            numericCode: 2
-          },
-          {
-            id: `${layerCode}.${categoryCode}.PRO`,
-            code: 'PRO',
-            name: 'Professional',
-            numericCode: 3
-          }
-        ];
-
-        // Layer-specific mock subcategories
-        if (layerCode === 'G') {
-          // Songs layer
-          mockSubcategories = [
-            {
-              id: `${layerCode}.${categoryCode}.BAS`,
-              code: 'BAS',
-              name: 'Base',
-              numericCode: 1
-            },
-            {
-              id: `${layerCode}.${categoryCode}.RMX`,
-              code: 'RMX',
-              name: 'Remix',
-              numericCode: 2
-            },
-            {
-              id: `${layerCode}.${categoryCode}.ACU`,
-              code: 'ACU',
-              name: 'Acoustic',
-              numericCode: 3
-            },
-            {
-              id: `${layerCode}.${categoryCode}.LIV`,
-              code: 'LIV',
-              name: 'Live',
-              numericCode: 4
-            }
-          ];
-        } else if (layerCode === 'S' && categoryCode !== 'POP' && categoryCode !== '001') {
-          // Stars layer (non-POP categories)
-          mockSubcategories = [
-            {
-              id: `${layerCode}.${categoryCode}.BAS`,
-              code: 'BAS',
-              name: 'Base',
-              numericCode: 1
-            },
-            {
-              id: `${layerCode}.${categoryCode}.LEG`,
-              code: 'LEG',
-              name: 'Legend',
-              numericCode: 2
-            },
-            {
-              id: `${layerCode}.${categoryCode}.ICO`,
-              code: 'ICO',
-              name: 'Icon',
-              numericCode: 3
-            },
-            {
-              id: `${layerCode}.${categoryCode}.MOD`,
-              code: 'MOD',
-              name: 'Modern',
-              numericCode: 4
-            }
-          ];
-        } else if (layerCode === 'W') {
-          // World layer - special cases by category
-          if (categoryCode === 'BCH' || categoryCode === '004') {
-            // Beach
-            mockSubcategories = [
-              {
-                id: `${layerCode}.${categoryCode}.BAS`,
-                code: 'BAS',
-                name: 'Base',
-                numericCode: 1
-              },
-              {
-                id: `${layerCode}.${categoryCode}.TRO`,
-                code: 'TRO',
-                name: 'Tropical',
-                numericCode: 2
-              },
-              {
-                id: `${layerCode}.${categoryCode}.SUN`,
-                code: 'SUN',
-                name: 'Sunset',
-                numericCode: 3
-              }
-            ];
-          } else if (categoryCode === 'CLB' || categoryCode === '001') {
-            // Dance Clubs
-            mockSubcategories = [
-              {
-                id: `${layerCode}.${categoryCode}.BAS`,
-                code: 'BAS',
-                name: 'Base',
-                numericCode: 1
-              },
-              {
-                id: `${layerCode}.${categoryCode}.NEO`,
-                code: 'NEO',
-                name: 'Neon',
-                numericCode: 2
-              },
-              {
-                id: `${layerCode}.${categoryCode}.BLK`,
-                code: 'BLK',
-                name: 'Black',
-                numericCode: 3
-              },
-              {
-                id: `${layerCode}.${categoryCode}.VIP`,
-                code: 'VIP',
-                name: 'VIP',
-                numericCode: 4
-              }
-            ];
-          } else {
-            // Other World categories
-            mockSubcategories = defaultMockSubcategories;
-          }
-        } else {
-          // All other layers and categories
-          mockSubcategories = defaultMockSubcategories;
-        }
-
-        // Cache the mock subcategories
-        this.subcategoriesCache.set(cacheKey, mockSubcategories);
-        return mockSubcategories;
-      }
-
       return [];
     }
 
