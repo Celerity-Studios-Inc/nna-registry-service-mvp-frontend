@@ -25,20 +25,14 @@ import TestComponent from './components/common/TestComponent';
 import ApiRouteAlert from './components/common/ApiRouteAlert';
 import TaxonomyValidator from './components/TaxonomyValidator';
 import AssetRegistrationWrapper from './components/AssetRegistrationWrapper';
+import TaxonomyInitProvider from './components/providers/TaxonomyInitProvider';
 
-// Force initialization of the flattened taxonomy service
-// Import and initialize the simplified taxonomy service
+// Force initialization of the flattened taxonomy service is now handled by TaxonomyInitProvider
 import { taxonomyService } from './services/simpleTaxonomyService';
-// Force pre-loading of the taxonomy data
-console.log('Initializing simplified taxonomy service...');
-// Pre-load some key taxonomies to ensure they're cached
-try {
-  const starCategories = taxonomyService.getCategories('S');
-  const worldCategories = taxonomyService.getCategories('W');
-  console.log(`Taxonomy service initialized with ${starCategories.length} Star categories and ${worldCategories.length} World categories`);
-} catch (err) {
-  console.error('Error pre-loading taxonomy data:', err);
-}
+import { logger } from './utils/logger';
+
+// Log the import of taxonomy service, but let the TaxonomyInitProvider handle initialization
+logger.info('Taxonomy service imported in App.tsx');
 
 // Create a theme instance
 const theme = createTheme({
@@ -145,45 +139,52 @@ const App: React.FC = () => {
             <FeedbackProvider>
               <NotificationsProvider>
                 <AuthProvider>
-                <Router>
-                  <Routes>
-                    <Route path="/login" element={<LoginPage />} />
-                    <Route path="/register" element={<RegisterPage />} />
-                    <Route path="/api-test" element={<TestComponent />} />
-                    <Route path="/api-debug" element={<ApiDebugPage />} />
-                    <Route path="/debug" element={<ApiDebugPage />} />
-                    <Route path="/connect" element={<ConnectivityHelp />} />
-                    <Route path="/help" element={<ConnectivityHelp />} />
-                    <Route path="/error-test" element={<ErrorTestPage />} />
-                    <Route path="/taxonomy-validator" element={<TaxonomyValidator />} />
-                    <Route path="/taxonomy-debug" element={<TaxonomyDebugPage />} />
-                    <Route element={<MainLayout />}>
-                      <Route path="/dashboard" element={
-                        <ProtectedRoute>
-                          <DashboardPage />
-                        </ProtectedRoute>
-                      } />
-                      <Route path="/register-asset" element={
-                        <ProtectedRoute>
-                          <AssetRegistrationWrapper />
-                        </ProtectedRoute>
-                      } />
-                      <Route path="/search-assets" element={
-                        <ProtectedRoute>
-                          <SearchAssetsPage />
-                        </ProtectedRoute>
-                      } />
-                      <Route path="/assets/:id" element={
-                        <ProtectedRoute>
-                          <AssetDetailPage />
-                        </ProtectedRoute>
-                      } />
-                      <Route path="/" element={<RootRedirect />} />
-                    </Route>
-                  </Routes>
-                </Router>
-              </AuthProvider>
-            </NotificationsProvider>
+                  <TaxonomyInitProvider fallback={
+                    <div className="taxonomy-loading">
+                      <div className="loading-spinner"></div>
+                      <p>Loading taxonomy data...</p>
+                    </div>
+                  }>
+                    <Router>
+                      <Routes>
+                        <Route path="/login" element={<LoginPage />} />
+                        <Route path="/register" element={<RegisterPage />} />
+                        <Route path="/api-test" element={<TestComponent />} />
+                        <Route path="/api-debug" element={<ApiDebugPage />} />
+                        <Route path="/debug" element={<ApiDebugPage />} />
+                        <Route path="/connect" element={<ConnectivityHelp />} />
+                        <Route path="/help" element={<ConnectivityHelp />} />
+                        <Route path="/error-test" element={<ErrorTestPage />} />
+                        <Route path="/taxonomy-validator" element={<TaxonomyValidator />} />
+                        <Route path="/taxonomy-debug" element={<TaxonomyDebugPage />} />
+                        <Route element={<MainLayout />}>
+                          <Route path="/dashboard" element={
+                            <ProtectedRoute>
+                              <DashboardPage />
+                            </ProtectedRoute>
+                          } />
+                          <Route path="/register-asset" element={
+                            <ProtectedRoute>
+                              <AssetRegistrationWrapper />
+                            </ProtectedRoute>
+                          } />
+                          <Route path="/search-assets" element={
+                            <ProtectedRoute>
+                              <SearchAssetsPage />
+                            </ProtectedRoute>
+                          } />
+                          <Route path="/assets/:id" element={
+                            <ProtectedRoute>
+                              <AssetDetailPage />
+                            </ProtectedRoute>
+                          } />
+                          <Route path="/" element={<RootRedirect />} />
+                        </Route>
+                      </Routes>
+                    </Router>
+                  </TaxonomyInitProvider>
+                </AuthProvider>
+              </NotificationsProvider>
             </FeedbackProvider>
           </ErrorProvider>
         </ThemeProvider>
