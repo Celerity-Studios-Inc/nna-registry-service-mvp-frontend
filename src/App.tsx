@@ -20,6 +20,7 @@ import ErrorBoundary from './components/common/ErrorBoundary';
 import GlobalErrorHandler from './components/common/GlobalErrorHandler';
 import TestComponent from './components/common/TestComponent';
 import ApiRouteAlert from './components/common/ApiRouteAlert';
+import TaxonomyValidator from './components/TaxonomyValidator';
 
 // Create a theme instance
 const theme = createTheme({
@@ -135,6 +136,7 @@ const App: React.FC = () => {
                     <Route path="/connect" element={<ConnectivityHelp />} />
                     <Route path="/help" element={<ConnectivityHelp />} />
                     <Route path="/error-test" element={<ErrorTestPage />} />
+                    <Route path="/taxonomy-validator" element={<TaxonomyValidator />} />
                     <Route element={<MainLayout />}>
                       <Route path="/dashboard" element={
                         <ProtectedRoute>

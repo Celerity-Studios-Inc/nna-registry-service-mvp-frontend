@@ -22,6 +22,7 @@ const navigationItems = [
   { text: 'Organize Assets', icon: <ViewListIcon />, path: '/organize-assets' },
   { text: 'Collections', icon: <CollectionsIcon />, path: '/collections' },
   { text: 'Taxonomy Browser', icon: <CategoryIcon />, path: '/taxonomy' },
+  { text: 'Taxonomy Validator', icon: <CategoryIcon />, path: '/taxonomy-validator' },
   { text: 'Asset Analytics', icon: <DataObjectIcon />, path: '/asset-analytics' },
 ];
 
