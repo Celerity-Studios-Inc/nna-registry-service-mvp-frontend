@@ -2,6 +2,8 @@ import React, { useEffect } from 'react';
 import './App.css';
 import './styles/ErrorHandling.css';
 import './styles/TaxonomyExample.css';
+import './styles/Feedback.css';
+import './styles/ErrorBoundary.css';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider, createTheme, StyledEngineProvider } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
@@ -20,7 +22,8 @@ import MainLayout from './components/layout/MainLayout';
 import { NotificationsProvider } from './contexts/NotificationsContext';
 import { ErrorProvider } from './contexts/ErrorContext';
 import { FeedbackProvider } from './contexts/FeedbackContext';
-import ErrorBoundary from './components/common/ErrorBoundary';
+import FeedbackDisplay from './components/feedback/FeedbackDisplay';
+import ErrorBoundary from './components/error/ErrorBoundary';
 import GlobalErrorHandler from './components/common/GlobalErrorHandler';
 import TestComponent from './components/common/TestComponent';
 import ApiRouteAlert from './components/common/ApiRouteAlert';
@@ -185,6 +188,7 @@ const App: React.FC = () => {
                         </Route>
                       </Routes>
                     </Router>
+                    <FeedbackDisplay />
                   </TaxonomyInitProvider>
                 </AuthProvider>
               </NotificationsProvider>
