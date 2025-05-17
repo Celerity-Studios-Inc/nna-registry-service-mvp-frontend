@@ -2,9 +2,9 @@
 
 ## Pre-Deployment Verification
 
-- [ ] Run `node scripts/test-all-mappings.js` to verify all mappings
-- [ ] Verify W.BCH.SUN.001 maps correctly to 5.004.003.001
-- [ ] Verify S.POP.HPM.001 maps correctly to 2.001.007.001
+- [x] Run `node scripts/test-all-mappings.js` to verify all mappings
+- [x] Verify W.BCH.SUN.001 maps correctly to 5.004.003.001
+- [x] Verify S.POP.HPM.001 maps correctly to 2.001.007.001
 - [ ] Test the asset registration flow for all 10 MVP layers
 - [ ] Check the taxonomy validator for all layers
 - [ ] Review console for any errors or warnings
@@ -13,9 +13,9 @@
 ## Deployment Steps
 
 1. **Merge the Branch**
-   - [ ] Create pull request from `flattened-taxonomy` to `main`
-   - [ ] Get code review approval
-   - [ ] Merge the PR
+   - [x] Create pull request from `flattened-taxonomy` to `main`
+   - [x] Get code review approval
+   - [x] Merge the PR
 
 2. **Deploy to Staging**
    - [ ] Deploy to staging environment
