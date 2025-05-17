@@ -17,6 +17,8 @@ import ApiDebugPage from './pages/ApiDebugPage';
 import ConnectivityHelp from './pages/ConnectivityHelp';
 import ErrorTestPage from './pages/ErrorTestPage';
 import TaxonomyDebugPage from './pages/TaxonomyDebugPage';
+import TaxonomyDebugger from './components/debug/TaxonomyDebugger';
+import './styles/TaxonomyDebugger.css';
 import { AuthProvider } from './contexts/AuthContext';
 import MainLayout from './components/layout/MainLayout';
 import { NotificationsProvider } from './contexts/NotificationsContext';
@@ -34,10 +36,12 @@ import TaxonomyExample from './components/examples/TaxonomyExample';
 
 // Force initialization of the flattened taxonomy service is now handled by TaxonomyInitProvider
 import { taxonomyService } from './services/simpleTaxonomyService';
-import { logger } from './utils/logger';
+import { logger, LogLevel, LogCategory } from './utils/logger';
+import LogViewer from './components/debug/LogViewer';
+import './styles/LogViewer.css';
 
 // Log the import of taxonomy service, but let the TaxonomyInitProvider handle initialization
-logger.info('Taxonomy service imported in App.tsx');
+logger.taxonomy(LogLevel.INFO, 'Taxonomy service imported in App.tsx');
 
 // Create a theme instance
 const theme = createTheme({

@@ -1,0 +1,170 @@
+.log-viewer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  background-color: rgba(0, 0, 0, 0.9);
+  color: #fff;
+  font-family: monospace;
+  max-height: 50vh;
+  display: flex;
+  flex-direction: column;
+  transition: max-height 0.3s ease;
+}
+
+.log-viewer.collapsed {
+  max-height: 40px;
+}
+
+.log-viewer-header {
+  padding: 10px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background-color: #222;
+  border-bottom: 1px solid #444;
+}
+
+.log-viewer-header h3 {
+  margin: 0;
+  flex: 1;
+}
+
+.log-viewer-toggle {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  padding: 5px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.log-viewer-toggle:hover {
+  background-color: #0069d9;
+}
+
+.log-viewer-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.log-filter {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.log-filter select {
+  background-color: #333;
+  color: #fff;
+  border: 1px solid #555;
+  padding: 4px;
+  border-radius: 4px;
+}
+
+.auto-refresh-button,
+.clear-logs-button,
+.refresh-button {
+  background-color: #333;
+  color: #fff;
+  border: 1px solid #555;
+  padding: 4px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.auto-refresh-button:hover,
+.clear-logs-button:hover,
+.refresh-button:hover {
+  background-color: #444;
+}
+
+.auto-refresh-button.active {
+  background-color: #28a745;
+  border-color: #28a745;
+}
+
+.clear-logs-button {
+  background-color: #dc3545;
+  border-color: #dc3545;
+}
+
+.log-viewer-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0;
+}
+
+.log-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.log-table th {
+  position: sticky;
+  top: 0;
+  background-color: #222;
+  padding: 8px;
+  text-align: left;
+  border-bottom: 1px solid #444;
+}
+
+.log-table td {
+  padding: 6px 8px;
+  border-bottom: 1px solid #444;
+  vertical-align: top;
+}
+
+.log-time {
+  white-space: nowrap;
+  width: 90px;
+}
+
+.log-level {
+  width: 60px;
+  white-space: nowrap;
+}
+
+.log-category {
+  width: 80px;
+  white-space: nowrap;
+}
+
+.log-message {
+  word-break: break-word;
+}
+
+.log-data {
+  margin-top: 5px;
+  padding: 5px;
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  white-space: pre-wrap;
+  font-size: 11px;
+}
+
+.log-level-debug {
+  color: #8a8a8a;
+}
+
+.log-level-info {
+  color: #17a2b8;
+}
+
+.log-level-warn {
+  color: #ffc107;
+}
+
+.log-level-error {
+  color: #dc3545;
+}
+
+.no-logs {
+  padding: 20px;
+  text-align: center;
+  font-style: italic;
+  color: #999;
+}

@@ -8,7 +8,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { taxonomyService } from '../services/simpleTaxonomyService';
 import { waitForTaxonomyInit } from '../services/taxonomyInitializer';
-import { logger } from '../utils/logger';
+import { taxonomyErrorRecovery } from '../services/taxonomyErrorRecovery';
+import { logger, LogLevel, LogCategory } from '../utils/logger';
 import { useFeedback } from '../contexts/FeedbackContext';
 
 interface TaxonomyCategory {
@@ -96,18 +97,18 @@ export const useTaxonomy = (options: UseTaxonomyOptions = {}): UseTaxonomyResult
   const showErrorFeedback = useCallback((message: string, error?: any) => {
     if (showFeedback) {
       feedback.addFeedback('error', message, 5000);
-      logger.error(message, error);
+      logger.taxonomy(LogLevel.ERROR, message, error);
     } else {
-      logger.error(message, error);
+      logger.taxonomy(LogLevel.ERROR, message, error);
     }
   }, [feedback, showFeedback]);
 
   const showSuccessFeedback = useCallback((message: string) => {
     if (showFeedback) {
       feedback.addFeedback('success', message, 3000);
-      logger.info(message);
+      logger.taxonomy(LogLevel.INFO, message);
     } else {
-      logger.info(message);
+      logger.taxonomy(LogLevel.INFO, message);
     }
   }, [feedback, showFeedback]);
 
@@ -123,7 +124,7 @@ export const useTaxonomy = (options: UseTaxonomyOptions = {}): UseTaxonomyResult
       await waitForTaxonomyInit();
 
       const layerCategories = taxonomyService.getCategories(layer);
-      logger.info(`Loaded ${layerCategories.length} categories for layer ${layer}`);
+      logger.taxonomy(LogLevel.INFO, `Loaded ${layerCategories.length} categories for layer ${layer}`);
 
       setCategories(layerCategories);
 
@@ -138,7 +139,7 @@ export const useTaxonomy = (options: UseTaxonomyOptions = {}): UseTaxonomyResult
       }
     } catch (error) {
       const errorMessage = `Failed to load categories for layer ${layer}`;
-      logger.error(errorMessage, error);
+      logger.taxonomy(LogLevel.ERROR, errorMessage, error);
       setCategoryError(error instanceof Error ? error : new Error(String(error)));
 
       // Show error feedback
@@ -146,21 +147,12 @@ export const useTaxonomy = (options: UseTaxonomyOptions = {}): UseTaxonomyResult
 
       // Try to use any previously loaded categories if available
       if (categories.length === 0) {
-        // Add fallback data for critical layers
-        if (layer === 'S') {
-          setCategories([
-            { code: 'POP', numericCode: '004', name: 'Pop' },
-            { code: 'RCK', numericCode: '005', name: 'Rock' },
-            { code: 'HIP', numericCode: '006', name: 'Hip Hop' }
-          ]);
-          showSuccessFeedback('Using fallback data for Song layer categories');
-        } else if (layer === 'W') {
-          setCategories([
-            { code: 'BCH', numericCode: '004', name: 'Beach' },
-            { code: 'CST', numericCode: '005', name: 'Coast' },
-            { code: 'DCL', numericCode: '006', name: 'Dance Club' }
-          ]);
-          showSuccessFeedback('Using fallback data for World layer categories');
+        // Use the error recovery service to get fallback data
+        const fallbackCategories = taxonomyErrorRecovery.getFallbackCategories(layer);
+        
+        if (fallbackCategories.length > 0) {
+          setCategories(fallbackCategories);
+          showSuccessFeedback(`Using fallback data for ${layer} layer categories`);
         }
       }
     } finally {
@@ -180,7 +172,7 @@ export const useTaxonomy = (options: UseTaxonomyOptions = {}): UseTaxonomyResult
       await waitForTaxonomyInit();
 
       const categorySubcategories = taxonomyService.getSubcategories(layer, category);
-      logger.info(`Loaded ${categorySubcategories.length} subcategories for ${layer}.${category}`);
+      logger.taxonomy(LogLevel.INFO, `Loaded ${categorySubcategories.length} subcategories for ${layer}.${category}`);
 
       setSubcategories(categorySubcategories);
 
@@ -195,7 +187,7 @@ export const useTaxonomy = (options: UseTaxonomyOptions = {}): UseTaxonomyResult
       }
     } catch (error) {
       const errorMessage = `Failed to load subcategories for ${layer}.${category}`;
-      logger.error(errorMessage, error);
+      logger.taxonomy(LogLevel.ERROR, errorMessage, error);
       setSubcategoryError(error instanceof Error ? error : new Error(String(error)));
 
       // Show error feedback
@@ -203,32 +195,19 @@ export const useTaxonomy = (options: UseTaxonomyOptions = {}): UseTaxonomyResult
 
       // Try to use any previously loaded subcategories if available
       if (subcategories.length === 0) {
-        // Add fallback data for critical categories
-        if (layer === 'S' && category === 'POP') {
-          setSubcategories([
-            { code: 'BPP', numericCode: '001', name: 'Bubblegum Pop' },
-            { code: 'ELP', numericCode: '002', name: 'Electro Pop' },
-            { code: 'HPM', numericCode: '003', name: 'Hip Pop Music' }
-          ]);
-          showSuccessFeedback('Using fallback data for Pop subcategories');
-        } else if (layer === 'W' && category === 'BCH') {
-          setSubcategories([
-            { code: 'SUN', numericCode: '003', name: 'Sunset' },
-            { code: 'FES', numericCode: '003', name: 'Festival' },
-            { code: 'TRO', numericCode: '002', name: 'Tropical' }
-          ]);
-          showSuccessFeedback('Using fallback data for Beach subcategories');
-        } else if (layer === 'S' && category === 'RCK') {
-          setSubcategories([
-            { code: 'BAS', numericCode: '001', name: 'Bass' }
-          ]);
-          showSuccessFeedback('Using fallback data for Rock subcategories');
+        // Use the error recovery service to get fallback data
+        const fallbackSubcategories = taxonomyErrorRecovery.getFallbackSubcategories(layer, category);
+        
+        if (fallbackSubcategories.length > 0) {
+          setSubcategories(fallbackSubcategories);
+          const categoryName = categories.find(cat => cat.code === category)?.name || category;
+          showSuccessFeedback(`Using fallback data for ${categoryName} subcategories`);
         }
       }
     } finally {
       setIsLoadingSubcategories(false);
     }
-  }, [subcategories, showErrorFeedback, showSuccessFeedback]);
+  }, [subcategories, categories, showErrorFeedback, showSuccessFeedback]);
 
   // Update HFN and MFA when selections change
   useEffect(() => {
@@ -247,20 +226,26 @@ export const useTaxonomy = (options: UseTaxonomyOptions = {}): UseTaxonomyResult
         // }
       } catch (error) {
         const errorMessage = `Failed to convert HFN to MFA for ${newHfn}`;
-        logger.error(errorMessage, error);
+        logger.taxonomy(LogLevel.ERROR, errorMessage, error);
 
         // Show error feedback for MFA conversion failures
         if (showFeedback) {
           showErrorFeedback(`${errorMessage}. Using fallback mapping if available.`, error);
         }
 
-        // Handle special cases for critical paths
-        if (selectedLayer === 'W' && selectedCategory === 'BCH' && selectedSubcategory === 'SUN') {
-          setMfa(`5.004.003.${sequential}${fileType ? `.${fileType}` : ''}`);
-          showSuccessFeedback('Using fallback mapping for Beach.Sunset');
-        } else if (selectedLayer === 'S' && selectedCategory === 'POP' && selectedSubcategory === 'HPM') {
-          setMfa(`2.004.003.${sequential}${fileType ? `.${fileType}` : ''}`);
-          showSuccessFeedback('Using fallback mapping for Pop.HipPopMusic');
+        // Use the error recovery service to get fallback MFA
+        const fallbackMfa = taxonomyErrorRecovery.getFallbackMFA(
+          selectedLayer, selectedCategory, selectedSubcategory, sequential, fileType || undefined
+        );
+        
+        if (fallbackMfa) {
+          setMfa(fallbackMfa);
+          
+          // Get names for better user feedback
+          const categoryName = categories.find(cat => cat.code === selectedCategory)?.name || selectedCategory;
+          const subcategoryName = subcategories.find(subcat => subcat.code === selectedSubcategory)?.name || selectedSubcategory;
+          
+          showSuccessFeedback(`Using fallback mapping for ${categoryName}.${subcategoryName}`);
         } else {
           setMfa('');
           showErrorFeedback('Could not generate a valid NNA Address for the selected combination');
@@ -270,7 +255,8 @@ export const useTaxonomy = (options: UseTaxonomyOptions = {}): UseTaxonomyResult
       setHfn('');
       setMfa('');
     }
-  }, [selectedLayer, selectedCategory, selectedSubcategory, sequential, fileType, showErrorFeedback, showSuccessFeedback]);
+  }, [selectedLayer, selectedCategory, selectedSubcategory, sequential, fileType, 
+    categories, subcategories, showErrorFeedback, showSuccessFeedback]);
 
   // Load categories when layer changes
   useEffect(() => {
