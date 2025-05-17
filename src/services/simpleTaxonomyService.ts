@@ -107,7 +107,7 @@ class SimpleTaxonomyService {
       return results;
     } catch (error) {
       console.error(`Error mapping categories for ${layer}:`, error);
-      logger.error(`Error mapping categories: ${error.message}`);
+      logger.error(`Error mapping categories: ${error instanceof Error ? error.message : 'Unknown error'}`);
       return [];
     }
   }
@@ -161,7 +161,7 @@ class SimpleTaxonomyService {
       return results;
     } catch (error) {
       console.error(`Error mapping subcategories for ${layer}.${categoryCode}:`, error);
-      logger.error(`Error mapping subcategories: ${error.message}`);
+      logger.error(`Error mapping subcategories: ${error instanceof Error ? error.message : 'Unknown error'}`);
       return [];
     }
   }
@@ -210,7 +210,7 @@ class SimpleTaxonomyService {
       logger.debug(`Converted HFN to MFA: ${hfn} -> ${mfa}`);
       return mfa;
     } catch (error) {
-      logger.error(`Error converting HFN to MFA:`, error);
+      logger.error(`Error converting HFN to MFA: ${error instanceof Error ? error.message : 'Unknown error'}`);
       return '';
     }
   }
