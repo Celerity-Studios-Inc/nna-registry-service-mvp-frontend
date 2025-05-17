@@ -31,10 +31,12 @@ import assetService from '../api/assetService';
 import { formatNNAAddressForDisplay } from '../api/codeMapping.enhanced';
 import taxonomyMapper from '../api/taxonomyMapper';
 import LayerSelection from '../components/asset/LayerSelection';
+import LayerSelector from '../components/asset/LayerSelector';
 import TaxonomySelection from '../components/asset/TaxonomySelection';
 import SimpleTaxonomySelection from '../components/asset/SimpleTaxonomySelection';
 import { taxonomyService } from '../services/simpleTaxonomyService';
 import '../styles/SimpleTaxonomySelection.css';
+import '../styles/LayerSelector.css';
 import FileUpload from '../components/asset/FileUpload';
 import ReviewSubmit from '../components/asset/ReviewSubmit';
 import TrainingDataCollection from '../components/asset/TrainingDataCollection';
@@ -901,59 +903,43 @@ const RegisterAssetPage: React.FC = () => {
     switch (adjustedStep) {
       case 0:
         return (
-          <LayerSelection
-            onLayerSelect={handleLayerSelect}
-            selectedLayerCode={watchLayer}
+          <LayerSelector
+            selectedLayer={watchLayer}
+            onLayerSelect={(layer) => handleLayerSelect({ code: layer, name: '', id: '' })}
           />
         );
       case 1:
         return (
-          <>
-            {watchLayer === 'W' ? (
-              <SimpleTaxonomySelection
-                layer={watchLayer}
-                selectedCategory={watchCategoryCode}
-                selectedSubcategory={watchSubcategoryCode}
-                onCategorySelect={(categoryCode) => {
-                  const category = taxonomyService.getCategories(watchLayer).find(c => c.code === categoryCode);
-                  if (category) {
-                    handleCategorySelect({
-                      id: categoryCode,
-                      code: categoryCode,
-                      name: category.name,
-                      numericCode: parseInt(category.numericCode)
-                    });
-                  }
-                }}
-                onSubcategorySelect={(subcategoryCode) => {
-                  const subcategories = taxonomyService.getSubcategories(watchLayer, watchCategoryCode);
-                  const subcategory = subcategories.find(s => s.code === subcategoryCode);
+          <SimpleTaxonomySelection
+            layer={watchLayer}
+            selectedCategory={watchCategoryCode}
+            selectedSubcategory={watchSubcategoryCode}
+            onCategorySelect={(categoryCode) => {
+              const category = taxonomyService.getCategories(watchLayer).find(c => c.code === categoryCode);
+              if (category) {
+                handleCategorySelect({
+                  id: categoryCode,
+                  code: categoryCode,
+                  name: category.name,
+                  numericCode: parseInt(category.numericCode)
+                });
+              }
+            }}
+            onSubcategorySelect={(subcategoryCode) => {
+              const subcategories = taxonomyService.getSubcategories(watchLayer, watchCategoryCode);
+              const subcategory = subcategories.find(s => s.code === subcategoryCode);
 
-                  if (subcategory) {
-                    // Add an id field to match the SubcategoryOption interface
-                    handleSubcategorySelect({
-                      id: `${watchCategoryCode}_${subcategoryCode}`,
-                      code: subcategory.code,
-                      name: subcategory.name,
-                      numericCode: parseInt(subcategory.numericCode)
-                    });
-                  }
-                }}
-              />
-            ) : (
-              <TaxonomySelection
-                layerCode={watchLayer}
-                onCategorySelect={handleCategorySelect}
-                onSubcategorySelect={handleSubcategorySelect}
-                selectedCategoryCode={watchCategoryCode}
-                selectedSubcategoryCode={watchSubcategoryCode}
-                subcategoryNumericCode={getValues('subcategoryNumericCode')}
-                categoryName={getValues('categoryName')}
-                subcategoryName={getValues('subcategoryName')}
-                onNNAAddressChange={handleNNAAddressChange}
-              />
-            )}
-          </>
+              if (subcategory) {
+                // Add an id field to match the SubcategoryOption interface
+                handleSubcategorySelect({
+                  id: `${watchCategoryCode}_${subcategoryCode}`,
+                  code: subcategory.code,
+                  name: subcategory.name,
+                  numericCode: parseInt(subcategory.numericCode)
+                });
+              }
+            }}
+          />
         );
       case 2:
         // For composite assets, display the component selection form

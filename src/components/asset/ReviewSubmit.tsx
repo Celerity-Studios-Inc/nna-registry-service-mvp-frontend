@@ -321,7 +321,7 @@ const ReviewSubmit: React.FC<ReviewSubmitProps> = ({
             </List>
           </Paper>
           
-          {/* NNA Address Information */}
+          {/* NNA Address Information - Enhanced */}
           <Paper variant="outlined" sx={{ p: 2, mb: 3 }}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
               <Typography variant="subtitle1" fontWeight="bold">
@@ -332,45 +332,66 @@ const ReviewSubmit: React.FC<ReviewSubmitProps> = ({
               </IconButton>
             </Box>
             <Divider sx={{ mb: 2 }} />
-            
-            <List disablePadding>
-              <ListItem disablePadding sx={{ mb: 1 }}>
-                <ListItemIcon sx={{ minWidth: 40 }}>
-                  <CodeIcon />
-                </ListItemIcon>
-                <ListItemText
-                  primary="Human Friendly Name (HFN)"
-                  secondary={displayHfn || 'Not generated yet'}
-                  primaryTypographyProps={{ variant: 'body2', color: 'text.secondary' }}
-                  secondaryTypographyProps={{ variant: 'body1', fontWeight: 'bold' }}
-                />
-              </ListItem>
-              
-              <ListItem disablePadding sx={{ mb: 1 }}>
-                <ListItemIcon sx={{ minWidth: 40 }}>
-                  <CodeIcon />
-                </ListItemIcon>
-                <ListItemText
-                  primary="Machine Friendly Address (MFA)"
-                  secondary={displayMfa || 'Not generated yet'}
-                  primaryTypographyProps={{ variant: 'body2', color: 'text.secondary' }}
-                  secondaryTypographyProps={{ variant: 'body1', fontFamily: 'monospace' }}
-                />
-                {/* Special case warnings are no longer needed with enhanced formatter */}
-              </ListItem>
-              
-              <ListItem disablePadding sx={{ mb: 1 }}>
-                <ListItemIcon sx={{ minWidth: 40 }}>
-                  <CodeIcon />
-                </ListItemIcon>
-                <ListItemText
-                  primary="Sequential Number"
-                  secondary={sequential || 'Not assigned yet'}
-                  primaryTypographyProps={{ variant: 'body2', color: 'text.secondary' }}
-                  secondaryTypographyProps={{ variant: 'body1' }}
-                />
-              </ListItem>
-            </List>
+
+            <Box sx={{ mb: 3, p: 2, bgcolor: '#f0f7ff', borderRadius: 1, border: '1px solid #d6e4ff' }}>
+              <Typography variant="subtitle2" align="center" gutterBottom>
+                Human-Friendly Name (HFN)
+              </Typography>
+              <Typography variant="h5" align="center" fontWeight="bold" gutterBottom sx={{ color: '#1976d2' }}>
+                {displayHfn || 'Not generated yet'}
+              </Typography>
+
+              <Box sx={{ mt: 3 }}>
+                <Typography variant="subtitle2" align="center" gutterBottom>
+                  Machine-Friendly Address (MFA)
+                </Typography>
+                <Typography variant="h5" align="center" fontFamily="monospace" gutterBottom sx={{ color: '#4a148c' }}>
+                  {displayMfa || 'Not generated yet'}
+                </Typography>
+              </Box>
+            </Box>
+
+            <Grid container spacing={2}>
+              <Grid item xs={4}>
+                <Paper variant="outlined" sx={{ p: 1, textAlign: 'center' }}>
+                  <Typography variant="caption" color="text.secondary">
+                    Layer
+                  </Typography>
+                  <Typography variant="body1" fontWeight="bold">
+                    {layer || '-'}
+                  </Typography>
+                </Paper>
+              </Grid>
+              <Grid item xs={4}>
+                <Paper variant="outlined" sx={{ p: 1, textAlign: 'center' }}>
+                  <Typography variant="caption" color="text.secondary">
+                    Category
+                  </Typography>
+                  <Typography variant="body1" fontWeight="bold">
+                    {categoryCode || '-'}
+                  </Typography>
+                </Paper>
+              </Grid>
+              <Grid item xs={4}>
+                <Paper variant="outlined" sx={{ p: 1, textAlign: 'center' }}>
+                  <Typography variant="caption" color="text.secondary">
+                    Subcategory
+                  </Typography>
+                  <Typography variant="body1" fontWeight="bold">
+                    {subcategoryCode || '-'}
+                  </Typography>
+                </Paper>
+              </Grid>
+            </Grid>
+
+            <Box sx={{ mt: 2, textAlign: 'center' }}>
+              <Typography variant="caption" color="text.secondary">
+                Sequential Number
+              </Typography>
+              <Typography variant="body1" fontWeight="bold">
+                {sequential || '001'}
+              </Typography>
+            </Box>
           </Paper>
         </Grid>
         
@@ -512,7 +533,7 @@ const ReviewSubmit: React.FC<ReviewSubmitProps> = ({
             </Paper>
           )}
           
-          {/* NNA Address Information moved below Asset Files */}
+          {/* Enhanced NNA Address Information */}
           <Paper variant="outlined" sx={{ p: 2, mb: 3 }}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
               <Typography variant="subtitle1" fontWeight="bold">
@@ -523,45 +544,66 @@ const ReviewSubmit: React.FC<ReviewSubmitProps> = ({
               </IconButton>
             </Box>
             <Divider sx={{ mb: 2 }} />
-            
-            <List disablePadding>
-              <ListItem disablePadding sx={{ mb: 1 }}>
-                <ListItemIcon sx={{ minWidth: 40 }}>
-                  <CodeIcon />
-                </ListItemIcon>
-                <ListItemText
-                  primary="Human Friendly Name (HFN)"
-                  secondary={displayHfn || 'Not generated yet'}
-                  primaryTypographyProps={{ variant: 'body2', color: 'text.secondary' }}
-                  secondaryTypographyProps={{ variant: 'body1', fontWeight: 'bold' }}
-                />
-              </ListItem>
-              
-              <ListItem disablePadding sx={{ mb: 1 }}>
-                <ListItemIcon sx={{ minWidth: 40 }}>
-                  <CodeIcon />
-                </ListItemIcon>
-                <ListItemText
-                  primary="Machine Friendly Address (MFA)"
-                  secondary={displayMfa || 'Not generated yet'}
-                  primaryTypographyProps={{ variant: 'body2', color: 'text.secondary' }}
-                  secondaryTypographyProps={{ variant: 'body1', fontFamily: 'monospace' }}
-                />
-                {/* Special case warnings are no longer needed with enhanced formatter */}
-              </ListItem>
-              
-              <ListItem disablePadding sx={{ mb: 1 }}>
-                <ListItemIcon sx={{ minWidth: 40 }}>
-                  <CodeIcon />
-                </ListItemIcon>
-                <ListItemText
-                  primary="Sequential Number"
-                  secondary={sequential || 'Not assigned yet'}
-                  primaryTypographyProps={{ variant: 'body2', color: 'text.secondary' }}
-                  secondaryTypographyProps={{ variant: 'body1' }}
-                />
-              </ListItem>
-            </List>
+
+            <Box sx={{ mb: 3, p: 2, bgcolor: '#f0f7ff', borderRadius: 1, border: '1px solid #d6e4ff' }}>
+              <Typography variant="subtitle2" align="center" gutterBottom>
+                Human-Friendly Name (HFN)
+              </Typography>
+              <Typography variant="h5" align="center" fontWeight="bold" gutterBottom sx={{ color: '#1976d2' }}>
+                {displayHfn || 'Not generated yet'}
+              </Typography>
+
+              <Box sx={{ mt: 3 }}>
+                <Typography variant="subtitle2" align="center" gutterBottom>
+                  Machine-Friendly Address (MFA)
+                </Typography>
+                <Typography variant="h5" align="center" fontFamily="monospace" gutterBottom sx={{ color: '#4a148c' }}>
+                  {displayMfa || 'Not generated yet'}
+                </Typography>
+              </Box>
+            </Box>
+
+            <Grid container spacing={2}>
+              <Grid item xs={4}>
+                <Paper variant="outlined" sx={{ p: 1, textAlign: 'center' }}>
+                  <Typography variant="caption" color="text.secondary">
+                    Layer
+                  </Typography>
+                  <Typography variant="body1" fontWeight="bold">
+                    {layer || '-'}
+                  </Typography>
+                </Paper>
+              </Grid>
+              <Grid item xs={4}>
+                <Paper variant="outlined" sx={{ p: 1, textAlign: 'center' }}>
+                  <Typography variant="caption" color="text.secondary">
+                    Category
+                  </Typography>
+                  <Typography variant="body1" fontWeight="bold">
+                    {categoryCode || '-'}
+                  </Typography>
+                </Paper>
+              </Grid>
+              <Grid item xs={4}>
+                <Paper variant="outlined" sx={{ p: 1, textAlign: 'center' }}>
+                  <Typography variant="caption" color="text.secondary">
+                    Subcategory
+                  </Typography>
+                  <Typography variant="body1" fontWeight="bold">
+                    {subcategoryCode || '-'}
+                  </Typography>
+                </Paper>
+              </Grid>
+            </Grid>
+
+            <Box sx={{ mt: 2, textAlign: 'center' }}>
+              <Typography variant="caption" color="text.secondary">
+                Sequential Number
+              </Typography>
+              <Typography variant="body1" fontWeight="bold">
+                {sequential || '001'}
+              </Typography>
+            </Box>
           </Paper>
         </Grid>
       </Grid>
