@@ -10,7 +10,7 @@ interface LayerInfo {
 
 interface LayerSelectorProps {
   selectedLayer: string;
-  onLayerSelect: (layer: string) => void;
+  onLayerSelect: (layer: string, isDoubleClick?: boolean) => void;
 }
 
 const LayerSelector: React.FC<LayerSelectorProps> = ({ selectedLayer, onLayerSelect }) => {
@@ -27,11 +27,21 @@ const LayerSelector: React.FC<LayerSelectorProps> = ({ selectedLayer, onLayerSel
     { code: 'R', name: 'Rights', description: 'Provenance and rights tracking', numericCode: '10' }
   ];
 
-  // Add debug click handler
+  // Enhanced click handler with explicit double-click support
   const handleLayerClick = (layerCode: string) => {
     console.log('Layer card clicked:', layerCode);
     onLayerSelect(layerCode);
   };
+
+  // Separate double-click handler to ensure it works properly
+  const handleLayerDoubleClick = (layerCode: string) => {
+    console.log('Layer card DOUBLE-clicked:', layerCode);
+    // Call with true flag to indicate double-click
+    onLayerSelect(layerCode, true);
+  };
+
+  // Force debug logging for clicked layers
+  console.log("LAYERS FOR SELECTION:", layers.map(l => l.code).join(', '));
 
   return (
     <div className="layer-selector">
@@ -42,11 +52,16 @@ const LayerSelector: React.FC<LayerSelectorProps> = ({ selectedLayer, onLayerSel
             key={layer.code}
             className={`layer-card ${selectedLayer === layer.code ? 'selected' : ''}`}
             onClick={() => handleLayerClick(layer.code)}
+            onDoubleClick={() => handleLayerDoubleClick(layer.code)}
             // Add tabIndex and role for better accessibility
             tabIndex={0}
             role="button"
             aria-pressed={selectedLayer === layer.code}
-            style={{ cursor: 'pointer' }}
+            style={{
+              cursor: 'pointer',
+              boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+              border: selectedLayer === layer.code ? '2px solid #1976d2' : '1px solid #ddd'
+            }}
           >
             <div className="layer-header">
               <span className="layer-code">{layer.code}</span>

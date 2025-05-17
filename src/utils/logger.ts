@@ -1,11 +1,30 @@
 /**
  * Logger utility for consistent logging
+ * Enhanced with timestamp and persistence options
  */
+
+// Log levels
+enum LogLevel {
+  DEBUG = 'DEBUG',
+  INFO = 'INFO',
+  WARN = 'WARN',
+  ERROR = 'ERROR'
+}
+
 class Logger {
   private static instance: Logger;
-  private debugMode: boolean = false;
+  // Flag to enable/disable debug logs in production
+  // Check both environment and localStorage to allow enabling in production
+  private debugMode: boolean = process.env.NODE_ENV !== 'production' ||
+    localStorage.getItem('enableDebugLogs') === 'true';
 
-  private constructor() {}
+  private constructor() {
+    // Initialize with localStorage setting if available
+    if (localStorage.getItem('enableDebugLogs') === 'true') {
+      this.debugMode = true;
+      console.log('[Logger] Debug logging enabled from localStorage');
+    }
+  }
 
   public static getInstance(): Logger {
     if (!Logger.instance) {
@@ -14,31 +33,50 @@ class Logger {
     return Logger.instance;
   }
 
-  public enableDebug(): void {
+  public enableDebug(persist: boolean = false): void {
     this.debugMode = true;
-    console.log('Debug logging enabled');
+
+    // Optionally persist the setting
+    if (persist) {
+      localStorage.setItem('enableDebugLogs', 'true');
+    }
+
+    console.log('[Logger] Debug logging enabled');
   }
 
-  public disableDebug(): void {
+  public disableDebug(persist: boolean = false): void {
     this.debugMode = false;
+
+    // Optionally remove the persisted setting
+    if (persist) {
+      localStorage.removeItem('enableDebugLogs');
+    }
+
+    console.log('[Logger] Debug logging disabled');
+  }
+
+  // Format a log message with timestamp
+  private formatMessage(level: LogLevel, message: string): string {
+    const timestamp = new Date().toISOString();
+    return `[${timestamp}] [${level}] ${message}`;
   }
 
   public debug(message: string, ...args: any[]): void {
     if (this.debugMode) {
-      console.log(`[DEBUG] ${message}`, ...args);
+      console.debug(this.formatMessage(LogLevel.DEBUG, message), ...args);
     }
   }
 
   public info(message: string, ...args: any[]): void {
-    console.log(`[INFO] ${message}`, ...args);
+    console.info(this.formatMessage(LogLevel.INFO, message), ...args);
   }
 
   public warn(message: string, ...args: any[]): void {
-    console.warn(`[WARN] ${message}`, ...args);
+    console.warn(this.formatMessage(LogLevel.WARN, message), ...args);
   }
 
   public error(message: string, ...args: any[]): void {
-    console.error(`[ERROR] ${message}`, ...args);
+    console.error(this.formatMessage(LogLevel.ERROR, message), ...args);
   }
 }
 

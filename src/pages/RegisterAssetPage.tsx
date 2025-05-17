@@ -32,7 +32,13 @@ import { formatNNAAddressForDisplay } from '../api/codeMapping.enhanced';
 import taxonomyMapper from '../api/taxonomyMapper';
 import LayerSelector from '../components/asset/LayerSelector';
 import SimpleTaxonomySelection from '../components/asset/SimpleTaxonomySelection';
+// Force use of the simplified taxonomy service
 import { taxonomyService } from '../services/simpleTaxonomyService';
+// CRITICAL: Ensure the simplified taxonomy service is the source of truth
+console.log('Forcing RegisterAssetPage to use simplified taxonomy service', {
+  serviceType: 'simplified',
+  layerCount: Object.keys(taxonomyService.LAYER_LOOKUPS).length
+});
 import '../styles/SimpleTaxonomySelection.css';
 import '../styles/LayerSelector.css';
 import FileUpload from '../components/asset/FileUpload';

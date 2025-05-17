@@ -4,6 +4,10 @@ import './index.css';
 import App from './App';
 import { checkEnv } from './api/envCheck';
 
+// Pre-load taxonomy data
+import './taxonomyLookup';
+console.log('Taxonomy data pre-loaded in index.tsx');
+
 // Log environment variables on startup
 console.log('Application starting with environment:', checkEnv());
 

@@ -23,6 +23,20 @@ import TestComponent from './components/common/TestComponent';
 import ApiRouteAlert from './components/common/ApiRouteAlert';
 import TaxonomyValidator from './components/TaxonomyValidator';
 
+// Force initialization of the flattened taxonomy service
+// Import and initialize the simplified taxonomy service
+import { taxonomyService } from './services/simpleTaxonomyService';
+// Force pre-loading of the taxonomy data
+console.log('Initializing simplified taxonomy service...');
+// Pre-load some key taxonomies to ensure they're cached
+try {
+  const starCategories = taxonomyService.getCategories('S');
+  const worldCategories = taxonomyService.getCategories('W');
+  console.log(`Taxonomy service initialized with ${starCategories.length} Star categories and ${worldCategories.length} World categories`);
+} catch (err) {
+  console.error('Error pre-loading taxonomy data:', err);
+}
+
 // Create a theme instance
 const theme = createTheme({
   palette: {
