@@ -35,8 +35,33 @@ const LAYER_NUMERIC_CODES: Record<string, string> = {
   'B': '6', 'P': '7', 'T': '8', 'C': '9', 'R': '10'
 };
 
-// Import constants from the constants file for proper encapsulation
-import { LAYER_LOOKUPS, LAYER_SUBCATEGORIES } from '../taxonomyLookup/constants';
+// Layer lookups mapping
+const LAYER_LOOKUPS: Record<string, Record<string, { numericCode: string, name: string }>> = {
+  'W': W_LAYER_LOOKUP,
+  'S': S_LAYER_LOOKUP,
+  'G': G_LAYER_LOOKUP,
+  'L': L_LAYER_LOOKUP,
+  'M': M_LAYER_LOOKUP,
+  'B': B_LAYER_LOOKUP,
+  'P': P_LAYER_LOOKUP,
+  'T': T_LAYER_LOOKUP,
+  'C': C_LAYER_LOOKUP,
+  'R': R_LAYER_LOOKUP
+};
+
+// Layer subcategories mapping
+const LAYER_SUBCATEGORIES: Record<string, Record<string, string[]>> = {
+  'W': W_SUBCATEGORIES,
+  'S': S_SUBCATEGORIES,
+  'G': G_SUBCATEGORIES,
+  'L': L_SUBCATEGORIES,
+  'M': M_SUBCATEGORIES,
+  'B': B_SUBCATEGORIES,
+  'P': P_SUBCATEGORIES,
+  'T': T_SUBCATEGORIES,
+  'C': C_SUBCATEGORIES,
+  'R': R_SUBCATEGORIES
+};
 
 class SimpleTaxonomyService {
   /**

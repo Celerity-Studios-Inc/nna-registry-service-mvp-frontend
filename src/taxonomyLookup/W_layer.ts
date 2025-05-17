@@ -1,5 +1,5 @@
-// Manually created W layer lookup table
-// This ensures the W.BCH.SUN mapping is correct (numericCode: "003")
+// Complete lookup table for W (World) layer
+// Manually created to ensure the W.BCH.SUN mapping is correct (numericCode: "003")
 
 export const W_LAYER_LOOKUP = {
   // Categories
@@ -15,22 +15,42 @@ export const W_LAYER_LOOKUP = {
     "numericCode": "006",
     "name": "Dance Club"
   },
-  
+  "STG": {
+    "numericCode": "001",
+    "name": "Stage"
+  },
+  "URB": {
+    "numericCode": "002",
+    "name": "Urban"
+  },
+  "NAT": {
+    "numericCode": "003",
+    "name": "Nature"
+  },
+  "FAN": {
+    "numericCode": "007",
+    "name": "Fantasy"
+  },
+  "SCI": {
+    "numericCode": "008",
+    "name": "Sci-Fi"
+  },
+
   // Subcategories - Beach
   "BCH.SUN": {
-    "numericCode": "003", // Important: This specifically fixes the W.BCH.SUN issue
+    "numericCode": "003", // CRITICAL: This specifically ensures W.BCH.SUN -> 5.004.003.001
     "name": "Sunset"
   },
   "BCH.FES": {
-    "numericCode": "003",
+    "numericCode": "002",
     "name": "Festival"
   },
   "BCH.TRO": {
-    "numericCode": "002",
+    "numericCode": "001",
     "name": "Tropical"
   },
-  
-  // Add other subcategories as needed
+
+  // Subcategories - Coast
   "CST.FES": {
     "numericCode": "003",
     "name": "Festival"
@@ -39,6 +59,12 @@ export const W_LAYER_LOOKUP = {
     "numericCode": "004",
     "name": "Live"
   },
+  "CST.OCN": {
+    "numericCode": "001",
+    "name": "Ocean"
+  },
+
+  // Subcategories - Dance Club
   "DCL.CLB": {
     "numericCode": "001",
     "name": "Club"
@@ -46,6 +72,40 @@ export const W_LAYER_LOOKUP = {
   "DCL.NIT": {
     "numericCode": "002",
     "name": "Night"
+  },
+  "DCL.LED": {
+    "numericCode": "003",
+    "name": "LED"
+  },
+
+  // Subcategories - Stage
+  "STG.CNT": {
+    "numericCode": "001",
+    "name": "Concert"
+  },
+  "STG.STD": {
+    "numericCode": "002",
+    "name": "Stadium"
+  },
+
+  // Subcategories - Urban
+  "URB.CTY": {
+    "numericCode": "001",
+    "name": "City"
+  },
+  "URB.STR": {
+    "numericCode": "002",
+    "name": "Street"
+  },
+
+  // Subcategories - Nature
+  "NAT.FOR": {
+    "numericCode": "001",
+    "name": "Forest"
+  },
+  "NAT.DST": {
+    "numericCode": "002",
+    "name": "Desert"
   }
 };
 
@@ -56,11 +116,27 @@ export const W_SUBCATEGORIES = {
     "BCH.TRO"
   ],
   "CST": [
+    "CST.OCN",
     "CST.FES",
     "CST.LIV"
   ],
   "DCL": [
     "DCL.CLB",
-    "DCL.NIT"
-  ]
+    "DCL.NIT",
+    "DCL.LED"
+  ],
+  "STG": [
+    "STG.CNT",
+    "STG.STD"
+  ],
+  "URB": [
+    "URB.CTY",
+    "URB.STR"
+  ],
+  "NAT": [
+    "NAT.FOR",
+    "NAT.DST"
+  ],
+  "FAN": [],
+  "SCI": []
 };
