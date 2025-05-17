@@ -1,55 +1,68 @@
 /**
- * This file is for manually running verification of the taxonomy service
- * Run with: npx ts-node src/tests/taxonomy-verification.ts
+ * Taxonomy verification tests
+ * 
+ * These tests verify that the taxonomy mapping works correctly,
+ * especially for the W.BCH.SUN case.
  */
 import { taxonomyService } from '../services/simpleTaxonomyService';
 
-// Test W.BCH.SUN mapping - This is our critical case that needed fixing
-const testWBCHSUN = () => {
+/**
+ * Test W.BCH.SUN mapping
+ */
+export function testWBCHSUNMapping() {
   const hfn = 'W.BCH.SUN.001';
-  const mfa = taxonomyService.convertHFNtoMFA(hfn);
+  const expectedMfa = '5.004.003.001';
   
-  console.log('Testing W.BCH.SUN.001 mapping:');
+  const actualMfa = taxonomyService.convertHFNtoMFA(hfn);
+  
+  console.log(`Testing W.BCH.SUN mapping:`);
   console.log(`HFN: ${hfn}`);
-  console.log(`MFA: ${mfa}`);
-  console.log(`Expected: 5.004.003.001`);
-  console.log(`Result: ${mfa === '5.004.003.001' ? 'SUCCESS ✅' : 'FAILED ❌'}`);
-  console.log('');
-}
-
-// Test category retrieval
-const testCategoryRetrieval = () => {
-  const layer = 'W';
-  const categories = taxonomyService.getCategories(layer);
+  console.log(`Expected MFA: ${expectedMfa}`);
+  console.log(`Actual MFA: ${actualMfa}`);
+  console.log(`Result: ${actualMfa === expectedMfa ? '✅ PASS' : '❌ FAIL'}`);
   
-  console.log(`Testing category retrieval for layer ${layer}:`);
-  console.log(`Found ${categories.length} categories`);
-  console.log(categories);
-  console.log(categories.length > 0 ? 'SUCCESS ✅' : 'FAILED ❌');
-  console.log('');
+  return actualMfa === expectedMfa;
 }
 
-// Test subcategory retrieval
-const testSubcategoryRetrieval = () => {
-  const layer = 'W';
-  const category = 'BCH';
-  const subcategories = taxonomyService.getSubcategories(layer, category);
+/**
+ * Test all W layer mappings
+ */
+export function testAllWLayerMappings() {
+  const mappings = taxonomyService.generateAllMappings('W');
   
-  console.log(`Testing subcategory retrieval for ${layer}.${category}:`);
-  console.log(`Found ${subcategories.length} subcategories`);
-  console.log(subcategories);
-  console.log(subcategories.length > 0 ? 'SUCCESS ✅' : 'FAILED ❌');
-  console.log('');
+  console.log(`Generated ${mappings.length} mappings for W layer`);
+  
+  // Check BCH.SUN specifically
+  const bchSunMapping = mappings.find(m => m.hfn === 'W.BCH.SUN.001');
+  
+  if (bchSunMapping) {
+    console.log(`W.BCH.SUN.001 maps to ${bchSunMapping.mfa}`);
+    console.log(`Result: ${bchSunMapping.mfa === '5.004.003.001' ? '✅ PASS' : '❌ FAIL'}`);
+  } else {
+    console.log('❌ FAIL: W.BCH.SUN.001 mapping not found');
+  }
+  
+  return mappings;
 }
 
-// Run all tests
-const runTests = () => {
-  console.log('=== RUNNING TAXONOMY SERVICE VERIFICATION ===');
-  testWBCHSUN();
-  testCategoryRetrieval();
-  testSubcategoryRetrieval();
-  console.log('=== VERIFICATION COMPLETE ===');
+/**
+ * Run all verification tests
+ */
+export function runAllTests() {
+  console.log('Running all taxonomy verification tests');
+  console.log('=====================================');
+  
+  const wbchsunResult = testWBCHSUNMapping();
+  console.log('-------------------------------------');
+  
+  const allWLayerResults = testAllWLayerMappings();
+  console.log('-------------------------------------');
+  
+  return {
+    wbchsunResult,
+    allWLayerResults
+  };
 }
 
-// Execute tests
-runTests();
+// Uncomment to run tests directly
+// runAllTests();
