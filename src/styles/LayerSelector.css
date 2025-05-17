@@ -1,25 +1,32 @@
 .layer-selector {
+  padding: 15px;
+}
+
+.layer-selector-title {
   margin-bottom: 20px;
+  font-size: 1.5rem;
+  color: #333;
 }
 
 .layer-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
   gap: 15px;
-  margin-top: 15px;
+  margin-bottom: 20px;
 }
 
 .layer-card {
-  border: 1px solid #eee;
-  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
   padding: 15px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
   cursor: pointer;
   transition: all 0.2s ease;
-  /* Enhanced visual feedback */
+  background-color: #fff;
   position: relative;
   overflow: hidden;
   user-select: none;
-  background-color: #ffffff;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
@@ -27,22 +34,21 @@
   background-color: #f0f7ff;
   transform: translateY(-2px);
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  border-color: #aaa;
 }
 
 .layer-card.selected {
   background-color: #e6f7ff;
   border-color: #1890ff;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.25);
 }
 
-/* Add a highlight effect when clicked */
 .layer-card:active {
   background-color: #cce6ff;
   transform: translateY(0);
   box-shadow: 0 2px 2px rgba(0, 0, 0, 0.1);
 }
 
-/* Make the card more accessible and interactive */
 .layer-card:focus {
   outline: 2px solid #1890ff;
   outline-offset: 2px;
@@ -77,4 +83,77 @@
   margin: 0;
   font-size: 14px;
   color: #666;
+}
+
+.layer-clickable-hint {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  font-size: 12px;
+  color: #666;
+  font-style: italic;
+}
+
+.layer-selection-info {
+  margin-top: 20px;
+  padding: 15px;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  border-left: 4px solid #1890ff;
+}
+
+.layer-selection-hint {
+  margin-top: 10px;
+  font-style: italic;
+  color: #6c757d;
+  font-size: 14px;
+}
+
+.layer-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.layer-card-icon {
+  width: 64px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 10px;
+}
+
+.layer-card-icon img {
+  max-width: 100%;
+  max-height: 100%;
+}
+
+.layer-card-icon-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f8f9fa;
+  border-radius: 50%;
+  font-size: 24px;
+  font-weight: bold;
+  color: #495057;
+}
+
+.layer-card-info {
+  text-align: center;
+}
+
+.layer-card-code {
+  font-weight: bold;
+  font-size: 18px;
+  margin-bottom: 5px;
+}
+
+.layer-card-name {
+  font-size: 14px;
+  color: #6c757d;
 }

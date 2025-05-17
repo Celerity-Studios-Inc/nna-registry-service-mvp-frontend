@@ -35,7 +35,7 @@ import assetService from '../api/assetService';
 // import taxonomyMapper from '../api/taxonomyMapper';
 
 // Import components
-import LayerSelector from '../components/asset/LayerSelector';
+import LayerSelector from '../components/asset/LayerSelectorV2';
 import SimpleTaxonomySelection from '../components/asset/SimpleTaxonomySelection';
 import FileUpload from '../components/asset/FileUpload';
 import ReviewSubmit from '../components/asset/ReviewSubmit';
