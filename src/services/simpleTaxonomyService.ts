@@ -14,7 +14,17 @@ import {
   L_LAYER_LOOKUP,
   L_SUBCATEGORIES,
   M_LAYER_LOOKUP,
-  M_SUBCATEGORIES
+  M_SUBCATEGORIES,
+  B_LAYER_LOOKUP,
+  B_SUBCATEGORIES,
+  P_LAYER_LOOKUP,
+  P_SUBCATEGORIES,
+  T_LAYER_LOOKUP,
+  T_SUBCATEGORIES,
+  C_LAYER_LOOKUP,
+  C_SUBCATEGORIES,
+  R_LAYER_LOOKUP,
+  R_SUBCATEGORIES
 } from '../taxonomyLookup';
 import { logger } from '../utils/logger';
 import { TaxonomyItem } from '../types/taxonomy.types';
@@ -31,8 +41,12 @@ export const LAYER_LOOKUPS: Record<string, Record<string, { numericCode: string,
   'G': G_LAYER_LOOKUP,
   'S': S_LAYER_LOOKUP,
   'L': L_LAYER_LOOKUP,
-  'M': M_LAYER_LOOKUP
-  // Add other layers as they become available
+  'M': M_LAYER_LOOKUP,
+  'B': B_LAYER_LOOKUP,
+  'P': P_LAYER_LOOKUP,
+  'T': T_LAYER_LOOKUP,
+  'C': C_LAYER_LOOKUP,
+  'R': R_LAYER_LOOKUP
 };
 
 // Layer subcategories mapping
@@ -41,8 +55,12 @@ export const LAYER_SUBCATEGORIES: Record<string, Record<string, string[]>> = {
   'G': G_SUBCATEGORIES,
   'S': S_SUBCATEGORIES,
   'L': L_SUBCATEGORIES,
-  'M': M_SUBCATEGORIES
-  // Add other layers as they become available
+  'M': M_SUBCATEGORIES,
+  'B': B_SUBCATEGORIES,
+  'P': P_SUBCATEGORIES,
+  'T': T_SUBCATEGORIES,
+  'C': C_SUBCATEGORIES,
+  'R': R_SUBCATEGORIES
 };
 
 class SimpleTaxonomyService {

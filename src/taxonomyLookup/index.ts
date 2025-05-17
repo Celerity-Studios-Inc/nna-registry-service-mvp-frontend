@@ -6,9 +6,8 @@ export * from './G_layer';
 export * from './S_layer';
 export * from './L_layer';
 export * from './M_layer';
-// These layers will be added later
-// export * from './B_layer';
-// export * from './P_layer';
-// export * from './T_layer';
-// export * from './C_layer';
-// export * from './R_layer';
+export * from './B_layer';
+export * from './P_layer';
+export * from './T_layer';
+export * from './C_layer';
+export * from './R_layer';
