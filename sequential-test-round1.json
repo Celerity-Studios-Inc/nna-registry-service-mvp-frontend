@@ -1,0 +1,42 @@
+[
+  {
+    "layer": "S",
+    "category": "Pop",
+    "subcategory": "Base",
+    "round": 1,
+    "error": "API error: 401 - {\"success\":false,\"error\":{\"code\":\"UnauthorizedException\",\"message\":\"Unauthorized\",\"details\":{\"message\":\"Unauthorized\",\"statusCode\":401}},\"metadata\":{\"timestamp\":\"2025-05-13T23:58:29.677Z\",\"path\":\"/api/assets\"}}",
+    "timestamp": "2025-05-13T23:58:29.736Z"
+  },
+  {
+    "layer": "S",
+    "category": "Pop",
+    "subcategory": "Pop_Hipster_Male_Stars",
+    "round": 1,
+    "error": "API error: 401 - {\"success\":false,\"error\":{\"code\":\"UnauthorizedException\",\"message\":\"Unauthorized\",\"details\":{\"message\":\"Unauthorized\",\"statusCode\":401}},\"metadata\":{\"timestamp\":\"2025-05-13T23:58:31.973Z\",\"path\":\"/api/assets\"}}",
+    "timestamp": "2025-05-13T23:58:32.027Z"
+  },
+  {
+    "layer": "S",
+    "category": "Pop",
+    "subcategory": "Pop_Diva_Female_Stars",
+    "round": 1,
+    "error": "API error: 401 - {\"success\":false,\"error\":{\"code\":\"UnauthorizedException\",\"message\":\"Unauthorized\",\"details\":{\"message\":\"Unauthorized\",\"statusCode\":401}},\"metadata\":{\"timestamp\":\"2025-05-13T23:58:34.283Z\",\"path\":\"/api/assets\"}}",
+    "timestamp": "2025-05-13T23:58:34.347Z"
+  },
+  {
+    "layer": "L",
+    "category": "Modern_Performance",
+    "subcategory": "Base",
+    "round": 1,
+    "error": "API error: 401 - {\"success\":false,\"error\":{\"code\":\"UnauthorizedException\",\"message\":\"Unauthorized\",\"details\":{\"message\":\"Unauthorized\",\"statusCode\":401}},\"metadata\":{\"timestamp\":\"2025-05-13T23:58:36.589Z\",\"path\":\"/api/assets\"}}",
+    "timestamp": "2025-05-13T23:58:36.651Z"
+  },
+  {
+    "layer": "L",
+    "category": "Modern_Performance",
+    "subcategory": "Athletic",
+    "round": 1,
+    "error": "API error: 401 - {\"success\":false,\"error\":{\"code\":\"UnauthorizedException\",\"message\":\"Unauthorized\",\"details\":{\"message\":\"Unauthorized\",\"statusCode\":401}},\"metadata\":{\"timestamp\":\"2025-05-13T23:58:38.941Z\",\"path\":\"/api/assets\"}}",
+    "timestamp": "2025-05-13T23:58:39.002Z"
+  }
+]

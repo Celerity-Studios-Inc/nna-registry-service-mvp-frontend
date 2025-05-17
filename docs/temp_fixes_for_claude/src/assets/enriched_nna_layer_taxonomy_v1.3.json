@@ -1,0 +1,94 @@
+{
+  "S": {
+    "POP": [
+      { "code": "BAS", "numericCode": "001", "name": "Base" },
+      { "code": "KPO", "numericCode": "002", "name": "K-Pop" },
+      { "code": "PRO", "numericCode": "003", "name": "Professional" }
+    ],
+    "ROK": [
+      { "code": "CLS", "numericCode": "001", "name": "Classic" },
+      { "code": "PRO", "numericCode": "003", "name": "Professional" }
+    ]
+  },
+  "W": {
+    "BCH": [
+      { "code": "SUN", "numericCode": "001", "name": "Sunset" },
+      { "code": "FES", "numericCode": "003", "name": "Festival" },
+      { "code": "TRO", "numericCode": "002", "name": "Tropical" }
+    ],
+    "CST": [
+      { "code": "FES", "numericCode": "003", "name": "Festival" },
+      { "code": "LIV", "numericCode": "004", "name": "Live" }
+    ],
+    "DCL": [
+      { "code": "CLB", "numericCode": "001", "name": "Club" },
+      { "code": "NIT", "numericCode": "002", "name": "Night" }
+    ],
+    "TRO": [
+      { "code": "BAS", "numericCode": "001", "name": "Base" },
+      { "code": "HPM", "numericCode": "002", "name": "Hipster Male" }
+    ],
+    "POP": [
+      { "code": "HPM", "numericCode": "001", "name": "Hipster Male" }
+    ]
+  },
+  "L": {
+    "STG": [
+      { "code": "RED", "numericCode": "001", "name": "Red" },
+      { "code": "BLU", "numericCode": "002", "name": "Blue" }
+    ],
+    "DSG": [
+      { "code": "MOD", "numericCode": "001", "name": "Modern" },
+      { "code": "RET", "numericCode": "002", "name": "Retro" }
+    ],
+    "FAN": [
+      { "code": "ADV", "numericCode": "001", "name": "Advanced" }
+    ],
+    "POP": [
+      { "code": "HRD", "numericCode": "001", "name": "Hard" },
+      { "code": "ADV", "numericCode": "002", "name": "Advanced" }
+    ],
+    "TRO": [
+      { "code": "HRD", "numericCode": "001", "name": "Hard" },
+      { "code": "BAS", "numericCode": "002", "name": "Base" },
+      { "code": "ADV", "numericCode": "003", "name": "Advanced" },
+      { "code": "PRO", "numericCode": "004", "name": "Professional" }
+    ],
+    "HIP": [
+      { "code": "PRO", "numericCode": "001", "name": "Professional" },
+      { "code": "HRD", "numericCode": "002", "name": "Hard" }
+    ],
+    "ROK": [
+      { "code": "PRO", "numericCode": "001", "name": "Professional" }
+    ]
+  },
+  "M": {
+    "POP": [
+      { "code": "BAS", "numericCode": "001", "name": "Base" }
+    ],
+    "FAN": [
+      { "code": "BAS", "numericCode": "001", "name": "Base" },
+      { "code": "HPM", "numericCode": "002", "name": "Hipster Male" }
+    ],
+    "TRO": [
+      { "code": "BAS", "numericCode": "001", "name": "Base" },
+      { "code": "PRO", "numericCode": "002", "name": "Professional" }
+    ],
+    "ROK": [
+      { "code": "ADV", "numericCode": "001", "name": "Advanced" },
+      { "code": "BAS", "numericCode": "002", "name": "Base" }
+    ]
+  },
+  "G": {
+    "POP": [
+      { "code": "BAS", "numericCode": "001", "name": "Base" },
+      { "code": "HPM", "numericCode": "002", "name": "Hipster Male" }
+    ],
+    "ROK": [
+      { "code": "BAS", "numericCode": "001", "name": "Base" }
+    ],
+    "FAN": [
+      { "code": "ADV", "numericCode": "001", "name": "Advanced" }
+    ]
+  }
+}

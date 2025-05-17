@@ -68,41 +68,102 @@ class SimpleTaxonomyService {
    * Get all categories for a layer
    */
   getCategories(layer: string): TaxonomyItem[] {
+    console.log(`Getting categories for layer: ${layer}`);
+
     const lookup = LAYER_LOOKUPS[layer];
     const subcategories = LAYER_SUBCATEGORIES[layer];
-    
-    if (!lookup || !subcategories) {
-      logger.error(`Layer not found: ${layer}`);
+
+    if (!lookup) {
+      console.error(`Layer lookup not found for layer: ${layer}`);
+      logger.error(`Layer lookup not found: ${layer}`);
       return [];
     }
-    
-    return Object.keys(subcategories).map(categoryCode => ({
-      code: categoryCode,
-      numericCode: lookup[categoryCode].numericCode,
-      name: lookup[categoryCode].name
-    }));
+
+    if (!subcategories) {
+      console.error(`Layer subcategories not found for layer: ${layer}`);
+      logger.error(`Layer subcategories not found: ${layer}`);
+      return [];
+    }
+
+    console.log(`Total lookup entries for ${layer}:`, Object.keys(lookup).length);
+    console.log(`Categories in subcategories for ${layer}:`, Object.keys(subcategories));
+
+    try {
+      const results = Object.keys(subcategories).map(categoryCode => {
+        const lookupEntry = lookup[categoryCode];
+        if (!lookupEntry) {
+          console.warn(`Missing lookup entry for category ${categoryCode} in layer ${layer}`);
+          return null;
+        }
+
+        return {
+          code: categoryCode,
+          numericCode: lookupEntry.numericCode,
+          name: lookupEntry.name
+        };
+      }).filter(item => item !== null) as TaxonomyItem[];
+
+      console.log(`Returning ${results.length} categories for ${layer}`);
+      return results;
+    } catch (error) {
+      console.error(`Error mapping categories for ${layer}:`, error);
+      logger.error(`Error mapping categories: ${error.message}`);
+      return [];
+    }
   }
   
   /**
    * Get all subcategories for a category
    */
   getSubcategories(layer: string, categoryCode: string): TaxonomyItem[] {
+    console.log(`Getting subcategories for ${layer}.${categoryCode}`);
+
     const lookup = LAYER_LOOKUPS[layer];
     const subcategories = LAYER_SUBCATEGORIES[layer];
-    
-    if (!lookup || !subcategories || !subcategories[categoryCode]) {
+
+    if (!lookup) {
+      console.error(`Layer lookup not found for layer: ${layer}`);
+      logger.error(`Layer lookup not found: ${layer}`);
+      return [];
+    }
+
+    if (!subcategories) {
+      console.error(`Layer subcategories not found for layer: ${layer}`);
+      logger.error(`Layer subcategories not found: ${layer}`);
+      return [];
+    }
+
+    if (!subcategories[categoryCode]) {
+      console.error(`Category ${categoryCode} not found in layer ${layer} subcategories`);
       logger.error(`Category not found: ${layer}.${categoryCode}`);
       return [];
     }
-    
-    return subcategories[categoryCode].map(fullCode => {
-      const subcategoryCode = fullCode.split('.')[1]; // Get part after the dot
-      return {
-        code: subcategoryCode,
-        numericCode: lookup[fullCode].numericCode,
-        name: lookup[fullCode].name
-      };
-    });
+
+    console.log(`Found ${subcategories[categoryCode].length} subcategory codes for ${layer}.${categoryCode}:`,
+      subcategories[categoryCode]);
+
+    try {
+      const results = subcategories[categoryCode].map(fullCode => {
+        if (!lookup[fullCode]) {
+          console.warn(`Missing lookup entry for subcategory ${fullCode} in layer ${layer}`);
+          return null;
+        }
+
+        const subcategoryCode = fullCode.split('.')[1]; // Get part after the dot
+        return {
+          code: subcategoryCode,
+          numericCode: lookup[fullCode].numericCode,
+          name: lookup[fullCode].name
+        };
+      }).filter(item => item !== null) as TaxonomyItem[];
+
+      console.log(`Returning ${results.length} subcategories for ${layer}.${categoryCode}`);
+      return results;
+    } catch (error) {
+      console.error(`Error mapping subcategories for ${layer}.${categoryCode}:`, error);
+      logger.error(`Error mapping subcategories: ${error.message}`);
+      return [];
+    }
   }
   
   /**

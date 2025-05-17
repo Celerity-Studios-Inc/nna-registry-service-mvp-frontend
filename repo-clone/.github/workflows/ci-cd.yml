@@ -1,0 +1,67 @@
+name: NNA Registry Service CI/CD
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+env:
+  PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+  SERVICE_NAME: nna-registry-service
+  REGION: us-central1
+  GCR_REPOSITORY: gcr.io/${{ secrets.GCP_PROJECT_ID }}/nna-registry-service
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+          
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Lint code
+        run: npm run lint || echo "Linting issues found but continuing"
+      
+      - name: Build code
+        run: npm run build
+      
+      - name: Setup Google Cloud CLI
+        uses: google-github-actions/setup-gcloud@v1
+        with:
+          service_account_key: ${{ secrets.GCP_SA_KEY }}
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+      
+      - name: Configure Docker to use gcloud as a credential helper
+        run: |
+          gcloud auth configure-docker
+      
+      - name: Build Docker image
+        run: |
+          docker build -t ${{ env.GCR_REPOSITORY }}:${{ github.sha }} -t ${{ env.GCR_REPOSITORY }}:latest .
+      
+      - name: Push Docker image
+        run: |
+          docker push ${{ env.GCR_REPOSITORY }}:${{ github.sha }}
+          docker push ${{ env.GCR_REPOSITORY }}:latest
+      
+      # Update to use the direct gcloud command since that worked in manual deployment
+      - name: Deploy to Cloud Run
+        run: |
+          gcloud run deploy ${{ env.SERVICE_NAME }} \
+            --image ${{ env.GCR_REPOSITORY }}:${{ github.sha }} \
+            --region ${{ env.REGION }} \
+            --platform managed \
+            --allow-unauthenticated \
+            --set-env-vars="NODE_ENV=production,MONGODB_URI=${{ secrets.MONGODB_URI }},JWT_SECRET=${{ secrets.JWT_SECRET }}"
+      
+      - name: Show Service URL
+        run: |
+          gcloud run services describe ${{ env.SERVICE_NAME }} --platform managed --region ${{ env.REGION }} --format 'value(status.url)'

@@ -15,6 +15,12 @@
   padding: 15px;
   cursor: pointer;
   transition: all 0.2s ease;
+  /* Enhanced visual feedback */
+  position: relative;
+  overflow: hidden;
+  user-select: none;
+  background-color: #ffffff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
 .layer-card:hover {
@@ -27,6 +33,19 @@
   background-color: #e6f7ff;
   border-color: #1890ff;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Add a highlight effect when clicked */
+.layer-card:active {
+  background-color: #cce6ff;
+  transform: translateY(0);
+  box-shadow: 0 2px 2px rgba(0, 0, 0, 0.1);
+}
+
+/* Make the card more accessible and interactive */
+.layer-card:focus {
+  outline: 2px solid #1890ff;
+  outline-offset: 2px;
 }
 
 .layer-header {

@@ -1,0 +1,54 @@
+# Cloud Build configuration for NNA Registry Service
+steps:
+  # Install dependencies
+  - name: 'gcr.io/cloud-builders/npm'
+    args: ['ci']
+    
+  # Run linting
+  - name: 'gcr.io/cloud-builders/npm'
+    args: ['run', 'lint']
+    
+  # Run tests
+  - name: 'gcr.io/cloud-builders/npm'
+    args: ['test']
+    
+  # Build the application
+  - name: 'gcr.io/cloud-builders/npm'
+    args: ['run', 'build']
+    
+  # Build the container image
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-t', 'gcr.io/$PROJECT_ID/nna-registry-service:$COMMIT_SHA', '.']
+    
+  # Push the container image to Container Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'gcr.io/$PROJECT_ID/nna-registry-service:$COMMIT_SHA']
+    
+  # Deploy container image to Cloud Run
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+    - 'run'
+    - 'deploy'
+    - 'nna-registry-service'
+    - '--image'
+    - 'gcr.io/$PROJECT_ID/nna-registry-service:$COMMIT_SHA'
+    - '--region'
+    - 'us-central1'
+    - '--platform'
+    - 'managed'
+    - '--allow-unauthenticated'
+    - '--service-account'
+    - '${_SERVICE_ACCOUNT}'
+    - '--set-secrets=/.env=nna-registry-env:latest'
+
+# Store images
+images:
+  - 'gcr.io/$PROJECT_ID/nna-registry-service:$COMMIT_SHA'
+  
+# Timeout
+timeout: '1800s'
+
+# Substitution variables
+substitutions:
+  _SERVICE_ACCOUNT: 'nna-storage-service-account@${PROJECT_ID}.iam.gserviceaccount.com'

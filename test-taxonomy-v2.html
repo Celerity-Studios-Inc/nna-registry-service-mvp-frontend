@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Taxonomy Mapping Test V2</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 40px;
+      line-height: 1.6;
+    }
+    h1 {
+      color: #333;
+    }
+    pre {
+      background-color: #f5f5f5;
+      padding: 10px;
+      border-radius: 5px;
+      overflow-x: auto;
+    }
+    .test-section {
+      margin-bottom: 30px;
+      padding: 20px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+    }
+    .result {
+      font-weight: bold;
+      color: #0066cc;
+    }
+    .error {
+      color: #cc0000;
+    }
+    .success {
+      color: #00cc00;
+    }
+    button {
+      padding: 10px 15px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+      margin-right: 10px;
+    }
+    button:hover {
+      background-color: #45a049;
+    }
+    .controls {
+      margin-bottom: 20px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 20px;
+    }
+    th, td {
+      padding: 8px;
+      text-align: left;
+      border-bottom: 1px solid #ddd;
+    }
+    th {
+      background-color: #f2f2f2;
+    }
+    tr:hover {
+      background-color: #f5f5f5;
+    }
+  </style>
+</head>
+<body>
+  <h1>Taxonomy Mapping Test V2</h1>
+  
+  <div class="controls">
+    <button id="runTests">Run All Tests</button>
+    <button id="clearResults">Clear Results</button>
+  </div>
+  
+  <div class="test-section">
+    <h3>1. Test W.BCH.SUN Mapping</h3>
+    <pre id="sunTest">Click "Run All Tests" to execute</pre>
+  </div>
+
+  <div class="test-section">
+    <h3>2. Test W.CST.FES Mapping</h3>
+    <pre id="festivalTest">Click "Run All Tests" to execute</pre>
+  </div>
+
+  <div class="test-section">
+    <h3>3. Test L.TRO.PRO Mapping</h3>
+    <pre id="looksTroProTest">Click "Run All Tests" to execute</pre>
+  </div>
+
+  <div class="test-section">
+    <h3>4. Test S.POP.HPM Mapping</h3>
+    <pre id="hipsterTest">Click "Run All Tests" to execute</pre>
+  </div>
+
+  <div class="test-section">
+    <h3>5. Comprehensive Test for All Layers</h3>
+    <pre id="comprehensiveTest">Click "Run All Tests" to execute</pre>
+  </div>
+
+  <script>
+    function testMapping(layer, category, subcategory, expectedMfa, elementId) {
+      try {
+        const hfnAddress = `${layer}.${category}.${subcategory}.001`;
+        const actualMfa = window.nnaCodeMappingFunctions.convertHFNToMFA(hfnAddress);
+        const success = actualMfa === expectedMfa;
+        
+        let output = `HFN Address: ${hfnAddress}\n`;
+        output += `Expected MFA: ${expectedMfa}\n`;
+        output += `Actual MFA: ${actualMfa}\n`;
+        output += `Test Result: ${success ? "✓ PASSED" : "❌ FAILED"}\n`;
+        
+        document.getElementById(elementId).textContent = output;
+        document.getElementById(elementId).className = success ? "success" : "error";
+        
+        return success;
+      } catch (error) {
+        document.getElementById(elementId).textContent = `Error: ${error.message}`;
+        document.getElementById(elementId).className = "error";
+        return false;
+      }
+    }
+    
+    function runComprehensiveTest() {
+      const testCases = [
+        { layer: 'W', category: 'BCH', subcategory: 'SUN', expectedMfa: '5.001.003.001', description: 'World Beach Sunset' },
+        { layer: 'W', category: 'CST', subcategory: 'FES', expectedMfa: '5.002.003.001', description: 'World Concert Stage Festival' },
+        { layer: 'L', category: 'TRO', subcategory: 'PRO', expectedMfa: '5.005.004.001', description: 'Looks Tropical Professional' },
+        { layer: 'S', category: 'POP', subcategory: 'HPM', expectedMfa: '1.001.007.001', description: 'Stars Pop Hipster Male' },
+        { layer: 'G', category: 'POP', subcategory: 'TSW', expectedMfa: '4.001.012.001', description: 'Songs Pop Swift-Inspired' },
+        { layer: 'G', category: 'ROK', subcategory: 'ALR', expectedMfa: '4.002.006.001', description: 'Songs Rock Alternative Rock' },
+        { layer: 'M', category: 'TRO', subcategory: 'PRO', expectedMfa: '2.003.002.001', description: 'Moves Tropical Professional' }
+      ];
+      
+      let tableHtml = '<table>';
+      tableHtml += '<tr><th>Description</th><th>HFN Address</th><th>Expected MFA</th><th>Actual MFA</th><th>Result</th></tr>';
+      
+      let passCount = 0;
+      let failCount = 0;
+      
+      testCases.forEach(testCase => {
+        try {
+          const hfnAddress = `${testCase.layer}.${testCase.category}.${testCase.subcategory}.001`;
+          const actualMfa = window.nnaCodeMappingFunctions.convertHFNToMFA(hfnAddress);
+          const success = actualMfa === testCase.expectedMfa;
+          
+          tableHtml += `<tr>
+            <td>${testCase.description}</td>
+            <td>${hfnAddress}</td>
+            <td>${testCase.expectedMfa}</td>
+            <td>${actualMfa}</td>
+            <td class="${success ? 'success' : 'error'}">${success ? '✓ PASSED' : '❌ FAILED'}</td>
+          </tr>`;
+          
+          if (success) {
+            passCount++;
+          } else {
+            failCount++;
+          }
+        } catch (error) {
+          tableHtml += `<tr>
+            <td>${testCase.description}</td>
+            <td>${testCase.layer}.${testCase.category}.${testCase.subcategory}.001</td>
+            <td>${testCase.expectedMfa}</td>
+            <td class="error">Error: ${error.message}</td>
+            <td class="error">❌ FAILED</td>
+          </tr>`;
+          failCount++;
+        }
+      });
+      
+      tableHtml += '</table>';
+      tableHtml += `Summary: ${passCount} test(s) passed, ${failCount} test(s) failed.`;
+      
+      document.getElementById('comprehensiveTest').innerHTML = tableHtml;
+    }
+    
+    function runAllTests() {
+      if (!window.nnaCodeMappingFunctions) {
+        alert("Code mapping functions not available. Make sure the app is loaded and the functions are exposed globally.");
+        return;
+      }
+      
+      // Test W.BCH.SUN Mapping
+      testMapping('W', 'BCH', 'SUN', '5.001.003.001', 'sunTest');
+      
+      // Test W.CST.FES Mapping
+      testMapping('W', 'CST', 'FES', '5.002.003.001', 'festivalTest');
+      
+      // Test L.TRO.PRO Mapping
+      testMapping('L', 'TRO', 'PRO', '5.005.004.001', 'looksTroProTest');
+      
+      // Test S.POP.HPM Mapping
+      testMapping('S', 'POP', 'HPM', '1.001.007.001', 'hipsterTest');
+      
+      // Comprehensive test for all layers
+      runComprehensiveTest();
+    }
+    
+    document.getElementById('runTests').addEventListener('click', runAllTests);
+    
+    document.getElementById('clearResults').addEventListener('click', function() {
+      document.getElementById('sunTest').textContent = "Click \"Run All Tests\" to execute";
+      document.getElementById('festivalTest').textContent = "Click \"Run All Tests\" to execute";
+      document.getElementById('looksTroProTest').textContent = "Click \"Run All Tests\" to execute";
+      document.getElementById('hipsterTest').textContent = "Click \"Run All Tests\" to execute";
+      document.getElementById('comprehensiveTest').textContent = "Click \"Run All Tests\" to execute";
+      
+      document.getElementById('sunTest').className = "";
+      document.getElementById('festivalTest').className = "";
+      document.getElementById('looksTroProTest').className = "";
+      document.getElementById('hipsterTest').className = "";
+      document.getElementById('comprehensiveTest').className = "";
+    });
+    
+    // Auto-run tests if functions are available when page loads
+    window.addEventListener('load', function() {
+      setTimeout(function() {
+        if (window.nnaCodeMappingFunctions) {
+          runAllTests();
+        }
+      }, 1000); // Give a second for the app to initialize
+    });
+  </script>
+</body>
+</html>

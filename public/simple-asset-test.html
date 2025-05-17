@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Simple NNA Asset Upload Test</title>
+  <style>
+    body {
+      font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      line-height: 1.6;
+      color: #333;
+    }
+    h1, h2, h3 {
+      color: #1a73e8;
+    }
+    h1 {
+      border-bottom: 2px solid #eee;
+      padding-bottom: 10px;
+      margin-bottom: 20px;
+    }
+    .container {
+      background-color: #f9f9f9;
+      padding: 20px;
+      border-radius: 5px;
+      margin-bottom: 20px;
+      border: 1px solid #ddd;
+    }
+    .success {
+      background-color: #d4edda;
+      color: #155724;
+      padding: 15px;
+      border-radius: 4px;
+      margin: 20px 0;
+      border-left: 4px solid #28a745;
+    }
+    .error {
+      background-color: #f8d7da;
+      color: #721c24;
+      padding: 15px;
+      border-radius: 4px;
+      margin: 20px 0;
+      border-left: 4px solid #dc3545;
+    }
+    .info {
+      background-color: #d1ecf1;
+      color: #0c5460;
+      padding: 15px;
+      border-radius: 4px;
+      margin: 20px 0;
+      border-left: 4px solid #17a2b8;
+    }
+    button {
+      background-color: #007bff;
+      color: white;
+      padding: 10px 15px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+      transition: background-color 0.3s;
+    }
+    button:hover {
+      background-color: #0069d9;
+    }
+    button:disabled {
+      background-color: #cccccc;
+      cursor: not-allowed;
+    }
+    pre {
+      background-color: #f5f5f5;
+      padding: 10px;
+      border-radius: 4px;
+      overflow-x: auto;
+      border: 1px solid #ddd;
+    }
+    #results {
+      margin-top: 20px;
+      padding: 15px;
+      background-color: #f8f9fa;
+      border-radius: 4px;
+      border: 1px solid #ddd;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+    .file-input-container {
+      margin: 20px 0;
+    }
+    .important-note {
+      background-color: #fff3cd;
+      border-left: 4px solid #ffc107;
+      padding: 15px;
+      margin: 20px 0;
+      color: #856404;
+    }
+    .field-group {
+      margin-bottom: 15px;
+    }
+    .field-group label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+    .field-group input, .field-group select, .field-group textarea {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      box-sizing: border-box;
+    }
+    .tag-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 8px;
+    }
+    .tag {
+      background-color: #e1e1e1;
+      padding: 5px 10px;
+      border-radius: 15px;
+      display: flex;
+      align-items: center;
+    }
+    .tag-remove {
+      margin-left: 5px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body onload="checkForToken()">
+  <h1>Simple NNA Asset Upload Test</h1>
+  <p>This page allows you to test asset uploads using the exact format that works in production.</p>
+  
+  <div class="important-note">
+    <h3>⚠️ Important</h3>
+    <p>Before using this test page:</p>
+    <ol>
+      <li>Log in to the main application first to get a valid authentication token</li>
+      <li>If you've already logged in, this page will automatically use your token</li>
+    </ol>
+  </div>
+  
+  <div class="container">
+    <h2>Step 1: Configure Asset Details</h2>
+    
+    <div class="field-group">
+      <label for="fileInput">Select File to Upload:</label>
+      <input type="file" id="fileInput" accept="image/*,video/*,audio/*">
+    </div>
+    
+    <div class="field-group">
+      <label for="layerSelect">Layer:</label>
+      <select id="layerSelect">
+        <option value="S">S (Stars)</option>
+        <option value="G">G (Galaxies)</option>
+        <option value="L">L (Looks)</option>
+        <option value="M">M (Moves)</option>
+        <option value="W">W (Worlds)</option>
+      </select>
+    </div>
+    
+    <div class="field-group">
+      <label for="categorySelect">Category:</label>
+      <select id="categorySelect">
+        <option value="Pop">Pop (001)</option>
+        <option value="Rock">Rock (002)</option>
+        <option value="Jazz">Jazz (003)</option>
+        <option value="Hip-Hop">Hip-Hop (004)</option>
+        <option value="Electronic">Electronic (005)</option>
+      </select>
+    </div>
+    
+    <div class="field-group">
+      <label for="subcategorySelect">Subcategory:</label>
+      <select id="subcategorySelect">
+        <option value="Base">Base (001)</option>
+        <option value="Pop_Diva_Female_Stars">Pop Diva Female Stars (002)</option>
+        <option value="Pop_Hipster_Male_Stars">Pop Hipster Male Stars (007)</option>
+      </select>
+    </div>
+    
+    <div class="field-group">
+      <label for="descriptionInput">Description:</label>
+      <textarea id="descriptionInput" rows="2">400 x 400 Test image</textarea>
+    </div>
+    
+    <div class="field-group">
+      <label for="sourceInput">Source:</label>
+      <input type="text" id="sourceInput" value="ReViz">
+    </div>
+    
+    <div class="field-group">
+      <label for="tagsInput">Tags (comma separated):</label>
+      <input type="text" id="tagsInput" value="Base Star">
+    </div>
+    
+    <h2>Step 2: Upload Asset</h2>
+    <div id="tokenStatus"></div>
+    <button id="uploadButton" disabled>Upload Asset</button>
+    
+    <div id="status"></div>
+    
+    <h3>Results:</h3>
+    <div id="results">Select a file and configure asset details, then click "Upload Asset"</div>
+  </div>
+  
+  <script>
+    // Check if auth token exists
+    function checkForToken() {
+      const token = localStorage.getItem('accessToken');
+      const tokenStatus = document.getElementById('tokenStatus');
+      const uploadButton = document.getElementById('uploadButton');
+      
+      if (token) {
+        tokenStatus.innerHTML = `<p>✅ Authentication token found: ${token.substring(0, 10)}...</p>`;
+        tokenStatus.className = 'success';
+        uploadButton.disabled = false;
+      } else {
+        tokenStatus.innerHTML = `<p>❌ No authentication token found. Please log in to the main application first.</p>`;
+        tokenStatus.className = 'error';
+        uploadButton.disabled = true;
+      }
+    }
+    
+    // Status display function
+    function showStatus(message, type = 'info') {
+      const statusDiv = document.getElementById('status');
+      statusDiv.innerHTML = message;
+      statusDiv.className = type;
+    }
+    
+    // Log to results
+    function log(message) {
+      const resultsDiv = document.getElementById('results');
+      
+      if (typeof message === 'object') {
+        try {
+          message = JSON.stringify(message, null, 2);
+        } catch (e) {
+          message = '[Complex Object]';
+        }
+      }
+      
+      const timestamp = new Date().toLocaleTimeString();
+      const logEntry = document.createElement('div');
+      logEntry.innerHTML = `<strong>${timestamp}</strong>: ${message}`;
+      
+      if (resultsDiv.childNodes.length === 0) {
+        resultsDiv.innerHTML = '';
+      }
+      
+      resultsDiv.appendChild(logEntry);
+      resultsDiv.scrollTop = resultsDiv.scrollHeight;
+    }
+    
+    // Parse tags input
+    function parseTags(tagsInput) {
+      return tagsInput.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0);
+    }
+    
+    // Asset upload test function
+    async function testAssetUpload() {
+      // Clear previous results
+      document.getElementById('results').innerHTML = '';
+      
+      log('Starting asset upload test...');
+      
+      // Check that a file is selected
+      const fileInput = document.getElementById('fileInput');
+      if (!fileInput || !fileInput.files || !fileInput.files[0]) {
+        showStatus('Please select a file first', 'error');
+        return;
+      }
+      
+      // Get form values
+      const file = fileInput.files[0];
+      const layer = document.getElementById('layerSelect').value;
+      const category = document.getElementById('categorySelect').value;
+      const subcategory = document.getElementById('subcategorySelect').value;
+      const description = document.getElementById('descriptionInput').value;
+      const source = document.getElementById('sourceInput').value;
+      const tags = parseTags(document.getElementById('tagsInput').value);
+      
+      log(`Selected file: ${file.name} (${file.type}, ${file.size} bytes)`);
+      
+      // Get auth token from localStorage
+      const token = localStorage.getItem('accessToken');
+      if (!token) {
+        showStatus('No auth token found. Please log in to the main application first', 'error');
+        return;
+      }
+      
+      log(`Using auth token: ${token.substring(0, 10)}...`);
+      
+      // Create FormData with exact structure from successful logs
+      const formData = new FormData();
+      
+      // Add the file - this is critical
+      formData.append('file', file);
+      
+      // Basic metadata exactly as seen in logs
+      formData.append('layer', layer);
+      formData.append('category', category);  // Using 'Pop', not 'POP'
+      formData.append('subcategory', subcategory); // Using 'Base', not 'BAS'
+      formData.append('description', description);
+      formData.append('source', source);
+      
+      // Tags as JSON string
+      formData.append('tags', JSON.stringify(tags));
+      
+      // Required JSON objects
+      formData.append('trainingData', JSON.stringify({
+        prompts: [],
+        images: [],
+        videos: []
+      }));
+      
+      formData.append('rights', JSON.stringify({
+        source: 'Original',
+        rights_split: '100%'
+      }));
+      
+      // Empty components array
+      formData.append('components[]', '');
+      
+      // Log the FormData for verification
+      log('FormData structure:');
+      for (const key of formData.keys()) {
+        log(` - ${key}: ${key === 'file' ? '[File Data]' : formData.get(key)}`);
+      }
+      
+      showStatus('Uploading asset...', 'info');
+      
+      // Disable upload button while in progress
+      document.getElementById('uploadButton').disabled = true;
+      
+      // Make the API request
+      log('Sending request to /api/assets...');
+      try {
+        const response = await fetch('/api/assets', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          },
+          body: formData
+        });
+        
+        log(`Response status: ${response.status} ${response.statusText}`);
+        
+        const responseText = await response.text();
+        
+        try {
+          // Try to parse as JSON
+          const responseData = JSON.parse(responseText);
+          log('API response data:');
+          log(responseData);
+          
+          if (response.ok) {
+            showStatus('Asset uploaded successfully!', 'success');
+            
+            if (responseData.data) {
+              log(`✅ Success! New NNA Address: ${responseData.data.nna_address || responseData.data.nnaAddress}`);
+              log(`✅ Asset Name: ${responseData.data.name}`);
+              
+              if (responseData.data.gcpStorageUrl) {
+                log(`✅ Storage URL: ${responseData.data.gcpStorageUrl}`);
+              }
+            }
+          } else {
+            showStatus(`Error: ${responseData.error || 'Unknown error'}`, 'error');
+          }
+        } catch (jsonError) {
+          // Not valid JSON
+          log('Response is not valid JSON:');
+          log(responseText);
+          showStatus('Error parsing response', 'error');
+        }
+        
+      } catch (error) {
+        log(`Error uploading asset: ${error.message}`);
+        showStatus(`Error: ${error.message}`, 'error');
+      } finally {
+        // Re-enable upload button
+        document.getElementById('uploadButton').disabled = false;
+      }
+    }
+    
+    // Add event listener to the upload button
+    document.getElementById('uploadButton').addEventListener('click', testAssetUpload);
+    
+    // Add file change listener to update UI
+    document.getElementById('fileInput').addEventListener('change', function(e) {
+      const file = e.target.files[0];
+      if (file) {
+        log(`File selected: ${file.name} (${file.size} bytes, ${file.type})`);
+      }
+    });
+  </script>
+</body>
+</html>

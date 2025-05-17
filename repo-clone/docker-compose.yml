@@ -1,0 +1,46 @@
+version: '3.8'
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: nna-registry-service
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - PORT=3000
+      - MONGODB_URI=mongodb://mongo:27017/nna-registry
+      - JWT_SECRET=development_jwt_secret_for_testing
+      - GCP_PROJECT_ID=nna-registry-service
+      - GCP_BUCKET_NAME=nna-registry-assets
+      - GOOGLE_APPLICATION_CREDENTIALS=/app/gcp-credentials.json
+      - SENTRY_DSN=your_sentry_dsn
+    volumes:
+      - ./gcp-credentials.json:/app/gcp-credentials.json:ro
+      - ./storage:/app/storage
+    depends_on:
+      - mongo
+    networks:
+      - nna-network
+    restart: unless-stopped
+
+  mongo:
+    image: mongo:latest
+    container_name: nna-mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+    networks:
+      - nna-network
+    restart: unless-stopped
+
+networks:
+  nna-network:
+    driver: bridge
+
+volumes:
+  mongo-data:
+    driver: local

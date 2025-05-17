@@ -1,0 +1,67 @@
+name: CI/CD Pipeline for NNA Registry Backend
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+env:
+  PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+  SERVICE_NAME: nna-registry-backend
+  REGION: us-central1
+  GCR_REPOSITORY: gcr.io/${{ secrets.GCP_PROJECT_ID }}/nna-registry-backend
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+          
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Lint code
+        run: npm run lint || echo "Linting issues found but continuing"
+      
+      - name: Build code
+        run: npm run build
+      
+      - name: Setup Google Cloud CLI
+        uses: google-github-actions/setup-gcloud@v1
+        with:
+          service_account_key: ${{ secrets.GCP_SA_KEY }}
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+      
+      - name: Configure Docker to use gcloud as a credential helper
+        run: |
+          gcloud auth configure-docker
+      
+      - name: Build Docker image
+        run: |
+          docker build -t ${{ env.GCR_REPOSITORY }}:${{ github.sha }} -t ${{ env.GCR_REPOSITORY }}:latest .
+      
+      - name: Push Docker image
+        run: |
+          docker push ${{ env.GCR_REPOSITORY }}:${{ github.sha }}
+          docker push ${{ env.GCR_REPOSITORY }}:latest
+      
+      - name: Deploy to Cloud Run
+        id: deploy
+        uses: google-github-actions/deploy-cloudrun@v1
+        with:
+          service: ${{ env.SERVICE_NAME }}
+          region: ${{ env.REGION }}
+          image: ${{ env.GCR_REPOSITORY }}:${{ github.sha }}
+          flags: --allow-unauthenticated --port=8080
+          env_vars: |
+            NODE_ENV=production
+      
+      - name: Show Output
+        run: echo ${{ steps.deploy.outputs.url }}

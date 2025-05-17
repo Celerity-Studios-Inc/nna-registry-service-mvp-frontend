@@ -25,9 +25,13 @@ const SimpleTaxonomySelection: React.FC<SimpleTaxonomySelectionProps> = ({
   // Load categories when layer changes
   useEffect(() => {
     if (!layer) return;
-    
+
     try {
+      console.log(`Loading categories for layer ${layer}...`);
       const layerCategories = taxonomyService.getCategories(layer);
+      console.log(`Found ${layerCategories.length} categories for ${layer}:`,
+        layerCategories.map(c => c.code).join(', '));
+
       setCategories(layerCategories);
       setLoading(false);
     } catch (err) {
@@ -43,12 +47,16 @@ const SimpleTaxonomySelection: React.FC<SimpleTaxonomySelectionProps> = ({
       setSubcategories([]);
       return;
     }
-    
+
     try {
+      console.log(`Loading subcategories for ${layer}.${selectedCategory}...`);
       const categorySubcategories = taxonomyService.getSubcategories(layer, selectedCategory);
+      console.log(`Found ${categorySubcategories.length} subcategories for ${layer}.${selectedCategory}:`,
+        categorySubcategories.map(s => s.code).join(', '));
+
       setSubcategories(categorySubcategories);
     } catch (err) {
-      console.error('Error loading subcategories:', err);
+      console.error(`Error loading subcategories for ${layer}.${selectedCategory}:`, err);
       setError('Failed to load subcategories');
     }
   }, [layer, selectedCategory]);

@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Minimal Asset Upload Test</title>
+  <style>
+    body { font-family: sans-serif; margin: 20px; }
+    pre { background: #f5f5f5; padding: 10px; border: 1px solid #ddd; }
+    button { padding: 10px; margin: 10px 0; }
+    .success { color: green; font-weight: bold; }
+    .error { color: red; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <h1>Minimal Asset Upload Test</h1>
+  <p>This is a minimal test page with no dependencies or complex styling.</p>
+  
+  <div>
+    <label for="file">Select File:</label>
+    <input type="file" id="file">
+  </div>
+  
+  <button id="uploadBtn">Upload Asset</button>
+  
+  <div id="status"></div>
+  <pre id="output">Results will appear here...</pre>
+  
+  <script>
+    // Simple logging
+    function log(msg) {
+      const output = document.getElementById('output');
+      output.textContent += (output.textContent === 'Results will appear here...' ? '' : '\n') + msg;
+    }
+    
+    // Show status
+    function showStatus(msg, isError) {
+      const status = document.getElementById('status');
+      status.textContent = msg;
+      status.className = isError ? 'error' : 'success';
+    }
+    
+    // Upload function
+    async function uploadAsset() {
+      // Reset output
+      document.getElementById('output').textContent = 'Starting upload test...\n';
+      
+      // Check if file selected
+      const fileInput = document.getElementById('file');
+      if (!fileInput.files.length) {
+        showStatus('Please select a file first', true);
+        return;
+      }
+      
+      // Get the token
+      let token;
+      try {
+        token = localStorage.getItem('accessToken');
+        if (!token) {
+          showStatus('No auth token found in localStorage. Please log in to the main app first.', true);
+          return;
+        }
+        log(`Using token: ${token.substring(0, 10)}...`);
+      } catch (e) {
+        showStatus('Error accessing localStorage: ' + e.message, true);
+        return;
+      }
+      
+      // Create the exact FormData structure that works in production
+      try {
+        const file = fileInput.files[0];
+        log(`Selected file: ${file.name} (${file.size} bytes)`);
+        
+        const formData = new FormData();
+        
+        // Add file (required)
+        formData.append('file', file);
+        
+        // Add required fields with EXACT naming shown in logs
+        formData.append('layer', 'S');
+        formData.append('category', 'Pop');
+        formData.append('subcategory', 'Base');
+        formData.append('description', 'Test upload via minimal test page');
+        formData.append('source', 'ReViz');
+        
+        // Required JSON strings (not serialized objects)
+        formData.append('tags', JSON.stringify(['test']));
+        formData.append('trainingData', JSON.stringify({prompts:[],images:[],videos:[]}));
+        formData.append('rights', JSON.stringify({source:"Original",rights_split:"100%"}));
+        formData.append('components[]', '');
+        
+        // Log what we're sending
+        log('Sending request with fields:');
+        for (const key of formData.keys()) {
+          log(`- ${key}: ${key === 'file' ? '[File Data]' : formData.get(key)}`);
+        }
+        
+        // Disable button during upload
+        document.getElementById('uploadBtn').disabled = true;
+        showStatus('Uploading...', false);
+        
+        // Make the API request with only the essentials
+        log('\nSending request to /api/assets...');
+        const response = await fetch('/api/assets', {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${token}` },
+          body: formData
+        });
+        
+        log(`Response status: ${response.status}`);
+        
+        // Get the response
+        const responseText = await response.text();
+        
+        try {
+          // Try to parse as JSON
+          const data = JSON.parse(responseText);
+          log('Response data:');
+          log(JSON.stringify(data, null, 2));
+          
+          if (response.ok) {
+            if (data.data && (data.data.nna_address || data.data.nnaAddress)) {
+              showStatus(`Success! NNA Address: ${data.data.nna_address || data.data.nnaAddress}`, false);
+            } else {
+              showStatus('Upload successful', false);
+            }
+          } else {
+            showStatus(`Error: ${data.error || 'Unknown error'}`, true);
+          }
+        } catch (e) {
+          // Not JSON
+          log('Response is not JSON:');
+          log(responseText);
+          showStatus('Error parsing response', true);
+        }
+      } catch (error) {
+        log(`Error: ${error.message}`);
+        showStatus(`Error: ${error.message}`, true);
+      } finally {
+        document.getElementById('uploadBtn').disabled = false;
+      }
+    }
+    
+    // Setup event listener
+    document.getElementById('uploadBtn').addEventListener('click', uploadAsset);
+  </script>
+</body>
+</html>

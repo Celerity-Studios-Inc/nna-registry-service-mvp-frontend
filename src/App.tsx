@@ -12,6 +12,7 @@ import DashboardPage from './pages/DashboardPage';
 import ApiDebugPage from './pages/ApiDebugPage';
 import ConnectivityHelp from './pages/ConnectivityHelp';
 import ErrorTestPage from './pages/ErrorTestPage';
+import TaxonomyDebugPage from './pages/TaxonomyDebugPage';
 import { AuthProvider } from './contexts/AuthContext';
 import MainLayout from './components/layout/MainLayout';
 import { NotificationsProvider } from './contexts/NotificationsContext';
@@ -137,6 +138,7 @@ const App: React.FC = () => {
                     <Route path="/help" element={<ConnectivityHelp />} />
                     <Route path="/error-test" element={<ErrorTestPage />} />
                     <Route path="/taxonomy-validator" element={<TaxonomyValidator />} />
+                    <Route path="/taxonomy-debug" element={<TaxonomyDebugPage />} />
                     <Route element={<MainLayout />}>
                       <Route path="/dashboard" element={
                         <ProtectedRoute>

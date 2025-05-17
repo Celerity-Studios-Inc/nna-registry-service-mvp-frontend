@@ -27,6 +27,12 @@ const LayerSelector: React.FC<LayerSelectorProps> = ({ selectedLayer, onLayerSel
     { code: 'R', name: 'Rights', description: 'Provenance and rights tracking', numericCode: '10' }
   ];
 
+  // Add debug click handler
+  const handleLayerClick = (layerCode: string) => {
+    console.log('Layer card clicked:', layerCode);
+    onLayerSelect(layerCode);
+  };
+
   return (
     <div className="layer-selector">
       <h3>Select Layer</h3>
@@ -35,7 +41,12 @@ const LayerSelector: React.FC<LayerSelectorProps> = ({ selectedLayer, onLayerSel
           <div
             key={layer.code}
             className={`layer-card ${selectedLayer === layer.code ? 'selected' : ''}`}
-            onClick={() => onLayerSelect(layer.code)}
+            onClick={() => handleLayerClick(layer.code)}
+            // Add tabIndex and role for better accessibility
+            tabIndex={0}
+            role="button"
+            aria-pressed={selectedLayer === layer.code}
+            style={{ cursor: 'pointer' }}
           >
             <div className="layer-header">
               <span className="layer-code">{layer.code}</span>

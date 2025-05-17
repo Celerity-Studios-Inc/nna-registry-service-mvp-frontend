@@ -1,0 +1,108 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nna-registry-service
+  labels:
+    app: nna-registry-service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: nna-registry-service
+  template:
+    metadata:
+      labels:
+        app: nna-registry-service
+    spec:
+      containers:
+      - name: nna-registry-service
+        image: gcr.io/your-project-id/nna-registry-service:latest
+        ports:
+        - containerPort: 3000
+        env:
+        - name: NODE_ENV
+          value: "production"
+        - name: PORT
+          value: "3000"
+        - name: MONGODB_URI
+          valueFrom:
+            secretKeyRef:
+              name: nna-registry-secrets
+              key: mongodb-uri
+        - name: JWT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: nna-registry-secrets
+              key: jwt-secret
+        - name: GCP_PROJECT_ID
+          valueFrom:
+            secretKeyRef:
+              name: nna-registry-secrets
+              key: gcp-project-id
+        - name: GCP_BUCKET_NAME
+          valueFrom:
+            secretKeyRef:
+              name: nna-registry-secrets
+              key: gcp-bucket-name
+        - name: SENTRY_DSN
+          valueFrom:
+            secretKeyRef:
+              name: nna-registry-secrets
+              key: sentry-dsn
+        volumeMounts:
+        - name: google-credentials
+          mountPath: /app/google-credentials.json
+          subPath: google-credentials.json
+          readOnly: true
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "200m"
+        readinessProbe:
+          httpGet:
+            path: /api/docs
+            port: 3000
+          initialDelaySeconds: 10
+          periodSeconds: 5
+      volumes:
+      - name: google-credentials
+        secret:
+          secretName: gcp-credentials
+          items:
+          - key: credentials.json
+            path: google-credentials.json
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nna-registry-service
+spec:
+  selector:
+    app: nna-registry-service
+  ports:
+  - port: 80
+    targetPort: 3000
+  type: LoadBalancer
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: nna-registry-secrets
+type: Opaque
+data:
+  mongodb-uri: <base64-encoded-mongodb-uri>
+  jwt-secret: <base64-encoded-jwt-secret>
+  gcp-project-id: <base64-encoded-gcp-project-id>
+  gcp-bucket-name: <base64-encoded-gcp-bucket-name>
+  sentry-dsn: <base64-encoded-sentry-dsn>
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: gcp-credentials
+type: Opaque
+data:
+  credentials.json: <base64-encoded-gcp-credentials>

@@ -1,0 +1,18 @@
+{
+  "layer": "S",
+  "category": "Pop",
+  "subcategory": "Base",
+  "source": "ReViz",
+  "tags": ["Olivia", "Pop Star", "Pop Diva"],
+  "description": "Olivia as a Pop Star, Pop Diva",
+  "trainingData": {
+    "prompts": ["Create a contemporary pop star performer with universal appeal."],
+    "images": [],
+    "videos": []
+  },
+  "rights": {
+    "source": "Original",
+    "rights_split": "100% ReViz"
+  },
+  "components": []
+}
