@@ -178,3 +178,14 @@ To help test and debug API interactions, we've provided these utility tools:
 - `/scripts/verify-formdata-handling.js` - Tool to verify FormData handling differences between fetch and axios
 
 These tools can be used to validate API connectivity, test asset registration, and debug FormData issues.
+
+## Documentation
+
+Detailed documentation is available for various parts of the system:
+
+### Taxonomy System
+
+- [Taxonomy System Overview](docs/taxonomy/README.md)
+- [Developer Guide](docs/taxonomy/DEVELOPER_GUIDE.md)
+- [UI Components Guide](docs/taxonomy/UI_COMPONENTS.md)
+- [Troubleshooting Guide](docs/taxonomy/TROUBLESHOOTING.md)

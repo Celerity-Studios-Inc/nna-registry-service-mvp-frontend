@@ -1,8 +1,14 @@
 /**
  * SimpleTaxonomyService
- *
- * A simplified taxonomy service that uses flattened lookup tables
- * for efficient HFN to MFA conversion and taxonomy navigation.
+ * 
+ * A service that provides access to taxonomy data using flattened lookup tables.
+ * This approach offers several advantages:
+ * - More efficient lookups (O(1) complexity)
+ * - Easier debugging and maintenance
+ * - Explicit handling of special cases
+ * - Reduced memory usage
+ * 
+ * @module SimpleTaxonomyService
  */
 import {
   W_LAYER_LOOKUP,
@@ -65,7 +71,10 @@ const LAYER_SUBCATEGORIES: Record<string, Record<string, string[]>> = {
 
 class SimpleTaxonomyService {
   /**
-   * Get all categories for a layer
+   * Retrieves all categories for a given layer
+   * @param layer - The layer code (e.g., 'W', 'S')
+   * @returns An array of taxonomy items representing categories
+   * @throws Error if the layer is not found
    */
   getCategories(layer: string): TaxonomyItem[] {
     console.log(`Getting categories for layer: ${layer}`);
@@ -113,7 +122,11 @@ class SimpleTaxonomyService {
   }
   
   /**
-   * Get all subcategories for a category
+   * Retrieves all subcategories for a given layer and category
+   * @param layer - The layer code (e.g., 'W', 'S')
+   * @param categoryCode - The category code (e.g., 'BCH', 'POP')
+   * @returns An array of taxonomy items representing subcategories
+   * @throws Error if the layer or category is not found
    */
   getSubcategories(layer: string, categoryCode: string): TaxonomyItem[] {
     console.log(`Getting subcategories for ${layer}.${categoryCode}`);
@@ -167,7 +180,10 @@ class SimpleTaxonomyService {
   }
   
   /**
-   * Convert HFN to MFA
+   * Converts a Human-Friendly Name (HFN) to a Machine-Friendly Address (MFA)
+   * @param hfn - The HFN to convert (e.g., 'W.BCH.SUN.001')
+   * @returns The corresponding MFA (e.g., '5.004.003.001')
+   * @throws Error if the HFN is invalid or any component is not found
    */
   convertHFNtoMFA(hfn: string): string {
     try {
@@ -216,7 +232,9 @@ class SimpleTaxonomyService {
   }
   
   /**
-   * Validate if an HFN is valid
+   * Validates if a Human-Friendly Name (HFN) is valid
+   * @param hfn - The HFN to validate (e.g., 'W.BCH.SUN.001')
+   * @returns True if the HFN is valid, false otherwise
    */
   validateHFN(hfn: string): boolean {
     try {
@@ -250,7 +268,9 @@ class SimpleTaxonomyService {
   }
   
   /**
-   * Generate all possible HFN/MFA pairs for a layer
+   * Generates all possible HFN/MFA pairs for a given layer
+   * @param layer - The layer code (e.g., 'W', 'S')
+   * @returns An array of objects containing HFN, MFA, category, and subcategory
    */
   generateAllMappings(layer: string): { hfn: string, mfa: string, category: string, subcategory: string }[] {
     const result = [];
@@ -276,7 +296,9 @@ class SimpleTaxonomyService {
   }
   
   /**
-   * Get the layer numeric code
+   * Gets the numeric code for a layer
+   * @param layer - The layer code (e.g., 'W', 'S')
+   * @returns The numeric code for the layer (e.g., '5', '2')
    */
   getLayerNumericCode(layer: string): string {
     return LAYER_NUMERIC_CODES[layer] || '0';

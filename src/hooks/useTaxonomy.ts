@@ -1,9 +1,17 @@
 /**
  * useTaxonomy Hook
- *
+ * 
  * A React hook that provides access to taxonomy data with built-in
  * loading states, error handling, and retry mechanisms.
- * Enhanced with feedback notifications for user-friendly error handling.
+ * 
+ * Features:
+ * - Automatic loading of categories and subcategories
+ * - Error handling with fallback data
+ * - Selection state management
+ * - HFN/MFA conversion
+ * - User feedback through notifications
+ * 
+ * @module useTaxonomy
  */
 import { useState, useEffect, useCallback } from 'react';
 import { taxonomyService } from '../services/simpleTaxonomyService';
@@ -67,6 +75,11 @@ interface UseTaxonomyResult {
 // Default layer list
 const DEFAULT_LAYERS = ['G', 'S', 'L', 'M', 'W', 'B', 'P', 'T', 'C', 'R'];
 
+/**
+ * Returns a hook for working with taxonomy data
+ * @param options - Configuration options for the hook
+ * @returns An object with taxonomy data and functions
+ */
 export const useTaxonomy = (options: UseTaxonomyOptions = {}): UseTaxonomyResult => {
   const { autoLoad = true, showFeedback = true } = options;
   const feedback = useFeedback();
