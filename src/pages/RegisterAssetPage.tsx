@@ -30,9 +30,7 @@ import {
 import assetService from '../api/assetService';
 import { formatNNAAddressForDisplay } from '../api/codeMapping.enhanced';
 import taxonomyMapper from '../api/taxonomyMapper';
-import LayerSelection from '../components/asset/LayerSelection';
 import LayerSelector from '../components/asset/LayerSelector';
-import TaxonomySelection from '../components/asset/TaxonomySelection';
 import SimpleTaxonomySelection from '../components/asset/SimpleTaxonomySelection';
 import { taxonomyService } from '../services/simpleTaxonomyService';
 import '../styles/SimpleTaxonomySelection.css';
@@ -602,8 +600,9 @@ const RegisterAssetPage: React.FC = () => {
   // Track original subcategory for display override
   const [originalSubcategoryCode, setOriginalSubcategoryCode] = useState<string>('');
 
-  // Handle NNA address change
-  const handleNNAAddressChange = (
+  // Handle NNA address change - kept for future reference
+  // Prefixed with underscore to indicate intentionally unused
+  const _handleNNAAddressChange = (
     humanFriendlyName: string,
     machineFriendlyAddress: string,
     sequentialNumber: number,
