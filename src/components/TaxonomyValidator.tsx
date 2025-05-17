@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { taxonomyService } from '../services/simpleTaxonomyService';
-import { LAYER_LOOKUPS } from '../services/simpleTaxonomyService';
+import { LAYER_LOOKUPS } from '../taxonomyLookup';
 import '../styles/TaxonomyValidator.css';
 
 const TaxonomyValidator: React.FC = () => {

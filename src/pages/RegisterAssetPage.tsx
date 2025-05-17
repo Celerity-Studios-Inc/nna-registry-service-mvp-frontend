@@ -48,7 +48,7 @@ import { FileUploadResponse, Asset, SOURCE_OPTIONS } from '../types/asset.types'
 // CRITICAL: Ensure the simplified taxonomy service is the source of truth
 console.log('Forcing RegisterAssetPage to use simplified taxonomy service', {
   serviceType: 'simplified',
-  layerCount: Object.keys(taxonomyService.LAYER_LOOKUPS).length
+  initialized: !!taxonomyService
 });
 
 // Define the steps in the registration process

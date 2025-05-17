@@ -30,8 +30,10 @@ const SimpleTaxonomySelection: React.FC<SimpleTaxonomySelectionProps> = ({
       console.log(`Loading categories for layer ${layer} using simplified taxonomy service...`);
 
       // Force re-initialization of the taxonomy service
-      if (Object.keys(taxonomyService['LAYER_LOOKUPS'][layer] || {}).length === 0) {
-        console.log(`WARNING: Layer lookup for ${layer} appears to be empty, forcing taxonomy reload...`);
+      // Check if we need to reload the taxonomy data by trying to get categories
+      const testCategories = taxonomyService.getCategories(layer);
+      if (!testCategories || testCategories.length === 0) {
+        console.log(`WARNING: Categories for ${layer} appear to be empty, forcing taxonomy reload...`);
 
         // Try to reload the taxonomy data
         import('../../taxonomyLookup').then(() => {
@@ -68,8 +70,7 @@ const SimpleTaxonomySelection: React.FC<SimpleTaxonomySelectionProps> = ({
       // Force refresh of the taxonomy data
       const debugInfo = {
         layer,
-        totalLayerLookupEntries: Object.keys(taxonomyService['LAYER_LOOKUPS'][layer] || {}).length,
-        categoryKeys: Object.keys(taxonomyService['LAYER_SUBCATEGORIES'][layer] || {}),
+        totalCategories: layerCategories.length,
         attempts: retryCount + 1
       };
       console.log(`DEBUG INFO: ${JSON.stringify(debugInfo)}`);
