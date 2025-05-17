@@ -45,7 +45,7 @@ const TaxonomyDebug: React.FC = () => {
           };
         });
       } catch (error) {
-        info[layer] = { error: error.message };
+        info[layer] = { error: error instanceof Error ? error.message : 'Unknown error' };
       }
     });
     
@@ -68,7 +68,7 @@ const TaxonomyDebug: React.FC = () => {
       } catch (error) {
         return {
           hfn: mapping.hfn,
-          mfa: 'Error: ' + error.message,
+          mfa: 'Error: ' + (error instanceof Error ? error.message : 'Unknown error'),
           success: false
         };
       }
