@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { taxonomyService } from '../../services/simpleTaxonomyService';
 import { TaxonomyItem } from '../../types/taxonomy.types';
+import { logger } from '../../utils/logger';
 
 interface SimpleTaxonomySelectionProps {
   layer: string;
@@ -17,10 +18,31 @@ const SimpleTaxonomySelection: React.FC<SimpleTaxonomySelectionProps> = ({
   selectedCategory,
   selectedSubcategory
 }) => {
+  // State for taxonomy data
   const [categories, setCategories] = useState<TaxonomyItem[]>([]);
   const [subcategories, setSubcategories] = useState<TaxonomyItem[]>([]);
+
+  // Internal state to track selection
+  const [internalSelectedCategory, setInternalSelectedCategory] = useState<string>(selectedCategory || '');
+  const [internalSelectedSubcategory, setInternalSelectedSubcategory] = useState<string>(selectedSubcategory || '');
+
+  // UI state
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [hasAttemptedLoad, setHasAttemptedLoad] = useState<boolean>(false);
+
+  // Sync internal state with props
+  useEffect(() => {
+    if (selectedCategory !== internalSelectedCategory && selectedCategory) {
+      setInternalSelectedCategory(selectedCategory);
+    }
+  }, [selectedCategory, internalSelectedCategory]);
+
+  useEffect(() => {
+    if (selectedSubcategory !== internalSelectedSubcategory && selectedSubcategory) {
+      setInternalSelectedSubcategory(selectedSubcategory);
+    }
+  }, [selectedSubcategory, internalSelectedSubcategory]);
 
   // Load categories when layer changes
   useEffect(() => {
@@ -85,10 +107,14 @@ const SimpleTaxonomySelection: React.FC<SimpleTaxonomySelectionProps> = ({
 
       setCategories(sortedCategories);
       setLoading(false);
+      setHasAttemptedLoad(true);
+      logger.info(`Successfully loaded ${sortedCategories.length} categories for layer ${layer}`);
     } catch (err) {
       console.error('Error loading categories:', err);
+      logger.error(`Failed to load categories for layer ${layer}: ${err instanceof Error ? err.message : 'Unknown error'}`);
       setError('Failed to load categories');
       setLoading(false);
+      setHasAttemptedLoad(true);
     }
   }, [layer]);
 
@@ -156,51 +182,165 @@ const SimpleTaxonomySelection: React.FC<SimpleTaxonomySelectionProps> = ({
     }
   }, [layer, selectedCategory]);
 
-  if (loading) {
-    return <div>Loading taxonomy data...</div>;
+  // Define selection handlers with internal state management
+  const handleCategorySelect = (category: string) => {
+    console.log(`Category selected: ${category}`);
+    setInternalSelectedCategory(category);
+    setInternalSelectedSubcategory(''); // Reset subcategory when category changes
+    onCategorySelect(category);
+  };
+
+  const handleSubcategorySelect = (subcategory: string) => {
+    console.log(`Subcategory selected: ${subcategory}`);
+    setInternalSelectedSubcategory(subcategory);
+    onSubcategorySelect(subcategory);
+  };
+
+  // Loading state
+  if (loading && !hasAttemptedLoad) {
+    return (
+      <div className="taxonomy-loading">
+        <div className="loading-spinner"></div>
+        <p>Loading taxonomy data...</p>
+      </div>
+    );
   }
 
+  // Error state with retry button
   if (error) {
-    return <div className="error-message">{error}</div>;
+    return (
+      <div className="error-container">
+        <div className="error-message">{error}</div>
+        <button
+          className="retry-button"
+          onClick={() => {
+            setError(null);
+            setLoading(true);
+            // Force reload for the current layer
+            const newCategories = taxonomyService.getCategories(layer);
+            setCategories(newCategories);
+            setLoading(false);
+          }}
+        >
+          Retry Loading
+        </button>
+      </div>
+    );
   }
 
   return (
     <div className="taxonomy-selection">
       <div className="taxonomy-section">
         <h3>Select Category</h3>
-        <div className="taxonomy-grid">
-          {categories.map(category => (
-            <div
-              key={category.code}
-              className={`taxonomy-item ${selectedCategory === category.code ? 'selected' : ''}`}
-              onClick={() => onCategorySelect(category.code)}
-            >
-              <div className="code">{category.code}</div>
-              <div className="numeric-code">{category.numericCode}</div>
-              <div className="name">{category.name}</div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {selectedCategory && (
-        <div className="taxonomy-section">
-          <h3>Select Subcategory</h3>
+        {categories.length > 0 ? (
           <div className="taxonomy-grid">
-            {subcategories.map(subcategory => (
+            {categories.map(category => (
               <div
-                key={subcategory.code}
-                className={`taxonomy-item ${selectedSubcategory === subcategory.code ? 'selected' : ''}`}
-                onClick={() => onSubcategorySelect(subcategory.code)}
+                key={category.code}
+                className={`taxonomy-item ${internalSelectedCategory === category.code ? 'selected' : ''}`}
+                onClick={() => handleCategorySelect(category.code)}
+                style={{
+                  cursor: 'pointer',
+                  border: internalSelectedCategory === category.code ? '2px solid #1976d2' : '1px solid #ddd',
+                  backgroundColor: internalSelectedCategory === category.code ? '#f0f7ff' : 'white',
+                  transition: 'all 0.2s ease'
+                }}
               >
-                <div className="code">{subcategory.code}</div>
-                <div className="numeric-code">{subcategory.numericCode}</div>
-                <div className="name">{subcategory.name}</div>
+                <div className="code">{category.code}</div>
+                <div className="numeric-code">{category.numericCode}</div>
+                <div className="name">{category.name || `Category ${category.code}`}</div>
               </div>
             ))}
           </div>
+        ) : (
+          <div className="no-data-message">
+            <p>No categories found for layer {layer}</p>
+            <button
+              onClick={() => {
+                // Force a reload
+                setLoading(true);
+                const reloadedCategories = taxonomyService.getCategories(layer);
+                setCategories(reloadedCategories);
+                setLoading(false);
+                setHasAttemptedLoad(true);
+                console.log(`Manually reloaded categories for ${layer}, found: ${reloadedCategories.length}`);
+              }}
+              style={{
+                padding: '8px 16px',
+                backgroundColor: '#1976d2',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                marginTop: '8px'
+              }}
+            >
+              Reload Categories
+            </button>
+          </div>
+        )}
+      </div>
+
+      {internalSelectedCategory && (
+        <div className="taxonomy-section">
+          <h3>Select Subcategory</h3>
+          {subcategories.length > 0 ? (
+            <div className="taxonomy-grid">
+              {subcategories.map(subcategory => (
+                <div
+                  key={subcategory.code}
+                  className={`taxonomy-item ${internalSelectedSubcategory === subcategory.code ? 'selected' : ''}`}
+                  onClick={() => handleSubcategorySelect(subcategory.code)}
+                  style={{
+                    cursor: 'pointer',
+                    border: internalSelectedSubcategory === subcategory.code ? '2px solid #1976d2' : '1px solid #ddd',
+                    backgroundColor: internalSelectedSubcategory === subcategory.code ? '#f0f7ff' : 'white',
+                    transition: 'all 0.2s ease'
+                  }}
+                >
+                  <div className="code">{subcategory.code}</div>
+                  <div className="numeric-code">{subcategory.numericCode}</div>
+                  <div className="name">{subcategory.name || `Subcategory ${subcategory.code}`}</div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="no-data-message">
+              <p>No subcategories found for category {internalSelectedCategory}</p>
+              <button
+                onClick={() => {
+                  // Force a reload of subcategories
+                  setLoading(true);
+                  const reloadedSubcategories = taxonomyService.getSubcategories(layer, internalSelectedCategory);
+                  setSubcategories(reloadedSubcategories);
+                  setLoading(false);
+                  console.log(`Manually reloaded subcategories for ${layer}.${internalSelectedCategory}, found: ${reloadedSubcategories.length}`);
+                }}
+                style={{
+                  padding: '8px 16px',
+                  backgroundColor: '#1976d2',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  marginTop: '8px'
+                }}
+              >
+                Reload Subcategories
+              </button>
+            </div>
+          )}
         </div>
       )}
+
+      {/* Debug information */}
+      <div className="taxonomy-debug" style={{ marginTop: '20px', fontSize: '12px', color: '#666', borderTop: '1px solid #eee', paddingTop: '10px' }}>
+        <p>Layer: {layer}</p>
+        <p>Categories: {categories.length} available</p>
+        <p>Selected Category: {internalSelectedCategory}</p>
+        <p>Subcategories: {subcategories.length} available</p>
+        <p>Selected Subcategory: {internalSelectedSubcategory}</p>
+      </div>
     </div>
   );
 };
