@@ -1,10 +1,21 @@
 /**
  * SimpleTaxonomyService
- * 
+ *
  * A simplified taxonomy service that uses flattened lookup tables
  * for efficient HFN to MFA conversion and taxonomy navigation.
  */
-import { W_LAYER_LOOKUP, W_SUBCATEGORIES } from '../taxonomyLookup/W_layer';
+import {
+  W_LAYER_LOOKUP,
+  W_SUBCATEGORIES,
+  G_LAYER_LOOKUP,
+  G_SUBCATEGORIES,
+  S_LAYER_LOOKUP,
+  S_SUBCATEGORIES,
+  L_LAYER_LOOKUP,
+  L_SUBCATEGORIES,
+  M_LAYER_LOOKUP,
+  M_SUBCATEGORIES
+} from '../taxonomyLookup';
 import { logger } from '../utils/logger';
 import { TaxonomyItem } from '../types/taxonomy.types';
 
@@ -14,20 +25,24 @@ const LAYER_NUMERIC_CODES: Record<string, string> = {
   'B': '6', 'P': '7', 'T': '8', 'C': '9', 'R': '10'
 };
 
-// Layer lookups mapping - add other layers as they become available
-const LAYER_LOOKUPS: Record<string, Record<string, { numericCode: string, name: string }>> = {
+// Layer lookups mapping
+export const LAYER_LOOKUPS: Record<string, Record<string, { numericCode: string, name: string }>> = {
   'W': W_LAYER_LOOKUP,
-  // 'G': G_LAYER_LOOKUP,
-  // 'S': S_LAYER_LOOKUP,
-  // etc.
+  'G': G_LAYER_LOOKUP,
+  'S': S_LAYER_LOOKUP,
+  'L': L_LAYER_LOOKUP,
+  'M': M_LAYER_LOOKUP
+  // Add other layers as they become available
 };
 
-// Layer subcategories mapping - add other layers as they become available
-const LAYER_SUBCATEGORIES: Record<string, Record<string, string[]>> = {
+// Layer subcategories mapping
+export const LAYER_SUBCATEGORIES: Record<string, Record<string, string[]>> = {
   'W': W_SUBCATEGORIES,
-  // 'G': G_SUBCATEGORIES,
-  // 'S': S_SUBCATEGORIES,
-  // etc.
+  'G': G_SUBCATEGORIES,
+  'S': S_SUBCATEGORIES,
+  'L': L_SUBCATEGORIES,
+  'M': M_SUBCATEGORIES
+  // Add other layers as they become available
 };
 
 class SimpleTaxonomyService {

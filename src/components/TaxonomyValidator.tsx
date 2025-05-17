@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { taxonomyService } from '../services/simpleTaxonomyService';
+import { LAYER_LOOKUPS } from '../services/simpleTaxonomyService';
 import '../styles/TaxonomyValidator.css';
 
 const TaxonomyValidator: React.FC = () => {
@@ -10,8 +11,13 @@ const TaxonomyValidator: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [subcategories, setSubcategories] = useState<any[]>([]);
   const [validationResults, setValidationResults] = useState<any[]>([]);
-  
+
   const layers = ['G', 'S', 'L', 'M', 'W', 'B', 'P', 'T', 'C', 'R'];
+
+  // Get the list of available layers
+  const getAvailableLayers = (): string[] => {
+    return Object.keys(LAYER_LOOKUPS);
+  };
   
   // Initialize with W layer data
   useEffect(() => {
@@ -176,14 +182,59 @@ const TaxonomyValidator: React.FC = () => {
         </div>
       )}
       
+      <div className="available-layers">
+        <h3>Available Layers</h3>
+        <div className="layer-list">
+          {layers.map(layerCode => {
+            const isAvailable = getAvailableLayers().includes(layerCode);
+            return (
+              <div
+                key={layerCode}
+                className={`layer-item ${isAvailable ? 'available' : 'unavailable'}`}
+              >
+                <span className="layer-code">{layerCode}</span>
+                <span className="layer-status">{isAvailable ? '✅' : '❌'}</span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
       <div className="hfn-mfa-tester">
         <h3>Special Case Test: W.BCH.SUN</h3>
         <p>Testing the specific W.BCH.SUN mapping that needed fixing</p>
-        
+
         <div className="tester-output">
           <div><strong>HFN:</strong> W.BCH.SUN.001</div>
           <div><strong>MFA:</strong> {taxonomyService.convertHFNtoMFA('W.BCH.SUN.001') || 'Not available'}</div>
           <div><strong>Status:</strong> {taxonomyService.convertHFNtoMFA('W.BCH.SUN.001') === '5.004.003.001' ? '✅ Fixed correctly' : '❌ Not fixed correctly'}</div>
+        </div>
+      </div>
+
+      <div className="test-cases">
+        <h3>Test Cases for All Layers</h3>
+        <div className="test-cases-grid">
+          {[
+            { hfn: 'G.POP.BAS.001', expected: '1.001.001.001' },
+            { hfn: 'S.POP.BAS.001', expected: '2.001.001.001' },
+            { hfn: 'S.POP.HPM.001', expected: '2.001.007.001' },
+            { hfn: 'L.STG.RED.001', expected: '3.001.002.001' },
+            { hfn: 'M.POP.BAS.001', expected: '4.001.001.001' },
+            { hfn: 'W.BCH.SUN.001', expected: '5.004.003.001' }
+          ].map((testCase, index) => {
+            const actual = taxonomyService.convertHFNtoMFA(testCase.hfn);
+            const isCorrect = actual === testCase.expected;
+            return (
+              <div key={index} className={`test-case ${isCorrect ? 'passed' : 'failed'}`}>
+                <div className="test-hfn">{testCase.hfn}</div>
+                <div className="test-mfa">
+                  <span>Expected: {testCase.expected}</span>
+                  <span>Actual: {actual || 'Error'}</span>
+                </div>
+                <div className="test-result">{isCorrect ? '✅' : '❌'}</div>
+              </div>
+            );
+          })}
         </div>
       </div>
     </div>
