@@ -4,10 +4,12 @@ Frontend application for the Naming, Numbering, and Addressing (NNA) Registry Se
 
 [![Deployed on Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-black?style=for-the-badge&logo=vercel)](https://nna-registry-service-mvp-frontend.vercel.app)
 
-## Latest Update (2025-05-13)
-- Updated backend URL to use production API at registry.reviz.dev
-- Fixed subcategory normalization issues 
-- Improved sequential numbering for MFA display
+## Latest Update (2025-05-17)
+- Implemented comprehensive taxonomy system improvements
+- Added enhanced error handling and fallback mechanisms
+- Created detailed documentation and user guides
+- Improved performance with flattened taxonomy lookups
+- Added comprehensive testing for taxonomy components
 
 ## Production Deployment
 
