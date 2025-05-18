@@ -64,8 +64,29 @@ class SimpleTaxonomyService {
    * @returns An array of taxonomy items representing subcategories
    */
   getSubcategories(layer: string, categoryCode: string): TaxonomyItem[] {
-    if (!layer || !categoryCode || !LAYER_LOOKUPS[layer] || !LAYER_SUBCATEGORIES[layer]) {
-      logger.error(`Layer or category not found: ${layer}.${categoryCode}`);
+    // Input validation with detailed error messages
+    if (!layer) {
+      logger.error('Layer parameter is required but was not provided');
+      return [];
+    }
+    
+    if (!categoryCode) {
+      logger.error(`Category code is required but was not provided for layer ${layer}`);
+      return [];
+    }
+    
+    if (!LAYER_LOOKUPS[layer]) {
+      logger.error(`Layer lookups not found for layer: ${layer}`);
+      return [];
+    }
+    
+    if (!LAYER_SUBCATEGORIES[layer]) {
+      logger.error(`Layer subcategories not found for layer: ${layer}`);
+      return [];
+    }
+    
+    if (!LAYER_SUBCATEGORIES[layer][categoryCode]) {
+      logger.error(`Category not found in layer subcategories: ${layer}.${categoryCode}`);
       return [];
     }
 
@@ -77,19 +98,146 @@ class SimpleTaxonomyService {
       return [];
     }
 
+    // Enhanced debugging for development environments only
+    if (process.env.NODE_ENV !== 'production') {
+      logger.debug(`Processing subcategories for ${layer}.${categoryCode} (${subcategoryCodes.length} found)`);
+      
+      // Check if first subcategory exists in lookup as a sanity check
+      if (subcategoryCodes.length > 0) {
+        const firstEntry = LAYER_LOOKUPS[layer][subcategoryCodes[0]];
+        logger.debug(`First subcategory sample: ${subcategoryCodes[0]} -> ${firstEntry ? 'Found' : 'Not found'}`);
+      }
+    }
+
     try {
-      return subcategoryCodes.map(fullCode => {
-        const parts = fullCode.split('.');
-        const subcategoryCode = parts[1]; // Get the part after the dot
-        const subcategoryEntry = LAYER_LOOKUPS[layer][fullCode];
+      // Create a results array with detailed error checking
+      const results: TaxonomyItem[] = [];
+      const errors: string[] = [];
+      
+      for (const fullCode of subcategoryCodes) {
+        try {
+          // Handle case where fullCode might not be properly formatted
+          if (!fullCode) {
+            errors.push(`Empty subcategory code found for ${layer}.${categoryCode}`);
+            continue;
+          }
+          
+          if (!fullCode.includes('.')) {
+            errors.push(`Invalid subcategory code format (missing dot): ${fullCode}`);
+            
+            // Try to fix the format by prepending the category code
+            const fixedCode = `${categoryCode}.${fullCode}`;
+            const fixedEntry = LAYER_LOOKUPS[layer][fixedCode];
+            
+            if (fixedEntry) {
+              logger.info(`Fixed subcategory code format: ${fullCode} -> ${fixedCode}`);
+              results.push({
+                code: fullCode, // Use the original as the code
+                numericCode: fixedEntry.numericCode,
+                name: fixedEntry.name
+              });
+            }
+            
+            continue;
+          }
+          
+          const parts = fullCode.split('.');
+          const subcategoryCode = parts[1]; // Get the part after the dot
+          
+          if (!subcategoryCode) {
+            errors.push(`Could not extract subcategory code from: ${fullCode}`);
+            continue;
+          }
+          
+          const subcategoryEntry = LAYER_LOOKUPS[layer][fullCode];
+          
+          if (!subcategoryEntry) {
+            errors.push(`Subcategory entry not found: ${layer}.${fullCode}`);
+            
+            // Try alternative formats and lookups
+            const alternatives = [
+              `${categoryCode}.${subcategoryCode}`,  // Standard format
+              subcategoryCode,                       // Direct code
+              fullCode.toUpperCase(),                // Uppercase
+              fullCode.toLowerCase()                 // Lowercase
+            ];
+            
+            let foundAlternative = false;
+            
+            for (const altKey of alternatives) {
+              const altEntry = LAYER_LOOKUPS[layer][altKey];
+              if (altEntry) {
+                logger.info(`Found subcategory using alternative lookup: ${altKey}`);
+                results.push({
+                  code: subcategoryCode,
+                  numericCode: altEntry.numericCode || String(results.length + 1).padStart(3, '0'),
+                  name: altEntry.name || subcategoryCode.replace(/_/g, ' ')
+                });
+                foundAlternative = true;
+                break;
+              }
+            }
+            
+            if (!foundAlternative) {
+              // Create a synthetic entry as last resort
+              logger.warn(`Creating synthetic entry for missing subcategory: ${fullCode}`);
+              results.push({
+                code: subcategoryCode,
+                numericCode: String(results.length + 1).padStart(3, '0'),
+                name: subcategoryCode.replace(/_/g, ' ')
+              });
+            }
+            
+            continue;
+          }
+          
+          // Validate the entry has all required fields
+          if (!subcategoryEntry.numericCode || !subcategoryEntry.name) {
+            const missingFields = [];
+            if (!subcategoryEntry.numericCode) missingFields.push('numericCode');
+            if (!subcategoryEntry.name) missingFields.push('name');
+            
+            errors.push(`Subcategory entry missing required fields (${missingFields.join(', ')}): ${fullCode}`);
+            
+            // Create a complete entry with fallback values
+            results.push({
+              code: subcategoryCode,
+              numericCode: subcategoryEntry.numericCode || String(results.length + 1).padStart(3, '0'),
+              name: subcategoryEntry.name || subcategoryCode.replace(/_/g, ' ')
+            });
+            
+            continue;
+          }
+          
+          // Found a valid entry, add it to results
+          results.push({
+            code: subcategoryCode,
+            numericCode: subcategoryEntry.numericCode,
+            name: subcategoryEntry.name
+          });
+        } catch (err) {
+          const errorMessage = err instanceof Error ? err.message : String(err);
+          errors.push(`Error processing subcategory ${fullCode}: ${errorMessage}`);
+        }
+      }
+      
+      // Log a summary of processing
+      if (errors.length > 0) {
+        logger.warn(`Encountered ${errors.length} errors processing subcategories for ${layer}.${categoryCode}`);
         
-        return {
-          code: subcategoryCode,
-          numericCode: subcategoryEntry.numericCode,
-          name: subcategoryEntry.name
-        };
-      });
+        // In development, log each error
+        if (process.env.NODE_ENV !== 'production' && errors.length <= 5) {
+          errors.forEach(err => logger.warn(`- ${err}`));
+        }
+      }
+      
+      // Log success information
+      logger.info(`Successfully mapped ${results.length}/${subcategoryCodes.length} subcategories for ${layer}.${categoryCode}`);
+      
+      // Return the results, which might include fallback or synthetic entries
+      return results;
     } catch (error) {
+      // Handle unexpected errors
       logger.error(`Error getting subcategories: ${error instanceof Error ? error.message : 'Unknown error'}`);
       return [];
     }

@@ -1,8 +1,10 @@
 import React from 'react';
 import { Container, Typography, Box, Paper, Divider, CssBaseline } from '@mui/material';
 import TaxonomyDebug from '../components/TaxonomyDebug';
+import TaxonomyDebugger from '../components/debug/TaxonomyDebugger';
 import LayerSelector from '../components/asset/LayerSelector';
 import SimpleTaxonomySelection from '../components/asset/SimpleTaxonomySelection';
+import { TaxonomyProvider } from '../contexts/TaxonomyContext';
 
 const TaxonomyDebugPage: React.FC = () => {
   const [selectedLayer, setSelectedLayer] = React.useState<string>('S');
@@ -62,6 +64,16 @@ const TaxonomyDebugPage: React.FC = () => {
             />
           </Paper>
         )}
+
+        <Paper elevation={3} sx={{ p: 3, mb: 4 }}>
+          <Typography variant="h5" gutterBottom>Enhanced Taxonomy Debugger</Typography>
+          <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 2 }}>
+            This component provides detailed debugging information about the taxonomy hierarchy
+          </Typography>
+          <TaxonomyProvider>
+            <TaxonomyDebugger />
+          </TaxonomyProvider>
+        </Paper>
 
         <TaxonomyDebug />
       </Container>
