@@ -3,10 +3,9 @@
  * 
  * A component for debugging taxonomy-related issues.
  */
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { taxonomyService } from '../../services/simpleTaxonomyService';
 import { logger, LogLevel, LogCategory } from '../../utils/logger';
-import { S_LAYER_LOOKUP, S_SUBCATEGORIES } from '../../taxonomyLookup/S_layer';
 import { LAYER_LOOKUPS, LAYER_SUBCATEGORIES } from '../../taxonomyLookup/constants';
 
 // Create or import stylesheet
