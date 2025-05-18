@@ -47,10 +47,7 @@ jobs:
           echo "REACT_APP_API_URL=/api" > .env.production
           echo "REACT_APP_USE_MOCK_API=false" >> .env.production
           cat .env.production
-          
-      - name: Run tests with skipped tests
-        run: npm run test:ci:skip || echo "Tests were skipped or contained some failures - continuing with build"
-        
+      
       - name: Build project
         run: |
           CI=false npm run build
