@@ -53,14 +53,15 @@
 
 .taxonomy-items {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); /* Smaller cards for more per row */
-  gap: 8px; /* Reduce gap for tighter layout */
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); /* Slightly larger cards for better readability */
+  gap: 12px; /* Increase gap for better visual separation */
   padding: 15px;
-  max-height: 300px;
+  max-height: 400px; /* Increased max height for more visibility */
   overflow-y: auto;
   min-height: 100px; /* Minimum height to prevent layout shifts */
   box-sizing: border-box;
   transition: opacity 0.2s ease;
+  will-change: opacity, transform; /* Performance optimization */
 }
 
 /* Loading placeholders */

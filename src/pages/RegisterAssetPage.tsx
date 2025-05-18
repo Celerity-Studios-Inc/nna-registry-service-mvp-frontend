@@ -574,6 +574,7 @@ const RegisterAssetPage: React.FC = () => {
 
   // Handle layer selection
   const handleLayerSelect = (layer: LayerOption, isDoubleClick?: boolean) => {
+    console.log(`handleLayerSelect called with isDoubleClick=${isDoubleClick}`);
     setValue('layer', layer.code);
     setValue('layerName', layer.name);
     
@@ -596,8 +597,11 @@ const RegisterAssetPage: React.FC = () => {
     setValue('sequential', '');
     
     // If double click, auto-advance to next step
+    // Note: We now also use the dedicated onLayerDoubleClick handler for reliability
     if (isDoubleClick) {
-      handleNext();
+      console.log('Double-click detected in handleLayerSelect, advancing to next step');
+      // Use setTimeout to ensure the layer selection is processed first
+      setTimeout(() => handleNext(), 50);
     }
   };
 
@@ -988,6 +992,11 @@ const RegisterAssetPage: React.FC = () => {
               
               // Call the handler with proper LayerOption object and isDoubleClick flag
               handleLayerSelect({ code: layer, name, id: layer }, isDoubleClick);
+            }}
+            onLayerDoubleClick={(layer) => {
+              console.log(`RegisterAssetPage received layer double-click: ${layer}`);
+              // Advance to the next step automatically on double-click
+              handleNext();
             }}
           />
         );

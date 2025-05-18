@@ -195,6 +195,17 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
       
       // Force reload immediately
       const timer = setTimeout(() => {
+        // Try to load categories directly first for immediate response
+        try {
+          const directCategories = taxonomyService.getCategories(layer);
+          if (directCategories && directCategories.length > 0) {
+            logger.info(`Direct category load successful: ${directCategories.length} categories`);
+          }
+        } catch (error) {
+          console.error('Error during direct category load:', error);
+        }
+        
+        // Also use context for consistency
         reloadCategories();
         logger.info(`Initial load of categories for layer: ${layer}`);
         
@@ -204,6 +215,16 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
           reloadSubcategories();
           logger.info(`Initial load of subcategories for ${layer}.${selectedCategory}`);
         }
+        
+        // Set up an auto-retry timer if categories don't load within a reasonable time
+        const retryTimer = setTimeout(() => {
+          if (categories.length === 0) {
+            logger.info('Auto-retry: No categories loaded, trying again...');
+            reloadCategories();
+          }
+        }, 500);
+        
+        return () => clearTimeout(retryTimer);
       }, 0);
       
       return () => clearTimeout(timer);
@@ -226,12 +247,37 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
       // Debounce the categories reload to prevent multiple rapid calls
       categoryDebounceRef.current = setTimeout(() => {
         if (layer) {
+          // Try direct service call first for immediate response
+          try {
+            const directCategories = taxonomyService.getCategories(layer);
+            console.log(`Directly loaded ${directCategories.length} categories for layer ${layer}`);
+            // If categories are already loaded, we don't need to do anything else
+            if (categories.length > 0) {
+              console.log('Categories already loaded in context, skipping reload');
+              return;
+            }
+          } catch (error) {
+            console.error('Error during debounced direct category load:', error);
+          }
+          
+          // Fall back to context reload
           reloadCategories();
           // Only log the first time to reduce console noise
           if (isInitialCategoryLoadRef.current) {
             logger.info(`Loading categories for layer: ${layer}`);
             isInitialCategoryLoadRef.current = false;
           }
+          
+          // Set up an auto-retry if categories don't load
+          const retryTimer = setTimeout(() => {
+            if (categories.length === 0) {
+              logger.info('Auto-retry: Still no categories, trying again...');
+              reloadCategories();
+            }
+          }, 300);
+          
+          // Clean up retry timer
+          return () => clearTimeout(retryTimer);
         }
       }, 50);
     }
@@ -241,7 +287,7 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
         clearTimeout(categoryDebounceRef.current);
       }
     };
-  }, [layer, selectLayer, reloadCategories]);
+  }, [layer, selectLayer, reloadCategories, categories.length]);
   
   // When layer changes, reset active category and subcategory states
   useEffect(() => {
@@ -284,7 +330,17 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
     }
   }, [selectedSubcategory, activeSubcategory]);
   
-  // Memoize the direct subcategories fetch to prevent re-calculation on every render
+  // Memoize the direct categories/subcategories fetch to prevent re-calculation on every render
+  const getDirectCategories = useCallback((layer: string) => {
+    if (!layer) return [];
+    try {
+      return taxonomyService.getCategories(layer);
+    } catch (error) {
+      console.error('Error getting direct categories:', error);
+      return [];
+    }
+  }, []);
+  
   const getDirectSubcategories = useCallback((layer: string, category: string | null) => {
     if (!layer || !category) return [];
     try {
@@ -492,11 +548,18 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
             onRetry={handleCategoryRetry}
           />
         ) : (
-          <CategoriesGrid 
-            categories={categories}
-            activeCategory={activeCategory}
-            handleCategorySelect={handleCategorySelect}
-          />
+          <React.Fragment>
+            <CategoriesGrid 
+              categories={categories}
+              activeCategory={activeCategory}
+              handleCategorySelect={handleCategorySelect}
+            />
+            {categories.length === 0 && (
+              <div style={{ textAlign: 'center', padding: '10px', fontSize: '12px', color: '#666' }}>
+                Attempting to load categories directly...
+              </div>
+            )}
+          </React.Fragment>
         )}
       </div>
       

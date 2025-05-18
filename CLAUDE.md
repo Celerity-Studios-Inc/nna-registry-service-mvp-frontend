@@ -38,7 +38,7 @@ The application uses a flattened taxonomy system with lookup tables for efficien
 ### Special Cases
 There are special case mappings that need special handling:
 - W.BCH.SUN.001 → 5.004.003.001
-- S.POP.HPM.001 → 2.004.003.001
+- S.POP.HPM.001 → 2.001.007.001
 
 ## Recent Issues and Fixes
 
@@ -83,9 +83,39 @@ There are special case mappings that need special handling:
     - Added diagnostic code for debugging
     - Implemented recovery mechanisms for disappearing subcategories
 
-### 5. Double-Click Navigation Fix Implementation (Coming next)
+### 5. Double-Click Navigation Fix Implementation (May 18, 2025)
 - Problem: Double-clicking a layer card in Step 1 doesn't advance to Step 2
-- Status: Scheduled to be addressed after subcategory selection fix is verified working
+- Solution: 
+  - Fixed event propagation in LayerSelectorV2.tsx to prevent event bubbling
+  - Implemented proper `onLayerDoubleClick` handler in RegisterAssetPage.tsx
+  - Added extra logging for debugging and verification
+  - Used setTimeout to ensure proper timing between selection and navigation
+- Key changes:
+  - `/src/components/asset/LayerSelectorV2.tsx`: Fixed event handling and propagation
+  - `/src/pages/RegisterAssetPage.tsx`: Implemented onLayerDoubleClick callback
+  - `/DOUBLE_CLICK_NAVIGATION_FIX.md`: Documented the changes in detail
+
+### 6. New UI Issues Identified (May 18, 2025)
+- Problem: Recent testing revealed several issues with the asset registration flow:
+  1. Category cards only display after clicking "Retry" (regression)
+  2. Subcategory cards display in a single vertical column rather than a grid
+  3. UI responsiveness is very slow with significant lag between clicks
+  4. HFN and MFA formats missing .000 suffix during workflow
+  5. Incorrect HFN and MFA format on success page (S.Pop.Base.041 instead of S.POP.BAS.041)
+
+- Root Causes:
+  1. Direct loading approach for categories not working properly on initial load
+  2. CSS layout using flexbox column instead of grid for subcategories
+  3. Excessive re-renders and logging affecting performance
+  4. Case handling issues in format conversion between display and internal formats
+  5. Numeric code mapping incorrect (showing 000.000 instead of 001.001)
+
+- Planned Fixes:
+  1. Fix category loading regression by improving initial load reliability
+  2. Update CSS to use grid layout for subcategories
+  3. Optimize performance by reducing re-renders and removing excessive logging
+  4. Fix case handling for consistent taxonomy codes (S.POP.BAS vs S.Pop.Base)
+  5. Fix numeric code mapping and proper sequential numbering suffix
 
 ## Current State
 
@@ -105,6 +135,12 @@ There are special case mappings that need special handling:
 - `/.github/workflows/tests.yml.disabled` - Disabled Run Tests workflow
 - `/package.json` - Removed test:ci:skip script
 
+### Files to Fix for Current Issues
+- `/src/components/asset/SimpleTaxonomySelectionV2.tsx` - For category loading and subcategory layout
+- `/src/styles/SimpleTaxonomySelection.css` - For subcategory grid layout
+- `/src/services/simpleTaxonomyService.ts` - For HFN/MFA format issues
+- `/src/pages/RegisterAssetPage.tsx` - For format display and performance issues
+
 ## Code Style Guidelines
 - TypeScript is required for all new code
 - Use functional components with React hooks
@@ -119,10 +155,12 @@ There are special case mappings that need special handling:
 
 ## Next Steps
 
-1. Await user testing feedback on the current fixes
-2. Address any remaining issues based on user feedback
-3. Clean up excessive debugging logs after functionality is confirmed working
-4. Consider properly fixing the failing tests in the future
+1. Fix category loading regression to show categories without needing Retry
+2. Improve subcategory layout to use grid instead of single column
+3. Optimize performance by reducing re-renders and excessive logging
+4. Fix HFN/MFA format display in workflow and success page
+5. Clean up excessive debugging logs after functionality is confirmed working
+6. Consider properly fixing the failing tests in the future
 
 ## Workflow Guidelines
 - Always get user validation BEFORE implementing changes
