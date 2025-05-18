@@ -58,8 +58,7 @@
     "flatten-taxonomy": "node scripts/taxonomyFlattener.js",
     "test-taxonomy": "node scripts/test-taxonomy-mappings.js",
     "generate-layer-icons": "node src/utils/createLayerIcons.js",
-    "postinstall": "echo 'Handling legacy peer dependencies'",
-    "test:ci:skip": "react-scripts test --watchAll=false --config=jest.config.skip.js"
+    "postinstall": "echo 'Handling legacy peer dependencies'"
   },
   "eslintConfig": {
     "extends": [
