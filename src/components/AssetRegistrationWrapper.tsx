@@ -139,12 +139,13 @@ const AssetRegistrationWrapper: React.FC = () => {
     }
   }, [addFeedback, verifyLayerCategories, verifySpecialCaseMappings]);
 
+  // Create the ref outside the effect to fix ESLint rule violation
+  const hasRunRef = React.useRef(false);
+  
   useEffect(() => {
     // To prevent infinite loops, especially in tests, use a ref to track if we've already verified
-    const hasRun = React.useRef(false);
-    
-    if (!hasRun.current) {
-      hasRun.current = true;
+    if (!hasRunRef.current) {
+      hasRunRef.current = true;
       runVerification();
     }
   }, [runVerification]);
