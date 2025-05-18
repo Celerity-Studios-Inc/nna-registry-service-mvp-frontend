@@ -4,10 +4,11 @@
  * An improved version of the SimpleTaxonomySelection component
  * that uses the useTaxonomy hook for more reliable taxonomy selection.
  */
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useTaxonomyContext } from '../../contexts/TaxonomyContext';
 import { logger } from '../../utils/logger';
 import { taxonomyService } from '../../services/simpleTaxonomyService';
+import { TaxonomyItem } from '../../types/taxonomy.types';
 import '../../styles/SimpleTaxonomySelection.css';
 
 interface SimpleTaxonomySelectionV2Props {
@@ -91,6 +92,10 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
   const [activeCategory, setActiveCategory] = useState<string | null>(selectedCategory || null);
   const [activeSubcategory, setActiveSubcategory] = useState<string | null>(selectedSubcategory || null);
   
+  // Local backup storage for subcategories
+  const [localSubcategories, setLocalSubcategories] = useState<TaxonomyItem[]>([]);
+  const subcategoriesRef = useRef<TaxonomyItem[]>([]);
+  
   // When layer changes, reset active category and subcategory
   useEffect(() => {
     setActiveCategory(null);
@@ -142,6 +147,10 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
       const subcats = taxonomyService.getSubcategories(layer, category);
       console.log(`Directly loaded subcategories for ${layer}.${category}:`, subcats);
       
+      // Store subcategories in local backup storage
+      setLocalSubcategories(subcats);
+      subcategoriesRef.current = subcats;
+      
       // Set subcategories in context
       selectCategory(category);
       if (subcats.length > 0) {
@@ -160,30 +169,89 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
     }, 50);
   };
   
-  // Handle subcategory selection
+  // Handle subcategory selection - TARGETED FIX FOR DISAPPEARING SUBCATEGORIES
   const handleSubcategorySelect = (subcategory: string, isDoubleClick?: boolean) => {
+    // Log before state changes to diagnose
+    console.log('BEFORE subcategory selection:', {
+      layer,
+      activeCategory,
+      subcategory,
+      currentSubcategories: subcategories
+    });
+
     // FIXED: Prevent duplicate selections
     if (subcategory === activeSubcategory) return;
     
     logger.info(`Subcategory selected: ${subcategory}`);
+    
+    // 1. Update local state first
     setActiveSubcategory(subcategory);
-    
-    // Set in context but also dispatch directly to parent component
+
+    // 2. Update context
     selectSubcategory(subcategory);
+
+    // 3. Notify parent
+    onSubcategorySelect(subcategory, isDoubleClick);
+
+    // 4. Create a local cache of subcategories to prevent disappearance
+    const currentSubcategories = [...subcategories];
     
-    // Log more details to debug
-    console.log(`Directly sending subcategory selection to parent: ${subcategory}`);
-    console.log(`Current state: layer=${layer}, category=${activeCategory}, subcategory=${subcategory}`);
+    // Store in our local backup storage too
+    if (subcategories.length > 0) {
+      setLocalSubcategories(subcategories);
+      subcategoriesRef.current = subcategories;
+    }
     
-    // Ensure parent gets notified
-    onSubcategorySelect(subcategory);
+    // Direct reference to ensure we have subcategories even if context fails
+    const directSubcategories = activeCategory ? 
+      taxonomyService.getSubcategories(layer, activeCategory) : [];
     
-    // Force immediate rendering of selected state
+    // If our local storage is empty but direct service has data, update it
+    if (localSubcategories.length === 0 && directSubcategories.length > 0) {
+      setLocalSubcategories(directSubcategories);
+      subcategoriesRef.current = directSubcategories;
+    }
+    
+    // 5. Add timeout to verify state after update
     setTimeout(() => {
-      // Re-set active subcategory in case it was cleared
-      setActiveSubcategory(subcategory);
-      console.log(`Reinforcing subcategory selection: ${subcategory}`);
-    }, 10);
+      console.log('AFTER subcategory selection:', {
+        layer,
+        activeCategory,
+        activeSubcategory: subcategory,
+        contextSubcategories: subcategories,
+        localCachedSubcategories: currentSubcategories,
+        localBackupSubcategories: localSubcategories,
+        refSubcategories: subcategoriesRef.current,
+        directSubcategories
+      });
+      
+      // 6. If subcategories disappeared, restore them from all available sources
+      if (subcategories.length === 0) {
+        console.log('Subcategories disappeared after selection - attempting to restore');
+        
+        // Try all available backup sources in order of preference
+        if (currentSubcategories.length > 0) {
+          console.log('Restoring from temporary cache');
+          // Force a re-render with the active subcategory
+          setActiveSubcategory(null);
+          setTimeout(() => setActiveSubcategory(subcategory), 10);
+        } 
+        else if (localSubcategories.length > 0) {
+          console.log('Restoring from local state backup');
+          // Force-update selection
+          setActiveSubcategory(null);
+          setTimeout(() => setActiveSubcategory(subcategory), 10);
+        } 
+        else if (directSubcategories.length > 0) {
+          console.log('Restoring from direct service call');
+          // Update local backup and force selection
+          setLocalSubcategories(directSubcategories);
+          subcategoriesRef.current = directSubcategories;
+          setActiveSubcategory(null);
+          setTimeout(() => setActiveSubcategory(subcategory), 10);
+        }
+      }
+    }, 50);
   };
   
   return (
@@ -257,13 +325,17 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
             {activeCategory && <span className="category-indicator">Category: {activeCategory}</span>}
           </h3>
           
-          {/* Add diagnostic logging before rendering subcategories */}
+          {/* ADD THIS DIAGNOSTIC BEFORE RENDERING SUBCATEGORIES */}
           {(() => {
-            console.log('About to render subcategories:', {
+            console.log('DEBUG Subcategory Rendering:', {
               layer,
               activeCategory,
+              subcategoriesDirectlyFromService: layer && activeCategory ? 
+                taxonomyService.getSubcategories(layer, activeCategory) : [],
               subcategoriesFromContext: subcategories,
-              directSubcategories: activeCategory ? taxonomyService.getSubcategories(layer, activeCategory) : []
+              localBackupSubcategories: localSubcategories,
+              refSubcategories: subcategoriesRef.current,
+              activeSubcategory
             });
             return null;
           })()}
@@ -380,21 +452,45 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
             })()
           ) : (
             (() => {
-              // ALWAYS check if we have direct service data available for consistency
+              // TARGETED FIX: Improved subcategory rendering logic
+              
+              // 1. First get subcategories directly from service (most reliable source)
               const directSubcategories = activeCategory ? 
                 taxonomyService.getSubcategories(layer, activeCategory) : [];
               
-              console.log(`[SUBCATEGORY RENDER] Context subcategories: ${subcategories.length}, Direct subcategories: ${directSubcategories.length}`);
+              console.log(`[SUBCATEGORY RENDER] Sources: Context=${subcategories.length}, Direct=${directSubcategories.length}, LocalBackup=${localSubcategories.length}, Ref=${subcategoriesRef.current.length}`);
               
-              // Determine which dataset to use
+              // 2. Determine best available source for subcategories
               let displaySubcategories = subcategories;
+              let dataSource = 'context';
               let useDirectData = false;
               
-              // If context data is empty but direct service has data, use direct service data
-              if (subcategories.length === 0 && directSubcategories.length > 0) {
-                displaySubcategories = directSubcategories;
-                useDirectData = true;
-                console.log(`[FALLBACK] Using direct subcategories instead of empty context data`);
+              // 3. If context is empty, try local backup options in order of preference
+              if (subcategories.length === 0) {
+                // First prefer direct service call (most reliable)
+                if (directSubcategories.length > 0) {
+                  displaySubcategories = directSubcategories;
+                  dataSource = 'direct';
+                  useDirectData = true;
+                  // Update our backup stores
+                  if (localSubcategories.length === 0) {
+                    setLocalSubcategories(directSubcategories);
+                    subcategoriesRef.current = directSubcategories;
+                  }
+                  console.log(`[FALLBACK-DIRECT] Using direct subcategories (${directSubcategories.length}) from service`);
+                } 
+                // Then try local state backup
+                else if (localSubcategories.length > 0) {
+                  displaySubcategories = localSubcategories;
+                  dataSource = 'local';
+                  console.log(`[FALLBACK-LOCAL] Using local backup subcategories (${localSubcategories.length})`);
+                } 
+                // Finally try reference backup
+                else if (subcategoriesRef.current.length > 0) {
+                  displaySubcategories = subcategoriesRef.current;
+                  dataSource = 'ref';
+                  console.log(`[FALLBACK-REF] Using reference backup subcategories (${subcategoriesRef.current.length})`);
+                }
               }
               
               // Return the actual subcategory rendering UI

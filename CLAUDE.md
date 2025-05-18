@@ -66,20 +66,26 @@ There are special case mappings that need special handling:
   - Modified build process to use CI=false flag
   - Fixed TypeScript error in TaxonomyDebugger component (duplicate clearLog function)
 
-### 4. Subcategory Selection and Double-Click Navigation Fixes (May 18, 2025)
-- Problem: Three issues identified during testing:
-  - Subcategories loaded but couldn't be selected
-  - Double-clicking a layer card in Step 1 didn't advance to Step 2
-  - Subcategory cards disappeared after attempted selection
+### 4. Subcategory Selection Disappearance Fix (May 18, 2025)
+- Problem: Subcategory cards were disappearing after selection despite loading correctly
+- Root Cause: State loss occurring during the subcategory selection process
 - Solution: 
-  - Implemented direct service calls for subcategory loading in SimpleTaxonomySelectionV2
-  - Fixed double-click event handling and interface typing
-  - Added fallback rendering for subcategories from direct service data
-  - Enhanced error handling with more detailed logging
+  - Implemented multiple backup mechanisms for subcategory data preservation
+  - Added detailed diagnostic logging to track state changes
+  - Implemented tiered fallback strategies (context → local state → ref → direct service)
+  - Fixed race conditions with careful setTimeout usage
+  - Added visual indicators when fallback mechanisms are used
 - Key changes:
-  - `/src/components/asset/SimpleTaxonomySelectionV2.tsx` - Direct service integration and double-click handling
-  - `/src/components/asset/LayerSelectorV2.tsx` - Fixed double-click event propagation
-  - `/src/pages/RegisterAssetPage.tsx` - Updated event handlers to properly handle double-clicks
+  - `/src/components/asset/SimpleTaxonomySelectionV2.tsx`:
+    - Added local state backup storage for subcategories
+    - Enhanced handleSubcategorySelect with backup mechanisms
+    - Improved subcategory rendering with multiple data sources
+    - Added diagnostic code for debugging
+    - Implemented recovery mechanisms for disappearing subcategories
+
+### 5. Double-Click Navigation Fix Implementation (Coming next)
+- Problem: Double-clicking a layer card in Step 1 doesn't advance to Step 2
+- Status: Scheduled to be addressed after subcategory selection fix is verified working
 
 ## Current State
 

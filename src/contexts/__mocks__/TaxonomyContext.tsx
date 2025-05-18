@@ -46,7 +46,7 @@ const mockTaxonomyContext = {
 export const TaxonomyContext = React.createContext(mockTaxonomyContext);
 
 // Custom hook to use the taxonomy context
-export const useTaxonomyContext = jest.fn(() => mockTaxonomyContext);
+export const useTaxonomyContext = jest.fn((_options = {}) => mockTaxonomyContext);
 
 // Mock provider component
 export const TaxonomyProvider: React.FC<{
