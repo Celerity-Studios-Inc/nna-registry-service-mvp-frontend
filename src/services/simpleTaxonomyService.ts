@@ -5,6 +5,7 @@
  * for efficient HFN to MFA conversion and taxonomy navigation.
  */
 import { W_LAYER_LOOKUP, W_SUBCATEGORIES } from '../taxonomyLookup/W_layer';
+import { S_LAYER_LOOKUP, S_SUBCATEGORIES } from '../taxonomyLookup/S_layer';
 import { logger } from '../utils/logger';
 import { TaxonomyItem } from '../types/taxonomy.types';
 
@@ -17,16 +18,16 @@ const LAYER_NUMERIC_CODES: Record<string, string> = {
 // Layer lookups mapping - add other layers as they become available
 const LAYER_LOOKUPS: Record<string, Record<string, { numericCode: string, name: string }>> = {
   'W': W_LAYER_LOOKUP,
+  'S': S_LAYER_LOOKUP,
   // 'G': G_LAYER_LOOKUP,
-  // 'S': S_LAYER_LOOKUP,
   // etc.
 };
 
 // Layer subcategories mapping - add other layers as they become available
 const LAYER_SUBCATEGORIES: Record<string, Record<string, string[]>> = {
   'W': W_SUBCATEGORIES,
+  'S': S_SUBCATEGORIES,
   // 'G': G_SUBCATEGORIES,
-  // 'S': S_SUBCATEGORIES,
   // etc.
 };
 
