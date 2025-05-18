@@ -11,42 +11,68 @@
  * Special case mappings for HFN to MFA conversion
  * Key format: '{layer}.{category}.{subcategory}'
  * Value format: '{layerNum}.{categoryNum}.{subcategoryNum}'
+ * 
+ * These are now derived from the flattened taxonomy data to avoid hardcoding
  */
+// Function to build special case MFA mappings from flattened taxonomy
+function buildSpecialCaseMFA(layer: string, category: string, subcategory: string) {
+  // Get the flattened taxonomy data for the layer
+  const layerData = flattenedTaxonomy[layer];
+  if (!layerData) return '';
+  
+  // Get the MFA components
+  const layerMFA = layerData.mfaCode;
+  
+  // Find the category and get its MFA code
+  const categoryData = layerData.categories[category];
+  if (!categoryData) return '';
+  const categoryMFA = categoryData.mfaCode;
+  
+  // Find the subcategory and get its MFA code
+  const subcategoryData = layerData.subcategories[category]?.[subcategory];
+  if (!subcategoryData) return '';
+  const subcategoryMFA = subcategoryData.mfaCode;
+  
+  // Combine the components to create the MFA (without sequence number)
+  return `${layerMFA}.${categoryMFA}.${subcategoryMFA}`;
+}
+
 export const SPECIAL_HFN_MFA_MAPPINGS: Record<string, string> = {
   // Layer W (Worlds) special mappings
-  'W.BCH.SUN': '5.004.003',     // Beach.Sunny
-  'W.STG.FES': '5.002.003',     // Stage.Festival
-  'W.BCH.TRO': '5.004.002',     // Beach.Tropical
-  'W.HIP.BAS': '5.003.001',     // Urban/HipHop.Base
-  'W.URB.BAS': '5.003.001',     // Urban/HipHop.Base (alias)
+  'W.BCH.SUN': buildSpecialCaseMFA('W', 'BCH', 'SUN'),     // Beach.Sunny
+  'W.STG.FES': buildSpecialCaseMFA('W', 'STG', 'FES'),     // Stage.Festival
+  'W.BCH.TRO': buildSpecialCaseMFA('W', 'BCH', 'TRO'),     // Beach.Tropical
+  'W.HIP.BAS': buildSpecialCaseMFA('W', 'HIP', 'BAS'),     // Urban/HipHop.Base
+  'W.URB.BAS': buildSpecialCaseMFA('W', 'URB', 'BAS'),     // Urban/HipHop.Base (alias)
   
   // Layer S (Stars) special mappings
-  'S.POP.HPM': '2.001.007',     // Pop.Pop_Hipster_Male_Stars - Updated to actual taxonomy data
-  'S.RCK.BAS': '2.005.001',     // Rock.Base
+  'S.POP.HPM': buildSpecialCaseMFA('S', 'POP', 'HPM'),     // Pop.Pop_Hipster_Male_Stars
+  'S.RCK.BAS': buildSpecialCaseMFA('S', 'RCK', 'BAS'),     // Rock.Base
   
-  // Layer G (Songs) special mapping for test case
+  // Layer G (Songs) special mapping for test case (keeping this for backward compatibility)
   'G.CAT.SUB': '1.001.001',     // Generic test case
 };
 
 /**
  * Numeric code mappings for categories
  * Organized by layer for direct lookups
+ * Now derived from flattened taxonomy
  */
 export const CATEGORY_NUMERIC_MAPPINGS: Record<string, Record<string, number>> = {
-  'W': {
-    'BCH': 4,    // Beach
-    'STG': 2,    // Stage
-    'HIP': 3,    // Urban/HipHop
-    'URB': 3,    // Urban (alias for HIP)
-    'NAT': 15    // Nature
-  },
-  'S': {
-    'POP': 1,    // Pop
-    'RCK': 5,    // Rock
-    'ROK': 2,    // Rock (alternate)
-    'HIP': 3     // Hip-Hop
-  },
+  'W': Object.fromEntries(
+    Object.entries(flattenedTaxonomy.W.categories).map(([code, data]) => [
+      code, 
+      parseInt(data.mfaCode, 10)
+    ])
+  ),
+  'S': Object.fromEntries(
+    Object.entries(flattenedTaxonomy.S.categories).map(([code, data]) => [
+      code, 
+      parseInt(data.mfaCode, 10)
+    ])
+  ),
   'G': {
+    // Derive G layer from taxonomy when available, or keep test category for backward compatibility
     'POP': 1,    // Pop
     'ROK': 2,    // Rock
     'HIP': 3,    // Hip-Hop
@@ -57,44 +83,33 @@ export const CATEGORY_NUMERIC_MAPPINGS: Record<string, Record<string, number>> =
 /**
  * Numeric code mappings for subcategories
  * Organized by layer and category for direct lookups
+ * Now derived from flattened taxonomy
  */
 export const SUBCATEGORY_NUMERIC_MAPPINGS: Record<string, Record<string, Record<string, number>>> = {
-  'W': {
-    'BCH': {
-      'SUN': 3,   // Sunny
-      'TRO': 2    // Tropical
-    },
-    'STG': {
-      'FES': 3,   // Festival
-      'BAS': 1    // Base
-    },
-    'HIP': {
-      'BAS': 1    // Base
-    },
-    'URB': {
-      'BAS': 1    // Base
-    },
-    'NAT': {
-      'BAS': 1    // Base
-    }
-  },
-  'S': {
-    'POP': {
-      'HPM': 7,   // Hipster Male - Updated to match actual taxonomy value (007)
-      'DIV': 2,   // Diva
-      'BAS': 1    // Base
-    },
-    'RCK': {
-      'BAS': 1    // Base
-    },
-    'ROK': {
-      'BAS': 1    // Base
-    },
-    'HIP': {
-      'BAS': 1    // Base
-    }
-  },
+  'W': Object.fromEntries(
+    Object.entries(flattenedTaxonomy.W.subcategories).map(([categoryCode, subcategories]) => [
+      categoryCode,
+      Object.fromEntries(
+        Object.entries(subcategories).map(([subcategoryCode, data]) => [
+          subcategoryCode,
+          parseInt(data.mfaCode, 10)
+        ])
+      )
+    ])
+  ),
+  'S': Object.fromEntries(
+    Object.entries(flattenedTaxonomy.S.subcategories).map(([categoryCode, subcategories]) => [
+      categoryCode,
+      Object.fromEntries(
+        Object.entries(subcategories).map(([subcategoryCode, data]) => [
+          subcategoryCode,
+          parseInt(data.mfaCode, 10)
+        ])
+      )
+    ])
+  ),
   'G': {
+    // Derive G layer from taxonomy when available, or keep test category for backward compatibility
     'POP': {
       'BAS': 1    // Base
     },
@@ -107,21 +122,24 @@ export const SUBCATEGORY_NUMERIC_MAPPINGS: Record<string, Record<string, Record<
 /**
  * Alphabetic code mappings for categories
  * Organized by layer and numeric code for direct lookups
+ * Now derived from flattened taxonomy
  */
 export const CATEGORY_ALPHABETIC_MAPPINGS: Record<string, Record<number, string>> = {
-  'W': {
-    4: 'BCH',    // Beach
-    2: 'STG',    // Stage
-    3: 'HIP',    // Urban/HipHop
-    15: 'NAT'    // Nature
-  },
-  'S': {
-    1: 'POP',    // Pop
-    5: 'RCK',    // Rock
-    2: 'ROK',    // Rock (alternate)
-    3: 'HIP'     // Hip-Hop
-  },
+  'W': Object.fromEntries(
+    // Convert the categoriesByMfa mapping which is already in the right format
+    Object.entries(flattenedTaxonomy.W.categoriesByMfa).map(([mfaCode, hfnCode]) => [
+      parseInt(mfaCode, 10),
+      hfnCode
+    ])
+  ),
+  'S': Object.fromEntries(
+    Object.entries(flattenedTaxonomy.S.categoriesByMfa).map(([mfaCode, hfnCode]) => [
+      parseInt(mfaCode, 10),
+      hfnCode
+    ])
+  ),
   'G': {
+    // Keep backward compatibility for G layer
     1: 'POP',    // Pop
     2: 'ROK',    // Rock
     3: 'HIP'     // Hip-Hop
@@ -131,38 +149,34 @@ export const CATEGORY_ALPHABETIC_MAPPINGS: Record<string, Record<number, string>
 /**
  * Alphabetic code mappings for subcategories
  * Organized by layer, category numeric code, and subcategory numeric code for direct lookups
+ * Now derived from flattened taxonomy
  */
 export const SUBCATEGORY_ALPHABETIC_MAPPINGS: Record<string, Record<number, Record<number, string>>> = {
-  'W': {
-    4: {         // Beach
-      3: 'SUN',  // Sunny
-      2: 'TRO'   // Tropical
-    },
-    2: {         // Stage
-      3: 'FES',  // Festival
-      1: 'BAS'   // Base
-    },
-    3: {         // Urban/HipHop
-      1: 'BAS'   // Base
-    },
-    15: {        // Nature
-      1: 'BAS'   // Base
-    }
-  },
-  'S': {
-    1: {         // Pop
-      7: 'HPM',  // Hipster Male - Maps to 7 in implementation (only supporting actual value now)
-      2: 'DIV',  // Diva
-      1: 'BAS'   // Base
-    },
-    5: {         // Rock
-      1: 'BAS'   // Base
-    },
-    2: {         // Rock (alternate)
-      1: 'BAS'   // Base
-    }
-  },
+  'W': Object.fromEntries(
+    // Transform the structure to match the required format
+    Object.entries(flattenedTaxonomy.W.subcategoriesByMfa).map(([categoryMfa, subcategoryMap]) => [
+      parseInt(categoryMfa, 10),
+      Object.fromEntries(
+        Object.entries(subcategoryMap).map(([subcategoryMfa, subcategoryHfn]) => [
+          parseInt(subcategoryMfa, 10),
+          subcategoryHfn
+        ])
+      )
+    ])
+  ),
+  'S': Object.fromEntries(
+    Object.entries(flattenedTaxonomy.S.subcategoriesByMfa).map(([categoryMfa, subcategoryMap]) => [
+      parseInt(categoryMfa, 10),
+      Object.fromEntries(
+        Object.entries(subcategoryMap).map(([subcategoryMfa, subcategoryHfn]) => [
+          parseInt(subcategoryMfa, 10),
+          subcategoryHfn
+        ])
+      )
+    ])
+  ),
   'G': {
+    // Keep backward compatibility for G layer
     1: {
       1: 'BAS'   // Base
     }
@@ -172,13 +186,40 @@ export const SUBCATEGORY_ALPHABETIC_MAPPINGS: Record<string, Record<number, Reco
 /**
  * Complete mappings for test cases
  * This maps a specific HFN to a specific MFA for testing
+ * These are now derived from the flattened taxonomy data to avoid hardcoding
  */
+import { flattenedTaxonomy } from '../utils/taxonomyFlattener';
+
+// Function to create an MFA from components based on the flattened taxonomy
+function buildMFA(layer: string, category: string, subcategory: string, seqNum: string) {
+  // Get the flattened taxonomy data for the layer
+  const layerData = flattenedTaxonomy[layer];
+  if (!layerData) return '';
+  
+  // Get the MFA components
+  const layerMFA = layerData.mfaCode;
+  
+  // Find the category and get its MFA code
+  const categoryData = layerData.categories[category];
+  if (!categoryData) return '';
+  const categoryMFA = categoryData.mfaCode;
+  
+  // Find the subcategory and get its MFA code
+  const subcategoryData = layerData.subcategories[category]?.[subcategory];
+  if (!subcategoryData) return '';
+  const subcategoryMFA = subcategoryData.mfaCode;
+  
+  // Combine the components to create the MFA
+  return `${layerMFA}.${categoryMFA}.${subcategoryMFA}.${seqNum}`;
+}
+
+// Build the test case mappings dynamically
 export const TEST_CASE_MAPPINGS: Record<string, string> = {
-  'W.BCH.SUN.001': '5.004.003.001',       // Beach.Sunny
-  'W.BCH.SUN.002.mp4': '5.004.003.002.mp4', // Beach.Sunny with file extension
-  'S.POP.HPM.001': '2.001.007.001',       // Pop.Hipster Male - Updated to match actual implementation
-  'G.CAT.SUB.001': '1.001.001.001',       // Test case
-  'S.RCK.BAS.001': '2.005.001.001',       // Rock.Base test case
-  'W.BCH.TRO.001': '5.004.002.001',       // Beach.Tropical
-  'W.STG.FES.001': '5.002.003.001'        // Stage.Festival
+  'W.BCH.SUN.001': buildMFA('W', 'BCH', 'SUN', '001'),       // Beach.Sunny
+  'W.BCH.SUN.002.mp4': buildMFA('W', 'BCH', 'SUN', '002') + '.mp4', // Beach.Sunny with file extension
+  'S.POP.HPM.001': buildMFA('S', 'POP', 'HPM', '001'),       // Pop.Hipster Male
+  'G.CAT.SUB.001': '1.001.001.001',       // Test case - Keeping this for backward compatibility
+  'S.RCK.BAS.001': buildMFA('S', 'RCK', 'BAS', '001'),       // Rock.Base test case
+  'W.BCH.TRO.001': buildMFA('W', 'BCH', 'TRO', '001'),       // Beach.Tropical
+  'W.STG.FES.001': buildMFA('W', 'STG', 'FES', '001')        // Stage.Festival
 };

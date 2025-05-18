@@ -1,8 +1,27 @@
 # Vercel Build Trigger
 
-Build triggered at: Fri May 17 16:30:00 MDT 2025
+Build triggered at: Fri May 17 18:45:00 MDT 2025
 
-## Latest Build - May 17, 2025 - Asset Registration UI Fix
+## Latest Build - May 17, 2025 (3) - Taxonomy Mapping Fix
+
+### Taxonomy Mapping Fix
+- Replaced hardcoded special case mappings with flattened taxonomy data
+- Fixed critical mapping issues for W.BCH.SUN.001 and S.POP.HPM.001
+- Updated tests to use the flattened taxonomy structure
+- Improved compatibility with taxonomy updates
+- Removed dependency on hardcoded values for better maintainability
+
+## Previous Build - May 17, 2025 (2) - Taxonomy Context Implementation
+
+### Taxonomy Context Implementation
+- Implemented React Context for taxonomy state management
+- Fixed infinite rendering loop in the asset registration flow
+- Added shared state across components to prevent circular updates
+- Improved performance with single source of truth
+- Enhanced debugging with detailed logging capabilities
+- Documented the changes in TAXONOMY_CONTEXT_FIX.md
+
+## Previous Build - May 17, 2025 (1) - Asset Registration UI Fix
 
 ### Asset Registration UI Fix
 - Fixed infinite rendering loop in the asset registration flow

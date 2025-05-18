@@ -2,24 +2,27 @@
  * Simple test for taxonomyMapper
  */
 import taxonomyMapper from './taxonomyMapper';
+import { flattenedTaxonomy } from '../utils/taxonomyFlattener';
 
 // Mock the taxonomyLookup constants module
+// We can't reference external variables directly in the mock function
+// so we'll mock with expected values that match the flattened taxonomy
 jest.mock('../taxonomyLookup/constants', () => {
-  // Create mock W layer lookup
+  // Create mock W layer lookup with values that match flattened taxonomy
   const W_LAYER_LOOKUP = {
-    'BCH': { numericCode: '001', name: 'Beach' },
-    'STG': { numericCode: '002', name: 'Stage' },
-    'BCH.SUN': { numericCode: '001', name: 'Sunset' },
+    'BCH': { numericCode: '004', name: 'Beach' },
+    'STG': { numericCode: '002', name: 'Concert_Stages' },
+    'BCH.SUN': { numericCode: '003', name: 'Sunset' },
     'STG.FES': { numericCode: '003', name: 'Festival' }
   };
   
-  // Create mock S layer lookup
+  // Create mock S layer lookup with values that match flattened taxonomy
   const S_LAYER_LOOKUP = {
     'POP': { numericCode: '001', name: 'Pop' },
-    'POP.HPM': { numericCode: '007', name: 'Happy Mood' }
+    'POP.HPM': { numericCode: '007', name: 'Pop_Hipster_Male_Stars' }
   };
   
-  // Create mock subcategories
+  // Create mock subcategories as arrays of fully qualified category.subcategory keys
   const W_SUBCATEGORIES = {
     'BCH': ['BCH.SUN'],
     'STG': ['STG.FES']
@@ -61,10 +64,14 @@ describe('TaxonomyMapper', () => {
   });
   
   it('should handle the critical S.POP.HPM.001 case correctly', () => {
+    // Get the expected MFA using the flattened taxonomy values
+    // The constants in the mock match these values
+    const expectedMFA = '2.001.007.001';
+    
     // Test direct formatting with correct parameters
     const formatted = taxonomyMapper.formatNNAAddress('S', 'POP', 'HPM', '001', 'mfa');
     console.log('Formatted S.POP.HPM.001 as MFA:', formatted);
-    expect(formatted).toBe('2.001.007.001');
+    expect(formatted).toBe(expectedMFA);
     
     // To get MFA from HFN, need to use a different function
     // Either use the internal convertHFNToMFA or call formatNNAAddress from component parts
@@ -74,6 +81,6 @@ describe('TaxonomyMapper', () => {
       parts[0], parts[1], parts[2], parts[3], 'mfa'
     );
     console.log('HFN to MFA via formatting:', mfaViaFormat);
-    expect(mfaViaFormat).toBe('2.001.007.001');
+    expect(mfaViaFormat).toBe(expectedMFA);
   });
 });
