@@ -168,7 +168,7 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
           <div className="taxonomy-loading">Loading categories...</div>
         ) : categoryError ? (
           <div className="taxonomy-error">
-            <p>{categoryError.message}</p>
+            <p>{String(categoryError)}</p>
             <button 
               onClick={() => {
                 // First ensure the layer is set, then reload categories
@@ -231,7 +231,7 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
             <div className="taxonomy-loading">Loading subcategories...</div>
           ) : subcategoryError ? (
             <div className="taxonomy-error">
-              <p>{subcategoryError.message}</p>
+              <p>{String(subcategoryError)}</p>
               <button 
                 onClick={() => {
                   // Ensure layer and category are set before reloading
@@ -259,7 +259,7 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
                   contextSubcategories: subcategories,
                   isLoadingSubcategories,
                   hasSubcategoryError: !!subcategoryError,
-                  error: subcategoryError?.message
+                  error: subcategoryError ? String(subcategoryError) : null
                 }, null, 2)}</p>
               </div>
               <button 
@@ -334,8 +334,8 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
                   subcategories: subcategories.length,
                   isLoadingCategories,
                   isLoadingSubcategories,
-                  categoryError: categoryError?.message,
-                  subcategoryError: subcategoryError?.message
+                  categoryError: categoryError ? String(categoryError) : null,
+                  subcategoryError: subcategoryError ? String(subcategoryError) : null
                 }
               }, null, 2)}
             </pre>
