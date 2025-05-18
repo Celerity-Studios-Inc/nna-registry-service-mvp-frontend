@@ -1,13 +1,24 @@
 name: Run Tests
 
+# Workflow disabled as per user request to only use the main ci-cd.yml workflow
+# on:
+#   push:
+#     branches: [ main ]
+#   pull_request:
+#     branches: [ main ]
+
 on:
-  push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
+  workflow_dispatch:
+    inputs:
+      run_manually:
+        description: 'Run this workflow manually (disabled by default)'
+        required: true
+        default: 'no'
 
 jobs:
   test:
+    # Only run when explicitly triggered manually with 'yes' option
+    if: github.event.inputs.run_manually == 'yes'
     runs-on: ubuntu-latest
 
     steps:
