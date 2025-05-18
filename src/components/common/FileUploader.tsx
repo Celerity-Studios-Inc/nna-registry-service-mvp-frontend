@@ -191,6 +191,128 @@ const FileUploader: React.FC<FileUploaderProps> = ({
     return true;
   }, [files, maxFiles, maxSize, validateFile]);
 
+  // Upload a single file - defined before onDrop to fix the dependency issue
+  const uploadFile = useCallback(async (file: File): Promise<FileUploadResponse | null> => {
+    // Update status to uploading
+    setFileStatuses(prev => 
+      prev.map(status => 
+        status.file === file 
+          ? { ...status, status: 'uploading' as const, progress: 0 } 
+          : status
+      )
+    );
+    
+    try {
+      // Upload with progress tracking
+      const uploadResult = await assetService.uploadFile(file, (progress) => {
+        // Update progress
+        setFileStatuses(prev => 
+          prev.map(status => 
+            status.file === file 
+              ? { ...status, progress } 
+              : status
+          )
+        );
+        
+        if (onUploadProgress) {
+          onUploadProgress(file.name, progress);
+        }
+      });
+      
+      if (uploadResult && uploadResult.response) {
+        const response: FileUploadResponse = {
+          filename: uploadResult.response.filename || file.name,
+          url: uploadResult.response.url || '',
+          size: uploadResult.response.size || file.size,
+          mimeType: uploadResult.response.mimeType || file.type,
+          originalName: file.name,
+        };
+        
+        // Update status to success
+        setFileStatuses(prev => 
+          prev.map(status => 
+            status.file === file 
+              ? { 
+                  ...status, 
+                  status: 'success' as const, 
+                  progress: 100,
+                  response
+                } 
+              : status
+          )
+        );
+        
+        if (onUploadComplete) {
+          onUploadComplete(file.name, response);
+        }
+        
+        return response;
+      }
+      
+      throw new Error('Upload failed');
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Upload failed';
+      
+      // Update status to error
+      setFileStatuses(prev => 
+        prev.map(status => 
+          status.file === file 
+            ? { 
+                ...status, 
+                status: 'error' as const,
+                error: errorMessage
+              } 
+            : status
+        )
+      );
+      
+      if (onUploadError) {
+        onUploadError(file.name, errorMessage);
+      }
+      
+      return null;
+    }
+  }, [onUploadComplete, onUploadError, onUploadProgress]);
+
+  // Upload files with optimized approach - defined before onDrop to fix the dependency issue
+  const uploadFiles = useCallback(async (filesToUpload: File[]) => {
+    if (filesToUpload.length === 0) return;
+    
+    setIsUploading(true);
+    
+    const uploadPromises = filesToUpload.map(file => uploadFile(file));
+    
+    try {
+      const results = await Promise.allSettled(uploadPromises);
+      
+      // Collect successful responses
+      const successfulResponses: FileUploadResponse[] = [];
+      
+      results.forEach((result, index) => {
+        if (result.status === 'fulfilled' && result.value) {
+          successfulResponses.push(result.value);
+        }
+      });
+      
+      if (successfulResponses.length > 0) {
+        setUploadResponses(prev => [...prev, ...successfulResponses]);
+        
+        if (onFilesUploaded) {
+          onFilesUploaded(successfulResponses);
+        }
+        
+        if (successfulResponses.length === filesToUpload.length && onAllUploadsComplete) {
+          onAllUploadsComplete(successfulResponses);
+        }
+      }
+    } catch (err) {
+      console.error('Error uploading files:', err);
+      setError('Error uploading files');
+    } finally {
+      setIsUploading(false);
+    }
+  }, [onAllUploadsComplete, onFilesUploaded, uploadFile]);
+
   // Handle file drop/selection using optimized approach
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
     if (acceptedFiles.length === 0) return;
@@ -274,128 +396,6 @@ const FileUploader: React.FC<FileUploaderProps> = ({
       onFileRemoved(fileToRemove);
     }
   }, [files, fileStatuses, onFileRemoved]);
-
-  // Upload files with optimized approach
-  const uploadFiles = useCallback(async (filesToUpload: File[]) => {
-    if (filesToUpload.length === 0) return;
-    
-    setIsUploading(true);
-    
-    const uploadPromises = filesToUpload.map(file => uploadFile(file));
-    
-    try {
-      const results = await Promise.allSettled(uploadPromises);
-      
-      // Collect successful responses
-      const successfulResponses: FileUploadResponse[] = [];
-      
-      results.forEach((result, index) => {
-        if (result.status === 'fulfilled' && result.value) {
-          successfulResponses.push(result.value);
-        }
-      });
-      
-      if (successfulResponses.length > 0) {
-        setUploadResponses(prev => [...prev, ...successfulResponses]);
-        
-        if (onFilesUploaded) {
-          onFilesUploaded(successfulResponses);
-        }
-        
-        if (successfulResponses.length === filesToUpload.length && onAllUploadsComplete) {
-          onAllUploadsComplete(successfulResponses);
-        }
-      }
-    } catch (err) {
-      console.error('Error uploading files:', err);
-      setError('Error uploading files');
-    } finally {
-      setIsUploading(false);
-    }
-  }, [onAllUploadsComplete, onFilesUploaded]);
-
-  // Upload a single file
-  const uploadFile = useCallback(async (file: File): Promise<FileUploadResponse | null> => {
-    // Update status to uploading
-    setFileStatuses(prev => 
-      prev.map(status => 
-        status.file === file 
-          ? { ...status, status: 'uploading' as const, progress: 0 } 
-          : status
-      )
-    );
-    
-    try {
-      // Upload with progress tracking
-      const uploadResult = await assetService.uploadFile(file, (progress) => {
-        // Update progress
-        setFileStatuses(prev => 
-          prev.map(status => 
-            status.file === file 
-              ? { ...status, progress } 
-              : status
-          )
-        );
-        
-        if (onUploadProgress) {
-          onUploadProgress(file.name, progress);
-        }
-      });
-      
-      if (uploadResult && uploadResult.response) {
-        const response: FileUploadResponse = {
-          filename: uploadResult.response.filename || file.name,
-          url: uploadResult.response.url || '',
-          size: uploadResult.response.size || file.size,
-          mimeType: uploadResult.response.mimeType || file.type,
-          originalName: file.name,
-        };
-        
-        // Update status to success
-        setFileStatuses(prev => 
-          prev.map(status => 
-            status.file === file 
-              ? { 
-                  ...status, 
-                  status: 'success' as const, 
-                  progress: 100,
-                  response
-                } 
-              : status
-          )
-        );
-        
-        if (onUploadComplete) {
-          onUploadComplete(file.name, response);
-        }
-        
-        return response;
-      }
-      
-      throw new Error('Upload failed');
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Upload failed';
-      
-      // Update status to error
-      setFileStatuses(prev => 
-        prev.map(status => 
-          status.file === file 
-            ? { 
-                ...status, 
-                status: 'error' as const,
-                error: errorMessage
-              } 
-            : status
-        )
-      );
-      
-      if (onUploadError) {
-        onUploadError(file.name, errorMessage);
-      }
-      
-      return null;
-    }
-  }, [onUploadComplete, onUploadError, onUploadProgress]);
 
   // Retry a failed upload
   const handleRetry = useCallback((file: File) => {
