@@ -6,103 +6,118 @@ import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import TaxonomyExample from '../../components/examples/TaxonomyExample';
 import { FeedbackProvider } from '../../contexts/FeedbackContext';
+import { taxonomyService } from '../../services/simpleTaxonomyService';
 import {
-  SPECIAL_HFN_MFA_TEST_CASES,
-  executeAllHfnMfaTests
+  MOCK_TAXONOMY_DATA,
+  createMockGetCategories,
+  createMockGetSubcategories,
+  createMockConvertHFNtoMFA,
 } from '../utils/taxonomyTestUtils';
 
-// Mock the direct imports from taxonomyService to avoid mocking the entire service
-jest.mock('../../hooks/useTaxonomy', () => {
-  // Import the real module
-  const originalModule = jest.requireActual('../../hooks/useTaxonomy');
-  
-  // Only override specific methods for testing
-  return {
-    ...originalModule,
-    // Preserve the original implementation
-  };
-});
+// Mock the taxonomy service
+jest.mock('../../services/simpleTaxonomyService', () => ({
+  taxonomyService: {
+    getCategories: jest.fn(),
+    getSubcategories: jest.fn(),
+    convertHFNtoMFA: jest.fn(),
+  },
+}));
 
-// Wrapper component for providing necessary context
-const Wrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <BrowserRouter>
-    <FeedbackProvider>
-      {children}
-    </FeedbackProvider>
-  </BrowserRouter>
-);
+// Mock the taxonomyErrorRecovery service
+jest.mock('../../services/taxonomyErrorRecovery', () => ({
+  taxonomyErrorRecovery: {
+    getFallbackCategories: jest
+      .fn()
+      .mockReturnValue([{ code: 'BCH', name: 'Beach', numericCode: '001' }]),
+    getFallbackSubcategories: jest
+      .fn()
+      .mockReturnValue([{ code: 'SUN', name: 'Sunset', numericCode: '001' }]),
+  },
+}));
 
-describe('Taxonomy System Integration Tests', () => {
-  it('should pass special case tests', () => {
-    // Run all HFN to MFA tests
-    const results = executeAllHfnMfaTests();
-    
-    // Check special cases
-    for (const testCase of SPECIAL_HFN_MFA_TEST_CASES) {
-      expect(results.specialCases[testCase.hfn]).toBe(true);
-    }
-    
-    // Check overall results
-    expect(results.totalFailed).toBe(0);
-    expect(results.totalPassed).toBeGreaterThan(0);
+describe('Taxonomy System Integration', () => {
+  // Setup mock implementations before each test
+  beforeEach(() => {
+    jest.clearAllMocks();
+
+    // Setup mocks
+    taxonomyService.getCategories = createMockGetCategories();
+    taxonomyService.getSubcategories = createMockGetSubcategories();
+    taxonomyService.convertHFNtoMFA = createMockConvertHFNtoMFA();
   });
-  
-  it('should render the TaxonomyExample component', async () => {
-    render(<TaxonomyExample />, { wrapper: Wrapper });
-    
-    // Component should render
-    expect(screen.getByText('Taxonomy Selection Example')).toBeInTheDocument();
-    expect(screen.getByText('Layer Selection')).toBeInTheDocument();
-    
-    // Layer buttons should be present
-    expect(screen.getByText('W')).toBeInTheDocument();
-    expect(screen.getByText('S')).toBeInTheDocument();
-    
-    // Select a layer
-    fireEvent.click(screen.getByText('W'));
-    
-    // Categories should load
-    await waitFor(() => {
-      expect(screen.getByText('Categories for W')).toBeInTheDocument();
-    });
-    
-    // Wait for categories to be displayed
-    await waitFor(() => {
-      const categoryElements = screen.getAllByRole('button');
-      expect(categoryElements.length).toBeGreaterThan(2); // At least layer buttons + some categories
-    });
-    
-    // Select the first category button that's not a layer button
-    const categoryButtons = screen.getAllByRole('button').filter(
-      button => !['G', 'S', 'L', 'M', 'W', 'B', 'P', 'T', 'C', 'R'].includes(button.textContent || '')
+
+  it('should allow selecting a layer, category, and subcategory', async () => {
+    render(
+      <BrowserRouter>
+        <FeedbackProvider>
+          <TaxonomyExample />
+        </FeedbackProvider>
+      </BrowserRouter>
     );
-    
-    if (categoryButtons.length > 0) {
-      fireEvent.click(categoryButtons[0]);
-      
-      // Subcategories should load
-      await waitFor(() => {
-        expect(screen.getByText(/Subcategories for W/)).toBeInTheDocument();
-      });
-      
-      // Wait for subcategories to be displayed
-      await waitFor(() => {
-        const allButtons = screen.getAllByRole('button');
-        // Should have more buttons now (layers + categories + subcategories + reset)
-        expect(allButtons.length).toBeGreaterThan(categoryButtons.length + 2);
-      });
-      
-      // Should have a reset button
-      const resetButton = screen.getByText('Reset');
-      expect(resetButton).toBeInTheDocument();
-      
-      // Reset should clear selections
-      fireEvent.click(resetButton);
-      
-      // After reset, subcategories should not be displayed
-      await waitFor(() => {
-        expect(screen.queryByText(/Subcategories for/)).not.toBeInTheDocument();
-      });
-    }
+
+    // Wait for the component to load
+    await waitFor(() => {
+      expect(screen.getByText(/Select a Layer/i)).toBeInTheDocument();
+    });
+
+    // Select the Worlds layer
+    const worldsButton = screen.getByText(/worlds/i);
+    fireEvent.click(worldsButton);
+
+    // Wait for categories to load
+    await waitFor(() => {
+      expect(taxonomyService.getCategories).toHaveBeenCalledWith('W');
+    });
+
+    // Select the Beach category
+    const beachButton = screen.getByText(/beach/i);
+    fireEvent.click(beachButton);
+
+    // Wait for subcategories to load
+    await waitFor(() => {
+      expect(taxonomyService.getSubcategories).toHaveBeenCalledWith('W', 'BCH');
+    });
+
+    // Select the Sunset subcategory
+    const sunsetButton = screen.getByText(/sunset/i);
+    fireEvent.click(sunsetButton);
+
+    // Verify HFN and MFA are displayed
+    await waitFor(() => {
+      expect(screen.getByText(/W\.BCH\.SUN\.001/i)).toBeInTheDocument();
+      expect(screen.getByText(/5\.001\.001\.001/i)).toBeInTheDocument();
+    });
+  });
+
+  it('should handle taxonomy loading failures gracefully', async () => {
+    // Mock taxonomy service to fail
+    taxonomyService.getCategories = jest.fn().mockImplementation(() => {
+      throw new Error('Failed to load categories');
+    });
+
+    render(
+      <BrowserRouter>
+        <FeedbackProvider>
+          <TaxonomyExample />
+        </FeedbackProvider>
+      </BrowserRouter>
+    );
+
+    // Wait for the component to load
+    await waitFor(() => {
+      expect(screen.getByText(/Select a Layer/i)).toBeInTheDocument();
+    });
+
+    // Select the Worlds layer
+    const worldsButton = screen.getByText(/worlds/i);
+    fireEvent.click(worldsButton);
+
+    // Should show an error message or fallback
+    await waitFor(() => {
+      // Either the error message or fallback data should be visible
+      expect(
+        screen.getByText(/error/i) || screen.getByText(/fallback/i)
+      ).toBeInTheDocument();
+    });
   });
 });

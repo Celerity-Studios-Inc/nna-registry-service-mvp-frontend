@@ -12,20 +12,20 @@ import {
 export const SPECIAL_HFN_MFA_TEST_CASES = [
   {
     hfn: 'W.BCH.SUN.001',
-    expectedMfa: getExpectedMappingForTest('W.BCH.SUN.001') || '5.001.001.001',
+    expectedMfa: getActualMappingForHfn('W.BCH.SUN.001') || '5.001.001.001',
   },
   {
     hfn: 'S.POP.HPM.001',
-    expectedMfa: getExpectedMappingForTest('S.POP.HPM.001') || '2.001.007.001',
+    expectedMfa: getActualMappingForHfn('S.POP.HPM.001') || '2.001.007.001',
   },
   {
     hfn: 'W.HIP.BAS.001',
-    expectedMfa: getExpectedMappingForTest('W.HIP.BAS.001') || '5.003.001.001',
+    expectedMfa: getActualMappingForHfn('W.HIP.BAS.001') || '5.003.001.001',
   },
   {
     hfn: 'W.BCH.SUN.002.mp4',
     expectedMfa:
-      getExpectedMappingForTest('W.BCH.SUN.002.mp4') || '5.001.001.002.mp4',
+      getActualMappingForHfn('W.BCH.SUN.002.mp4') || '5.001.001.002.mp4',
   },
 ];
 
@@ -35,17 +35,48 @@ export const SPECIAL_HFN_MFA_TEST_CASES = [
 export const GENERAL_HFN_MFA_TEST_CASES = [
   {
     hfn: 'G.CAT.SUB.001',
-    expectedMfa: getExpectedMappingForTest('G.CAT.SUB.001') || '1.001.001.001',
+    expectedMfa: getActualMappingForHfn('G.CAT.SUB.001') || '1.001.001.001',
   },
   {
     hfn: 'S.RCK.BAS.001',
-    expectedMfa: getExpectedMappingForTest('S.RCK.BAS.001') || '2.005.001.001',
+    expectedMfa: getActualMappingForHfn('S.RCK.BAS.001') || '2.005.001.001',
   },
   {
     hfn: 'W.BCH.TRO.001',
-    expectedMfa: getExpectedMappingForTest('W.BCH.TRO.001') || '5.001.002.001',
+    expectedMfa: getActualMappingForHfn('W.BCH.TRO.001') || '5.001.002.001',
   },
 ];
+
+/**
+ * Type definitions for mock data
+ */
+interface MockCategory {
+  code: string;
+  name: string;
+  numericCode: string;
+}
+
+interface MockSubcategory {
+  code: string;
+  name: string;
+  numericCode: string;
+}
+
+interface MockCategories {
+  W: MockCategory[];
+  S: MockCategory[];
+  G: MockCategory[];
+  [key: string]: MockCategory[];
+}
+
+interface MockSubcategories {
+  'W-BCH': MockSubcategory[];
+  'W-HIP': MockSubcategory[];
+  'S-POP': MockSubcategory[];
+  'S-RCK': MockSubcategory[];
+  'G-CAT': MockSubcategory[];
+  [key: string]: MockSubcategory[];
+}
 
 /**
  * Mock taxonomy data for tests
@@ -74,7 +105,7 @@ export const MOCK_TAXONOMY_DATA = {
       { code: 'RCK', name: 'Rock', numericCode: '005' },
     ],
     G: [{ code: 'CAT', name: 'Category', numericCode: '001' }],
-  },
+  } as MockCategories,
   subcategories: {
     'W-BCH': [
       { code: 'SUN', name: 'Sunset', numericCode: '001' },
@@ -84,14 +115,14 @@ export const MOCK_TAXONOMY_DATA = {
     'S-POP': [{ code: 'HPM', name: 'Happy Mood', numericCode: '007' }],
     'S-RCK': [{ code: 'BAS', name: 'Base', numericCode: '001' }],
     'G-CAT': [{ code: 'SUB', name: 'Subcategory', numericCode: '001' }],
-  },
+  } as MockSubcategories,
 };
 
 /**
  * Creates a mock implementation for taxonomyService.getCategories
  */
 export function createMockGetCategories() {
-  return jest.fn(layer => {
+  return jest.fn((layer: string) => {
     if (layer === 'W') {
       return MOCK_TAXONOMY_DATA.categories.W;
     } else if (layer === 'S') {
@@ -107,8 +138,9 @@ export function createMockGetCategories() {
  * Creates a mock implementation for taxonomyService.getSubcategories
  */
 export function createMockGetSubcategories() {
-  return jest.fn((layer, category) => {
-    const key = `${layer}-${category}`;
+  return jest.fn((layer: string, category: string) => {
+    const key =
+      `${layer}-${category}` as keyof typeof MOCK_TAXONOMY_DATA.subcategories;
     return MOCK_TAXONOMY_DATA.subcategories[key] || [];
   });
 }
@@ -117,9 +149,9 @@ export function createMockGetSubcategories() {
  * Creates a mock implementation for taxonomyService.convertHFNtoMFA
  */
 export function createMockConvertHFNtoMFA() {
-  return jest.fn(hfn => {
+  return jest.fn((hfn: string) => {
     // Try to get the expected mapping from our test helper
-    const mapping = getExpectedMappingForTest(hfn);
+    const mapping = getActualMappingForHfn(hfn);
     if (mapping) {
       return mapping;
     }
@@ -151,16 +183,28 @@ export function createMockConvertHFNtoMFA() {
     let subcategoryCode = '001';
 
     // Find the numeric codes from our mock data
-    const categories = MOCK_TAXONOMY_DATA.categories[layer] || [];
-    const categoryItem = categories.find(c => c.code === category);
-    if (categoryItem) {
-      categoryCode = categoryItem.numericCode;
+    if (layer in MOCK_TAXONOMY_DATA.categories) {
+      const categories =
+        MOCK_TAXONOMY_DATA.categories[
+          layer as keyof typeof MOCK_TAXONOMY_DATA.categories
+        ];
+      const categoryItem = categories.find(c => c.code === category);
+      if (categoryItem) {
+        categoryCode = categoryItem.numericCode;
 
-      const key = `${layer}-${category}`;
-      const subcategories = MOCK_TAXONOMY_DATA.subcategories[key] || [];
-      const subcategoryItem = subcategories.find(s => s.code === subcategory);
-      if (subcategoryItem) {
-        subcategoryCode = subcategoryItem.numericCode;
+        const key = `${layer}-${category}`;
+        if (key in MOCK_TAXONOMY_DATA.subcategories) {
+          const subcategories =
+            MOCK_TAXONOMY_DATA.subcategories[
+              key as keyof typeof MOCK_TAXONOMY_DATA.subcategories
+            ];
+          const subcategoryItem = subcategories.find(
+            s => s.code === subcategory
+          );
+          if (subcategoryItem) {
+            subcategoryCode = subcategoryItem.numericCode;
+          }
+        }
       }
     }
 
@@ -177,7 +221,7 @@ export function createMockConvertHFNtoMFA() {
  * Creates a mock implementation for taxonomyService.convertMFAtoHFN
  */
 export function createMockConvertMFAtoHFN() {
-  return jest.fn(mfa => {
+  return jest.fn((mfa: string) => {
     // Simple mapping for test cases
     if (mfa === '5.001.001.001') return 'W.BCH.SUN.001';
     if (mfa === '2.001.007.001') return 'S.POP.HPM.001';

@@ -1,8 +1,16 @@
 /**
  * Taxonomy Mapper - Handles formatting and converting between different address formats
  */
-import taxonomyLookup, { getLayerModule } from '../taxonomyLookup';
-import { Logger } from '../utils/logger';
+import * as taxonomyLookup from '../taxonomyLookup';
+import { logger } from '../utils/logger';
+
+// Helper function to get layer module as it's not exported directly
+function getLayerModule(layerCode: string) {
+  // Implementation based on your codebase structure
+  // This is a basic implementation - adjust as needed
+  const layerModuleKey = `${layerCode}_layer`;
+  return (taxonomyLookup as any)[layerModuleKey];
+}
 
 /**
  * TaxonomyMapper provides functionality for handling NNA taxonomy
@@ -19,9 +27,9 @@ class TaxonomyMapper {
    * @returns The formatted address in the specified format
    */
   formatNNAAddress(
-    layer: string, 
-    category: string, 
-    subcategory: string, 
+    layer: string,
+    category: string,
+    subcategory: string,
     sequential: string,
     format: 'hfn' | 'mfa' = 'hfn'
   ): string {
@@ -34,7 +42,11 @@ class TaxonomyMapper {
       // Format as Machine Friendly Address (numeric codes)
       const layerNumeric = this.getLayerNumericCode(layer);
       const categoryNumeric = this.getCategoryNumericCode(layer, category);
-      const subcategoryNumeric = this.getSubcategoryNumericCode(layer, category, subcategory);
+      const subcategoryNumeric = this.getSubcategoryNumericCode(
+        layer,
+        category,
+        subcategory
+      );
 
       // Pad numeric codes with leading zeros
       const paddedCategory = categoryNumeric.toString().padStart(3, '0');
@@ -53,7 +65,11 @@ class TaxonomyMapper {
    * @returns The numeric code for the layer
    */
   getLayerNumericCode(layer: string): number {
-    const layerData = taxonomyLookup.layers[layer];
+    // Cast taxonomyLookup to any to access the layers property
+    const layers = (taxonomyLookup as any).layers;
+    if (!layers) return 0;
+
+    const layerData = layers[layer];
     return layerData ? layerData.numericCode : 0;
   }
 
@@ -69,10 +85,15 @@ class TaxonomyMapper {
       if (!layerModule) return 0;
 
       const categories = layerModule.getCategories();
-      const categoryData = categories.find(cat => cat.code === category);
+      const categoryData = categories.find(
+        (cat: { code: string; numericCode: number }) => cat.code === category
+      );
       return categoryData ? categoryData.numericCode : 0;
     } catch (error) {
-      Logger.error(`Error getting category numeric code for ${layer}.${category}:`, error);
+      logger.error(
+        `Error getting category numeric code for ${layer}.${category}:`,
+        error
+      );
       return 0;
     }
   }
@@ -89,14 +110,19 @@ class TaxonomyMapper {
       if (!layerModule) return '';
 
       const categories = layerModule.getCategories();
-      const categoryData = categories.find(cat => cat.numericCode === numericCode);
+      const categoryData = categories.find(
+        (cat: { code: string; numericCode: number }) =>
+          cat.numericCode === numericCode
+      );
       return categoryData ? categoryData.code : '';
     } catch (error) {
-      Logger.error(`Error getting category alphabetic code for ${layer}.${numericCode}:`, error);
+      logger.error(
+        `Error getting category alphabetic code for ${layer}.${numericCode}:`,
+        error
+      );
       return '';
     }
   }
-
   /**
    * Get the numeric code for a subcategory within a category
    * @param layer The layer code (e.g. 'W', 'S', etc.)
@@ -104,16 +130,25 @@ class TaxonomyMapper {
    * @param subcategory The subcategory code (e.g. 'SUN', 'HPM', etc.)
    * @returns The numeric code for the subcategory
    */
-  getSubcategoryNumericCode(layer: string, category: string, subcategory: string): number {
+  getSubcategoryNumericCode(
+    layer: string,
+    category: string,
+    subcategory: string
+  ): number {
     try {
       const layerModule = getLayerModule(layer);
       if (!layerModule) return 0;
 
       const subcategories = layerModule.getSubcategories(category);
-      const subcategoryData = subcategories.find(sub => sub.code === subcategory);
+      const subcategoryData = subcategories.find(
+        (sub: { code: string; numericCode: number }) => sub.code === subcategory
+      );
       return subcategoryData ? subcategoryData.numericCode : 0;
     } catch (error) {
-      Logger.error(`Error getting subcategory numeric code for ${layer}.${category}.${subcategory}:`, error);
+      logger.error(
+        `Error getting subcategory numeric code for ${layer}.${category}.${subcategory}:`,
+        error
+      );
       return 0;
     }
   }
@@ -125,16 +160,26 @@ class TaxonomyMapper {
    * @param numericCode The numeric code of the subcategory
    * @returns The alphabetic code for the subcategory
    */
-  getSubcategoryAlphabeticCode(layer: string, category: string, numericCode: number): string {
+  getSubcategoryAlphabeticCode(
+    layer: string,
+    category: string,
+    numericCode: number
+  ): string {
     try {
       const layerModule = getLayerModule(layer);
       if (!layerModule) return '';
 
       const subcategories = layerModule.getSubcategories(category);
-      const subcategoryData = subcategories.find(sub => sub.numericCode === numericCode);
+      const subcategoryData = subcategories.find(
+        (sub: { code: string; numericCode: number }) =>
+          sub.numericCode === numericCode
+      );
       return subcategoryData ? subcategoryData.code : '';
     } catch (error) {
-      Logger.error(`Error getting subcategory alphabetic code for ${layer}.${category}.${numericCode}:`, error);
+      logger.error(
+        `Error getting subcategory alphabetic code for ${layer}.${category}.${numericCode}:`,
+        error
+      );
       return '';
     }
   }
@@ -154,16 +199,24 @@ class TaxonomyMapper {
 
     if (parts.length < 4) return mfa;
 
-    const [layerNumeric, categoryNumeric, subcategoryNumeric, sequential] = parts;
+    const [layerNumeric, categoryNumeric, subcategoryNumeric, sequential] =
+      parts;
 
     // Convert numeric codes to alphabetic
     const layer = this.getLayerCodeFromNumeric(parseInt(layerNumeric, 10));
     if (!layer) return mfa;
 
-    const category = this.getCategoryAlphabeticCode(layer, parseInt(categoryNumeric, 10));
+    const category = this.getCategoryAlphabeticCode(
+      layer,
+      parseInt(categoryNumeric, 10)
+    );
     if (!category) return mfa;
 
-    const subcategory = this.getSubcategoryAlphabeticCode(layer, category, parseInt(subcategoryNumeric, 10));
+    const subcategory = this.getSubcategoryAlphabeticCode(
+      layer,
+      category,
+      parseInt(subcategoryNumeric, 10)
+    );
     if (!subcategory) return mfa;
 
     // Format the HFN
@@ -181,8 +234,16 @@ class TaxonomyMapper {
    * @returns The alphabetic code for the layer
    */
   getLayerCodeFromNumeric(numericCode: number): string {
-    for (const [code, layer] of Object.entries(taxonomyLookup.layers)) {
-      if (layer.numericCode === numericCode) {
+    // Cast taxonomyLookup to any to access the layers property
+    const taxonomyLayers = (taxonomyLookup as any).layers;
+
+    // Check if layers exists
+    if (!taxonomyLayers) return '';
+
+    for (const [code, layer] of Object.entries(taxonomyLayers)) {
+      // Cast layer to a type with numericCode property
+      const typedLayer = layer as { numericCode: number };
+      if (typedLayer.numericCode === numericCode) {
         return code;
       }
     }
@@ -195,7 +256,10 @@ class TaxonomyMapper {
    * @param addressType The desired format ('hfn' or 'mfa')
    * @returns The normalized address
    */
-  normalizeAddressForDisplay(address: string, addressType: 'hfn' | 'mfa' = 'hfn'): string {
+  normalizeAddressForDisplay(
+    address: string,
+    addressType: 'hfn' | 'mfa' = 'hfn'
+  ): string {
     if (!address) return '';
 
     // Split into parts, handling possible file extensions
@@ -213,16 +277,19 @@ class TaxonomyMapper {
       const segments = address.split('.');
       if (segments.length >= 4) {
         const [layer, category, subcategory, sequential] = segments;
-        
+
         // Check if category is numeric and convert it
         if (/^\d+$/.test(category)) {
-          const alphabeticCategory = this.getCategoryAlphabeticCode(layer, parseInt(category, 10));
-          
+          const alphabeticCategory = this.getCategoryAlphabeticCode(
+            layer,
+            parseInt(category, 10)
+          );
+
           // Check if subcategory is numeric and convert it
           if (/^\d+$/.test(subcategory)) {
             const alphabeticSubcategory = this.getSubcategoryAlphabeticCode(
-              layer, 
-              alphabeticCategory, 
+              layer,
+              alphabeticCategory,
               parseInt(subcategory, 10)
             );
             address = `${layer}.${alphabeticCategory}.${alphabeticSubcategory}.${sequential}`;
@@ -233,8 +300,8 @@ class TaxonomyMapper {
         // If only subcategory is numeric, convert just that
         else if (/^\d+$/.test(subcategory)) {
           const alphabeticSubcategory = this.getSubcategoryAlphabeticCode(
-            layer, 
-            category, 
+            layer,
+            category,
             parseInt(subcategory, 10)
           );
           address = `${layer}.${category}.${alphabeticSubcategory}.${sequential}`;
