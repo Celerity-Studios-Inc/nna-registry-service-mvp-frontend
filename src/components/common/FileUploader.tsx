@@ -727,7 +727,7 @@ const FileUploader: React.FC<FileUploaderProps> = ({
       )}
 
       {/* Styled keyframes for animations */}
-      <style jsx global>{`
+      <style>{`
         @keyframes pulse {
           0% { transform: scale(1); }
           50% { transform: scale(1.1); }
