@@ -221,6 +221,7 @@ export const useTaxonomy = (options: UseTaxonomyOptions = {}): UseTaxonomyResult
   }, [showErrorFeedback, showSuccessFeedback, showFeedback]);
 
   // Update HFN and MFA when selections change
+  // FIXED: Removed unnecessary dependencies from dependency array to prevent re-renders
   useEffect(() => {
     if (selectedLayer && selectedCategory && selectedSubcategory) {
       const newHfn = `${selectedLayer}.${selectedCategory}.${selectedSubcategory}.${sequential}${fileType ? `.${fileType}` : ''}`;
@@ -266,8 +267,7 @@ export const useTaxonomy = (options: UseTaxonomyOptions = {}): UseTaxonomyResult
       setHfn('');
       setMfa('');
     }
-  }, [selectedLayer, selectedCategory, selectedSubcategory, sequential, fileType, 
-    categories, subcategories, showErrorFeedback, showSuccessFeedback]);
+  }, [selectedLayer, selectedCategory, selectedSubcategory, sequential, fileType]);
 
   // Load categories when layer changes
   useEffect(() => {
@@ -311,6 +311,9 @@ export const useTaxonomy = (options: UseTaxonomyOptions = {}): UseTaxonomyResult
 
   // Select a category
   const selectCategory = useCallback((category: string) => {
+    // FIXED: Prevent duplicate selections to avoid unnecessary re-renders
+    if (category === selectedCategory) return;
+    
     setSelectedCategory(category);
     setSelectedSubcategory(null);
 
@@ -321,10 +324,13 @@ export const useTaxonomy = (options: UseTaxonomyOptions = {}): UseTaxonomyResult
         showSuccessFeedback(`Selected ${categoryObj.name} category`);
       }
     }
-  }, [categories, selectedLayer, showFeedback, showSuccessFeedback]);
+  }, [categories, selectedLayer, selectedCategory, showFeedback, showSuccessFeedback]);
 
   // Select a subcategory
   const selectSubcategory = useCallback((subcategory: string) => {
+    // FIXED: Prevent duplicate selections to avoid unnecessary re-renders
+    if (subcategory === selectedSubcategory) return;
+    
     setSelectedSubcategory(subcategory);
 
     // Find full subcategory name and display in feedback
@@ -334,7 +340,7 @@ export const useTaxonomy = (options: UseTaxonomyOptions = {}): UseTaxonomyResult
         showSuccessFeedback(`Selected ${subcategoryObj.name} subcategory`);
       }
     }
-  }, [subcategories, selectedLayer, selectedCategory, showFeedback, showSuccessFeedback]);
+  }, [subcategories, selectedLayer, selectedCategory, selectedSubcategory, showFeedback, showSuccessFeedback]);
 
   // Update sequential number
   const updateSequential = useCallback((newSequential: string) => {

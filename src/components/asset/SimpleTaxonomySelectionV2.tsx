@@ -59,23 +59,30 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
   }, [layer]);
   
   // When selectedCategory changes, update the active category
+  // FIXED: Don't call selectCategory to prevent circular updates with parent
   useEffect(() => {
     if (selectedCategory && selectedCategory !== activeCategory) {
       setActiveCategory(selectedCategory);
-      selectCategory(selectedCategory);
+      // We don't call selectCategory here to prevent circular updates
+      // selectCategory(selectedCategory); - This was causing infinite loops
     }
-  }, [selectedCategory, activeCategory, selectCategory]);
+  }, [selectedCategory, activeCategory]);
   
   // When selectedSubcategory changes, update the active subcategory
+  // FIXED: Don't call selectSubcategory to prevent circular updates with parent
   useEffect(() => {
     if (selectedSubcategory && selectedSubcategory !== activeSubcategory) {
       setActiveSubcategory(selectedSubcategory);
-      selectSubcategory(selectedSubcategory);
+      // We don't call selectSubcategory here to prevent circular updates
+      // selectSubcategory(selectedSubcategory); - This was causing infinite loops
     }
-  }, [selectedSubcategory, activeSubcategory, selectSubcategory]);
+  }, [selectedSubcategory, activeSubcategory]);
   
   // Handle category selection
   const handleCategorySelect = (category: string) => {
+    // FIXED: Prevent duplicate selections
+    if (category === activeCategory) return;
+    
     logger.info(`Category selected: ${category}`);
     setActiveCategory(category);
     setActiveSubcategory(null);
@@ -85,6 +92,9 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
   
   // Handle subcategory selection
   const handleSubcategorySelect = (subcategory: string) => {
+    // FIXED: Prevent duplicate selections
+    if (subcategory === activeSubcategory) return;
+    
     logger.info(`Subcategory selected: ${subcategory}`);
     setActiveSubcategory(subcategory);
     selectSubcategory(subcategory);
