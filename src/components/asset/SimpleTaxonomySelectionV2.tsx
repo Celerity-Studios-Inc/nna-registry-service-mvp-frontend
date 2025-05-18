@@ -5,7 +5,7 @@
  * that uses the useTaxonomy hook for more reliable taxonomy selection.
  */
 import React, { useState, useEffect } from 'react';
-import { useTaxonomy } from '../../hooks/useTaxonomy';
+import { useTaxonomyContext } from '../../contexts/TaxonomyContext';
 import { logger } from '../../utils/logger';
 import '../../styles/SimpleTaxonomySelection.css';
 
@@ -24,7 +24,7 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
   selectedCategory,
   selectedSubcategory
 }) => {
-  // Initialize taxonomy hook with the current layer
+  // Use shared taxonomy context instead of creating a new instance
   const {
     categories,
     isLoadingCategories,
@@ -39,7 +39,10 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
     reloadSubcategories,
 
     selectLayer
-  } = useTaxonomy();
+  } = useTaxonomyContext({ 
+    componentName: 'SimpleTaxonomySelectionV2', 
+    enableLogging: process.env.NODE_ENV === 'development'
+  });
   
   // When layer changes, update the selected layer in the taxonomy hook
   useEffect(() => {

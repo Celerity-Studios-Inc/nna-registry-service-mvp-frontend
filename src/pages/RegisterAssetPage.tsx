@@ -42,9 +42,10 @@ import ReviewSubmit from '../components/asset/ReviewSubmit';
 import TrainingDataCollection from '../components/asset/TrainingDataCollection';
 import { ComponentsForm } from '../components/asset/ComponentsForm';
 
-// Import the simplified taxonomy service
+// Import the simplified taxonomy service and context
 import { taxonomyService } from '../services/simpleTaxonomyService';
 import { TaxonomyConverter } from '../services/taxonomyConverter';
+import { useTaxonomyContext } from '../contexts/TaxonomyContext';
 
 // Import styles
 import '../styles/SimpleTaxonomySelection.css';
@@ -148,6 +149,12 @@ interface FormData {
 const RegisterAssetPage: React.FC = () => {
   // FIXED: Add a ref to prevent checking navigation state on every render
   const isDirectNavigationCheckedRef = React.useRef(false);
+  
+  // Use the shared taxonomy context from TaxonomyProvider
+  const taxonomyContext = useTaxonomyContext({
+    componentName: 'RegisterAssetPage',
+    enableLogging: process.env.NODE_ENV === 'development'
+  });
   
   // Check for any previously created asset in localStorage/sessionStorage
   // but in a way that doesn't cause re-renders
@@ -643,7 +650,7 @@ const RegisterAssetPage: React.FC = () => {
     }
   };
 
-  // Generate HFN and MFA using simplified taxonomy service exclusively
+  // Generate HFN and MFA using taxonomy context instead of direct service calls
   useEffect(() => {
     if (formData.layer && formData.categoryCode && formData.subcategoryCode) {
       // Use formatted sequential number (pad with leading zeros if needed)
@@ -656,38 +663,57 @@ const RegisterAssetPage: React.FC = () => {
       console.log(`Generating MFA from HFN: ${newHfn}`);
 
       try {
-        // Use the simplified taxonomy service for ALL layers
-        const newMfa = taxonomyService.convertHFNtoMFA(newHfn);
-        if (newMfa) {
-          setValue('mfa', newMfa);
-          console.log(`SimpleTaxonomyService HFN to MFA conversion: ${newHfn} -> ${newMfa}`);
+        // Update shared context state first using context methods
+        if (taxonomyContext.selectedLayer !== formData.layer) {
+          taxonomyContext.selectLayer(formData.layer);
+        }
+        
+        if (taxonomyContext.selectedCategory !== formData.categoryCode) {
+          taxonomyContext.selectCategory(formData.categoryCode);
+        }
+        
+        if (taxonomyContext.selectedSubcategory !== formData.subcategoryCode) {
+          taxonomyContext.selectSubcategory(formData.subcategoryCode);
+        }
+        
+        // Check if context already has the MFA we need
+        if (taxonomyContext.hfn === newHfn && taxonomyContext.mfa) {
+          setValue('mfa', taxonomyContext.mfa);
+          console.log(`Using MFA from context: ${taxonomyContext.mfa}`);
         } else {
-          // If conversion fails, use a fallback format
-          console.error(`Conversion failed for ${newHfn}, using fallback format`);
-
-          // Generate a simple fallback (using layer numeric code + category + subcategory)
-          let fallbackMfa = '';
-
-          // Layer codes mapping
-          const layerCodes: {[key: string]: string} = {
-            'G': '1', 'S': '2', 'L': '3', 'M': '4', 'W': '5',
-            'B': '6', 'P': '7', 'T': '8', 'C': '9', 'R': '10'
-          };
-
-          // Get numeric codes or default to formatted strings
-          const layerCode = layerCodes[formData.layer] || '0';
-          // Handle special cases
-          if (formData.layer === 'S' && formData.categoryCode === 'POP' && formData.subcategoryCode === 'HPM') {
-            fallbackMfa = '2.001.007.001'; // Special case for S.POP.HPM
-          } else if (formData.layer === 'W' && formData.categoryCode === 'BCH' && formData.subcategoryCode === 'SUN') {
-            fallbackMfa = '5.004.003.001'; // Special case for W.BCH.SUN
+          // Otherwise use the service directly (the context will update on its own)
+          const newMfa = taxonomyService.convertHFNtoMFA(newHfn);
+          if (newMfa) {
+            setValue('mfa', newMfa);
+            console.log(`SimpleTaxonomyService HFN to MFA conversion: ${newHfn} -> ${newMfa}`);
           } else {
-            // Generic fallback
-            fallbackMfa = `${layerCode}.000.000.${sequentialFormatted}`;
-          }
+            // If conversion fails, use a fallback format
+            console.error(`Conversion failed for ${newHfn}, using fallback format`);
 
-          setValue('mfa', fallbackMfa);
-          console.log(`Using fallback MFA: ${fallbackMfa}`);
+            // Generate a simple fallback (using layer numeric code + category + subcategory)
+            let fallbackMfa = '';
+
+            // Layer codes mapping
+            const layerCodes: {[key: string]: string} = {
+              'G': '1', 'S': '2', 'L': '3', 'M': '4', 'W': '5',
+              'B': '6', 'P': '7', 'T': '8', 'C': '9', 'R': '10'
+            };
+
+            // Get numeric codes or default to formatted strings
+            const layerCode = layerCodes[formData.layer] || '0';
+            // Handle special cases
+            if (formData.layer === 'S' && formData.categoryCode === 'POP' && formData.subcategoryCode === 'HPM') {
+              fallbackMfa = '2.001.007.001'; // Special case for S.POP.HPM
+            } else if (formData.layer === 'W' && formData.categoryCode === 'BCH' && formData.subcategoryCode === 'SUN') {
+              fallbackMfa = '5.004.003.001'; // Special case for W.BCH.SUN
+            } else {
+              // Generic fallback
+              fallbackMfa = `${layerCode}.000.000.${sequentialFormatted}`;
+            }
+
+            setValue('mfa', fallbackMfa);
+            console.log(`Using fallback MFA: ${fallbackMfa}`);
+          }
         }
       } catch (error) {
         console.error('Error converting HFN to MFA:', error);
@@ -704,9 +730,16 @@ const RegisterAssetPage: React.FC = () => {
       categoryCode: formData.categoryCode,
       subcategoryCode: formData.subcategoryCode,
       hfn: getValues('hfn'),
-      mfa: getValues('mfa')
+      mfa: getValues('mfa'),
+      contextState: {
+        layer: taxonomyContext.selectedLayer,
+        category: taxonomyContext.selectedCategory,
+        subcategory: taxonomyContext.selectedSubcategory,
+        hfn: taxonomyContext.hfn,
+        mfa: taxonomyContext.mfa
+      }
     });
-  }, [formData.layer, formData.categoryCode, formData.subcategoryCode, formData.sequential, formData.fileType, setValue, getValues]);
+  }, [formData.layer, formData.categoryCode, formData.subcategoryCode, formData.sequential, formData.fileType, setValue, getValues, taxonomyContext]);
 
   // Calculate a simple hash for a file (based on size, type, and first few bytes)
   const calculateFileHash = async (file: File): Promise<string> => {

@@ -4,6 +4,7 @@ import { taxonomyService } from '../services/simpleTaxonomyService';
 import { useFeedback } from '../contexts/FeedbackContext';
 import ErrorBoundary from './ErrorBoundary';
 import { useTaxonomy } from '../hooks/useTaxonomy';
+import { TaxonomyProvider } from '../contexts/TaxonomyContext';
 import { logger, LogLevel } from '../utils/logger';
 
 /**
@@ -19,9 +20,7 @@ const AssetRegistrationWrapper: React.FC = () => {
   const [errorDetails, setErrorDetails] = useState<{ message: string, technical?: string }>({ message: '' });
   const { addFeedback } = useFeedback();
   
-  // Initialize taxonomy hook with showFeedback=false to prevent duplicate messages
-  // We'll handle feedback messages manually for better control
-  const taxonomy = useTaxonomy({ autoLoad: false, showFeedback: false });
+  // We now provide taxonomy through context, so we don't need a direct hook instance here
 
   // Test critical special case mappings to verify the taxonomy service
   const verifySpecialCaseMappings = useCallback(async () => {
@@ -246,8 +245,10 @@ const AssetRegistrationWrapper: React.FC = () => {
         </div>
       </div>
     }>
-      {/* Pass the initialized taxonomy hook through context */}
-      <RegisterAssetPage />
+      {/* Provide taxonomy context to RegisterAssetPage */}
+      <TaxonomyProvider options={{ autoLoad: false, showFeedback: true }}>
+        <RegisterAssetPage />
+      </TaxonomyProvider>
     </ErrorBoundary>
   );
 };

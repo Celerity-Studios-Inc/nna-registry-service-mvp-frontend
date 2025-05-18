@@ -22,6 +22,33 @@ jest.mock('../../utils/logger', () => ({
     error: jest.fn(),
     debug: jest.fn(),
   },
+  logger: {
+    error: jest.fn(),
+    info: jest.fn(),
+    warn: jest.fn(),
+    debug: jest.fn(),
+    taxonomy: jest.fn(),
+    api: jest.fn(),
+    auth: jest.fn(),
+    file: jest.fn(),
+    ui: jest.fn(),
+    general: jest.fn(),
+    addLogEntry: jest.fn()
+  },
+  LogLevel: {
+    INFO: 'INFO',
+    ERROR: 'ERROR',
+    DEBUG: 'DEBUG',
+    WARN: 'WARN'
+  },
+  LogCategory: {
+    GENERAL: 'GENERAL',
+    API: 'API',
+    AUTH: 'AUTH',
+    TAXONOMY: 'TAXONOMY',
+    FILE: 'FILE',
+    UI: 'UI'
+  }
 }));
 
 // Mock the enhanced service

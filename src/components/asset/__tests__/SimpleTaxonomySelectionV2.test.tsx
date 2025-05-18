@@ -2,30 +2,8 @@ import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import SimpleTaxonomySelectionV2 from '../SimpleTaxonomySelectionV2';
 
-// Mock the useTaxonomy hook
-jest.mock('../../../hooks/useTaxonomy', () => ({
-  useTaxonomy: () => ({
-    categories: [
-      { code: 'CAT1', numericCode: '001', name: 'Category 1' },
-      { code: 'CAT2', numericCode: '002', name: 'Category 2' }
-    ],
-    isLoadingCategories: false,
-    categoryError: null,
-    selectedCategory: null,
-    selectCategory: jest.fn(),
-    reloadCategories: jest.fn(),
-    
-    subcategories: [
-      { code: 'SUB1', numericCode: '001', name: 'Subcategory 1' },
-      { code: 'SUB2', numericCode: '002', name: 'Subcategory 2' }
-    ],
-    isLoadingSubcategories: false,
-    subcategoryError: null,
-    selectedSubcategory: null,
-    selectSubcategory: jest.fn(),
-    reloadSubcategories: jest.fn()
-  })
-}));
+// Mock the TaxonomyContext
+jest.mock('../../../contexts/TaxonomyContext');
 
 // Mock the logger
 jest.mock('../../../utils/logger', () => ({

@@ -1,6 +1,37 @@
 import { initializeTaxonomy, isTaxonomyInitialized, getTaxonomyInitError } from '../taxonomyInitializer';
 import { taxonomyService } from '../simpleTaxonomyService';
 
+// Mock the logger
+jest.mock('../../utils/logger', () => ({
+  logger: {
+    error: jest.fn(),
+    info: jest.fn(),
+    warn: jest.fn(),
+    debug: jest.fn(),
+    taxonomy: jest.fn(),
+    api: jest.fn(),
+    auth: jest.fn(),
+    file: jest.fn(),
+    ui: jest.fn(),
+    general: jest.fn(),
+    addLogEntry: jest.fn()
+  },
+  LogLevel: {
+    INFO: 'INFO',
+    ERROR: 'ERROR',
+    DEBUG: 'DEBUG',
+    WARN: 'WARN'
+  },
+  LogCategory: {
+    GENERAL: 'GENERAL',
+    API: 'API',
+    AUTH: 'AUTH',
+    TAXONOMY: 'TAXONOMY',
+    FILE: 'FILE',
+    UI: 'UI'
+  }
+}));
+
 // Mock the taxonomy service
 jest.mock('../simpleTaxonomyService', () => ({
   taxonomyService: {
@@ -34,7 +65,7 @@ describe('Taxonomy Initializer', () => {
     
     (taxonomyService.convertHFNtoMFA as jest.Mock).mockImplementation((hfn) => {
       if (hfn === 'W.BCH.SUN.001') return '5.004.003.001';
-      if (hfn === 'S.POP.HPM.001') return '2.004.003.001';
+      if (hfn === 'S.POP.HPM.001') return '2.001.007.001';
       return '';
     });
     
@@ -55,7 +86,7 @@ describe('Taxonomy Initializer', () => {
     
     (taxonomyService.convertHFNtoMFA as jest.Mock).mockImplementation((hfn) => {
       if (hfn === 'W.BCH.SUN.001') return '5.004.003.001';
-      if (hfn === 'S.POP.HPM.001') return '2.004.003.001';
+      if (hfn === 'S.POP.HPM.001') return '2.001.007.001';
       return '';
     });
     
