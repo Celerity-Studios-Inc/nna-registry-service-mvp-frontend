@@ -35,8 +35,8 @@ import assetService from '../api/assetService';
 // import taxonomyMapper from '../api/taxonomyMapper';
 
 // Import components
-import LayerSelector from '../components/asset/LayerSelector';
-import SimpleTaxonomySelection from '../components/asset/SimpleTaxonomySelection';
+import LayerSelector from '../components/asset/LayerSelectorV2';
+import SimpleTaxonomySelection from '../components/asset/SimpleTaxonomySelectionV2';
 import FileUpload from '../components/asset/FileUpload';
 import ReviewSubmit from '../components/asset/ReviewSubmit';
 import TrainingDataCollection from '../components/asset/TrainingDataCollection';
@@ -146,25 +146,15 @@ interface FormData {
 }
 
 const RegisterAssetPage: React.FC = () => {
+  // FIXED: Add a ref to prevent checking navigation state on every render
+  const isDirectNavigationCheckedRef = React.useRef(false);
+  
   // Check for any previously created asset in localStorage/sessionStorage
+  // but in a way that doesn't cause re-renders
   const getStoredAssetData = () => {
     try {
-      // Only keep stored asset data if navigation is from success page
-      const referrer = document.referrer;
-      const isFromSuccessPage = referrer?.includes('register-asset') &&
-                              window.sessionStorage.getItem('directNavigation') !== 'true';
-
-      // If the user came directly to register-asset via a menu link or direct URL,
-      // we should start with a fresh form
-      if (!isFromSuccessPage) {
-        // Clear any previously stored data to ensure a fresh form
-        window.sessionStorage.removeItem('showSuccessPage');
-        localStorage.removeItem('lastCreatedAsset');
-        console.log('Direct navigation to Register Asset - clearing stored data');
-        window.sessionStorage.setItem('directNavigation', 'true');
-        return { showSuccessPage: false, asset: null };
-      }
-
+      // The navigation check is now handled in a useEffect to prevent infinite loops
+      // Just read the existing values from storage here
       const savedShowSuccessPage = window.sessionStorage.getItem('showSuccessPage') === 'true';
       let savedAsset = null;
 
@@ -184,6 +174,28 @@ const RegisterAssetPage: React.FC = () => {
   };
   
   const storedData = getStoredAssetData();
+  
+  // Handle navigation state only once on component mount
+  React.useEffect(() => {
+    if (!isDirectNavigationCheckedRef.current) {
+      isDirectNavigationCheckedRef.current = true;
+      
+      // Check if this is a direct navigation
+      const referrer = document.referrer;
+      const isFromSuccessPage = referrer?.includes('register-asset') &&
+                             window.sessionStorage.getItem('directNavigation') !== 'true';
+      
+      // If the user came directly to register-asset via a menu link or direct URL,
+      // we should start with a fresh form
+      if (!isFromSuccessPage) {
+        // Clear any previously stored data to ensure a fresh form
+        window.sessionStorage.removeItem('showSuccessPage');
+        localStorage.removeItem('lastCreatedAsset');
+        console.log('Direct navigation to Register Asset - clearing stored data (one-time check)');
+        window.sessionStorage.setItem('directNavigation', 'true');
+      }
+    }
+  }, []);
   
   // IMPORTANT: Force real API mode for asset creation
   React.useEffect(() => {
@@ -482,7 +494,7 @@ const RegisterAssetPage: React.FC = () => {
                 finalMfa = '5.004.003.001';
               } else {
                 // Default fallback
-                const layerCode = LAYER_NUMERIC_CODES[data.layer] || '0';
+                const layerCode = taxonomyService.getLayerNumericCode(data.layer);
                 finalMfa = `${layerCode}.000.000.001`;
               }
               console.log(`Using fallback MFA: ${finalMfa}`);

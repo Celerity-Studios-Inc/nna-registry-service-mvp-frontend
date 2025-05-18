@@ -40,7 +40,8 @@
       "Bash(git switch:*)",
       "Bash(npm run tsc:*)",
       "Bash(npx tsc:*)",
-      "Bash(npm build:*)"
+      "Bash(npm build:*)",
+      "Bash(git cherry-pick:*)"
     ],
     "deny": []
   }

@@ -1,634 +1,372 @@
 /**
- * Comprehensive Taxonomy Mapper for NNA Registry
- * 
- * This mapper provides reliable, consistent conversion between different 
- * taxonomy representation formats across the entire application.
- * 
- * Key features:
- * - Single source of truth for all taxonomy conversions
- * - Bidirectional mapping between all formats (name, code, numeric)
- * - Consistent handling of special cases like S.POP.HPM
- * - Integration with taxonomyService as the canonical data source
- * - Comprehensive caching for performance optimization
+ * Taxonomy Mapper - Handles formatting and converting between different address formats
  */
+import { LAYER_LOOKUPS, LAYER_SUBCATEGORIES } from '../taxonomyLookup/constants';
+import { logger } from '../utils/logger';
 
-import taxonomyService from './taxonomyService';
-import { formatNNAAddressForDisplay } from './codeMapping.enhanced';
+// Define layer numeric codes mapping for direct access
+export const LAYER_NUMERIC_CODES: Record<string, string> = {
+  'G': '1', 'S': '2', 'L': '3', 'M': '4', 'W': '5',
+  'B': '6', 'P': '7', 'T': '8', 'C': '9', 'R': '10'
+};
 
-/**
- * Cache for taxonomy mapping operations to improve performance
- */
-interface MappingCache {
-  // Cache structure: layerCode_categoryCode_subcategoryCode -> result
-  categoryNames: Map<string, string>;
-  subcategoryNames: Map<string, string>;
-  categoryAlphaCodes: Map<string, string>;
-  subcategoryAlphaCodes: Map<string, string>;
-  categoryNumericCodes: Map<string, number>;
-  subcategoryNumericCodes: Map<string, number>;
-  validCombinations: Map<string, boolean>;
-  formatCache: Map<string, {hfn: string, mfa: string}>;
+// Define layer alpha codes mapping (reverse of numeric)
+export const LAYER_ALPHA_CODES: Record<string, string> = {
+  '1': 'G', '2': 'S', '3': 'L', '4': 'M', '5': 'W',
+  '6': 'B', '7': 'P', '8': 'T', '9': 'C', '10': 'R'
+};
+
+// Helper function for layer module access
+function getLayerModule(layerCode: string) {
+  // Create a generic layer module interface with the methods we need
+  const module = {
+    getCategories: () => {
+      const categories: Array<{code: string, name: string, numericCode: number}> = [];
+      
+      if (layerCode && LAYER_LOOKUPS[layerCode]) {
+        // Extract categories from LAYER_LOOKUPS (keys that don't contain dots)
+        for (const [key, value] of Object.entries(LAYER_LOOKUPS[layerCode])) {
+          if (!key.includes('.')) {
+            categories.push({
+              code: key,
+              name: value.name,
+              numericCode: parseInt(value.numericCode, 10)
+            });
+          }
+        }
+      }
+      
+      return categories;
+    },
+    
+    getSubcategories: (categoryCode: string) => {
+      const subcategories: Array<{code: string, name: string, numericCode: number}> = [];
+      
+      if (layerCode && categoryCode && LAYER_SUBCATEGORIES[layerCode] && LAYER_SUBCATEGORIES[layerCode][categoryCode]) {
+        // Get subcategory keys for this category
+        const subcategoryKeys = LAYER_SUBCATEGORIES[layerCode][categoryCode] || [];
+        
+        // Extract details for each subcategory
+        for (const fullKey of subcategoryKeys) {
+          const subcategoryCode = fullKey.split('.')[1]; // Get the part after the dot
+          const details = LAYER_LOOKUPS[layerCode][fullKey];
+          
+          if (details) {
+            subcategories.push({
+              code: subcategoryCode,
+              name: details.name,
+              numericCode: parseInt(details.numericCode, 10)
+            });
+          }
+        }
+      }
+      
+      return subcategories;
+    }
+  };
+  
+  return module;
 }
 
+/**
+ * TaxonomyMapper provides functionality for handling NNA taxonomy
+ * address formats and conversions between them
+ */
 class TaxonomyMapper {
-  private cache: MappingCache = {
-    categoryNames: new Map(),
-    subcategoryNames: new Map(),
-    categoryAlphaCodes: new Map(),
-    subcategoryAlphaCodes: new Map(),
-    categoryNumericCodes: new Map(),
-    subcategoryNumericCodes: new Map(),
-    validCombinations: new Map(),
-    formatCache: new Map(),
-  };
-
-  constructor() {
-    // Populate cache with known special mappings
-    this.preloadSpecialCases();
-  }
-
   /**
-   * Initialize cache
-   */
-  private preloadSpecialCases(): void {
-    // Clear any existing cache entries
-    this.clearCache();
-
-    // We no longer need special mappings - we'll rely on the taxonomy service
-    // for proper lookups directly from the taxonomy data
-    console.log('Initialized taxonomy mapper cache - using direct lookups from taxonomy data');
-  }
-
-  /**
-   * Generates a cache key for consistent lookups
-   */
-  private getCacheKey(parts: string[]): string {
-    return parts.join('_');
-  }
-
-  /**
-   * Gets the full layer name from a layer code
-   */
-  getLayerName(layerCode: string): string {
-    const layerInfo = taxonomyService.getLayer(layerCode);
-    return layerInfo?.name || layerCode;
-  }
-
-  /**
-   * Gets the alphabetic code for a category from its numeric code or name
-   */
-  getCategoryAlphabeticCode(layerCode: string, categoryValue: string | number): string {
-    const categoryStr = typeof categoryValue === 'number' ? categoryValue.toString() : categoryValue;
-
-    // If already alphabetic, return as is
-    if (/^[A-Za-z]{3}$/.test(categoryStr)) {
-      return categoryStr.toUpperCase();
-    }
-
-    // Debug log for World layer Beach category
-    if (layerCode === 'W' && (categoryStr === '003' || categoryStr === 'BCH')) {
-      console.log(`getCategoryAlphabeticCode called for W.${categoryStr}`);
-    }
-
-    // Check cache for numeric lookups
-    if (/^\d+$/.test(categoryStr)) {
-      const cacheKey = this.getCacheKey([layerCode, categoryStr]);
-      if (this.cache.categoryAlphaCodes.has(cacheKey)) {
-        const cachedResult = this.cache.categoryAlphaCodes.get(cacheKey)!;
-        console.log(`Using cached value for ${layerCode}.${categoryStr}: ${cachedResult}`);
-        return cachedResult;
-      }
-
-      // Not in cache, look up using taxonomy service
-      const numericCode = parseInt(categoryStr, 10);
-      const result = taxonomyService.getCategoryAlphabeticCode(layerCode, numericCode);
-
-      // Log the result for important lookups
-      if (layerCode === 'W' && categoryStr === '003') {
-        console.log(`Taxonomy service returned ${result || 'empty'} for W.003`);
-      }
-
-      if (result) {
-        // Cache the result for future lookups
-        this.cache.categoryAlphaCodes.set(cacheKey, result);
-        return result;
-      }
-
-      // For numeric code 003 in W layer, explicitly return BCH if the service didn't find it
-      if (layerCode === 'W' && numericCode === 3) {
-        console.log('Returning explicit BCH for W.003 numeric code');
-        // We don't cache this as it should come from the taxonomy service
-        return 'BCH';
-      }
-    }
-    
-    // Handle lookup by name
-    const categories = taxonomyService.getCategories(layerCode);
-    const matchByName = categories.find(c => c.name === categoryStr);
-    
-    if (matchByName) {
-      const cacheKey = this.getCacheKey([layerCode, categoryStr]);
-      this.cache.categoryAlphaCodes.set(cacheKey, matchByName.code);
-      return matchByName.code;
-    }
-    
-    // If we can't determine, generate from first 3 letters
-    if (categoryStr.length > 0) {
-      return categoryStr.substring(0, 3).toUpperCase();
-    }
-    
-    // Default fallback
-    return 'POP';
-  }
-  
-  /**
-   * Gets the alphabetic code for a subcategory from its numeric code or name
-   */
-  getSubcategoryAlphabeticCode(
-    layerCode: string,
-    categoryValue: string | number,
-    subcategoryValue: string | number
-  ): string {
-    const categoryStr = typeof categoryValue === 'number' ? categoryValue.toString() : categoryValue;
-    const subcategoryStr = typeof subcategoryValue === 'number' ? subcategoryValue.toString() : subcategoryValue;
-
-    // If already alphabetic, return as is
-    if (/^[A-Za-z]{3}$/.test(subcategoryStr)) {
-      return subcategoryStr.toUpperCase();
-    }
-
-    // Debug log for important subcategories
-    if (layerCode === 'S' &&
-        (categoryStr === 'POP' || categoryStr === '001') &&
-        (subcategoryStr === '7' || subcategoryStr === '007')) {
-      console.log(`Looking up alphabetic code for ${layerCode}.${categoryStr}.${subcategoryStr}`);
-    }
-    
-    // Normalize category code
-    let categoryCode = categoryStr;
-    if (/^\d+$/.test(categoryStr) || categoryStr.length > 3) {
-      categoryCode = this.getCategoryAlphabeticCode(layerCode, categoryStr);
-    }
-    
-    // Check cache for numeric lookups
-    if (/^\d+$/.test(subcategoryStr)) {
-      const cacheKey = this.getCacheKey([layerCode, categoryCode, subcategoryStr]);
-      if (this.cache.subcategoryAlphaCodes.has(cacheKey)) {
-        return this.cache.subcategoryAlphaCodes.get(cacheKey)!;
-      }
-      
-      // Not in cache, look up using taxonomy service
-      const numericCode = parseInt(subcategoryStr, 10);
-      const categoryNumericCode = this.getCategoryNumericCode(layerCode, categoryCode);
-      const result = taxonomyService.getSubcategoryAlphabeticCode(
-        layerCode, 
-        categoryNumericCode, 
-        numericCode
-      );
-      
-      if (result) {
-        // Cache the result for future lookups
-        this.cache.subcategoryAlphaCodes.set(cacheKey, result);
-        return result;
-      }
-    }
-    
-    // Try to find by name
-    const subcategories = taxonomyService.getSubcategories(layerCode, categoryCode);
-    const matchByName = subcategories.find(sc => sc.name === subcategoryStr);
-    
-    if (matchByName) {
-      return matchByName.code;
-    }
-    
-    // Special case for "Base" subcategory
-    if (subcategoryStr === "Base") {
-      return "BAS";
-    }
-    
-    // If we can't determine, generate from first 3 letters
-    if (subcategoryStr.length > 0) {
-      return subcategoryStr.substring(0, 3).toUpperCase();
-    }
-    
-    // Default fallback
-    return 'BAS';
-  }
-
-  /**
-   * Gets the numeric code for a category from its alphabetic code or name
-   */
-  getCategoryNumericCode(layerCode: string, categoryValue: string | number): number {
-    const categoryStr = typeof categoryValue === 'number' ? categoryValue.toString() : categoryValue;
-
-    // If already numeric, parse and return
-    if (/^\d+$/.test(categoryStr)) {
-      return parseInt(categoryStr, 10);
-    }
-
-    // Debug log for important categories
-    if (layerCode === 'W' && (categoryStr === 'BCH' || categoryStr === 'HIP')) {
-      console.log(`Looking up numeric code for ${layerCode}.${categoryStr}`);
-    }
-    
-    // Check cache for code lookups
-    if (/^[A-Za-z]{3}$/.test(categoryStr)) {
-      const cacheKey = this.getCacheKey([layerCode, categoryStr]);
-      if (this.cache.categoryNumericCodes.has(cacheKey)) {
-        return this.cache.categoryNumericCodes.get(cacheKey)!;
-      }
-      
-      // Not in cache, look up using taxonomy service
-      const result = taxonomyService.getCategoryNumericCode(layerCode, categoryStr);
-      if (result !== -1) {
-        // Cache the result for future lookups
-        this.cache.categoryNumericCodes.set(cacheKey, result);
-        return result;
-      }
-    }
-    
-    // Try to find by name
-    const categories = taxonomyService.getCategories(layerCode);
-    const matchByName = categories.find(c => c.name === categoryStr);
-    
-    if (matchByName && matchByName.numericCode) {
-      return matchByName.numericCode;
-    }
-    
-    // Default fallback for popular categories
-    if (categoryStr === 'Pop' || categoryStr.toUpperCase() === 'POP') {
-      return 1;
-    }
-    
-    // Last resort
-    return 1;
-  }
-
-  /**
-   * Gets the numeric code for a subcategory from its alphabetic code or name
-   */
-  getSubcategoryNumericCode(
-    layerCode: string,
-    categoryValue: string | number,
-    subcategoryValue: string | number
-  ): number {
-    const categoryStr = typeof categoryValue === 'number' ? categoryValue.toString() : categoryValue;
-    const subcategoryStr = typeof subcategoryValue === 'number' ? subcategoryValue.toString() : subcategoryValue;
-
-    // If already numeric, parse and return
-    if (/^\d+$/.test(subcategoryStr)) {
-      return parseInt(subcategoryStr, 10);
-    }
-
-    // Debug log for important subcategories
-    if (layerCode === 'S' && (categoryStr === 'POP' || categoryStr === '001') && subcategoryStr === 'HPM') {
-      console.log(`Looking up numeric code for ${layerCode}.${categoryStr}.${subcategoryStr}`);
-    }
-    
-    // Normalize category code
-    let categoryCode = categoryStr;
-    if (/^\d+$/.test(categoryStr) || categoryStr.length > 3) {
-      categoryCode = this.getCategoryAlphabeticCode(layerCode, categoryStr);
-    }
-    
-    // Check cache for code lookups
-    if (/^[A-Za-z]{3}$/.test(subcategoryStr)) {
-      const cacheKey = this.getCacheKey([layerCode, categoryCode, subcategoryStr]);
-      if (this.cache.subcategoryNumericCodes.has(cacheKey)) {
-        return this.cache.subcategoryNumericCodes.get(cacheKey)!;
-      }
-      
-      // Not in cache, look up using taxonomy service
-      const result = taxonomyService.getSubcategoryNumericCode(
-        layerCode,
-        categoryCode,
-        subcategoryStr
-      );
-      
-      if (result !== -1) {
-        // Cache the result for future lookups
-        this.cache.subcategoryNumericCodes.set(cacheKey, result);
-        return result;
-      }
-    }
-    
-    // Try to find by name
-    const subcategories = taxonomyService.getSubcategories(layerCode, categoryCode);
-    const matchByName = subcategories.find(sc => sc.name === subcategoryStr);
-    
-    if (matchByName && matchByName.numericCode) {
-      return matchByName.numericCode;
-    }
-    
-    // Default fallback for base subcategory
-    if (subcategoryStr === 'Base' || subcategoryStr.toUpperCase() === 'BAS') {
-      return 1;
-    }
-    
-    // Last resort
-    return 1;
-  }
-
-  /**
-   * Converts a human-friendly NNA address to its machine-friendly equivalent
-   */
-  convertHFNToMFA(hfnAddress: string): string {
-    const parts = hfnAddress.split('.');
-    if (parts.length !== 4) {
-      return hfnAddress; // Not a valid NNA address format
-    }
-
-    const [layer, category, subcategory, sequential] = parts;
-    
-    // Convert each part to its numeric representation
-    const layerNumeric = this.getNumericLayerCode(layer);
-    const categoryNumeric = this.getCategoryNumericCode(layer, category);
-    const subcategoryNumeric = this.getSubcategoryNumericCode(layer, category, subcategory);
-    
-    // Format as padded strings for the MFA
-    const paddedCategory = String(categoryNumeric).padStart(3, '0');
-    const paddedSubcategory = String(subcategoryNumeric).padStart(3, '0');
-    
-    return `${layerNumeric}.${paddedCategory}.${paddedSubcategory}.${sequential}`;
-  }
-
-  /**
-   * Converts a machine-friendly NNA address to its human-friendly equivalent
-   */
-  convertMFAToHFN(mfaAddress: string): string {
-    const parts = mfaAddress.split('.');
-    if (parts.length !== 4) {
-      return mfaAddress; // Not a valid NNA address format
-    }
-
-    const [layerNumeric, categoryNumeric, subcategoryNumeric, sequential] = parts;
-    
-    // Convert each part to its alphabetic representation
-    const layer = this.getLayerCodeFromNumeric(parseInt(layerNumeric, 10));
-    const category = this.getCategoryAlphabeticCode(layer, parseInt(categoryNumeric, 10));
-    const subcategory = this.getSubcategoryAlphabeticCode(
-      layer,
-      parseInt(categoryNumeric, 10),
-      parseInt(subcategoryNumeric, 10)
-    );
-    
-    return `${layer}.${category}.${subcategory}.${sequential}`;
-  }
-
-  /**
-   * Gets the numeric layer code from a single letter layer code
-   */
-  getNumericLayerCode(layerCode: string): number {
-    const layerMap: Record<string, number> = {
-      G: 1, // Songs
-      S: 2, // Stars
-      L: 3, // Looks
-      M: 4, // Moves
-      W: 5, // Worlds
-      B: 6, // Branded
-      P: 7, // Personalize
-      T: 8, // Training Data
-      C: 9, // Composite
-      R: 10 // Rights
-    };
-    
-    return layerMap[layerCode] || 0;
-  }
-
-  /**
-   * Gets the layer code from a numeric layer code
-   */
-  getLayerCodeFromNumeric(numericCode: number): string {
-    const numericToLayerMap: Record<number, string> = {
-      1: 'G',
-      2: 'S',
-      3: 'L', 
-      4: 'M',
-      5: 'W',
-      6: 'B',
-      7: 'P',
-      8: 'T',
-      9: 'C',
-      10: 'R'
-    };
-    
-    return numericToLayerMap[numericCode] || '';
-  }
-
-  /**
-   * Gets the category name from a category code
-   */
-  getCategoryName(layerCode: string, categoryValue: string | number): string {
-    const categoryStr = typeof categoryValue === 'number' ? categoryValue.toString() : categoryValue;
-    const cacheKey = this.getCacheKey([layerCode, categoryStr]);
-    
-    // Check cache first
-    if (this.cache.categoryNames.has(cacheKey)) {
-      return this.cache.categoryNames.get(cacheKey)!;
-    }
-    
-    let result = '';
-    
-    // If numeric, convert to alphabetic first for lookup
-    if (/^\d+$/.test(categoryStr)) {
-      const numericCode = parseInt(categoryStr, 10);
-      const categories = taxonomyService.getCategories(layerCode);
-      const category = categories.find(c => c.numericCode === numericCode);
-      result = category?.name || '';
-    } else {
-      // Direct lookup for alphabetic
-      const categories = taxonomyService.getCategories(layerCode);
-      const category = categories.find(c => c.code === categoryStr);
-      result = category?.name || '';
-    }
-    
-    // Cache the result
-    this.cache.categoryNames.set(cacheKey, result);
-    return result;
-  }
-
-  /**
-   * Gets the subcategory name from a subcategory code
-   */
-  getSubcategoryName(
-    layerCode: string,
-    categoryValue: string | number,
-    subcategoryValue: string | number
-  ): string {
-    const categoryStr = typeof categoryValue === 'number' ? categoryValue.toString() : categoryValue;
-    const subcategoryStr = typeof subcategoryValue === 'number' ? subcategoryValue.toString() : subcategoryValue;
-    const cacheKey = this.getCacheKey([layerCode, categoryStr, subcategoryStr]);
-
-    // Check cache first
-    if (this.cache.subcategoryNames.has(cacheKey)) {
-      return this.cache.subcategoryNames.get(cacheKey)!;
-    }
-
-    // Debug log for important lookups
-    if (layerCode === 'S' &&
-        (categoryStr === 'POP' || categoryStr === '001') &&
-        (subcategoryStr === 'HPM' || subcategoryStr === '7' || subcategoryStr === '007')) {
-      console.log(`Looking up name for ${layerCode}.${categoryStr}.${subcategoryStr}`);
-    }
-    
-    // Normalize category code to alphabetic
-    let categoryAlpha = categoryStr;
-    if (/^\d+$/.test(categoryStr)) {
-      categoryAlpha = this.getCategoryAlphabeticCode(layerCode, categoryStr);
-    }
-    
-    let result = '';
-    
-    // If numeric subcategory, convert to name via lookup
-    if (/^\d+$/.test(subcategoryStr)) {
-      const numericCode = parseInt(subcategoryStr, 10);
-      const subcategories = taxonomyService.getSubcategories(layerCode, categoryAlpha);
-      const subcategory = subcategories.find(s => s.numericCode === numericCode);
-      result = subcategory?.name || '';
-    } else {
-      // Direct lookup for alphabetic
-      const subcategories = taxonomyService.getSubcategories(layerCode, categoryAlpha);
-      const subcategory = subcategories.find(s => s.code === subcategoryStr);
-      result = subcategory?.name || '';
-    }
-    
-    // Cache the result
-    this.cache.subcategoryNames.set(cacheKey, result);
-    return result;
-  }
-
-  /**
-   * Format an NNA address with consistent representation across components
-   * This method ensures that all parts of the application display addresses in the same format.
+   * Format an NNA address from its individual components
+   * @param layer The layer code (e.g. 'W', 'S', etc.)
+   * @param category The category code (e.g. 'BCH', 'POP', etc.)
+   * @param subcategory The subcategory code (e.g. 'SUN', 'HPM', etc.)
+   * @param sequential The sequential identifier (e.g. '001')
+   * @param format The format to generate ('hfn' or 'mfa')
+   * @returns The formatted address in the specified format
    */
   formatNNAAddress(
     layer: string,
-    category: string | number,
-    subcategory: string | number,
-    sequential: string | number = "000"
-  ): { hfn: string, mfa: string } {
-    // Create cache key from inputs
-    const cacheKey = this.getCacheKey([
+    category: string,
+    subcategory: string,
+    sequential: string,
+    format: 'hfn' | 'mfa' = 'hfn'
+  ): string | { hfn: string, mfa: string } {
+    // Return empty string if any required component is missing
+    if (!layer || !category || !subcategory || !sequential) {
+      return format === 'hfn' ? '' : { hfn: '', mfa: '' };
+    }
+
+    // Format as Human Friendly Name (alphabetic codes)
+    const hfn = `${layer}.${category}.${subcategory}.${sequential}`;
+    
+    // Format as Machine Friendly Address (numeric codes)
+    const layerNumeric = this.getLayerNumericCode(layer);
+    const categoryNumeric = this.getCategoryNumericCode(layer, category);
+    const subcategoryNumeric = this.getSubcategoryNumericCode(
       layer,
-      typeof category === 'number' ? category.toString() : category,
-      typeof subcategory === 'number' ? subcategory.toString() : subcategory,
-      typeof sequential === 'number' ? sequential.toString() : sequential
-    ]);
-    
-    // Check cache first for performance
-    if (this.cache.formatCache.has(cacheKey)) {
-      return this.cache.formatCache.get(cacheKey)!;
+      category,
+      subcategory
+    );
+
+    // Pad numeric codes with leading zeros
+    const paddedCategory = categoryNumeric.toString().padStart(3, '0');
+    const paddedSubcategory = subcategoryNumeric.toString().padStart(3, '0');
+
+    const mfa = `${layerNumeric}.${paddedCategory}.${paddedSubcategory}.${sequential}`;
+
+    // For backward compatibility, return string if format is specified
+    if (format === 'hfn') {
+      return hfn;
+    } else if (format === 'mfa') {
+      return mfa;
     }
     
-    // Fall through to the existing enhanced formatter
-    const result = formatNNAAddressForDisplay(layer, category, subcategory, sequential);
-    
-    // Cache the result
-    this.cache.formatCache.set(cacheKey, result);
-    return result;
+    // Otherwise return object with both formats
+    return { hfn, mfa };
   }
 
   /**
-   * Normalize a category code to alphabetic representation
-   * This is important for the success screen to always show alphabetic codes (e.g., W.STG.FES.001)
-   * instead of numeric codes (e.g., W.002.FES.001)
+   * Get the numeric code for a layer
+   * @param layer The layer code (e.g. 'W', 'S', etc.)
+   * @returns The numeric code for the layer
    */
-  normalizeAddressForDisplay(address: string, addressType: 'hfn' | 'mfa'): string {
+  getLayerNumericCode(layer: string): number {
+    // Use the LAYER_NUMERIC_CODES mapping for direct lookup
+    return parseInt(LAYER_NUMERIC_CODES[layer] || '0', 10);
+  }
+
+  /**
+   * Get the numeric code for a category within a layer
+   * @param layer The layer code (e.g. 'W', 'S', etc.)
+   * @param category The category code (e.g. 'BCH', 'POP', etc.)
+   * @returns The numeric code for the category
+   */
+  getCategoryNumericCode(layer: string, category: string): number {
+    try {
+      const layerModule = getLayerModule(layer);
+      if (!layerModule) return 0;
+
+      const categories = layerModule.getCategories();
+      const categoryData = categories.find(
+        (cat: { code: string; numericCode: number }) => cat.code === category
+      );
+      return categoryData ? categoryData.numericCode : 0;
+    } catch (error) {
+      logger.error(
+        `Error getting category numeric code for ${layer}.${category}:`,
+        error
+      );
+      return 0;
+    }
+  }
+
+  /**
+   * Get the alphabetic code for a category from its numeric code
+   * @param layer The layer code (e.g. 'W', 'S', etc.)
+   * @param numericCode The numeric code of the category
+   * @returns The alphabetic code for the category
+   */
+  getCategoryAlphabeticCode(layer: string, numericCode: number): string {
+    try {
+      const layerModule = getLayerModule(layer);
+      if (!layerModule) return '';
+
+      const categories = layerModule.getCategories();
+      const categoryData = categories.find(
+        (cat: { code: string; numericCode: number }) =>
+          cat.numericCode === numericCode
+      );
+      return categoryData ? categoryData.code : '';
+    } catch (error) {
+      logger.error(
+        `Error getting category alphabetic code for ${layer}.${numericCode}:`,
+        error
+      );
+      return '';
+    }
+  }
+  /**
+   * Get the numeric code for a subcategory within a category
+   * @param layer The layer code (e.g. 'W', 'S', etc.)
+   * @param category The category code (e.g. 'BCH', 'POP', etc.)
+   * @param subcategory The subcategory code (e.g. 'SUN', 'HPM', etc.)
+   * @returns The numeric code for the subcategory
+   */
+  getSubcategoryNumericCode(
+    layer: string,
+    category: string,
+    subcategory: string
+  ): number {
+    try {
+      const layerModule = getLayerModule(layer);
+      if (!layerModule) return 0;
+
+      const subcategories = layerModule.getSubcategories(category);
+      const subcategoryData = subcategories.find(
+        (sub: { code: string; numericCode: number }) => sub.code === subcategory
+      );
+      return subcategoryData ? subcategoryData.numericCode : 0;
+    } catch (error) {
+      logger.error(
+        `Error getting subcategory numeric code for ${layer}.${category}.${subcategory}:`,
+        error
+      );
+      return 0;
+    }
+  }
+
+  /**
+   * Get the alphabetic code for a subcategory from its numeric code
+   * @param layer The layer code (e.g. 'W', 'S', etc.)
+   * @param category The category code (e.g. 'BCH', 'POP', etc.)
+   * @param numericCode The numeric code of the subcategory
+   * @returns The alphabetic code for the subcategory
+   */
+  getSubcategoryAlphabeticCode(
+    layer: string,
+    category: string,
+    numericCode: number
+  ): string {
+    try {
+      const layerModule = getLayerModule(layer);
+      if (!layerModule) return '';
+
+      const subcategories = layerModule.getSubcategories(category);
+      const subcategoryData = subcategories.find(
+        (sub: { code: string; numericCode: number }) =>
+          sub.numericCode === numericCode
+      );
+      return subcategoryData ? subcategoryData.code : '';
+    } catch (error) {
+      logger.error(
+        `Error getting subcategory alphabetic code for ${layer}.${category}.${numericCode}:`,
+        error
+      );
+      return '';
+    }
+  }
+
+  /**
+   * Convert from Machine Friendly Address (MFA) to Human Friendly Name (HFN)
+   * @param mfa The MFA to convert (e.g. '5.001.001.001')
+   * @returns The corresponding HFN (e.g. 'W.BCH.SUN.001')
+   */
+  convertMFAToHFN(mfa: string): string {
+    if (!mfa) return '';
+
+    // Split address into parts, handling file extensions
+    const parts = mfa.split('.');
+    const hasExtension = parts.length > 4;
+    const extension = hasExtension ? parts.splice(4).join('.') : '';
+
+    if (parts.length < 4) return mfa;
+
+    const [layerNumeric, categoryNumeric, subcategoryNumeric, sequential] =
+      parts;
+
+    // Convert numeric codes to alphabetic
+    const layer = this.getLayerCodeFromNumeric(parseInt(layerNumeric, 10));
+    if (!layer) return mfa;
+
+    const category = this.getCategoryAlphabeticCode(
+      layer,
+      parseInt(categoryNumeric, 10)
+    );
+    if (!category) return mfa;
+
+    const subcategory = this.getSubcategoryAlphabeticCode(
+      layer,
+      category,
+      parseInt(subcategoryNumeric, 10)
+    );
+    if (!subcategory) return mfa;
+
+    // Format the HFN
+    let hfn = `${layer}.${category}.${subcategory}.${sequential}`;
+    if (hasExtension) {
+      hfn += `.${extension}`;
+    }
+
+    return hfn;
+  }
+
+  /**
+   * Get the layer code from its numeric code
+   * @param numericCode The numeric code of the layer
+   * @returns The alphabetic code for the layer
+   */
+  getLayerCodeFromNumeric(numericCode: number): string {
+    // Use the LAYER_ALPHA_CODES mapping for direct lookup
+    const numericStr = String(numericCode);
+    return LAYER_ALPHA_CODES[numericStr] || '';
+  }
+
+  /**
+   * Normalize an address for display by ensuring it uses the correct format
+   * @param address The address to normalize
+   * @param addressType The desired format ('hfn' or 'mfa')
+   * @returns The normalized address
+   */
+  normalizeAddressForDisplay(
+    address: string,
+    addressType: 'hfn' | 'mfa' = 'hfn'
+  ): string {
     if (!address) return '';
-    
-    // If it's already an MFA, convert to HFN first (if requested)
-    let hfnAddress = address;
-    if (addressType === 'hfn' && /^\d+\.\d{3}\.\d{3}\.\d{3}$/.test(address)) {
-      hfnAddress = this.convertMFAToHFN(address);
-    } else if (addressType === 'mfa' && /^[A-Z]\.[A-Z]{3}\.[A-Z]{3}\.\d{3}$/.test(address)) {
-      // If we want MFA but have HFN, convert it
-      return this.convertHFNToMFA(address);
+
+    // Split into parts, handling possible file extensions
+    const parts = address.split('.');
+    const hasExtension = parts.length > 4;
+    const extension = hasExtension ? parts.splice(4).join('.') : '';
+
+    // If it's already an MFA format but we want HFN, convert it first
+    if (/^\d+\.\d+/.test(address) && addressType === 'hfn') {
+      address = this.convertMFAToHFN(address);
     }
-    
-    // Now we have or want an HFN address
+
+    // Handle conversion from numeric codes to alphabetic codes in HFN
     if (addressType === 'hfn') {
-      const parts = hfnAddress.split('.');
-      if (parts.length !== 4) return hfnAddress; // Not valid format
-      
-      const [layer, category, subcategory, sequential] = parts;
-      
-      // Check if the category part is numeric (this would be the issue in the success screen)
-      if (/^\d+$/.test(category)) {
-        // Convert numeric category to alphabetic
-        const alphaCategory = this.getCategoryAlphabeticCode(layer, category);
-        return `${layer}.${alphaCategory}.${subcategory}.${sequential}`;
-      }
-      
-      return hfnAddress;
-    }
-    
-    // For MFA, just return as is
-    return address;
-  }
+      const segments = address.split('.');
+      if (segments.length >= 4) {
+        const [layer, category, subcategory, sequential] = segments;
 
-  /**
-   * Clear the cache to refresh mappings
-   */
-  /**
-   * General function to get alphabetic code for any code (category or subcategory)
-   * For use in consistent display in UI components
-   */
-  getAlphabeticCode(code: string): string {
-    // If already alphabetic, return as is
-    if (/^[A-Za-z]{3}$/.test(code)) {
-      return code;
-    }
+        // Check if category is numeric and convert it
+        if (/^\d+$/.test(category)) {
+          const alphabeticCategory = this.getCategoryAlphabeticCode(
+            layer,
+            parseInt(category, 10)
+          );
 
-    // If numeric, convert to padded format for lookup
-    if (/^\d+$/.test(code)) {
-      const numericCode = parseInt(code, 10);
-      const paddedCode = String(numericCode).padStart(3, '0');
-
-      console.log(`Looking up alphabetic code for numeric code ${paddedCode}`);
-
-      // Since we don't have layer context here, we need to do a best-effort lookup
-      // Try to get the code from all available layers in a specific order
-      // World layer is most important for our W.BCH.SUN fix
-      const layersToTry = ['W', 'S', 'G', 'L', 'M'];
-
-      for (const layerCode of layersToTry) {
-        const alphabeticCode = taxonomyService.getCategoryAlphabeticCode(layerCode, numericCode);
-        if (alphabeticCode) {
-          console.log(`Found alphabetic code ${alphabeticCode} for numeric code ${paddedCode} in layer ${layerCode}`);
-          return alphabeticCode;
+          // Check if subcategory is numeric and convert it
+          if (/^\d+$/.test(subcategory)) {
+            const alphabeticSubcategory = this.getSubcategoryAlphabeticCode(
+              layer,
+              alphabeticCategory,
+              parseInt(subcategory, 10)
+            );
+            address = `${layer}.${alphabeticCategory}.${alphabeticSubcategory}.${sequential}`;
+          } else {
+            address = `${layer}.${alphabeticCategory}.${subcategory}.${sequential}`;
+          }
+        }
+        // If only subcategory is numeric, convert just that
+        else if (/^\d+$/.test(subcategory)) {
+          const alphabeticSubcategory = this.getSubcategoryAlphabeticCode(
+            layer,
+            category,
+            parseInt(subcategory, 10)
+          );
+          address = `${layer}.${category}.${alphabeticSubcategory}.${sequential}`;
         }
       }
-
-      // If we couldn't find a mapping in any layer, use a generic mapping based on common codes
-      console.log(`Could not find alphabetic code for numeric code ${paddedCode} in any layer`);
-
-      // Fallback common mappings (intentionally minimal)
-      if (paddedCode === '001') return 'POP'; // Pop is 001 in most layers
-      if (paddedCode === '007') return 'HPM'; // Hipster Male is 007 in Stars layer
-
-      // Last resort: return the padded code itself
-      return paddedCode;
     }
 
-    // If neither alphabetic nor numeric, return as is
-    return code;
-  }
+    // Reattach extension if present
+    if (hasExtension) {
+      address = `${address}.${extension}`;
+    }
 
-  clearCache(): void {
-    this.cache.categoryNames.clear();
-    this.cache.subcategoryNames.clear();
-    this.cache.categoryAlphaCodes.clear();
-    this.cache.subcategoryAlphaCodes.clear();
-    this.cache.categoryNumericCodes.clear();
-    this.cache.subcategoryNumericCodes.clear();
-    this.cache.validCombinations.clear();
-    this.cache.formatCache.clear();
-
-    console.log('Taxonomy mapper cache cleared');
+    return address;
   }
 }
 
-// Create a singleton instance
+// Export a singleton instance of the mapper
 const taxonomyMapper = new TaxonomyMapper();
-
 export default taxonomyMapper;
