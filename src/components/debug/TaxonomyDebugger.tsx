@@ -24,6 +24,17 @@ const TaxonomyDebugger: React.FC = () => {
   
   const layers = ['G', 'S', 'L', 'M', 'W', 'B', 'P', 'T', 'C', 'R'];
   
+  // Add message to output log
+  const addToLog = useCallback((message: string) => {
+    setOutputLog(prev => [...prev, message]);
+    logger.taxonomy(LogLevel.DEBUG, message);
+  }, []);
+  
+  // Clear output log
+  const clearLog = () => {
+    setOutputLog([]);
+  };
+
   // Load debug information for current layer and category
   const loadLayerDebugInfo = useCallback((selectedLayer: string, selectedCategory?: string) => {
     try {
@@ -117,20 +128,20 @@ const TaxonomyDebugger: React.FC = () => {
       }
       
       // Add debug info to log
-      addToLog('--- Debug Information ---');
-      addToLog(`Layer: ${selectedLayer}`);
-      if (categoryToTest) {
-        addToLog(`Selected Category: ${categoryToTest}`);
-      }
-      addToLog(`LAYER_LOOKUPS[${selectedLayer}] count: ${layerLookupCount}`);
-      addToLog(`LAYER_SUBCATEGORIES[${selectedLayer}] count: ${layerSubcatsCount}`);
-      addToLog(`Categories: ${categories.length}`);
-      
-      if (categoryToTest) {
-        addToLog(`Subcategory codes for ${categoryToTest}: ${subcatCodes.length}`);
-        addToLog(`Mapped subcategories: ${subcats.length}`);
-        addToLog(`Service result count: ${serviceResult.length}`);
-      }
+      setOutputLog(prevLog => [
+        ...prevLog,
+        '--- Debug Information ---',
+        `Layer: ${selectedLayer}`,
+        ...(categoryToTest ? [`Selected Category: ${categoryToTest}`] : []),
+        `LAYER_LOOKUPS[${selectedLayer}] count: ${layerLookupCount}`,
+        `LAYER_SUBCATEGORIES[${selectedLayer}] count: ${layerSubcatsCount}`,
+        `Categories: ${categories.length}`,
+        ...(categoryToTest ? [
+          `Subcategory codes for ${categoryToTest}: ${subcatCodes.length}`,
+          `Mapped subcategories: ${subcats.length}`,
+          `Service result count: ${serviceResult.length}`
+        ] : [])
+      ]);
       
       setError('');
     } catch (error) {
@@ -141,7 +152,7 @@ const TaxonomyDebugger: React.FC = () => {
         layer: selectedLayer
       });
     }
-  }, [addToLog]);
+  }, []);
   
   // Load initial debug info on mount
   useEffect(() => {
@@ -196,17 +207,6 @@ const TaxonomyDebugger: React.FC = () => {
       setMfa('');
       addToLog(`Error converting HFN to MFA: ${errorMessage}`);
     }
-  };
-  
-  // Add message to output log
-  const addToLog = (message: string) => {
-    setOutputLog(prev => [...prev, message]);
-    logger.taxonomy(LogLevel.DEBUG, message);
-  };
-  
-  // Clear output log
-  const clearLog = () => {
-    setOutputLog([]);
   };
   
   // Handle layer change
