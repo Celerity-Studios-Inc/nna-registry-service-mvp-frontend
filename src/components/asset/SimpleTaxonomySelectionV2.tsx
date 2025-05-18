@@ -12,8 +12,8 @@ import '../../styles/SimpleTaxonomySelection.css';
 
 interface SimpleTaxonomySelectionV2Props {
   layer: string;
-  onCategorySelect: (category: string) => void;
-  onSubcategorySelect: (subcategory: string) => void;
+  onCategorySelect: (category: string, isDoubleClick?: boolean) => void;
+  onSubcategorySelect: (subcategory: string, isDoubleClick?: boolean) => void;
   selectedCategory?: string;
   selectedSubcategory?: string;
 }
@@ -135,7 +135,7 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
     setActiveCategory(category);
     setActiveSubcategory(null);
     selectCategory(category);
-    onCategorySelect(category);
+    onCategorySelect(category, false);
     
     // Direct service call to load subcategories
     try {
@@ -161,14 +161,29 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
   };
   
   // Handle subcategory selection
-  const handleSubcategorySelect = (subcategory: string) => {
+  const handleSubcategorySelect = (subcategory: string, isDoubleClick?: boolean) => {
     // FIXED: Prevent duplicate selections
     if (subcategory === activeSubcategory) return;
     
     logger.info(`Subcategory selected: ${subcategory}`);
     setActiveSubcategory(subcategory);
+    
+    // Set in context but also dispatch directly to parent component
     selectSubcategory(subcategory);
+    
+    // Log more details to debug
+    console.log(`Directly sending subcategory selection to parent: ${subcategory}`);
+    console.log(`Current state: layer=${layer}, category=${activeCategory}, subcategory=${subcategory}`);
+    
+    // Ensure parent gets notified
     onSubcategorySelect(subcategory);
+    
+    // Force immediate rendering of selected state
+    setTimeout(() => {
+      // Re-set active subcategory in case it was cleared
+      setActiveSubcategory(subcategory);
+      console.log(`Reinforcing subcategory selection: ${subcategory}`);
+    }, 10);
   };
   
   return (
@@ -286,19 +301,29 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
           ) : subcategories.length === 0 ? (
             (() => {
               // Try to get subcategories directly from the service if context is empty
+              // IMPORTANT: Always call getSubcategories directly to ensure we get fresh data
               const directSubcategories = activeCategory ? 
                 taxonomyService.getSubcategories(layer, activeCategory) : [];
+              
+              console.log(`[DIRECT] Got ${directSubcategories.length} subcategories for ${layer}.${activeCategory}`);
               
               // If we got subcategories directly, use them instead of showing empty state
               if (directSubcategories.length > 0) {
                 console.log(`Using direct subcategories (${directSubcategories.length}) as fallback for ${layer}.${activeCategory}`);
+                console.log(`First subcategory: ${directSubcategories[0].code} - ${directSubcategories[0].name}`);
+                
+                // Use the subcategories directly 
+                // We don't have a direct method to set subcategories in context
+                
                 return (
-                  <div className="taxonomy-items">
+                  <div className="taxonomy-items direct-fallback">
+                    {/* Render subcategories directly from taxonomyService */}
                     {directSubcategories.map(subcategory => (
                       <div
                         key={subcategory.code}
                         className={`taxonomy-item ${activeSubcategory === subcategory.code ? 'active' : ''}`}
                         onClick={() => handleSubcategorySelect(subcategory.code)}
+                        onDoubleClick={() => handleSubcategorySelect(subcategory.code, true)}
                         data-testid={`subcategory-${subcategory.code}`}
                       >
                         <div className="taxonomy-item-code">{subcategory.code}</div>
@@ -354,20 +379,48 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
               );
             })()
           ) : (
-            <div className="taxonomy-items">
-              {subcategories.map(subcategory => (
-                <div
-                  key={subcategory.code}
-                  className={`taxonomy-item ${activeSubcategory === subcategory.code ? 'active' : ''}`}
-                  onClick={() => handleSubcategorySelect(subcategory.code)}
-                  data-testid={`subcategory-${subcategory.code}`}
-                >
-                  <div className="taxonomy-item-code">{subcategory.code}</div>
-                  <div className="taxonomy-item-numeric">{subcategory.numericCode}</div>
-                  <div className="taxonomy-item-name">{subcategory.name}</div>
+            (() => {
+              // ALWAYS check if we have direct service data available for consistency
+              const directSubcategories = activeCategory ? 
+                taxonomyService.getSubcategories(layer, activeCategory) : [];
+              
+              console.log(`[SUBCATEGORY RENDER] Context subcategories: ${subcategories.length}, Direct subcategories: ${directSubcategories.length}`);
+              
+              // Determine which dataset to use
+              let displaySubcategories = subcategories;
+              let useDirectData = false;
+              
+              // If context data is empty but direct service has data, use direct service data
+              if (subcategories.length === 0 && directSubcategories.length > 0) {
+                displaySubcategories = directSubcategories;
+                useDirectData = true;
+                console.log(`[FALLBACK] Using direct subcategories instead of empty context data`);
+              }
+              
+              // Return the actual subcategory rendering UI
+              return (
+                <div className={`taxonomy-items ${useDirectData ? 'using-direct-data' : ''}`}>
+                  {displaySubcategories.map(subcategory => (
+                    <div
+                      key={subcategory.code}
+                      className={`taxonomy-item ${activeSubcategory === subcategory.code ? 'active' : ''}`}
+                      onClick={() => handleSubcategorySelect(subcategory.code)}
+                      onDoubleClick={() => handleSubcategorySelect(subcategory.code, true)}
+                      data-testid={`subcategory-${subcategory.code}`}
+                    >
+                      <div className="taxonomy-item-code">{subcategory.code}</div>
+                      <div className="taxonomy-item-numeric">{subcategory.numericCode}</div>
+                      <div className="taxonomy-item-name">{subcategory.name}</div>
+                    </div>
+                  ))}
+                  {useDirectData && (
+                    <div style={{ fontSize: '11px', color: '#666', margin: '8px 0', padding: '4px', backgroundColor: '#f0f8ff', border: '1px solid #d0e0ff', borderRadius: '4px' }}>
+                      Using direct service data (fallback mode)
+                    </div>
+                  )}
                 </div>
-              ))}
-            </div>
+              );
+            })()
           )}
         </div>
       )}

@@ -37,6 +37,9 @@ const LayerSelectorV2: React.FC<LayerSelectorV2Props> = ({
     logger.info(`Layer selected: ${layer}`);
     setActiveLayer(layer);
     selectLayer(layer);
+    
+    // Make sure to pass isDoubleClick=false explicitly
+    console.log(`Sending layer selection to parent: ${layer}, isDoubleClick=false`);
     onLayerSelect(layer, false);
   }, [selectLayer, onLayerSelect]);
 
@@ -45,8 +48,12 @@ const LayerSelectorV2: React.FC<LayerSelectorV2Props> = ({
     logger.info(`Layer double-clicked: ${layer}`);
     setActiveLayer(layer);
     selectLayer(layer);
+    
+    // First call the parent with isDoubleClick=true
+    console.log(`Sending layer double-click to parent: ${layer}, isDoubleClick=true`);
     onLayerSelect(layer, true);
 
+    // Also call the optional onLayerDoubleClick callback if provided
     if (onLayerDoubleClick) {
       onLayerDoubleClick(layer);
     }

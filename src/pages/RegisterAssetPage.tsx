@@ -977,7 +977,18 @@ const RegisterAssetPage: React.FC = () => {
         return (
           <LayerSelector
             selectedLayer={watchLayer}
-            onLayerSelect={(layer) => handleLayerSelect({ code: layer, name: '', id: '' })}
+            onLayerSelect={(layer, isDoubleClick) => {
+              console.log(`RegisterAssetPage received layer select: ${layer}, isDoubleClick=${isDoubleClick}`);
+              // Get the layer name based on the code
+              const layerNames: Record<string, string> = {
+                'G': 'Songs', 'S': 'Stars', 'L': 'Looks', 'M': 'Moves', 'W': 'Worlds',
+                'B': 'Branded Assets', 'P': 'Patterns', 'T': 'Training Data', 'C': 'Composites', 'R': 'Rights'
+              };
+              const name = layerNames[layer] || '';
+              
+              // Call the handler with proper LayerOption object and isDoubleClick flag
+              handleLayerSelect({ code: layer, name, id: layer }, isDoubleClick);
+            }}
           />
         );
       case 1:
@@ -997,7 +1008,8 @@ const RegisterAssetPage: React.FC = () => {
                 });
               }
             }}
-            onSubcategorySelect={(subcategoryCode) => {
+            onSubcategorySelect={(subcategoryCode, isDoubleClick) => {
+              console.log(`Subcategory selected: ${subcategoryCode}, isDoubleClick=${isDoubleClick}`);
               const subcategories = taxonomyService.getSubcategories(watchLayer, watchCategoryCode);
               const subcategory = subcategories.find(s => s.code === subcategoryCode);
 
@@ -1008,7 +1020,9 @@ const RegisterAssetPage: React.FC = () => {
                   code: subcategory.code,
                   name: subcategory.name,
                   numericCode: parseInt(subcategory.numericCode)
-                });
+                }, isDoubleClick);  // Pass the isDoubleClick parameter for auto-advancing
+              } else {
+                console.error(`Could not find subcategory ${subcategoryCode} in layer ${watchLayer}, category ${watchCategoryCode}`);
               }
             }}
           />
