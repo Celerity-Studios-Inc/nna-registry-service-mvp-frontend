@@ -1,8 +1,16 @@
 # Vercel Build Trigger
 
-Build triggered at: Wed May 14 14:45:00 MDT 2025
+Build triggered at: Fri May 17 16:30:00 MDT 2025
 
-## Latest Build - May 14, 2025 (2) - Asset Detail View Fix
+## Latest Build - May 17, 2025 - Asset Registration UI Fix
+
+### Asset Registration UI Fix
+- Fixed infinite rendering loop in the asset registration flow
+- Categories now display correctly after layer selection
+- Improved performance with optimized rendering
+- Ensured session storage operations don't cause unnecessary re-renders
+
+## Previous Build - May 14, 2025 (2) - Asset Detail View Fix
 
 ### Asset Detail View Fix
 - Fixed 404 errors when viewing asset details
