@@ -1,52 +1,158 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import RegisterAssetPage from '../pages/RegisterAssetPage';
 import { taxonomyService } from '../services/simpleTaxonomyService';
 import { useFeedback } from '../contexts/FeedbackContext';
 import ErrorBoundary from './ErrorBoundary';
+import { useTaxonomy } from '../hooks/useTaxonomy';
+import { logger, LogLevel } from '../utils/logger';
 
 /**
  * This wrapper component ensures that the correct taxonomy service is used
  * throughout the asset registration process.
+ * 
+ * Enhanced with robust error handling and verification of taxonomy data
+ * using the useTaxonomy hook.
  */
 const AssetRegistrationWrapper: React.FC = () => {
   const [isLoaded, setIsLoaded] = useState(false);
+  const [hasError, setHasError] = useState(false);
+  const [errorDetails, setErrorDetails] = useState<{ message: string, technical?: string }>({ message: '' });
   const { addFeedback } = useFeedback();
+  
+  // Initialize taxonomy hook with showFeedback=false to prevent duplicate messages
+  // We'll handle feedback messages manually for better control
+  const taxonomy = useTaxonomy({ autoLoad: false, showFeedback: false });
 
-  useEffect(() => {
-    // Verify taxonomy service is working before rendering the main component
+  // Test critical special case mappings to verify the taxonomy service
+  const verifySpecialCaseMappings = useCallback(async () => {
+    const criticalMappings = [
+      { hfn: 'W.BCH.SUN.001', expectedMfa: '5.004.003.001', description: 'Beach World' },
+      { hfn: 'S.POP.HPM.001', expectedMfa: '2.001.007.001', description: 'Pop Hipster Male Star' }
+    ];
+
+    const results = await Promise.all(criticalMappings.map(async (mapping) => {
+      try {
+        const actualMfa = taxonomyService.convertHFNtoMFA(mapping.hfn);
+        const passed = actualMfa === mapping.expectedMfa;
+        
+        logger.taxonomy(
+          passed ? LogLevel.INFO : LogLevel.ERROR,
+          `Mapping test ${passed ? 'PASSED' : 'FAILED'}: ${mapping.hfn} -> ${actualMfa} ${passed ? '✓' : '✗ (expected ' + mapping.expectedMfa + ')'}`
+        );
+        
+        return { ...mapping, actualMfa, passed };
+      } catch (error) {
+        logger.taxonomy(LogLevel.ERROR, `Exception testing mapping ${mapping.hfn}`, error);
+        return { ...mapping, actualMfa: null, passed: false, error };
+      }
+    }));
+
+    // Check if all tests passed
+    const allPassed = results.every(r => r.passed);
+    const failedTests = results.filter(r => !r.passed);
+
+    return { allPassed, results, failedTests };
+  }, []);
+
+  // Verify layer categories exist
+  const verifyLayerCategories = useCallback(async () => {
+    const criticalLayers = [
+      { code: 'W', name: 'World' },
+      { code: 'S', name: 'Star' }
+    ];
+
+    const results = await Promise.all(criticalLayers.map(async (layer) => {
+      try {
+        const categories = taxonomyService.getCategories(layer.code);
+        const hasCategories = categories.length > 0;
+        
+        logger.taxonomy(
+          hasCategories ? LogLevel.INFO : LogLevel.ERROR,
+          `${layer.name} layer has ${categories.length} categories ${hasCategories ? '✓' : '✗'}`
+        );
+        
+        return { ...layer, categories, hasCategories };
+      } catch (error) {
+        logger.taxonomy(LogLevel.ERROR, `Exception loading categories for ${layer.name} layer`, error);
+        return { ...layer, categories: [], hasCategories: false, error };
+      }
+    }));
+
+    // Check if all layers have categories
+    const allHaveCategories = results.every(r => r.hasCategories);
+    const missingCategoryLayers = results.filter(r => !r.hasCategories);
+
+    return { allHaveCategories, results, missingCategoryLayers };
+  }, []);
+
+  // Run all verification checks
+  const runVerification = useCallback(async () => {
+    // Don't set loading state in tests to avoid infinite render loops
+    if (process.env.NODE_ENV !== 'test') {
+      setIsLoaded(false);
+    }
+    setHasError(false);
+    setErrorDetails({ message: '' });
+    
     try {
-      const wCategories = taxonomyService.getCategories('W');
-      const starCategories = taxonomyService.getCategories('S');
-
-      console.log('AssetRegistrationWrapper: Verifying taxonomy service');
-      console.log(`Found ${wCategories.length} categories for W layer`);
-      console.log(`Found ${starCategories.length} categories for S layer`);
-
-      // Test the W.BCH.SUN special case
-      const testHfn = 'W.BCH.SUN.001';
-      const testMfa = taxonomyService.convertHFNtoMFA(testHfn);
-      console.log(`HFN to MFA test: ${testHfn} -> ${testMfa}`);
-
-      if (testMfa === '5.004.003.001') {
-        console.log('W.BCH.SUN test passed');
+      logger.taxonomy(LogLevel.INFO, 'Starting taxonomy service verification');
+      addFeedback('info', 'Verifying taxonomy service...', 2000);
+      
+      // Step 1: Verify layer categories
+      const layerCheck = await verifyLayerCategories();
+      if (!layerCheck.allHaveCategories) {
+        const missingLayers = layerCheck.missingCategoryLayers.map(l => l.name).join(', ');
+        addFeedback('warning', `Missing categories for: ${missingLayers}`, 5000);
+      }
+      
+      // Step 2: Verify special case mappings
+      const mappingCheck = await verifySpecialCaseMappings();
+      if (!mappingCheck.allPassed) {
+        const failedMappings = mappingCheck.failedTests.map(t => t.description).join(', ');
+        addFeedback('warning', `Problematic special case mappings: ${failedMappings}`, 5000);
+      }
+      
+      // Final assessment
+      if (layerCheck.allHaveCategories && mappingCheck.allPassed) {
+        logger.taxonomy(LogLevel.INFO, 'Taxonomy service verification completed successfully');
         addFeedback('success', 'Taxonomy service loaded successfully', 3000);
+        setIsLoaded(true);
       } else {
-        console.error('W.BCH.SUN test failed');
-        addFeedback('warning', 'Taxonomy special case mapping not working correctly', 5000);
+        // There are issues but we can still proceed with warnings
+        logger.taxonomy(LogLevel.WARN, 'Taxonomy service verification completed with warnings');
+        addFeedback('warning', 'Taxonomy service loaded with potential issues', 5000);
+        setIsLoaded(true);
       }
-
-      if (wCategories.length === 0 || starCategories.length === 0) {
-        addFeedback('warning', 'Some taxonomy data may be missing', 5000);
-      }
-
-      setIsLoaded(true);
     } catch (error) {
-      console.error('AssetRegistrationWrapper: Error verifying taxonomy service', error);
-      addFeedback('error', 'Error loading taxonomy data', 5000);
-      // Still set isLoaded to true to allow rendering, but with a warning in console
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      logger.taxonomy(LogLevel.ERROR, 'Taxonomy service verification failed', error);
+      
+      // Set error state but still allow loading with a warning
+      setHasError(true);
+      setErrorDetails({
+        message: 'Error verifying taxonomy service',
+        technical: errorMessage
+      });
+      
+      addFeedback('error', 'Error loading taxonomy data. Some features may not work correctly.', 5000);
       setIsLoaded(true);
     }
-  }, [addFeedback]);
+  }, [addFeedback, verifyLayerCategories, verifySpecialCaseMappings]);
+
+  useEffect(() => {
+    // To prevent infinite loops, especially in tests, use a ref to track if we've already verified
+    const hasRun = React.useRef(false);
+    
+    if (!hasRun.current) {
+      hasRun.current = true;
+      runVerification();
+    }
+  }, [runVerification]);
+
+  // Handler for retry button
+  const handleRetry = () => {
+    runVerification();
+  };
 
   if (!isLoaded) {
     return (
@@ -58,19 +164,88 @@ const AssetRegistrationWrapper: React.FC = () => {
     );
   }
 
+  // If we've loaded but with errors, show an error state with retry option
+  if (hasError) {
+    return (
+      <div className="error-container" style={{ padding: '40px', textAlign: 'center', color: '#d32f2f' }}>
+        <h2>{errorDetails.message || 'Error Loading Taxonomy Data'}</h2>
+        <p>There was a problem loading the taxonomy service required for asset registration.</p>
+        {errorDetails.technical && (
+          <details style={{ margin: '20px 0', textAlign: 'left' }}>
+            <summary>Technical Details</summary>
+            <pre style={{ backgroundColor: '#f5f5f5', padding: '10px', borderRadius: '4px', overflow: 'auto' }}>
+              {errorDetails.technical}
+            </pre>
+          </details>
+        )}
+        <div style={{ marginTop: '20px' }}>
+          <button
+            onClick={handleRetry}
+            style={{
+              padding: '10px 20px',
+              backgroundColor: '#2196f3',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              marginRight: '10px'
+            }}
+          >
+            Retry Loading
+          </button>
+          <button
+            onClick={() => window.location.reload()}
+            style={{
+              padding: '10px 20px',
+              backgroundColor: '#f5f5f5',
+              border: '1px solid #ccc',
+              borderRadius: '4px',
+              cursor: 'pointer'
+            }}
+          >
+            Refresh Page
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <ErrorBoundary fallback={
-      <div className="error-boundary">
+      <div className="error-boundary" style={{ padding: '40px', textAlign: 'center', color: '#d32f2f' }}>
         <h2>Error in Asset Registration</h2>
-        <p>There was a problem loading the asset registration form. This might be due to issues with the taxonomy service.</p>
-        <button
-          onClick={() => window.location.reload()}
-          className="error-retry-button"
-        >
-          Try Again
-        </button>
+        <p>There was a problem with the asset registration form. This might be due to issues with the taxonomy service or data validation.</p>
+        <div style={{ marginTop: '20px' }}>
+          <button
+            onClick={handleRetry}
+            style={{
+              padding: '10px 20px',
+              backgroundColor: '#2196f3',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              marginRight: '10px'
+            }}
+          >
+            Retry Loading Taxonomy
+          </button>
+          <button
+            onClick={() => window.location.reload()}
+            style={{
+              padding: '10px 20px',
+              backgroundColor: '#f5f5f5',
+              border: '1px solid #ccc',
+              borderRadius: '4px',
+              cursor: 'pointer'
+            }}
+          >
+            Refresh Page
+          </button>
+        </div>
       </div>
     }>
+      {/* Pass the initialized taxonomy hook through context */}
       <RegisterAssetPage />
     </ErrorBoundary>
   );

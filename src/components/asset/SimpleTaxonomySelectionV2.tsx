@@ -24,6 +24,7 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
   selectedCategory,
   selectedSubcategory
 }) => {
+  // Initialize taxonomy hook with the current layer
   const {
     categories,
     isLoadingCategories,
@@ -35,8 +36,18 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
     isLoadingSubcategories,
     subcategoryError,
     selectSubcategory,
-    reloadSubcategories
+    reloadSubcategories,
+
+    selectLayer
   } = useTaxonomy();
+  
+  // When layer changes, update the selected layer in the taxonomy hook
+  useEffect(() => {
+    if (layer) {
+      logger.info(`SimpleTaxonomySelectionV2: Setting layer to ${layer}`);
+      selectLayer(layer);
+    }
+  }, [layer, selectLayer]);
   
   const [activeCategory, setActiveCategory] = useState<string | null>(selectedCategory || null);
   const [activeSubcategory, setActiveSubcategory] = useState<string | null>(selectedSubcategory || null);
@@ -93,14 +104,36 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
         ) : categoryError ? (
           <div className="taxonomy-error">
             <p>{categoryError.message}</p>
-            <button onClick={reloadCategories} className="retry-button">
+            <button 
+              onClick={() => {
+                // First ensure the layer is set, then reload categories
+                if (layer) {
+                  selectLayer(layer);
+                  // Add a small delay to ensure layer is set before reloading
+                  setTimeout(() => reloadCategories(), 50);
+                  logger.info(`Retrying category load for layer: ${layer}`);
+                }
+              }} 
+              className="retry-button"
+            >
               Retry
             </button>
           </div>
         ) : categories.length === 0 ? (
           <div className="taxonomy-empty">
             <p>No categories found for layer {layer}</p>
-            <button onClick={reloadCategories} className="retry-button">
+            <button 
+              onClick={() => {
+                // First ensure the layer is set, then reload categories
+                if (layer) {
+                  selectLayer(layer);
+                  // Add a small delay to ensure layer is set before reloading
+                  setTimeout(() => reloadCategories(), 50);
+                  logger.info(`Retrying category load for layer: ${layer}`);
+                }
+              }} 
+              className="retry-button"
+            >
               Retry
             </button>
           </div>
@@ -134,14 +167,38 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
           ) : subcategoryError ? (
             <div className="taxonomy-error">
               <p>{subcategoryError.message}</p>
-              <button onClick={reloadSubcategories} className="retry-button">
+              <button 
+                onClick={() => {
+                  // Ensure layer and category are set before reloading
+                  if (layer && activeCategory) {
+                    selectLayer(layer);
+                    selectCategory(activeCategory);
+                    // Add a small delay to ensure selections are set before reloading
+                    setTimeout(() => reloadSubcategories(), 50);
+                    logger.info(`Retrying subcategory load for ${layer}.${activeCategory}`);
+                  }
+                }} 
+                className="retry-button"
+              >
                 Retry
               </button>
             </div>
           ) : subcategories.length === 0 ? (
             <div className="taxonomy-empty">
               <p>No subcategories found for {layer}.{activeCategory}</p>
-              <button onClick={reloadSubcategories} className="retry-button">
+              <button 
+                onClick={() => {
+                  // Ensure layer and category are set before reloading
+                  if (layer && activeCategory) {
+                    selectLayer(layer);
+                    selectCategory(activeCategory);
+                    // Add a small delay to ensure selections are set before reloading
+                    setTimeout(() => reloadSubcategories(), 50);
+                    logger.info(`Retrying subcategory load for ${layer}.${activeCategory}`);
+                  }
+                }} 
+                className="retry-button"
+              >
                 Retry
               </button>
             </div>
