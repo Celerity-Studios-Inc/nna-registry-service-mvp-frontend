@@ -6,10 +6,15 @@ import { logger } from '../utils/logger';
 
 // Helper function to get layer module as it's not exported directly
 function getLayerModule(layerCode: string) {
-  // Implementation based on your codebase structure
-  // This is a basic implementation - adjust as needed
+  // Get the layer module using dynamic property access
   const layerModuleKey = `${layerCode}_layer`;
+  // Cast to any to allow property access with string key
   return (taxonomyLookup as any)[layerModuleKey];
+  
+  // Try the exported getLayerModule if available
+  // if ((taxonomyLookup as any).getLayerModule) {
+  //   return (taxonomyLookup as any).getLayerModule(layerCode);
+  // }
 }
 
 /**
