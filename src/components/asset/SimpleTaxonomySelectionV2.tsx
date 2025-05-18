@@ -25,6 +25,11 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
   selectedSubcategory
 }) => {
   // Use shared taxonomy context instead of creating a new instance
+  const taxonomyContext = useTaxonomyContext({ 
+    componentName: 'SimpleTaxonomySelectionV2', 
+    enableLogging: process.env.NODE_ENV === 'development'
+  });
+  
   const {
     categories,
     isLoadingCategories,
@@ -39,18 +44,48 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
     reloadSubcategories,
 
     selectLayer
-  } = useTaxonomyContext({ 
-    componentName: 'SimpleTaxonomySelectionV2', 
-    enableLogging: process.env.NODE_ENV === 'development'
-  });
+  } = taxonomyContext;
+  
+  // Initial setup - run only once
+  useEffect(() => {
+    if (layer) {
+      logger.info(`SimpleTaxonomySelectionV2: Initial setup for layer ${layer}`);
+      // Clear any previous state
+      selectLayer(layer);
+      
+      // Force reload immediately
+      setTimeout(() => {
+        reloadCategories();
+        logger.info(`Initial load of categories for layer: ${layer}`);
+      }, 0);
+      
+      // If category is also provided, load subcategories
+      if (selectedCategory) {
+        setTimeout(() => {
+          selectCategory(selectedCategory);
+          reloadSubcategories();
+          logger.info(`Initial load of subcategories for ${layer}.${selectedCategory}`);
+        }, 100);
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Empty dependency array to run once on mount
   
   // When layer changes, update the selected layer in the taxonomy hook
   useEffect(() => {
     if (layer) {
       logger.info(`SimpleTaxonomySelectionV2: Setting layer to ${layer}`);
       selectLayer(layer);
+      
+      // Force an immediate reload of categories
+      setTimeout(() => {
+        if (layer) {
+          reloadCategories();
+          logger.info(`Automatically loading categories for layer: ${layer}`);
+        }
+      }, 50);
     }
-  }, [layer, selectLayer]);
+  }, [layer, selectLayer, reloadCategories]);
   
   const [activeCategory, setActiveCategory] = useState<string | null>(selectedCategory || null);
   const [activeSubcategory, setActiveSubcategory] = useState<string | null>(selectedSubcategory || null);
@@ -67,9 +102,18 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
     if (selectedCategory && selectedCategory !== activeCategory) {
       setActiveCategory(selectedCategory);
       // We don't call selectCategory here to prevent circular updates
-      // selectCategory(selectedCategory); - This was causing infinite loops
+      // but we do need to trigger subcategory loading
+      
+      // Force an immediate reload of subcategories if passed from parent
+      setTimeout(() => {
+        if (layer && selectedCategory) {
+          selectCategory(selectedCategory); // Need to set in context
+          reloadSubcategories();
+          logger.info(`Automatically loading subcategories for ${layer}.${selectedCategory} (from parent)`);
+        }
+      }, 50);
     }
-  }, [selectedCategory, activeCategory]);
+  }, [selectedCategory, activeCategory, layer, selectCategory, reloadSubcategories]);
   
   // When selectedSubcategory changes, update the active subcategory
   // FIXED: Don't call selectSubcategory to prevent circular updates with parent
@@ -91,6 +135,14 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
     setActiveSubcategory(null);
     selectCategory(category);
     onCategorySelect(category);
+    
+    // Force an immediate reload of subcategories
+    setTimeout(() => {
+      if (layer && category) {
+        reloadSubcategories();
+        logger.info(`Automatically loading subcategories for ${layer}.${category}`);
+      }
+    }, 50);
   };
   
   // Handle subcategory selection
@@ -199,6 +251,17 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
           ) : subcategories.length === 0 ? (
             <div className="taxonomy-empty">
               <p>No subcategories found for {layer}.{activeCategory}</p>
+              <div style={{ fontSize: '12px', color: '#666', margin: '10px 0', padding: '8px', backgroundColor: '#f9f9f9', border: '1px solid #eee' }}>
+                <p>Debug Info: {JSON.stringify({
+                  layer,
+                  activeCategory,
+                  subcategoriesState: subcategories.length,
+                  contextSubcategories: subcategories,
+                  isLoadingSubcategories,
+                  hasSubcategoryError: !!subcategoryError,
+                  error: subcategoryError?.message
+                }, null, 2)}</p>
+              </div>
               <button 
                 onClick={() => {
                   // Ensure layer and category are set before reloading
@@ -250,6 +313,33 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
           <p>Selected Category: {activeCategory}</p>
           <p>Subcategories: {subcategories.length} available</p>
           <p>Selected Subcategory: {activeSubcategory}</p>
+          
+          <details>
+            <summary>Advanced Taxonomy State</summary>
+            <pre style={{ fontSize: '11px' }}>
+              {JSON.stringify({
+                component: {
+                  props: { layer, selectedCategory, selectedSubcategory },
+                  state: { activeCategory, activeSubcategory }
+                },
+                context: {
+                  selectedLayer: taxonomyContext?.selectedLayer,
+                  selectedCategory: taxonomyContext?.selectedCategory,
+                  selectedSubcategory: taxonomyContext?.selectedSubcategory,
+                  hfn: taxonomyContext?.hfn,
+                  mfa: taxonomyContext?.mfa
+                },
+                serviceState: {
+                  categories: categories.length,
+                  subcategories: subcategories.length,
+                  isLoadingCategories,
+                  isLoadingSubcategories,
+                  categoryError: categoryError?.message,
+                  subcategoryError: subcategoryError?.message
+                }
+              }, null, 2)}
+            </pre>
+          </details>
         </div>
       )}
     </div>
