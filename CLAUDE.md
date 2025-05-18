@@ -66,6 +66,21 @@ There are special case mappings that need special handling:
   - Modified build process to use CI=false flag
   - Fixed TypeScript error in TaxonomyDebugger component (duplicate clearLog function)
 
+### 4. Subcategory Selection and Double-Click Navigation Fixes (May 18, 2025)
+- Problem: Three issues identified during testing:
+  - Subcategories loaded but couldn't be selected
+  - Double-clicking a layer card in Step 1 didn't advance to Step 2
+  - Subcategory cards disappeared after attempted selection
+- Solution: 
+  - Implemented direct service calls for subcategory loading in SimpleTaxonomySelectionV2
+  - Fixed double-click event handling and interface typing
+  - Added fallback rendering for subcategories from direct service data
+  - Enhanced error handling with more detailed logging
+- Key changes:
+  - `/src/components/asset/SimpleTaxonomySelectionV2.tsx` - Direct service integration and double-click handling
+  - `/src/components/asset/LayerSelectorV2.tsx` - Fixed double-click event propagation
+  - `/src/pages/RegisterAssetPage.tsx` - Updated event handlers to properly handle double-clicks
+
 ## Current State
 
 ### Active Workflows
@@ -76,6 +91,9 @@ There are special case mappings that need special handling:
 ### Important Files Modified
 - `/src/services/simpleTaxonomyService.ts` - Enhanced with fallback mechanisms
 - `/src/components/debug/TaxonomyDebugger.tsx` - Fixed TypeScript errors
+- `/src/components/asset/SimpleTaxonomySelectionV2.tsx` - Added direct service integration
+- `/src/components/asset/LayerSelectorV2.tsx` - Fixed double-click event propagation
+- `/src/pages/RegisterAssetPage.tsx` - Updated event handlers
 - `/.github/workflows/ci-cd.yml` - Maintained original version
 - `/.github/workflows/ci.yml.disabled` - Disabled CI workflow
 - `/.github/workflows/tests.yml.disabled` - Disabled Run Tests workflow
@@ -95,13 +113,20 @@ There are special case mappings that need special handling:
 
 ## Next Steps
 
-1. Verify the deployment is successful
-2. Test the taxonomy subcategory selection in the Register Asset UI
-3. Ensure the special paths "W.BCH.SUN.001" and "S.POP.HPM.001" work correctly
+1. Await user testing feedback on the current fixes
+2. Address any remaining issues based on user feedback
+3. Clean up excessive debugging logs after functionality is confirmed working
 4. Consider properly fixing the failing tests in the future
+
+## Workflow Guidelines
+- Always get user validation BEFORE implementing changes
+- Present a clear diagnosis and action plan for approval
+- Keep CLAUDE.md updated after each significant change
+- Update CURRENT_STATUS.md to maintain work context between sessions
 
 ## Reminder
 When continuing work on this project, remember:
 - Do not add test steps to the CI/CD workflow
 - Do not re-enable the CI or Run Tests workflows
 - Focus on UI functionality over test coverage
+- Make minimal targeted changes rather than broad refactoring
