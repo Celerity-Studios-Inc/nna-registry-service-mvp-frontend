@@ -8,6 +8,7 @@ import TaxonomyExample from '../../components/examples/TaxonomyExample';
 import { FeedbackProvider } from '../../contexts/FeedbackContext';
 import { taxonomyService } from '../../services/simpleTaxonomyService';
 import { 
+  MOCK_TAXONOMY_DATA, 
   createMockGetCategories, 
   createMockGetSubcategories,
   createMockConvertHFNtoMFA 
@@ -81,13 +82,9 @@ describe('Taxonomy System Integration', () => {
     const sunsetButton = screen.getByText(/sunset/i);
     fireEvent.click(sunsetButton);
     
-    // Verify HFN is displayed
+    // Verify HFN and MFA are displayed
     await waitFor(() => {
       expect(screen.getByText(/W\.BCH\.SUN\.001/i)).toBeInTheDocument();
-    });
-    
-    // Verify MFA is displayed
-    await waitFor(() => {
       expect(screen.getByText(/5\.001\.001\.001/i)).toBeInTheDocument();
     });
   });
@@ -118,9 +115,9 @@ describe('Taxonomy System Integration', () => {
     // Should show an error message or fallback
     await waitFor(() => {
       // Either the error message or fallback data should be visible
-      const errorElement = screen.queryByText(/error/i);
-      const fallbackElement = screen.queryByText(/fallback/i);
-      expect(errorElement || fallbackElement).toBeTruthy();
+      expect(
+        screen.getByText(/error/i) || screen.getByText(/fallback/i)
+      ).toBeInTheDocument();
     });
   });
 });

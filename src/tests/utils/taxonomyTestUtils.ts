@@ -1,10 +1,7 @@
 /**
  * Utility functions and test data for taxonomy system tests
  */
-import {
-  getExpectedMappingForTest,
-  getActualMappingForHfn,
-} from './taxonomyTestHelper';
+import { getActualMappingForHfn } from './taxonomyTestHelper';
 
 /**
  * Common test cases for special Human-Friendly Name (HFN) to Machine-Friendly Address (MFA) mappings
@@ -237,8 +234,9 @@ export function createMockConvertMFAtoHFN() {
     const parts = mfa.split('.');
     const [
       layerNumeric,
-      categoryNumeric,
-      subcategoryNumeric,
+      /* No need to use these variables */
+      /* categoryNumeric, */
+      /* subcategoryNumeric, */
       identifier,
       ...rest
     ] = parts;

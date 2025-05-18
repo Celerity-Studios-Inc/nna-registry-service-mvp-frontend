@@ -28,7 +28,7 @@ describe('LayerSelectorV2', () => {
   });
   
   it('renders all layer cards', () => {
-    render(<LayerSelectorV2 onLayerSelect={onLayerSelect} />);
+    render(<LayerSelectorV2 onLayerSelect={onLayerSelect} selectedLayer="" />);
     
     expect(screen.getByTestId('layer-card-G')).toBeInTheDocument();
     expect(screen.getByTestId('layer-card-S')).toBeInTheDocument();

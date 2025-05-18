@@ -3,75 +3,44 @@
  */
 import taxonomyMapper from './taxonomyMapper';
 
-// Mock the taxonomyLookup modules
-jest.mock('../taxonomyLookup', () => {
+// Mock the taxonomyLookup constants module
+jest.mock('../taxonomyLookup/constants', () => {
+  // Create mock W layer lookup
+  const W_LAYER_LOOKUP = {
+    'BCH': { numericCode: '001', name: 'Beach' },
+    'STG': { numericCode: '002', name: 'Stage' },
+    'BCH.SUN': { numericCode: '001', name: 'Sunset' },
+    'STG.FES': { numericCode: '003', name: 'Festival' }
+  };
+  
+  // Create mock S layer lookup
+  const S_LAYER_LOOKUP = {
+    'POP': { numericCode: '001', name: 'Pop' },
+    'POP.HPM': { numericCode: '007', name: 'Happy Mood' }
+  };
+  
+  // Create mock subcategories
+  const W_SUBCATEGORIES = {
+    'BCH': ['BCH.SUN'],
+    'STG': ['STG.FES']
+  };
+  
+  const S_SUBCATEGORIES = {
+    'POP': ['POP.HPM']
+  };
+  
   return {
-    // Provide mock layers data
-    layers: {
-      G: { code: 'G', name: 'Songs', numericCode: 1 },
-      S: { code: 'S', name: 'Stars', numericCode: 2 },
-      W: { code: 'W', name: 'Worlds', numericCode: 5 },
+    // Mock LAYER_LOOKUPS
+    LAYER_LOOKUPS: {
+      'W': W_LAYER_LOOKUP,
+      'S': S_LAYER_LOOKUP
     },
     
-    // Mock layer modules
-    W_layer: {
-      getCategories: () => [
-        { code: 'BCH', name: 'Beach', numericCode: 1 },
-        { code: 'STG', name: 'Stage', numericCode: 2 },
-      ],
-      getSubcategories: (category) => {
-        if (category === 'STG') {
-          return [{ code: 'FES', name: 'Festival', numericCode: 3 }];
-        }
-        return [];
-      }
-    },
-    S_layer: {
-      getCategories: () => [
-        { code: 'POP', name: 'Pop', numericCode: 1 },
-      ],
-      getSubcategories: (category) => {
-        if (category === 'POP') {
-          return [{ code: 'HPM', name: 'Happy Mood', numericCode: 7 }];
-        }
-        return [];
-      }
-    },
-    
-    // Mock getLayerModule
-    getLayerModule: jest.fn().mockImplementation((layer) => {
-      if (layer === 'W') {
-        return {
-          getCategories: () => [
-            { code: 'BCH', name: 'Beach', numericCode: 1 },
-            { code: 'STG', name: 'Stage', numericCode: 2 },
-          ],
-          getSubcategories: (category) => {
-            if (category === 'STG') {
-              return [{ code: 'FES', name: 'Festival', numericCode: 3 }];
-            }
-            return [];
-          }
-        };
-      }
-      if (layer === 'S') {
-        return {
-          getCategories: () => [
-            { code: 'POP', name: 'Pop', numericCode: 1 },
-          ],
-          getSubcategories: (category) => {
-            if (category === 'POP') {
-              return [{ code: 'HPM', name: 'Happy Mood', numericCode: 7 }];
-            }
-            return [];
-          }
-        };
-      }
-      return {
-        getCategories: () => [],
-        getSubcategories: () => []
-      };
-    })
+    // Mock LAYER_SUBCATEGORIES
+    LAYER_SUBCATEGORIES: {
+      'W': W_SUBCATEGORIES,
+      'S': S_SUBCATEGORIES
+    }
   };
 });
 

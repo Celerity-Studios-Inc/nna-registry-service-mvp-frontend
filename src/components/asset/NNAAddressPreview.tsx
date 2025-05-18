@@ -43,12 +43,31 @@ const NNAAddressPreview: React.FC<NNAAddressPreviewProps> = ({
 
   // Use the enhanced taxonomy mapper to ensure consistent display across components
   // This handles all special cases internally and returns properly formatted addresses
-  const { hfn: hfnAddress, mfa: mfaAddress } = taxonomyMapper.formatNNAAddress(
+  let hfnAddress = '';
+  let mfaAddress = '';
+  
+  const formattedAddresses = taxonomyMapper.formatNNAAddress(
     layerCode,
     categoryCode,
     subcategoryCode,
     "000" // Always use "000" for display in the preview
   );
+  
+  if (typeof formattedAddresses === 'string') {
+    // Legacy format - single string output
+    hfnAddress = formattedAddresses;
+    mfaAddress = taxonomyMapper.formatNNAAddress(
+      layerCode,
+      categoryCode,
+      subcategoryCode,
+      "000",
+      'mfa'
+    ) as string;
+  } else {
+    // Enhanced format - object with hfn and mfa properties
+    hfnAddress = formattedAddresses.hfn;
+    mfaAddress = formattedAddresses.mfa;
+  }
 
   // Log the formatted addresses for debugging
   console.log(`NNAAddressPreview: Formatted HFN=${hfnAddress}, MFA=${mfaAddress}`);

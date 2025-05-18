@@ -134,7 +134,7 @@ const ReviewSubmit: React.FC<ReviewSubmitProps> = ({
       categoryCode,
       subcategoryCode,
       "000" // Always use "000" for display consistency
-    );
+    ) as { hfn: string, mfa: string }; // Cast to the expected type
     displayHfn = formattedAddresses.hfn;
     displayMfa = formattedAddresses.mfa;
 
@@ -295,7 +295,7 @@ const ReviewSubmit: React.FC<ReviewSubmitProps> = ({
                   primary="Category"
                   secondary={categoryName && categoryCode ? (
                     <>
-                      {categoryName} ({taxonomyMapper.getAlphabeticCode(categoryCode) || categoryCode})
+                      {categoryName} ({categoryCode})
                     </>
                   ) : (categoryCode || 'Not specified')}
                   primaryTypographyProps={{ variant: 'body2', color: 'text.secondary' }}
@@ -311,7 +311,7 @@ const ReviewSubmit: React.FC<ReviewSubmitProps> = ({
                   primary="Subcategory"
                   secondary={subcategoryName && subcategoryCode ? (
                     <>
-                      {subcategoryName} ({taxonomyMapper.getAlphabeticCode(subcategoryCode) || subcategoryCode})
+                      {subcategoryName} ({subcategoryCode})
                     </>
                   ) : (subcategoryCode || 'Not specified')}
                   primaryTypographyProps={{ variant: 'body2', color: 'text.secondary' }}

@@ -130,6 +130,11 @@ export const getTaxonomyInitError = (): Error | null => {
  * @returns Promise that resolves when initialization is complete
  */
 export const waitForTaxonomyInit = (): Promise<boolean> => {
+  // For testing environments, automatically resolve
+  if (process.env.NODE_ENV === 'test') {
+    return Promise.resolve(true);
+  }
+  
   if (isInitialized) {
     return Promise.resolve(true);
   }

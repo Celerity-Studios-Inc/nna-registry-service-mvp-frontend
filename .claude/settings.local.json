@@ -40,7 +40,16 @@
       "Bash(git switch:*)",
       "Bash(npm run tsc:*)",
       "Bash(npx tsc:*)",
-      "Bash(npm build:*)"
+      "Bash(npm build:*)",
+      "Bash(npm --version)",
+      "Bash(npm run test:ci:*)",
+      "Bash(npm test:*)",
+      "Bash(npm run typecheck:*)",
+      "Bash(npm run:*)",
+      "Bash(npx kill-port:*)",
+      "Bash(pkill:*)",
+      "Bash(touch:*)",
+      "Bash(NODE_OPTIONS=--max_old_space_size=4096 npm test)"
     ],
     "deny": []
   }

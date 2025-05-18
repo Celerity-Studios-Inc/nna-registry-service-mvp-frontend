@@ -4,19 +4,17 @@
  */
 
 // Use direct imports to avoid circular references
-import * as taxonomyLookup from '../../taxonomyLookup';
+import { LAYER_LOOKUPS } from '../../taxonomyLookup/constants';
 
-// Helper function to get layer module as it's not exported directly
-function getLayerModule(layerCode: string) {
-  const layerModuleKey = `${layerCode}_layer`;
-  return (taxonomyLookup as any)[layerModuleKey];
-}
+// Layer numeric codes mapping
+const LAYER_NUMERIC_CODES: Record<string, string> = {
+  'G': '1', 'S': '2', 'L': '3', 'M': '4', 'W': '5',
+  'B': '6', 'P': '7', 'T': '8', 'C': '9', 'R': '10'
+};
 
 /**
  * Gets the mapping for an HFN based on the current taxonomy structure.
  * This should be used for generating test expectations dynamically.
- *
- * Note: This is for backward compatibility with existing tests.
  */
 export function getActualMappingForHfn(hfn: string): string {
   if (!hfn) return '';
@@ -28,36 +26,27 @@ export function getActualMappingForHfn(hfn: string): string {
 
   try {
     // Get layer numeric code
-    const layer = (taxonomyLookup as any).layers[layerCode];
-    if (!layer) return '';
-
-    const layerNumeric = layer.numericCode;
+    const layerNumeric = LAYER_NUMERIC_CODES[layerCode];
+    if (!layerNumeric) return '';
 
     // Get category numeric code
-    const layerModule = getLayerModule(layerCode);
-    if (!layerModule) return '';
+    const layerLookup = LAYER_LOOKUPS[layerCode];
+    if (!layerLookup) return '';
 
-    const categories = layerModule.getCategories();
-    const category = categories.find((c: any) => c.code === categoryCode);
-    if (!category) return '';
-
-    const categoryNumeric = category.numericCode;
+    const categoryInfo = layerLookup[categoryCode];
+    if (!categoryInfo) return '';
+    
+    const categoryNumeric = categoryInfo.numericCode;
 
     // Get subcategory numeric code
-    const subcategories = layerModule.getSubcategories(categoryCode);
-    const subcategory = subcategories.find(
-      (s: any) => s.code === subcategoryCode
-    );
-    if (!subcategory) return '';
-
-    const subcategoryNumeric = subcategory.numericCode;
+    const subcategoryKey = `${categoryCode}.${subcategoryCode}`;
+    const subcategoryInfo = layerLookup[subcategoryKey];
+    if (!subcategoryInfo) return '';
+    
+    const subcategoryNumeric = subcategoryInfo.numericCode;
 
     // Format the result
-    return `${layerNumeric}.${categoryNumeric
-      .toString()
-      .padStart(3, '0')}.${subcategoryNumeric
-      .toString()
-      .padStart(3, '0')}.${identifier}`;
+    return `${layerNumeric}.${categoryNumeric.padStart(3, '0')}.${subcategoryNumeric.padStart(3, '0')}.${identifier}`;
   } catch (error) {
     console.error(`Error getting mapping for ${hfn}:`, error);
     return '';
