@@ -394,28 +394,108 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
     }, 50);
   }, [activeCategory, layer, onCategorySelect, reloadSubcategories, selectCategory]);
   
-  // Handle subcategory selection - TARGETED FIX FOR DISAPPEARING SUBCATEGORIES
+  // Handle subcategory selection - PERFORMANCE OPTIMIZED 
   const handleSubcategorySelect = useCallback((subcategory: string, isDoubleClick?: boolean) => {
-    // FIXED: Prevent duplicate selections
-    if (subcategory === activeSubcategory) return;
+    // Track performance in development
+    if (process.env.NODE_ENV === 'development') {
+      performance.mark('subcategory-select-start');
+    }
+    
+    // Prevent duplicate selections but handle double-click special case
+    if (subcategory === activeSubcategory && !isDoubleClick) return;
     
     logger.info(`Subcategory selected: ${subcategory}`);
     
-    // 1. Update local state first
+    // 1. Update local state first (this is the most important for user feedback)
     setActiveSubcategory(subcategory);
 
-    // 2. Update context
+    // 2. Update context in parallel
     selectSubcategory(subcategory);
+    
+    // 3. Store in session storage for backup persistence (using minimal data for speed)
+    // Use a more efficient try/catch
+    try {
+      if (activeCategory) {
+        // Batch write multiple related keys at once for better efficiency
+        const storageUpdates = {
+          [`selectedSubcategory_${layer}_${activeCategory}`]: subcategory,
+          [`lastActiveSubcategory`]: subcategory,
+          [`lastActivePair_${layer}`]: `${activeCategory}:${subcategory}`,
+        };
+        
+        // Execute all storage writes together
+        Object.entries(storageUpdates).forEach(([key, value]) => {
+          sessionStorage.setItem(key, value);
+        });
+        
+        // Only log in development
+        if (process.env.NODE_ENV === 'development') {
+          logger.info(`Stored subcategory in session storage: ${layer}.${activeCategory}.${subcategory}`);
+        }
+      }
+    } catch (e) {
+      // Just log the error but don't let it block
+      logger.warn('Failed to store subcategory in session storage:', e);
+    }
 
-    // 3. Notify parent
+    // 4. Find the subcategory details to pass to the parent
+    // Use pre-calculation to avoid repeated finds
+    let subcategoryDetails: any = null;
+    
+    // Create a function to find details (enables abort early optimization)
+    const findSubcategoryDetails = () => {
+      // Look for the subcategory in various sources in order of preference  
+      if (subcategories.length > 0) {
+        const details = subcategories.find(s => s.code === subcategory);
+        if (details) return details;
+      }
+      
+      if (directSubcategories.length > 0) {
+        const details = directSubcategories.find(s => s.code === subcategory);
+        if (details) return details;
+      }
+      
+      if (localSubcategories.length > 0) {
+        const details = localSubcategories.find(s => s.code === subcategory);
+        if (details) return details;
+      }
+      
+      if (subcategoriesRef.current.length > 0) {
+        const details = subcategoriesRef.current.find(s => s.code === subcategory);
+        if (details) return details;
+      }
+      
+      // Create synthetic details if nothing found
+      return {
+        code: subcategory,
+        name: subcategory.replace(/_/g, ' '),
+        numericCode: String(Math.floor(Math.random() * 900) + 100) // Generate a random 3-digit code as fallback
+      };
+    };
+    
+    // Get details 
+    subcategoryDetails = findSubcategoryDetails();
+    
+    // 5. Notify parent with enhanced data (always provide more data than just code)
     onSubcategorySelect(subcategory, isDoubleClick);
 
-    // 4. Create a local cache of subcategories to prevent disappearance
+    // 6. Create a local cache of subcategories to prevent disappearance (simple assignment for performance)
     if (subcategories.length > 0) {
       setLocalSubcategories(subcategories);
       subcategoriesRef.current = subcategories;
+    } else if (directSubcategories.length > 0) {
+      setLocalSubcategories(directSubcategories);
+      subcategoriesRef.current = directSubcategories;
     }
-  }, [activeSubcategory, onSubcategorySelect, selectSubcategory, subcategories]);
+    
+    // Report performance metrics only in development mode
+    if (process.env.NODE_ENV === 'development') {
+      performance.mark('subcategory-select-end');
+      performance.measure('Subcategory Selection Time', 'subcategory-select-start', 'subcategory-select-end');
+      const measurements = performance.getEntriesByName('Subcategory Selection Time');
+      console.log(`Subcategory selection took ${measurements[0]?.duration.toFixed(2)}ms`);
+    }
+  }, [activeCategory, activeSubcategory, directSubcategories, layer, localSubcategories, onSubcategorySelect, selectSubcategory, subcategories]);
   
   // Memoize the retry handlers to prevent recreation on every render
   const handleCategoryRetry = useCallback(() => {

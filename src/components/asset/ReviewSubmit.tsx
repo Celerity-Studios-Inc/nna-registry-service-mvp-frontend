@@ -178,7 +178,53 @@ const ReviewSubmit: React.FC<ReviewSubmitProps> = ({
 
       {!isComplete && (
         <Alert severity="warning" sx={{ mb: 3 }}>
-          Some required information is missing. Please complete all required fields.
+          <Typography variant="body1" sx={{ fontWeight: 'medium', mb: 1 }}>
+            Required information is missing. Please complete the following fields:
+          </Typography>
+          <Box component="ul" sx={{ ml: 2, mb: 0 }}>
+            {!name && (
+              <Box component="li" sx={{ mb: 0.5 }}>
+                <Typography variant="body2">
+                  <strong>Name</strong> - Asset needs a name (Step 3)
+                </Typography>
+              </Box>
+            )}
+            {!source && (
+              <Box component="li" sx={{ mb: 0.5 }}>
+                <Typography variant="body2">
+                  <strong>Source</strong> - Asset needs a source (Step 3)
+                </Typography>
+              </Box>
+            )}
+            {!layer && (
+              <Box component="li" sx={{ mb: 0.5 }}>
+                <Typography variant="body2">
+                  <strong>Layer</strong> - Select a layer (Step 1)
+                </Typography>
+              </Box>
+            )}
+            {!categoryCode && (
+              <Box component="li" sx={{ mb: 0.5 }}>
+                <Typography variant="body2">
+                  <strong>Category</strong> - Select a category (Step 2)
+                </Typography>
+              </Box>
+            )}
+            {!subcategoryCode && (
+              <Box component="li" sx={{ mb: 0.5 }}>
+                <Typography variant="body2">
+                  <strong>Subcategory</strong> - Select a subcategory (Step 2)
+                </Typography>
+              </Box>
+            )}
+            {(!files || files.length === 0) && (
+              <Box component="li" sx={{ mb: 0.5 }}>
+                <Typography variant="body2">
+                  <strong>Files</strong> - Upload at least one file (Step 3)
+                </Typography>
+              </Box>
+            )}
+          </Box>
         </Alert>
       )}
 
@@ -293,11 +339,31 @@ const ReviewSubmit: React.FC<ReviewSubmitProps> = ({
                 </ListItemIcon>
                 <ListItemText
                   primary="Category"
-                  secondary={categoryName && categoryCode ? (
+                  secondary={
                     <>
-                      {categoryName} ({categoryCode})
+                      {categoryName && categoryCode ? (
+                        <Box component="span" fontWeight="medium">
+                          {categoryName} ({categoryCode})
+                        </Box>
+                      ) : categoryCode ? (
+                        <Box component="span" fontWeight="medium">
+                          {categoryCode}
+                        </Box>
+                      ) : (
+                        <Box component="span" sx={{ color: 'error.main', fontWeight: 'medium' }}>
+                          Not specified (Required)
+                        </Box>
+                      )}
+                      
+                      {/* Category validation indicator */}
+                      {!categoryCode && (
+                        <Box sx={{ mt: 1, display: 'flex', alignItems: 'center', color: 'error.main', fontSize: '0.8rem' }}>
+                          <Box component="span" sx={{ mr: 0.5, width: 16, height: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '50%', bgcolor: 'error.main', color: 'white', fontSize: '10px', fontWeight: 'bold' }}>!</Box>
+                          <Box component="span">Required field - Please go back and select a category</Box>
+                        </Box>
+                      )}
                     </>
-                  ) : (categoryCode || 'Not specified')}
+                  }
                   primaryTypographyProps={{ variant: 'body2', color: 'text.secondary' }}
                   secondaryTypographyProps={{ variant: 'body1' }}
                 />
@@ -309,11 +375,59 @@ const ReviewSubmit: React.FC<ReviewSubmitProps> = ({
                 </ListItemIcon>
                 <ListItemText
                   primary="Subcategory"
-                  secondary={subcategoryName && subcategoryCode ? (
+                  secondary={
                     <>
-                      {subcategoryName} ({subcategoryCode})
+                      {subcategoryName && subcategoryCode ? (
+                        <Box component="span" fontWeight="medium">
+                          {subcategoryName} ({subcategoryCode})
+                        </Box>
+                      ) : subcategoryCode ? (
+                        <Box component="span" fontWeight="medium">
+                          {subcategoryCode}
+                        </Box>
+                      ) : (
+                        <Box component="span" sx={{ color: 'error.main', fontWeight: 'medium' }}>
+                          Not specified (Required)
+                        </Box>
+                      )}
+                      
+                      {/* Subcategory validation indicator */}
+                      {!subcategoryCode && (
+                        <Box sx={{ mt: 1, display: 'flex', alignItems: 'center', color: 'error.main', fontSize: '0.8rem' }}>
+                          <Box component="span" sx={{ mr: 0.5, width: 16, height: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '50%', bgcolor: 'error.main', color: 'white', fontSize: '10px', fontWeight: 'bold' }}>!</Box>
+                          <Box component="span">Required field - Please go back and select a subcategory</Box>
+                        </Box>
+                      )}
+                      
+                      {/* Session storage recovery hint */}
+                      {(categoryCode && !subcategoryCode) && (
+                        <Box sx={{ mt: 1 }}>
+                          <Button 
+                            size="small" 
+                            variant="outlined"
+                            color="primary"
+                            onClick={() => {
+                              // Try to recover from session storage
+                              try {
+                                const storedSubcategory = sessionStorage.getItem(`originalSubcategory_${layer}_${categoryCode}`);
+                                if (storedSubcategory) {
+                                  onEditStep(1); // Go back to taxonomy selection step
+                                  console.log('Found stored subcategory, redirecting to selection step');
+                                } else {
+                                  onEditStep(1); // Go back to taxonomy selection step anyway
+                                }
+                              } catch (e) {
+                                console.warn('Error accessing session storage:', e);
+                                onEditStep(1); // Go back to taxonomy selection step
+                              }
+                            }}
+                          >
+                            Select Subcategory
+                          </Button>
+                        </Box>
+                      )}
                     </>
-                  ) : (subcategoryCode || 'Not specified')}
+                  }
                   primaryTypographyProps={{ variant: 'body2', color: 'text.secondary' }}
                   secondaryTypographyProps={{ variant: 'body1' }}
                 />
@@ -409,53 +523,53 @@ const ReviewSubmit: React.FC<ReviewSubmitProps> = ({
             <Divider sx={{ mb: 2 }} />
             
             {files.length === 0 ? (
-              <Alert severity="warning">No files have been uploaded.</Alert>
+              <Alert severity="warning">
+                <Typography variant="body1" fontWeight="medium">No files have been uploaded.</Typography>
+                <Typography variant="body2" sx={{ mt: 1 }}>
+                  Please go back to Step 3 to upload at least one file for your asset.
+                </Typography>
+                <Button 
+                  variant="outlined" 
+                  size="small" 
+                  onClick={() => onEditStep(2)} 
+                  sx={{ mt: 2 }}
+                >
+                  Go to Upload Files
+                </Button>
+              </Alert>
             ) : (
               <Box>
-                {/* Enhanced File Preview */}
+                {/* Enhanced File Preview with FilePreview component */}
                 {files.length > 0 && (
-                  <Box sx={{ mb: 3, display: 'flex', justifyContent: 'center' }}>
-                    {files[0].type.startsWith('image/') ? (
-                      <Box
-                        component="img"
-                        src={URL.createObjectURL(files[0])}
-                        alt={files[0].name}
-                        sx={{
-                          maxWidth: '100%',
-                          maxHeight: '200px',
-                          objectFit: 'contain',
-                          borderRadius: '4px',
-                          border: '1px solid #eee'
-                        }}
+                  <Box sx={{ mb: 3 }}>
+                    <Typography variant="subtitle2" gutterBottom>
+                      File Preview
+                    </Typography>
+                    
+                    <Paper 
+                      variant="outlined" 
+                      sx={{ 
+                        overflow: 'hidden', 
+                        borderRadius: 1,
+                        height: '220px',
+                        backgroundColor: '#fafafa'
+                      }}
+                    >
+                      <FilePreview 
+                        file={files[0]} 
+                        height="220px"
+                        showControls={false}
                       />
-                    ) : files[0].type.startsWith('video/') ? (
-                      <Box sx={{ width: '100%', maxHeight: '250px', border: '1px solid #eee', borderRadius: '4px' }}>
-                        <video
-                          controls
-                          style={{ width: '100%', maxHeight: '250px', objectFit: 'contain' }}
-                        >
-                          <source src={URL.createObjectURL(files[0])} type={files[0].type} />
-                          Your browser does not support the video element.
-                        </video>
-                      </Box>
-                    ) : files[0].type.startsWith('audio/') ? (
-                      <Box sx={{ width: '100%', p: 2, border: '1px solid #eee', borderRadius: '4px' }}>
-                        <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
-                          <AudioIcon sx={{ fontSize: 48, color: 'secondary.main' }} />
-                        </Box>
-                        <audio controls style={{ width: '100%' }}>
-                          <source src={URL.createObjectURL(files[0])} type={files[0].type} />
-                          Your browser does not support the audio element.
-                        </audio>
-                      </Box>
-                    ) : (
-                      <Box sx={{ textAlign: 'center', p: 3, border: '1px dashed #ccc', borderRadius: '4px' }}>
-                        {getFileIcon(files[0].type)}
-                        <Typography variant="caption" display="block" sx={{ mt: 1 }}>
-                          {files[0].name}
-                        </Typography>
-                      </Box>
-                    )}
+                    </Paper>
+                    
+                    <Typography 
+                      variant="caption" 
+                      color="text.secondary" 
+                      align="center" 
+                      sx={{ display: 'block', mt: 1 }}
+                    >
+                      {files[0].name} ({formatBytes(files[0].size)})
+                    </Typography>
                   </Box>
                 )}
                 

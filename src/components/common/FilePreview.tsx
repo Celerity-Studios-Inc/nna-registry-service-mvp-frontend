@@ -66,67 +66,113 @@ const getFileIcon = (type: string | undefined) => {
   return <FileIcon fontSize="large" />;
 };
 
-// Determine if file is previewable in browser
+// Enhanced isPreviewable function with better error handling and type detection
 const isPreviewable = (file: File | string | { url: string; type?: string; [key: string]: any }) => {
+  // Add extra debug logging to trace issues
+  console.log('Checking if file is previewable:', typeof file, file);
+  
   // Handle null or undefined file
   if (!file) {
     console.warn("Received null or undefined file in isPreviewable");
     return false;
   }
 
-  // Handle string URLs - assume they are previewable if they have common media extensions
-  if (typeof file === 'string') {
-    // Simple validation to avoid errors with malformed URLs
-    if (!file.includes('.') && !file.startsWith('data:')) {
-      console.warn("String URL doesn't contain a file extension or data URL format:", file);
-      return false;
+  try {
+    // Handle string URLs - assume they are previewable if they have common media extensions
+    if (typeof file === 'string') {
+      // More forgiving validation for string URLs
+      if (!file.includes('.') && !file.startsWith('data:') && !file.includes('blob:')) {
+        console.warn("String URL lacks recognized pattern:", file);
+        // Try to be more permissive - if it starts with http/https, it might be an image
+        if (file.startsWith('http')) {
+          console.log("URL starts with http, attempting to treat as image");
+          return true; // Try to render it anyway
+        }
+        return false;
+      }
+
+      const url = file.toLowerCase();
+      return url.endsWith('.jpg') || url.endsWith('.jpeg') || url.endsWith('.png') ||
+             url.endsWith('.gif') || url.endsWith('.webp') || url.endsWith('.mp4') ||
+             url.endsWith('.webm') || url.endsWith('.mp3') || url.endsWith('.wav') ||
+             url.endsWith('.ogg') || url.endsWith('.pdf') ||
+             url.startsWith('data:image/') || url.startsWith('data:video/') ||
+             url.startsWith('data:audio/') || url.includes('gcpStorageUrl') ||
+             url.startsWith('blob:') || // Handle blob URLs
+             url.includes('storage.googleapis.com'); // Handle GCP storage URLs
     }
 
-    const url = file.toLowerCase();
-    return url.endsWith('.jpg') || url.endsWith('.jpeg') || url.endsWith('.png') ||
-           url.endsWith('.gif') || url.endsWith('.webp') || url.endsWith('.mp4') ||
-           url.endsWith('.webm') || url.endsWith('.mp3') || url.endsWith('.wav') ||
-           url.endsWith('.ogg') || url.endsWith('.pdf') ||
-           url.startsWith('data:image/') || url.startsWith('data:video/') ||
-           url.startsWith('data:audio/') || url.includes('gcpStorageUrl');
-  }
+    // Handle object with url property
+    if (typeof file === 'object' && file !== null && 'url' in file) {
+      // First check content type/MIME type (most reliable)
+      // Check multiple possible properties for content type
+      const contentType = file.type || file.contentType || file.mimeType;
+      
+      if (contentType) {
+        console.log(`Found content type: ${contentType}`);
+        return contentType.startsWith('image/') ||
+               contentType === 'application/pdf' ||
+               contentType.startsWith('video/') ||
+               contentType.startsWith('audio/');
+      }
 
-  // Handle object with url property
-  if (typeof file === 'object' && file !== null && 'url' in file) {
-    // If it has a type property, use that
-    if (file.type) {
-      return file.type.startsWith('image/') ||
-             file.type === 'application/pdf' ||
-             file.type.startsWith('video/') ||
-             file.type.startsWith('audio/');
+      // Missing URL check (server response might have null URL)
+      if (!file.url) {
+        console.warn("Object with url property has null or undefined url:", file);
+        
+        // If we have a file/filename property, try to get a type from that
+        const fileName = file.fileName || file.filename || file.name;
+        if (fileName && typeof fileName === 'string') {
+          console.log(`No URL but found filename: ${fileName}`);
+          const ext = fileName.split('.').pop()?.toLowerCase();
+          if (ext) {
+            return ['jpg','jpeg','png','gif','webp','mp4','webm','mp3','wav','ogg','pdf'].includes(ext);
+          }
+        }
+        
+        return false;
+      }
+
+      // Check multiple URL properties
+      const urlToCheck = (file.url || file.fileUrl || file.downloadUrl || file.thumbnailUrl).toLowerCase();
+      
+      // Advanced URL recognition
+      return urlToCheck.endsWith('.jpg') || urlToCheck.endsWith('.jpeg') || urlToCheck.endsWith('.png') ||
+             urlToCheck.endsWith('.gif') || urlToCheck.endsWith('.webp') || urlToCheck.endsWith('.mp4') ||
+             urlToCheck.endsWith('.webm') || urlToCheck.endsWith('.mp3') || urlToCheck.endsWith('.wav') ||
+             urlToCheck.endsWith('.ogg') || urlToCheck.endsWith('.pdf') ||
+             urlToCheck.startsWith('data:image/') || urlToCheck.startsWith('data:video/') ||
+             urlToCheck.startsWith('data:audio/') || urlToCheck.includes('gcpStorageUrl') ||
+             urlToCheck.startsWith('blob:') || // Handle blob URLs 
+             urlToCheck.includes('storage.googleapis.com') || // Handle GCP storage URLs
+             urlToCheck.includes('/api/files/') || // Handle API file routes
+             urlToCheck.includes('/uploads/'); // Handle upload directories
     }
 
-    // Missing URL check (server response might have null URL)
-    if (!file.url) {
-      console.warn("Object with url property has null or undefined url:", file);
-      return false;
+    // Handle File object
+    if (file instanceof File) {
+      // For files, check by MIME type and filename as fallback
+      if (file.type) {
+        return file.type.startsWith('image/') ||
+               file.type === 'application/pdf' ||
+               file.type.startsWith('video/') ||
+               file.type.startsWith('audio/');
+      }
+      
+      // Fallback to checking file extension
+      const fileName = file.name.toLowerCase();
+      const ext = fileName.split('.').pop();
+      if (ext) {
+        return ['jpg','jpeg','png','gif','webp','mp4','webm','mp3','wav','ogg','pdf'].includes(ext);
+      }
     }
 
-    // Otherwise check URL extension
-    const url = file.url.toLowerCase();
-    return url.endsWith('.jpg') || url.endsWith('.jpeg') || url.endsWith('.png') ||
-           url.endsWith('.gif') || url.endsWith('.webp') || url.endsWith('.mp4') ||
-           url.endsWith('.webm') || url.endsWith('.mp3') || url.endsWith('.wav') ||
-           url.endsWith('.ogg') || url.endsWith('.pdf') ||
-           url.startsWith('data:image/') || url.startsWith('data:video/') ||
-           url.startsWith('data:audio/') || url.includes('gcpStorageUrl');
+    console.warn("Unhandled file type in isPreviewable:", typeof file, file);
+    return false;
+  } catch (error) {
+    console.error("Error in isPreviewable:", error);
+    return false;
   }
-
-  // Handle File object
-  if (file instanceof File) {
-    return file.type.startsWith('image/') ||
-           file.type === 'application/pdf' ||
-           file.type.startsWith('video/') ||
-           file.type.startsWith('audio/');
-  }
-
-  console.warn("Unhandled file type in isPreviewable:", typeof file, file);
-  return false;
 };
 
 const FilePreview: React.FC<FilePreviewProps> = ({
@@ -138,18 +184,23 @@ const FilePreview: React.FC<FilePreviewProps> = ({
   allowDownload = false,
   onDelete,
 }) => {
-  // Create object URL for preview
+  // Create object URL for preview with enhanced reliability
   const [objectUrl, setObjectUrl] = React.useState<string>('');
+  const [fallbackMode, setFallbackMode] = React.useState<boolean>(false);
 
   React.useEffect(() => {
-    // Generate preview URL
+    // Generate preview URL with improved error handling
     if (!file) {
       console.warn("File is null or undefined in useEffect");
       setObjectUrl('');
+      setFallbackMode(false);
       return;
     }
 
     try {
+      // Reset state
+      setFallbackMode(false);
+      
       // Check if file is already a string URL (happens when editing an existing asset)
       if (typeof file === 'string') {
         console.log("Setting object URL from string:", file);
@@ -181,6 +232,16 @@ const FilePreview: React.FC<FilePreviewProps> = ({
         setObjectUrl(file.thumbnailUrl);
         return;
       }
+      
+      // Check for file.file property (common in some API responses)
+      if (typeof file === 'object' && file !== null && 'file' in file) {
+        const fileObj = file.file;
+        if (typeof fileObj === 'object' && fileObj !== null && 'url' in fileObj) {
+          console.log("Setting object URL from file.file.url:", fileObj.url);
+          setObjectUrl(fileObj.url);
+          return;
+        }
+      }
 
       // Regular File object - create a blob URL
       if (file instanceof Blob) {
@@ -194,10 +255,15 @@ const FilePreview: React.FC<FilePreviewProps> = ({
         };
       }
 
-      // Fall back to checking for any URL-like property in the object
+      // Enhanced fallback strategy - check multiple common property names
       if (typeof file === 'object' && file !== null) {
-        // Check for common URL property names
-        const urlProps = ['imageUrl', 'fileUrl', 'src', 'source', 'link', 'href'];
+        // Check for common URL property names (expanded list)
+        const urlProps = [
+          'imageUrl', 'fileUrl', 'src', 'source', 'link', 'href', 'path', 
+          'location', 'downloadUrl', 'previewUrl', 'cdnUrl', 'publicUrl', 
+          'assetUrl', 'uri', 'media', 'thumbnail'
+        ];
+        
         for (const prop of urlProps) {
           if (prop in file && typeof file[prop] === 'string' && file[prop]) {
             console.log(`Setting object URL from ${prop}:`, file[prop]);
@@ -205,30 +271,90 @@ const FilePreview: React.FC<FilePreviewProps> = ({
             return;
           }
         }
+        
+        // If we have a filename, try to use it to create a data URI 
+        // or search for matching elements in the DOM
+        const fileName = file.fileName || file.filename || file.name;
+        if (fileName && typeof fileName === 'string') {
+          console.log(`No direct URL found, but found filename: ${fileName}`);
+          
+          // Try to see if we have a matching <img> with this alt text in the document
+          const images = document.querySelectorAll('img');
+          for (let i = 0; i < images.length; i++) {
+            const img = images[i];
+            if (img.alt === fileName && img.src) {
+              console.log(`Found image with matching alt text, using its src:`, img.src);
+              setObjectUrl(img.src);
+              setFallbackMode(true);
+              return;
+            }
+          }
+        }
       }
 
       console.warn("Could not extract a valid URL from the provided file object:", file);
-
+      
+      // Create a placeholder data URL for fallback display
+      if (typeof file === 'object' && file.type && file.type.startsWith('image/')) {
+        console.log("Creating placeholder for image type");
+        setObjectUrl('data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22100%22%20height%3D%22100%22%3E%3Crect%20fill%3D%22%23ddd%22%20width%3D%22100%22%20height%3D%22100%22%2F%3E%3Ctext%20fill%3D%22%23666%22%20x%3D%2250%22%20y%3D%2250%22%20text-anchor%3D%22middle%22%20dominant-baseline%3D%22middle%22%3EImage%3C%2Ftext%3E%3C%2Fsvg%3E');
+        setFallbackMode(true);
+        return;
+      }
+      
       // If we get here, we couldn't extract a valid URL - set a blank URL
       setObjectUrl('');
     } catch (error) {
       console.error("Error setting object URL:", error);
       setObjectUrl('');
+      setFallbackMode(true);
     }
   }, [file]);
 
-  // Image preview
+  // Enhanced image preview with error handling and fallbacks
   const renderImagePreview = () => {
     return (
-      <img
-        src={objectUrl}
-        alt={getFileName()}
-        style={{
-          width: '100%',
-          height: '100%',
-          objectFit: 'contain',
-        }}
-      />
+      <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+        <img
+          src={objectUrl}
+          alt={getFileName()}
+          style={{
+            width: '100%',
+            height: '100%',
+            objectFit: 'contain',
+            opacity: fallbackMode ? 0.7 : 1, // Indicate fallback mode visually
+          }}
+          onError={(e) => {
+            console.error('Image failed to load:', objectUrl);
+            
+            // Set a fallback data URL for the broken image
+            const imgElement = e.target as HTMLImageElement;
+            imgElement.src = 'data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22100%22%20height%3D%22100%22%3E%3Crect%20fill%3D%22%23f8f9fa%22%20width%3D%22100%22%20height%3D%22100%22%2F%3E%3Ctext%20fill%3D%22%23888%22%20font-family%3D%22Arial%22%20font-size%3D%2212%22%20x%3D%2250%22%20y%3D%2250%22%20text-anchor%3D%22middle%22%3EImage%20unavailable%3C%2Ftext%3E%3C%2Fsvg%3E';
+            
+            // Set the alt text for accessibility
+            imgElement.alt = 'Image preview unavailable';
+            
+            // Add a class to indicate the error state
+            imgElement.classList.add('preview-error');
+          }}
+        />
+        {fallbackMode && (
+          <div style={{
+            position: 'absolute',
+            bottom: '10px',
+            left: '10px',
+            right: '10px',
+            background: 'rgba(0,0,0,0.5)',
+            color: 'white',
+            fontSize: '12px',
+            padding: '4px',
+            borderRadius: '4px',
+            textAlign: 'center'
+          }}>
+            Preview may not be accurate
+          </div>
+        )}
+      </div>
     );
   };
 

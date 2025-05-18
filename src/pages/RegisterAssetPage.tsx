@@ -290,22 +290,38 @@ const RegisterAssetPage: React.FC = () => {
     fileType: watchFiles && watchFiles.length > 0 ? watchFiles[0].name.split('.').pop() : ''
   };
 
-  // Handle form submission
+  // Handle form submission - Optimized for performance
   const onSubmit: SubmitHandler<FormData> = async (data) => {
     try {
+      // Start performance tracking in development mode
+      if (process.env.NODE_ENV === 'development') {
+        performance.mark('form-submission-start');
+      }
+      
       setLoading(true);
       setError(null);
       
-      // Show a temporary confirmation message
+      // Create more visually appealing loading UI
       const formContainer = document.querySelector('form');
       if (formContainer) {
+        // Remove any existing loading indicator
+        const existingIndicator = formContainer.querySelector('.submission-indicator');
+        if (existingIndicator) {
+          formContainer.removeChild(existingIndicator);
+        }
+        
+        // Add styled loading indicator
         const confirmationEl = document.createElement('div');
+        confirmationEl.className = 'submission-indicator';
         confirmationEl.innerHTML = `
-          <div style="text-align: center; padding: 20px;">
-            <h3>Processing your submission...</h3>
-            <p>Uploading files and registering your asset. Please wait.</p>
+          <div style="text-align: center; padding: 20px; position: relative; background-color: #f8f9fa; border-radius: 8px; border: 1px solid #e9ecef; margin: 20px 0; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
+            <h3 style="margin-bottom: 10px; color: #1976d2;">Processing your submission...</h3>
+            <p style="margin-bottom: 20px; color: #555;">Uploading files and registering your asset. Please wait.</p>
             <div style="display: flex; justify-content: center; margin-top: 20px;">
-              <div style="width: 40px; height: 40px; border: 5px solid #f3f3f3; border-top: 5px solid #3498db; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+              <div style="width: 40px; height: 40px; border: 5px solid rgba(25, 118, 210, 0.2); border-top: 5px solid #1976d2; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+            </div>
+            <div class="submission-progress" style="margin-top: 20px; text-align: left; padding: 10px; background-color: #fff; border-radius: 4px; border: 1px solid #eee; font-size: 14px; color: #666;">
+              <p>Preparing submission data...</p>
             </div>
           </div>
           <style>
@@ -315,67 +331,112 @@ const RegisterAssetPage: React.FC = () => {
         formContainer.appendChild(confirmationEl);
       }
       
+      // Helper function to update progress message
+      const updateProgress = (message: string) => {
+        if (formContainer) {
+          const progressElement = formContainer.querySelector('.submission-progress');
+          if (progressElement) {
+            progressElement.innerHTML = `<p>${message}</p>`;
+          }
+        }
+      };
+      
+      // Log validation state for debugging - but only in development
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Form data to submit:', {
+          layer: data.layer,
+          categoryCode: data.categoryCode,
+          subcategoryCode: data.subcategoryCode,
+          name: data.name,
+          files: data.files?.length || 0,
+          source: data.source,
+          isValid: schema.isValidSync(data)
+        });
+      }
+      
+      // Use Promise.all for parallel file uploads to improve performance
+      updateProgress("Preparing file uploads...");
+      const uploadPromises: Promise<any>[] = [];
+      
       // Process file uploads if not already uploaded
       if (data.files && data.files.length > 0) {
         // If files are not already processed, upload them
         if (uploadedFiles.length < data.files.length) {
-          for (const file of data.files) {
-            // Check if file is already uploaded
-            const isUploaded = uploadedFiles.some(
-              (uploaded) => uploaded.originalName === file.name
-            );
-            
-            if (!isUploaded) {
-              const uploadResult = await assetService.uploadFile(file);
-              if (uploadResult && uploadResult.response) {
-                setUploadedFiles((prev) => [
-                  ...prev,
-                  {
+          const filesToUpload = data.files.filter(file => 
+            !uploadedFiles.some(uploaded => uploaded.originalName === file.name)
+          );
+          
+          updateProgress(`Uploading ${filesToUpload.length} file(s)...`);
+          
+          // Create upload promises for all files
+          for (const file of filesToUpload) {
+            const uploadPromise = assetService.uploadFile(file)
+              .then(uploadResult => {
+                if (uploadResult && uploadResult.response) {
+                  const fileData = {
                     filename: uploadResult.response?.filename || file.name,
                     url: uploadResult.response?.url || '',
                     size: uploadResult.response?.size || file.size,
                     mimeType: uploadResult.response?.mimeType || file.type,
                     originalName: file.name,
-                  },
-                ]);
-              }
-            }
+                  };
+                  
+                  // Update upload files state
+                  setUploadedFiles(prev => [...prev, fileData]);
+                  return fileData;
+                }
+                return null;
+              });
+            
+            uploadPromises.push(uploadPromise);
+          }
+          
+          // Wait for all uploads to complete in parallel
+          if (uploadPromises.length > 0) {
+            await Promise.all(uploadPromises);
           }
         }
       }
 
-      // Log form data for debugging
-      console.log('Form data for asset creation:', {
-        layer: data.layer,
-        categoryCode: data.categoryCode,  // This could be numeric "001" or alphabetic "POP"
-        subcategoryCode: data.subcategoryCode, // This could be numeric "005"/"007" or alphabetic "LGM"/"HPM"
-        hfn: data.hfn,
-        mfa: data.mfa,
-        isNumericCategory: /^\d+$/.test(data.categoryCode), // Check if category is numeric
-        isNumericSubcategory: /^\d+$/.test(data.subcategoryCode) // Check if subcategory is numeric
-      });
+      // Update progress to indicate we're preparing the asset
+      updateProgress("Preparing asset data...");
+      
+      // Consolidate logging into a single block for better performance
+      if (process.env.NODE_ENV === 'development') {
+        // Log form data for debugging
+        console.log('Form data for asset creation:', {
+          layer: data.layer,
+          categoryCode: data.categoryCode,  // This could be numeric "001" or alphabetic "POP"
+          subcategoryCode: data.subcategoryCode, // This could be numeric "005"/"007" or alphabetic "LGM"/"HPM"
+          hfn: data.hfn,
+          mfa: data.mfa,
+          isNumericCategory: /^\d+$/.test(data.categoryCode), // Check if category is numeric
+          isNumericSubcategory: /^\d+$/.test(data.subcategoryCode) // Check if subcategory is numeric
+        });
 
-      // Add special logging for the category/subcategory format to debug backend issues
-      console.log('IMPORTANT: Category/Subcategory Format Check:');
-      console.log(`Category: ${data.categoryCode} (${/^\d+$/.test(data.categoryCode) ? 'NUMERIC - needs conversion' : 'ALPHABETIC - OK'})`);
-      console.log(`Subcategory: ${data.subcategoryCode} (${/^\d+$/.test(data.subcategoryCode) ? 'NUMERIC - needs conversion' : 'ALPHABETIC - OK'})`);
+        // Add special logging for the category/subcategory format to debug backend issues
+        console.log('IMPORTANT: Category/Subcategory Format Check:');
+        console.log(`Category: ${data.categoryCode} (${/^\d+$/.test(data.categoryCode) ? 'NUMERIC - needs conversion' : 'ALPHABETIC - OK'})`);
+        console.log(`Subcategory: ${data.subcategoryCode} (${/^\d+$/.test(data.subcategoryCode) ? 'NUMERIC - needs conversion' : 'ALPHABETIC - OK'})`);
 
-      // For S.POP.LGM, log the specific mapping that will be used
-      if (data.layer === 'S' && (data.categoryCode === 'POP' || data.categoryCode === '001') &&
-          (data.subcategoryCode === 'LGM' || data.subcategoryCode === '005')) {
-        console.log('DETECTED S.POP.LGM COMBINATION - Will convert to proper codes for backend');
-      }
+        // Handle special cases with focused logging
+        // For S.POP.LGM, log the specific mapping that will be used
+        if (data.layer === 'S' && (data.categoryCode === 'POP' || data.categoryCode === '001') &&
+            (data.subcategoryCode === 'LGM' || data.subcategoryCode === '005')) {
+          console.log('DETECTED S.POP.LGM COMBINATION - Will convert to proper codes for backend');
+        }
 
-      // Add extended debug logging specifically for S.POP.HPM case
-      if (data.layer === 'S' && data.categoryCode === 'POP' && data.subcategoryCode === 'HPM') {
-        console.log('IMPORTANT - Asset registration with S.POP.HPM:');
-        console.log(`HFN: ${data.hfn}`);
-        console.log(`MFA: ${data.mfa}`);
-        console.log('Verifying MFA is correct: expected 2.001.007.001');
+        // Add extended debug logging specifically for S.POP.HPM case
+        if (data.layer === 'S' && data.categoryCode === 'POP' && data.subcategoryCode === 'HPM') {
+          console.log('IMPORTANT - Asset registration with S.POP.HPM:');
+          console.log(`HFN: ${data.hfn}`);
+          console.log(`MFA: ${data.mfa}`);
+          console.log('Verifying MFA is correct: expected 2.001.007.001');
 
-        // This should match the expected MFA for S.POP.HPM
-        if (data.mfa !== '2.001.007.001') {
-          console.error(`WARNING: MFA is incorrect! Expected 2.001.007.001 but got ${data.mfa}`);
+          // This should match the expected MFA for S.POP.HPM
+          if (data.mfa !== '2.001.007.001') {
+            console.error(`WARNING: MFA is incorrect! Expected 2.001.007.001 but got ${data.mfa}`);
+          }
         }
       }
 
@@ -522,11 +583,21 @@ const RegisterAssetPage: React.FC = () => {
         },
       };
 
-      // Add a small delay for better user experience
-      await new Promise(resolve => setTimeout(resolve, 800));
+      // Update progress to indicate submitting to backend
+      updateProgress("Sending asset data to server...");
+      
+      // Remove artificial delay in production for better UX
+      if (process.env.NODE_ENV === 'development') {
+        // Small delay in development to make loading state visible
+        await new Promise(resolve => setTimeout(resolve, 400));
+      }
 
+      // Send asset data to server
       const createdAsset = await assetService.createAsset(assetData);
       console.log("Asset created successfully:", createdAsset);
+      
+      // Update progress to show success
+      updateProgress("Asset created successfully!");
       
       if (!createdAsset) {
         throw new Error("Asset creation failed - no asset returned from API");
@@ -535,6 +606,9 @@ const RegisterAssetPage: React.FC = () => {
       // Store the created asset in localStorage as a fallback in case of page refresh
       try {
         localStorage.setItem('lastCreatedAsset', JSON.stringify(createdAsset));
+        
+        // Also store a timestamp to know when it was created
+        localStorage.setItem('lastCreatedAssetTimestamp', Date.now().toString());
       } catch (e) {
         console.warn("Failed to store created asset in localStorage:", e);
       }
@@ -547,9 +621,29 @@ const RegisterAssetPage: React.FC = () => {
       window.sessionStorage.setItem('showSuccessPage', 'true');
       setShowSuccessPage(true);
       
+      // Report performance metrics only in development mode
+      if (process.env.NODE_ENV === 'development') {
+        performance.mark('form-submission-end');
+        performance.measure('Form Submission Time', 'form-submission-start', 'form-submission-end');
+        const measurements = performance.getEntriesByName('Form Submission Time');
+        console.log(`Form submission took ${measurements[0]?.duration.toFixed(2)}ms`);
+      }
+      
       // Don't reset the form yet - wait for user to navigate away
     } catch (err) {
       console.error('Error creating asset:', err);
+      
+      // Update progress to show error
+      if (formContainer) {
+        const progressElement = formContainer.querySelector('.submission-progress');
+        if (progressElement) {
+          progressElement.innerHTML = `
+            <p style="color: #d32f2f; font-weight: bold;">Error: ${err instanceof Error ? err.message : 'Failed to create asset'}</p>
+            <p>Please try again or contact support if the problem persists.</p>
+          `;
+        }
+      }
+      
       setError(err instanceof Error ? err.message : 'Failed to create asset');
     } finally {
       setLoading(false);
@@ -605,29 +699,52 @@ const RegisterAssetPage: React.FC = () => {
     }
   };
 
-  // Handle category selection
+  // Handle category selection - Enhanced to ensure proper form state updates
   const handleCategorySelect = (category: CategoryOption) => {
-    setValue('categoryCode', category.code);
-    setValue('categoryName', category.name);
+    // Log for debugging
+    console.log(`Setting category in form: ${category.code}, ${category.name}, ${category.numericCode}`);
+    
+    // Force immediate form update with explicit state management
+    setValue('categoryCode', category.code, { shouldValidate: true, shouldDirty: true, shouldTouch: true });
+    setValue('categoryName', category.name, { shouldValidate: true, shouldDirty: true, shouldTouch: true });
     
     // Clear subcategory when category changes
-    setValue('subcategoryCode', '');
-    setValue('subcategoryName', '');
-    setValue('subcategoryNumericCode', '');
+    setValue('subcategoryCode', '', { shouldValidate: true });
+    setValue('subcategoryName', '', { shouldValidate: true });
+    setValue('subcategoryNumericCode', '', { shouldValidate: true });
     setValue('hfn', '');
     setValue('mfa', '');
     setValue('sequential', '');
+    
+    // Clear any stored subcategory for this category
+    try {
+      sessionStorage.removeItem(`originalSubcategory_${watchLayer}_${category.code}`);
+    } catch (e) {
+      console.warn('Failed to clear subcategory from session storage:', e);
+    }
   };
 
-  // Handle subcategory selection
+  // Handle subcategory selection - Enhanced to ensure proper form state updates
   const handleSubcategorySelect = (subcategory: SubcategoryOption, isDoubleClick?: boolean) => {
-    setValue('subcategoryCode', subcategory.code);
-    setValue('subcategoryName', subcategory.name);
-    setValue('subcategoryNumericCode', subcategory.numericCode?.toString() || '');
+    // Log for debugging
+    console.log(`Setting subcategory in form: ${subcategory.code}, ${subcategory.name}, ${subcategory.numericCode}`);
     
-    // If double click, auto-advance to next step
+    // Force immediate form update with explicit state management
+    setValue('subcategoryCode', subcategory.code, { shouldValidate: true, shouldDirty: true, shouldTouch: true });
+    setValue('subcategoryName', subcategory.name, { shouldValidate: true, shouldDirty: true, shouldTouch: true });
+    setValue('subcategoryNumericCode', subcategory.numericCode?.toString() || '', { shouldValidate: true });
+    
+    // Store original subcategory in session storage as a backup
+    try {
+      sessionStorage.setItem(`originalSubcategory_${watchLayer}_${watchCategoryCode}`, subcategory.code);
+      console.log(`Stored backup subcategory in session storage: ${subcategory.code}`);
+    } catch (e) {
+      console.warn('Failed to store subcategory in session storage:', e);
+    }
+    
+    // If double click, add a small delay before advancing to ensure state is updated
     if (isDoubleClick) {
-      handleNext();
+      setTimeout(() => handleNext(), 50);
     }
   };
 
