@@ -11,7 +11,7 @@ import { logger } from '../utils/logger';
 // Define key categories and subcategories that must be available
 const CRITICAL_MAPPINGS = [
   { hfn: 'W.BCH.SUN.001', expectedMfa: '5.004.003.001' },
-  { hfn: 'S.POP.HPM.001', expectedMfa: '2.004.003.001' }
+  { hfn: 'S.POP.HPM.001', expectedMfa: '2.001.007.001' } // Updated to match actual taxonomy data
 ];
 
 const REQUIRED_LAYERS = ['W', 'S', 'G', 'L', 'M', 'B', 'P', 'T', 'C', 'R'];

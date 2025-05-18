@@ -21,7 +21,7 @@ export const SPECIAL_HFN_MFA_MAPPINGS: Record<string, string> = {
   'W.URB.BAS': '5.003.001',     // Urban/HipHop.Base (alias)
   
   // Layer S (Stars) special mappings
-  'S.POP.HPM': '2.004.003',     // Pop.Pop_Hipster_Male_Stars
+  'S.POP.HPM': '2.001.007',     // Pop.Pop_Hipster_Male_Stars - Updated to actual taxonomy data
   'S.RCK.BAS': '2.005.001',     // Rock.Base
   
   // Layer G (Songs) special mapping for test case
@@ -80,7 +80,7 @@ export const SUBCATEGORY_NUMERIC_MAPPINGS: Record<string, Record<string, Record<
   },
   'S': {
     'POP': {
-      'HPM': 3,   // Hipster Male - IMPORTANT: Tests expect this to be 3 not 7
+      'HPM': 7,   // Hipster Male - Updated to match actual taxonomy value (007)
       'DIV': 2,   // Diva
       'BAS': 1    // Base
     },
@@ -151,8 +151,7 @@ export const SUBCATEGORY_ALPHABETIC_MAPPINGS: Record<string, Record<number, Reco
   },
   'S': {
     1: {         // Pop
-      3: 'HPM',  // Hipster Male - Maps to 3 in tests
-      7: 'HPM',  // Hipster Male - Maps to 7 in implementation
+      7: 'HPM',  // Hipster Male - Maps to 7 in implementation (only supporting actual value now)
       2: 'DIV',  // Diva
       1: 'BAS'   // Base
     },
@@ -177,7 +176,7 @@ export const SUBCATEGORY_ALPHABETIC_MAPPINGS: Record<string, Record<number, Reco
 export const TEST_CASE_MAPPINGS: Record<string, string> = {
   'W.BCH.SUN.001': '5.004.003.001',       // Beach.Sunny
   'W.BCH.SUN.002.mp4': '5.004.003.002.mp4', // Beach.Sunny with file extension
-  'S.POP.HPM.001': '2.004.003.001',       // Pop.Hipster Male - Note different from implementation
+  'S.POP.HPM.001': '2.001.007.001',       // Pop.Hipster Male - Updated to match actual implementation
   'G.CAT.SUB.001': '1.001.001.001',       // Test case
   'S.RCK.BAS.001': '2.005.001.001',       // Rock.Base test case
   'W.BCH.TRO.001': '5.004.002.001',       // Beach.Tropical
