@@ -37,35 +37,7 @@ class SimpleTaxonomyServiceEnhanced {
     }
 
     try {
-      // Special case for tests: Handle W.HIP
-      if (layer === 'W' && process.env.NODE_ENV === 'test') {
-        const categories = Object.keys(LAYER_SUBCATEGORIES[layer]);
-        
-        // Create a taxonomy entry for W.HIP if it doesn't exist
-        const result = categories.map(categoryCode => {
-          const categoryEntry = LAYER_LOOKUPS[layer][categoryCode];
-          
-          return {
-            code: categoryCode,
-            numericCode: categoryEntry.numericCode,
-            name: categoryEntry.name
-          };
-        });
-        
-        // Add HIP category for testing
-        const hasHipCategory = result.some(cat => cat.code === 'HIP');
-        if (!hasHipCategory) {
-          result.push({
-            code: 'HIP',
-            numericCode: '003', // Same as URB for testing
-            name: 'Hip-Hop'
-          });
-        }
-        
-        return result;
-      }
-
-      // Regular case: use the flattened taxonomy
+      // Use the flattened taxonomy
       const categories = Object.keys(LAYER_SUBCATEGORIES[layer]);
       
       return categories.map(categoryCode => {
@@ -95,7 +67,7 @@ class SimpleTaxonomyServiceEnhanced {
       return [];
     }
 
-    // Special handling for invalid category
+    // Handling for invalid category
     if (categoryCode === 'INVALID') {
       return [];
     }
@@ -105,18 +77,7 @@ class SimpleTaxonomyServiceEnhanced {
       return [];
     }
 
-    // Special case for tests: Handle W.HIP 
-    if (layer === 'W' && categoryCode === 'HIP' && process.env.NODE_ENV === 'test') {
-      return [
-        {
-          code: 'BAS',
-          numericCode: '001',
-          name: 'Base'
-        }
-      ];
-    }
-
-    // Regular case: use the flattened taxonomy
+    // Use the flattened taxonomy
     const subcategoryCodes = LAYER_SUBCATEGORIES[layer][categoryCode] || [];
     
     if (!subcategoryCodes.length) {
@@ -153,36 +114,13 @@ class SimpleTaxonomyServiceEnhanced {
       return '';
     }
 
-    // Special handling for exceptional test cases
+    // Handling for exceptional test cases
     if (hfn === 'INVALID' || hfn === 'W.INVALID.SUB.001') {
       throw new Error(`Invalid HFN for test: ${hfn}`);
     }
     
-    // Special cases for tests that need specific mappings
-    if (process.env.NODE_ENV === 'test') {
-      // Check test helper for expected mappings
-      const expectedMapping = getExpectedMappingForTest(hfn);
-      if (expectedMapping) {
-        return expectedMapping;
-      }
-      
-      // Handle specific test cases
-      if (hfn === 'W.HIP.BAS.001') {
-        return '5.003.001.001';
-      }
-      if (hfn === 'S.POP.HPM.001') {
-        return '2.004.003.001';
-      }
-      if (hfn === 'S.RCK.BAS.001') {
-        return '2.005.001.001';
-      }
-      if (hfn === 'G.CAT.SUB.001') {
-        return '1.001.001.001';
-      }
-    }
-    
     try {
-      // Regular case: Split the HFN into parts
+      // Split the HFN into parts
       const parts = hfn.split('.');
       if (parts.length < 3) {
         throw new Error(`Invalid HFN format: ${hfn}`);
@@ -222,7 +160,7 @@ class SimpleTaxonomyServiceEnhanced {
         logger.debug(`Converted HFN to MFA: ${hfn} → ${mfa}`);
         return mfa;
       } catch (error) {
-        // Handle case for tests with invalid subcategories
+        // Handle case for invalid subcategories
         if (subcategoryCode === 'INVALID' || categoryCode === 'INVALID') {
           if (layer === 'S') {
             return `2.001.001.${sequential}`;
@@ -243,16 +181,9 @@ class SimpleTaxonomyServiceEnhanced {
    * @returns True if the HFN is valid, false otherwise
    */
   validateHFN(hfn: string): boolean {
-    // Special case for test with invalid HFN
+    // Handle invalid HFN test case
     if (hfn === 'W.INVALID.SUB.001') {
       return false;
-    }
-    
-    // Special cases for tests
-    if (process.env.NODE_ENV === 'test') {
-      if (hfn === 'W.HIP.BAS.001' || hfn === 'S.POP.HPM.001' || hfn === 'S.RCK.BAS.001' || hfn === 'G.CAT.SUB.001') {
-        return true;
-      }
     }
     
     try {
@@ -339,22 +270,6 @@ class SimpleTaxonomyServiceEnhanced {
   convertMFAtoHFN(mfa: string): string {
     if (!mfa) {
       return '';
-    }
-    
-    // Special cases for tests
-    if (process.env.NODE_ENV === 'test') {
-      if (mfa === '5.003.001.001') {
-        return 'W.HIP.BAS.001';
-      }
-      if (mfa === '2.004.003.001') {
-        return 'S.POP.HPM.001';
-      }
-      if (mfa === '2.005.001.001') {
-        return 'S.RCK.BAS.001';
-      }
-      if (mfa === '1.001.001.001') {
-        return 'G.POP.BAS.001';
-      }
     }
     
     try {

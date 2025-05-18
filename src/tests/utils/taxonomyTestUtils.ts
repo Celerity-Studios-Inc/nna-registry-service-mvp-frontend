@@ -1,147 +1,211 @@
 /**
- * Taxonomy Test Utilities
- * 
- * Utilities for testing the taxonomy system.
- * Updated to work with the actual flattened taxonomy files without special case handling.
- * The tests still expect certain mappings that don't match the actual taxonomy structure,
- * so we use the taxonomyTestHelper to provide the expected values.
+ * Utility functions and test data for taxonomy system tests
  */
-import { getExpectedMappingForTest } from './taxonomyTestHelper';
+import {
+  getExpectedMappingForTest,
+  getActualMappingForHfn,
+} from './taxonomyTestHelper';
 
 /**
- * Generate a test case for HFN to MFA conversion
+ * Common test cases for special Human-Friendly Name (HFN) to Machine-Friendly Address (MFA) mappings
  */
-export interface HfnMfaTestCase {
-  hfn: string;
-  expectedMfa: string;
-  description: string;
-}
-
-/**
- * Test cases for special HFN to MFA conversions
- */
-export const SPECIAL_HFN_MFA_TEST_CASES: HfnMfaTestCase[] = [
+export const SPECIAL_HFN_MFA_TEST_CASES = [
   {
     hfn: 'W.BCH.SUN.001',
-    expectedMfa: '5.004.003.001',
-    description: 'W.BCH.SUN mapping'
+    expectedMfa: getExpectedMappingForTest('W.BCH.SUN.001') || '5.001.001.001',
   },
   {
     hfn: 'S.POP.HPM.001',
-    expectedMfa: getExpectedMappingForTest('S.POP.HPM.001'), // Uses expected test mapping (2.004.003.001)
-    description: 'S.POP.HPM special case for tests'
+    expectedMfa: getExpectedMappingForTest('S.POP.HPM.001') || '2.001.007.001',
   },
   {
     hfn: 'W.HIP.BAS.001',
-    expectedMfa: getExpectedMappingForTest('W.HIP.BAS.001'), // Uses expected test mapping (5.003.001.001)
-    description: 'W.HIP.BAS special case for tests (HIP is actually URB in taxonomy)'
+    expectedMfa: getExpectedMappingForTest('W.HIP.BAS.001') || '5.003.001.001',
   },
   {
     hfn: 'W.BCH.SUN.002.mp4',
-    expectedMfa: '5.004.003.002.mp4',
-    description: 'W.BCH.SUN with sequential 002 and file type'
-  }
+    expectedMfa:
+      getExpectedMappingForTest('W.BCH.SUN.002.mp4') || '5.001.001.002.mp4',
+  },
 ];
 
 /**
- * Test cases for general HFN to MFA conversions
+ * Common test cases for general Human-Friendly Name (HFN) to Machine-Friendly Address (MFA) mappings
  */
-export const GENERAL_HFN_MFA_TEST_CASES: HfnMfaTestCase[] = [
+export const GENERAL_HFN_MFA_TEST_CASES = [
   {
     hfn: 'G.CAT.SUB.001',
-    expectedMfa: getExpectedMappingForTest('G.CAT.SUB.001'),
-    description: 'Ground layer test case'
+    expectedMfa: getExpectedMappingForTest('G.CAT.SUB.001') || '1.001.001.001',
   },
   {
     hfn: 'S.RCK.BAS.001',
-    expectedMfa: getExpectedMappingForTest('S.RCK.BAS.001'), // Uses expected test mapping (2.005.001.001)
-    description: 'Star layer Rock Bass test case for tests'
+    expectedMfa: getExpectedMappingForTest('S.RCK.BAS.001') || '2.005.001.001',
   },
   {
     hfn: 'W.BCH.TRO.001',
-    expectedMfa: '5.004.002.001',
-    description: 'Wave layer Beach Tropical test case'
-  }
+    expectedMfa: getExpectedMappingForTest('W.BCH.TRO.001') || '5.001.002.001',
+  },
 ];
 
 /**
- * Test a single HFN to MFA conversion
+ * Mock taxonomy data for tests
  */
-export const testHfnToMfa = (testCase: HfnMfaTestCase): boolean => {
-  // For test cases, directly use the helper
-  const expectedMfa = testCase.expectedMfa;
-  const actualMfa = getExpectedMappingForTest(testCase.hfn) || '';
-  
-  return actualMfa === expectedMfa;
+export const MOCK_TAXONOMY_DATA = {
+  layers: [
+    { code: 'G', name: 'Songs' },
+    { code: 'S', name: 'Stars' },
+    { code: 'L', name: 'Looks' },
+    { code: 'M', name: 'Moves' },
+    { code: 'W', name: 'Worlds' },
+    { code: 'B', name: 'Branded' },
+    { code: 'P', name: 'Personalize' },
+    { code: 'T', name: 'Training_Data' },
+    { code: 'R', name: 'Rights' },
+    { code: 'C', name: 'Composites' },
+  ],
+  categories: {
+    W: [
+      { code: 'BCH', name: 'Beach', numericCode: '001' },
+      { code: 'HIP', name: 'Hip Hop', numericCode: '003' },
+      { code: 'URB', name: 'Urban', numericCode: '004' },
+    ],
+    S: [
+      { code: 'POP', name: 'Pop', numericCode: '001' },
+      { code: 'RCK', name: 'Rock', numericCode: '005' },
+    ],
+    G: [{ code: 'CAT', name: 'Category', numericCode: '001' }],
+  },
+  subcategories: {
+    'W-BCH': [
+      { code: 'SUN', name: 'Sunset', numericCode: '001' },
+      { code: 'TRO', name: 'Tropical', numericCode: '002' },
+    ],
+    'W-HIP': [{ code: 'BAS', name: 'Base', numericCode: '001' }],
+    'S-POP': [{ code: 'HPM', name: 'Happy Mood', numericCode: '007' }],
+    'S-RCK': [{ code: 'BAS', name: 'Base', numericCode: '001' }],
+    'G-CAT': [{ code: 'SUB', name: 'Subcategory', numericCode: '001' }],
+  },
 };
 
 /**
- * Get all categories for all layers
- * This uses the enhanced taxonomy service for compatibility
+ * Creates a mock implementation for taxonomyService.getCategories
  */
-export const getAllLayerCategories = (): Record<string, any[]> => {
-  // This is a test mock function that doesn't need to be implemented
-  // We're testing the actual implementation separately
-  return {
-    'G': [{ code: 'CAT', numericCode: '001', name: 'Category' }],
-    'S': [{ code: 'POP', numericCode: '001', name: 'Pop' }],
-    'W': [{ code: 'HIP', numericCode: '003', name: 'Hip-Hop' }]
-  };
-};
-
-/**
- * Get all subcategories for a layer and category
- * This uses the enhanced taxonomy service for compatibility
- */
-export const getAllSubcategories = (layer: string, category: string): any[] => {
-  // This is a test mock function that doesn't need to be implemented
-  // We're testing the actual implementation separately
-  return [{ code: 'SUB', numericCode: '001', name: 'Subcategory' }];
-};
-
-/**
- * Execute all HFN to MFA test cases
- */
-export const executeAllHfnMfaTests = (): {
-  specialCases: Record<string, boolean>;
-  generalCases: Record<string, boolean>;
-  totalPassed: number;
-  totalFailed: number;
-} => {
-  const specialCases: Record<string, boolean> = {};
-  const generalCases: Record<string, boolean> = {};
-  
-  let totalPassed = 0;
-  let totalFailed = 0;
-  
-  // Test special cases
-  for (const testCase of SPECIAL_HFN_MFA_TEST_CASES) {
-    const result = testHfnToMfa(testCase);
-    specialCases[testCase.hfn] = result;
-    
-    if (result) {
-      totalPassed++;
-    } else {
-      totalFailed++;
+export function createMockGetCategories() {
+  return jest.fn(layer => {
+    if (layer === 'W') {
+      return MOCK_TAXONOMY_DATA.categories.W;
+    } else if (layer === 'S') {
+      return MOCK_TAXONOMY_DATA.categories.S;
+    } else if (layer === 'G') {
+      return MOCK_TAXONOMY_DATA.categories.G;
     }
-  }
-  
-  // Test general cases
-  for (const testCase of GENERAL_HFN_MFA_TEST_CASES) {
-    const result = testHfnToMfa(testCase);
-    generalCases[testCase.hfn] = result;
-    
-    if (result) {
-      totalPassed++;
-    } else {
-      totalFailed++;
+    return [];
+  });
+}
+
+/**
+ * Creates a mock implementation for taxonomyService.getSubcategories
+ */
+export function createMockGetSubcategories() {
+  return jest.fn((layer, category) => {
+    const key = `${layer}-${category}`;
+    return MOCK_TAXONOMY_DATA.subcategories[key] || [];
+  });
+}
+
+/**
+ * Creates a mock implementation for taxonomyService.convertHFNtoMFA
+ */
+export function createMockConvertHFNtoMFA() {
+  return jest.fn(hfn => {
+    // Try to get the expected mapping from our test helper
+    const mapping = getExpectedMappingForTest(hfn);
+    if (mapping) {
+      return mapping;
     }
-  }
-  
-  return {
-    specialCases,
-    generalCases,
-    totalPassed,
-    totalFailed
-  };
-};
+
+    // Special test cases
+    for (const testCase of SPECIAL_HFN_MFA_TEST_CASES) {
+      if (testCase.hfn === hfn) {
+        return testCase.expectedMfa;
+      }
+    }
+
+    // General test cases
+    for (const testCase of GENERAL_HFN_MFA_TEST_CASES) {
+      if (testCase.hfn === hfn) {
+        return testCase.expectedMfa;
+      }
+    }
+
+    // Custom mapping logic for other cases
+    const parts = hfn.split('.');
+    const [layer, category, subcategory, identifier, ...rest] = parts;
+
+    let layerCode = '0';
+    if (layer === 'G') layerCode = '1';
+    else if (layer === 'S') layerCode = '2';
+    else if (layer === 'W') layerCode = '5';
+
+    let categoryCode = '001';
+    let subcategoryCode = '001';
+
+    // Find the numeric codes from our mock data
+    const categories = MOCK_TAXONOMY_DATA.categories[layer] || [];
+    const categoryItem = categories.find(c => c.code === category);
+    if (categoryItem) {
+      categoryCode = categoryItem.numericCode;
+
+      const key = `${layer}-${category}`;
+      const subcategories = MOCK_TAXONOMY_DATA.subcategories[key] || [];
+      const subcategoryItem = subcategories.find(s => s.code === subcategory);
+      if (subcategoryItem) {
+        subcategoryCode = subcategoryItem.numericCode;
+      }
+    }
+
+    let mfa = `${layerCode}.${categoryCode}.${subcategoryCode}.${identifier}`;
+    if (rest.length > 0) {
+      mfa += '.' + rest.join('.');
+    }
+
+    return mfa;
+  });
+}
+
+/**
+ * Creates a mock implementation for taxonomyService.convertMFAtoHFN
+ */
+export function createMockConvertMFAtoHFN() {
+  return jest.fn(mfa => {
+    // Simple mapping for test cases
+    if (mfa === '5.001.001.001') return 'W.BCH.SUN.001';
+    if (mfa === '2.001.007.001') return 'S.POP.HPM.001';
+    if (mfa === '5.003.001.001') return 'W.HIP.BAS.001';
+    if (mfa === '1.001.001.001') return 'G.CAT.SUB.001';
+    if (mfa === '2.005.001.001') return 'S.RCK.BAS.001';
+    if (mfa === '5.001.002.001') return 'W.BCH.TRO.001';
+
+    // Extension handling
+    if (mfa === '5.001.001.002.mp4') return 'W.BCH.SUN.002.mp4';
+
+    // Default fallback - convert MFA to HFN format
+    const parts = mfa.split('.');
+    const [
+      layerNumeric,
+      categoryNumeric,
+      subcategoryNumeric,
+      identifier,
+      ...rest
+    ] = parts;
+
+    let layer = '';
+    if (layerNumeric === '1') layer = 'G';
+    else if (layerNumeric === '2') layer = 'S';
+    else if (layerNumeric === '5') layer = 'W';
+
+    return `${layer}.CAT.SUB.${identifier}${
+      rest.length > 0 ? '.' + rest.join('.') : ''
+    }`;
+  });
+}

@@ -188,11 +188,6 @@ export function getCategoryAlphabeticCode(layerCode: string, categoryValue: stri
     return categoryValue;
   }
   
-  // If numeric, convert to alphabetic
-  // Special cases for tests
-  if (layerCode === 'S' && categoryValue === '001') return 'POP';
-  if (layerCode === 'W' && categoryValue === '015') return 'NAT';
-  
   // Pad numeric code to 3 digits for lookup
   const paddedCode = categoryValue.padStart(3, '0');
   return categoryNumericToAlpha[paddedCode] || categoryValue;
@@ -210,11 +205,6 @@ export function getCategoryNumericCode(layerCode: string, categoryValue: string)
     return parseInt(categoryValue, 10);
   }
   
-  // Special cases for tests
-  if (layerCode === 'S' && categoryValue === 'POP') return 1;
-  if (layerCode === 'W' && (categoryValue === 'NAT' || categoryValue === 'Natural')) return 15;
-  if (layerCode === 'W' && categoryValue === 'HIP') return 3;
-  
   // Look up from alpha to numeric mapping
   const numericCode = categoryAlphaToNumeric[categoryValue];
   return numericCode ? parseInt(numericCode, 10) : 1;
@@ -228,9 +218,7 @@ export function getCategoryNumericCode(layerCode: string, categoryValue: string)
  * @returns Alphabetic subcategory code
  */
 export function getSubcategoryAlphabeticCode(layerCode: string, category: string, subcategoryValue: string): string {
-  // Special cases for tests
-  if (layerCode === 'S' && category === 'POP' && subcategoryValue === 'Pop_Hipster_Male_Stars') return 'HPM';
-  if (layerCode === 'S' && category === 'POP' && subcategoryValue === '007') return 'HPM';
+  // If it's "Base", standardize to "BAS"
   if (subcategoryValue === 'Base') return 'BAS';
   
   // If already alphabetic, return as is
@@ -241,6 +229,21 @@ export function getSubcategoryAlphabeticCode(layerCode: string, category: string
   // Default for numeric code '001' is 'BAS'
   if (subcategoryValue === '001' || subcategoryValue === '1') {
     return 'BAS';
+  }
+  
+  // Look up the subcategory from LAYER_LOOKUPS
+  try {
+    const numericCode = subcategoryValue.padStart(3, '0');
+    
+    // Try to find in the taxonomy
+    for (const [code, info] of Object.entries(LAYER_LOOKUPS[layerCode] || {})) {
+      if (code.includes('.') && info.numericCode === numericCode) {
+        // Return the part after the dot
+        return code.split('.')[1];
+      }
+    }
+  } catch (error) {
+    console.error('Error looking up subcategory alphabetic code:', error);
   }
   
   // Return as is if nothing else matches
@@ -255,12 +258,6 @@ export function getSubcategoryAlphabeticCode(layerCode: string, category: string
  * @returns Numeric subcategory code
  */
 export function getSubcategoryNumericCode(layerCode: string, category: string, subcategoryValue: string): number {
-  // Special cases for tests
-  if (layerCode === 'S' && category === 'POP' && 
-      (subcategoryValue === 'HPM' || subcategoryValue === 'Pop_Hipster_Male_Stars')) {
-    return 7;
-  }
-  
   // If already numeric, parse and return
   if (/^\d+$/.test(subcategoryValue)) {
     return parseInt(subcategoryValue, 10);
@@ -271,7 +268,7 @@ export function getSubcategoryNumericCode(layerCode: string, category: string, s
     return 1;
   }
   
-  // Look up from layer-specific mappings or return 1 as default
+  // Look up from layer-specific mappings
   try {
     if (layerSpecificSubcategoryMappings[layerCode] && 
         layerSpecificSubcategoryMappings[layerCode][category] && 
@@ -283,6 +280,18 @@ export function getSubcategoryNumericCode(layerCode: string, category: string, s
     console.error('Error looking up subcategory numeric code:', error);
   }
   
+  // Try to find in the taxonomy
+  try {
+    const fullSubcategoryKey = `${category}.${subcategoryValue}`;
+    const subcategoryEntry = LAYER_LOOKUPS[layerCode]?.[fullSubcategoryKey];
+    
+    if (subcategoryEntry && subcategoryEntry.numericCode) {
+      return parseInt(subcategoryEntry.numericCode, 10);
+    }
+  } catch (error) {
+    console.error('Error looking up subcategory in taxonomy:', error);
+  }
+  
   return 1;
 }
 
@@ -292,17 +301,12 @@ export function getSubcategoryNumericCode(layerCode: string, category: string, s
  * @returns The machine-friendly address (e.g., 1.001.003.001)
  */
 export function convertHFNToMFA(hfnAddress: string): string {
-  // Special cases for tests
-  if (hfnAddress === 'S.POP.HPM.001') return '2.001.007.001';
-  if (hfnAddress === 'W.HIP.BAS.001') return '5.003.001.001';
-  if (hfnAddress === 'G.POP.BAS.001') return '1.001.001.001';
-  
   const parts = hfnAddress.split('.');
-  if (parts.length !== 4) {
+  if (parts.length < 4) {
     return hfnAddress; // Not a valid NNA address format
   }
 
-  const [layer, category, subcategory, sequential] = parts;
+  const [layer, category, subcategory, sequential, ...rest] = parts;
 
   // 1. Convert layer to numeric
   const layerNumeric = getNumericLayerCode(layer);
@@ -316,7 +320,14 @@ export function convertHFNToMFA(hfnAddress: string): string {
   const formattedSubcategoryNumeric = String(subcategoryNumeric).padStart(3, '0');
   
   // 4. Format as machine-friendly address
-  return `${layerNumeric}.${formattedCategoryNumeric}.${formattedSubcategoryNumeric}.${sequential}`;
+  let mfa = `${layerNumeric}.${formattedCategoryNumeric}.${formattedSubcategoryNumeric}.${sequential}`;
+  
+  // Add any remaining parts (like file extensions)
+  if (rest.length > 0) {
+    mfa += '.' + rest.join('.');
+  }
+  
+  return mfa;
 }
 
 /**
@@ -325,17 +336,12 @@ export function convertHFNToMFA(hfnAddress: string): string {
  * @returns The human-friendly address (e.g., G.POP.SHK.001)
  */
 export function convertMFAToHFN(mfaAddress: string): string {
-  // Special cases for tests
-  if (mfaAddress === '2.001.007.001') return 'S.POP.HPM.001';
-  if (mfaAddress === '5.003.001.001') return 'W.HIP.BAS.001';
-  if (mfaAddress === '1.001.001.001') return 'G.POP.BAS.001';
-  
   const parts = mfaAddress.split('.');
-  if (parts.length !== 4) {
+  if (parts.length < 4) {
     return mfaAddress; // Not a valid NNA address format
   }
 
-  const [layerNumeric, categoryNumeric, subcategoryNumeric, sequential] = parts;
+  const [layerNumeric, categoryNumeric, subcategoryNumeric, sequential, ...rest] = parts;
 
   // 1. Convert numeric layer to alphabetic
   const layer = getLayerCodeFromNumeric(parseInt(layerNumeric, 10));
@@ -347,7 +353,14 @@ export function convertMFAToHFN(mfaAddress: string): string {
   const subcategory = getSubcategoryAlphabeticCode(layer, category, subcategoryNumeric);
   
   // 4. Format as human-friendly address
-  return `${layer}.${category}.${subcategory}.${sequential}`;
+  let hfn = `${layer}.${category}.${subcategory}.${sequential}`;
+  
+  // Add any remaining parts (like file extensions)
+  if (rest.length > 0) {
+    hfn += '.' + rest.join('.');
+  }
+  
+  return hfn;
 }
 
 /**
@@ -364,36 +377,6 @@ export function formatNNAAddressForDisplay(
   subcategory: string,
   sequential: string | number = "000"
 ): { hfn: string, mfa: string } {
-  // Special cases for tests
-  if (layer === 'S' && (category === 'POP' || category === '001') && 
-      (subcategory === 'HPM' || subcategory === '007')) {
-    const seq = typeof sequential === 'number' ? 
-      sequential.toString().padStart(3, '0') : sequential.padStart(3, '0');
-    return {
-      hfn: `S.POP.HPM.${seq}`,
-      mfa: `2.001.007.${seq}`
-    };
-  }
-  
-  if (layer === 'W' && category === 'HIP' && subcategory === 'BAS') {
-    const seq = typeof sequential === 'number' ? 
-      sequential.toString().padStart(3, '0') : sequential.padStart(3, '0');
-    return {
-      hfn: `W.HIP.BAS.${seq}`,
-      mfa: `5.003.001.${seq}`
-    };
-  }
-  
-  if (layer === 'W' && (category === 'NAT' || category === 'Natural') && 
-      (subcategory === 'BAS' || subcategory === 'Base')) {
-    const seq = typeof sequential === 'number' ? 
-      sequential.toString().padStart(3, '0') : sequential.padStart(3, '0');
-    return {
-      hfn: `W.NAT.BAS.${seq}`,
-      mfa: `5.015.001.${seq}`
-    };
-  }
-  
   // Format sequential number
   const seq = typeof sequential === 'number' ? 
     sequential.toString().padStart(3, '0') : sequential.padStart(3, '0');
@@ -427,9 +410,14 @@ export function getAlphabeticCode(code: string, layerCode?: string, categoryName
       return categoryNumericToAlpha[paddedCode];
     }
     
-    // Special cases for tests
-    if (layerCode === 'S' && code === '001') {
-      return 'POP';
+    // If a layer code is provided, try to look up the code in the layer's lookups
+    if (layerCode && LAYER_LOOKUPS[layerCode]) {
+      for (const [codeKey, info] of Object.entries(LAYER_LOOKUPS[layerCode])) {
+        // Only check top-level entries (categories, not subcategories)
+        if (!codeKey.includes('.') && info.numericCode === paddedCode) {
+          return codeKey;
+        }
+      }
     }
   }
 
