@@ -3,6 +3,8 @@
   flex-direction: column;
   gap: 20px;
   padding: 15px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .taxonomy-selection {
@@ -16,6 +18,8 @@
   border: 1px solid #ddd;
   border-radius: 8px;
   overflow: hidden;
+  min-height: 150px; /* Prevent section collapse during loading */
+  transition: all 0.2s ease-in-out;
 }
 
 .taxonomy-section-title {
@@ -27,6 +31,8 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  height: 50px; /* Fixed height for title bar */
+  box-sizing: border-box;
 }
 
 .layer-indicator, .category-indicator {
@@ -47,13 +53,22 @@
 
 .taxonomy-items {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-  gap: 10px;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); /* Smaller cards for more per row */
+  gap: 8px; /* Reduce gap for tighter layout */
   padding: 15px;
   max-height: 300px;
   overflow-y: auto;
+  min-height: 100px; /* Minimum height to prevent layout shifts */
+  box-sizing: border-box;
+  transition: opacity 0.2s ease;
 }
 
+/* Loading placeholders */
+.taxonomy-items.loading {
+  opacity: 0.7;
+}
+
+/* Apply consistent sizing to all taxonomy items */
 .taxonomy-item {
   padding: 10px;
   border: 1px solid #eee;
@@ -61,16 +76,26 @@
   cursor: pointer;
   transition: all 0.2s ease;
   background-color: #fff;
+  height: 70px; /* Fixed height for cards */
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-sizing: border-box;
+  will-change: transform, opacity; /* Optimization for animations */
 }
 
 .taxonomy-item:hover {
   border-color: #ccc;
   background-color: #f8f9fa;
+  transform: translateY(-2px); /* Subtle lift effect */
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
 }
 
 .taxonomy-item.active {
   border-color: #007bff;
   background-color: #e8f4ff;
+  transform: translateY(-2px);
+  box-shadow: 0 2px 5px rgba(0,123,255,0.2);
 }
 
 .taxonomy-item .code {
@@ -90,27 +115,55 @@
 
 .taxonomy-item-code {
   font-weight: bold;
-  margin-bottom: 5px;
+  margin-bottom: 4px;
+  font-size: 1rem;
 }
 
 .taxonomy-item-numeric {
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   color: #6c757d;
-  margin-bottom: 3px;
+  margin-bottom: 2px;
 }
 
 .taxonomy-item-name {
-  font-size: 0.9rem;
-  color: #6c757d;
+  font-size: 0.8rem;
+  color: #343a40;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  line-height: 1.1;
 }
 
+/* Status states with consistent sizing */
 .taxonomy-loading, .taxonomy-empty, .taxonomy-error {
   padding: 20px;
   text-align: center;
   color: #6c757d;
+  min-height: 100px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.taxonomy-loading {
+  position: relative;
+}
+
+.taxonomy-loading::after {
+  content: '';
+  display: block;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 3px solid rgba(0,123,255,0.2);
+  border-top-color: #007bff;
+  margin: 10px auto 0;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 
 .taxonomy-error {
@@ -140,6 +193,7 @@
   border: none;
   border-radius: 4px;
   cursor: pointer;
+  transition: background-color 0.2s ease;
 }
 
 .retry-button:hover {
@@ -151,6 +205,7 @@
   background-color: #e8f4ff;
   border-radius: 8px;
   border-left: 4px solid #007bff;
+  margin-top: 10px;
 }
 
 .taxonomy-debug {
@@ -165,4 +220,42 @@
 .error-container {
   padding: 15px;
   margin-bottom: 15px;
+}
+
+/* Fallback indicator styling */
+.using-direct-data-indicator {
+  font-size: 11px; 
+  color: #666; 
+  margin: 8px 0; 
+  padding: 4px;
+  background-color: #f0f8ff; 
+  border: 1px solid #d0e0ff; 
+  border-radius: 4px;
+  text-align: center;
+}
+
+/* Responsive adjustments */
+@media (max-width: 767px) {
+  .taxonomy-items {
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  }
+  
+  .taxonomy-item {
+    height: 65px;
+    padding: 8px;
+  }
+  
+  .taxonomy-item-code {
+    font-size: 0.9rem;
+  }
+  
+  .taxonomy-item-name {
+    font-size: 0.75rem;
+  }
+}
+
+/* Prevent layout shifts during transitions */
+.taxonomy-section, .taxonomy-items, .taxonomy-item {
+  backface-visibility: hidden;
+  -webkit-font-smoothing: subpixel-antialiased;
 }

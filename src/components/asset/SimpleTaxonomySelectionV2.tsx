@@ -3,8 +3,9 @@
  * 
  * An improved version of the SimpleTaxonomySelection component
  * that uses the useTaxonomy hook for more reliable taxonomy selection.
+ * Optimized for performance with memoization and reduced re-renders.
  */
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useTaxonomyContext } from '../../contexts/TaxonomyContext';
 import { logger } from '../../utils/logger';
 import { taxonomyService } from '../../services/simpleTaxonomyService';
@@ -18,6 +19,125 @@ interface SimpleTaxonomySelectionV2Props {
   selectedCategory?: string;
   selectedSubcategory?: string;
 }
+
+// Memoized TaxonomyItem component to prevent unnecessary re-renders
+const TaxonomyItemComponent = React.memo(({ 
+  item, 
+  isActive, 
+  onClick, 
+  onDoubleClick, 
+  dataTestId 
+}: { 
+  item: TaxonomyItem; 
+  isActive: boolean; 
+  onClick: () => void; 
+  onDoubleClick?: () => void;
+  dataTestId: string;
+}) => {
+  return (
+    <div
+      className={`taxonomy-item ${isActive ? 'active' : ''}`}
+      onClick={onClick}
+      onDoubleClick={onDoubleClick}
+      data-testid={dataTestId}
+    >
+      <div className="taxonomy-item-code">{item.code}</div>
+      <div className="taxonomy-item-numeric">{item.numericCode}</div>
+      <div className="taxonomy-item-name">{item.name}</div>
+    </div>
+  );
+});
+
+// Memoized Category Card Grid component
+const CategoriesGrid = React.memo(({
+  categories,
+  activeCategory,
+  handleCategorySelect
+}: {
+  categories: TaxonomyItem[];
+  activeCategory: string | null;
+  handleCategorySelect: (category: string) => void;
+}) => {
+  return (
+    <div className="taxonomy-items">
+      {categories.map(category => (
+        <TaxonomyItemComponent
+          key={category.code}
+          item={category}
+          isActive={activeCategory === category.code}
+          onClick={() => handleCategorySelect(category.code)}
+          dataTestId={`category-${category.code}`}
+        />
+      ))}
+    </div>
+  );
+});
+
+// Memoized Subcategory Card Grid component
+const SubcategoriesGrid = React.memo(({
+  subcategories,
+  activeSubcategory,
+  handleSubcategorySelect
+}: {
+  subcategories: TaxonomyItem[];
+  activeSubcategory: string | null;
+  handleSubcategorySelect: (subcategory: string, isDoubleClick?: boolean) => void;
+}) => {
+  return (
+    <div className="taxonomy-items">
+      {subcategories.map(subcategory => (
+        <TaxonomyItemComponent
+          key={subcategory.code}
+          item={subcategory}
+          isActive={activeSubcategory === subcategory.code}
+          onClick={() => handleSubcategorySelect(subcategory.code)}
+          onDoubleClick={() => handleSubcategorySelect(subcategory.code, true)}
+          dataTestId={`subcategory-${subcategory.code}`}
+        />
+      ))}
+    </div>
+  );
+});
+
+// Loading state component
+const LoadingState = React.memo(({ message }: { message: string }) => (
+  <div className="taxonomy-loading">{message}</div>
+));
+
+// Error state component with retry button
+const ErrorState = React.memo(({ 
+  error, 
+  onRetry 
+}: { 
+  error: Error | null; 
+  onRetry: () => void;
+}) => (
+  <div className="taxonomy-error">
+    <p>{String(error)}</p>
+    <button onClick={onRetry} className="retry-button">
+      Retry
+    </button>
+  </div>
+));
+
+// Empty state component with retry button
+const EmptyState = React.memo(({ 
+  message, 
+  onRetry,
+  debugInfo
+}: { 
+  message: string; 
+  onRetry: () => void;
+  debugInfo?: React.ReactNode;
+}) => (
+  <div className="taxonomy-empty">
+    <p>{message}</p>
+    {debugInfo}
+    <button onClick={onRetry} className="retry-button">
+      Retry
+    </button>
+  </div>
+));
 
 const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
   layer,
@@ -48,47 +168,7 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
     selectLayer
   } = taxonomyContext;
   
-  // Initial setup - run only once
-  useEffect(() => {
-    if (layer) {
-      logger.info(`SimpleTaxonomySelectionV2: Initial setup for layer ${layer}`);
-      // Clear any previous state
-      selectLayer(layer);
-      
-      // Force reload immediately
-      setTimeout(() => {
-        reloadCategories();
-        logger.info(`Initial load of categories for layer: ${layer}`);
-      }, 0);
-      
-      // If category is also provided, load subcategories
-      if (selectedCategory) {
-        setTimeout(() => {
-          selectCategory(selectedCategory);
-          reloadSubcategories();
-          logger.info(`Initial load of subcategories for ${layer}.${selectedCategory}`);
-        }, 100);
-      }
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Empty dependency array to run once on mount
-  
-  // When layer changes, update the selected layer in the taxonomy hook
-  useEffect(() => {
-    if (layer) {
-      logger.info(`SimpleTaxonomySelectionV2: Setting layer to ${layer}`);
-      selectLayer(layer);
-      
-      // Force an immediate reload of categories
-      setTimeout(() => {
-        if (layer) {
-          reloadCategories();
-          logger.info(`Automatically loading categories for layer: ${layer}`);
-        }
-      }, 50);
-    }
-  }, [layer, selectLayer, reloadCategories]);
-  
+  // Only use state when we need to track changes not in context
   const [activeCategory, setActiveCategory] = useState<string | null>(selectedCategory || null);
   const [activeSubcategory, setActiveSubcategory] = useState<string | null>(selectedSubcategory || null);
   
@@ -96,43 +176,133 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
   const [localSubcategories, setLocalSubcategories] = useState<TaxonomyItem[]>([]);
   const subcategoriesRef = useRef<TaxonomyItem[]>([]);
   
-  // When layer changes, reset active category and subcategory
+  // Prevent duplicate data loads with a ref
+  const initialSetupRef = useRef<boolean>(false);
+  const isInitialCategoryLoadRef = useRef<boolean>(true);
+  
+  // Debounce timer references
+  const categoryDebounceRef = useRef<NodeJS.Timeout | null>(null);
+  const subcategoryDebounceRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // Initial setup - run only once and optimize with ref check
+  useEffect(() => {
+    if (layer && !initialSetupRef.current) {
+      initialSetupRef.current = true;
+      logger.info(`SimpleTaxonomySelectionV2: Initial setup for layer ${layer}`);
+      
+      // Clear any previous state
+      selectLayer(layer);
+      
+      // Force reload immediately
+      const timer = setTimeout(() => {
+        reloadCategories();
+        logger.info(`Initial load of categories for layer: ${layer}`);
+        
+        // If category is also provided, load subcategories
+        if (selectedCategory) {
+          selectCategory(selectedCategory);
+          reloadSubcategories();
+          logger.info(`Initial load of subcategories for ${layer}.${selectedCategory}`);
+        }
+      }, 0);
+      
+      return () => clearTimeout(timer);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [layer]); // Only depends on layer changing
+  
+  // When layer changes, update the selected layer in the taxonomy hook
+  // Use debouncing to prevent rapid/multiple calls
+  useEffect(() => {
+    if (layer) {
+      // Clear any previous debounce timer
+      if (categoryDebounceRef.current) {
+        clearTimeout(categoryDebounceRef.current);
+      }
+      
+      logger.info(`SimpleTaxonomySelectionV2: Setting layer to ${layer}`);
+      selectLayer(layer);
+      
+      // Debounce the categories reload to prevent multiple rapid calls
+      categoryDebounceRef.current = setTimeout(() => {
+        if (layer) {
+          reloadCategories();
+          // Only log the first time to reduce console noise
+          if (isInitialCategoryLoadRef.current) {
+            logger.info(`Loading categories for layer: ${layer}`);
+            isInitialCategoryLoadRef.current = false;
+          }
+        }
+      }, 50);
+    }
+    
+    return () => {
+      if (categoryDebounceRef.current) {
+        clearTimeout(categoryDebounceRef.current);
+      }
+    };
+  }, [layer, selectLayer, reloadCategories]);
+  
+  // When layer changes, reset active category and subcategory states
   useEffect(() => {
     setActiveCategory(null);
     setActiveSubcategory(null);
   }, [layer]);
   
-  // When selectedCategory changes, update the active category
+  // When selectedCategory changes from props, update the active category
   // FIXED: Don't call selectCategory to prevent circular updates with parent
   useEffect(() => {
     if (selectedCategory && selectedCategory !== activeCategory) {
       setActiveCategory(selectedCategory);
-      // We don't call selectCategory here to prevent circular updates
-      // but we do need to trigger subcategory loading
       
-      // Force an immediate reload of subcategories if passed from parent
-      setTimeout(() => {
+      // Clear any previous debounce timer
+      if (subcategoryDebounceRef.current) {
+        clearTimeout(subcategoryDebounceRef.current);
+      }
+      
+      // Debounce the subcategories reload
+      subcategoryDebounceRef.current = setTimeout(() => {
         if (layer && selectedCategory) {
           selectCategory(selectedCategory); // Need to set in context
           reloadSubcategories();
-          logger.info(`Automatically loading subcategories for ${layer}.${selectedCategory} (from parent)`);
+          logger.info(`Loading subcategories for ${layer}.${selectedCategory} (from parent)`);
         }
-      }, 50);
+      }, 100);
     }
+    
+    return () => {
+      if (subcategoryDebounceRef.current) {
+        clearTimeout(subcategoryDebounceRef.current);
+      }
+    };
   }, [selectedCategory, activeCategory, layer, selectCategory, reloadSubcategories]);
   
-  // When selectedSubcategory changes, update the active subcategory
-  // FIXED: Don't call selectSubcategory to prevent circular updates with parent
+  // When selectedSubcategory changes from props, update the active subcategory
   useEffect(() => {
     if (selectedSubcategory && selectedSubcategory !== activeSubcategory) {
       setActiveSubcategory(selectedSubcategory);
-      // We don't call selectSubcategory here to prevent circular updates
-      // selectSubcategory(selectedSubcategory); - This was causing infinite loops
     }
   }, [selectedSubcategory, activeSubcategory]);
   
-  // Handle category selection
-  const handleCategorySelect = (category: string) => {
+  // Memoize the direct subcategories fetch to prevent re-calculation on every render
+  const getDirectSubcategories = useCallback((layer: string, category: string | null) => {
+    if (!layer || !category) return [];
+    try {
+      return taxonomyService.getSubcategories(layer, category);
+    } catch (error) {
+      console.error('Error getting direct subcategories:', error);
+      return [];
+    }
+  }, []);
+  
+  // Memoize the subcategories based on the activeCategory
+  const directSubcategories = useMemo(() => {
+    if (!activeCategory) return [];
+    return getDirectSubcategories(layer, activeCategory);
+  }, [layer, activeCategory, getDirectSubcategories]);
+  
+  // Handle category selection with debouncing to prevent multiple rapid selections
+  const handleCategorySelect = useCallback((category: string) => {
     // FIXED: Prevent duplicate selections
     if (category === activeCategory) return;
     
@@ -145,7 +315,6 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
     // Direct service call to load subcategories
     try {
       const subcats = taxonomyService.getSubcategories(layer, category);
-      console.log(`Directly loaded subcategories for ${layer}.${category}:`, subcats);
       
       // Store subcategories in local backup storage
       setLocalSubcategories(subcats);
@@ -153,32 +322,24 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
       
       // Set subcategories in context
       selectCategory(category);
-      if (subcats.length > 0) {
-        console.log('Subcategories loaded successfully:', subcats.length);
-      }
     } catch (error) {
       console.error('Error loading subcategories directly:', error);
     }
     
-    // Keep the original method as a fallback
-    setTimeout(() => {
+    // Keep the original method as a fallback, but with debouncing
+    if (subcategoryDebounceRef.current) {
+      clearTimeout(subcategoryDebounceRef.current);
+    }
+    
+    subcategoryDebounceRef.current = setTimeout(() => {
       if (layer && category) {
         reloadSubcategories();
-        logger.info(`Automatically loading subcategories for ${layer}.${category}`);
       }
     }, 50);
-  };
+  }, [activeCategory, layer, onCategorySelect, reloadSubcategories, selectCategory]);
   
   // Handle subcategory selection - TARGETED FIX FOR DISAPPEARING SUBCATEGORIES
-  const handleSubcategorySelect = (subcategory: string, isDoubleClick?: boolean) => {
-    // Log before state changes to diagnose
-    console.log('BEFORE subcategory selection:', {
-      layer,
-      activeCategory,
-      subcategory,
-      currentSubcategories: subcategories
-    });
-
+  const handleSubcategorySelect = useCallback((subcategory: string, isDoubleClick?: boolean) => {
     // FIXED: Prevent duplicate selections
     if (subcategory === activeSubcategory) return;
     
@@ -194,65 +355,121 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
     onSubcategorySelect(subcategory, isDoubleClick);
 
     // 4. Create a local cache of subcategories to prevent disappearance
-    const currentSubcategories = [...subcategories];
-    
-    // Store in our local backup storage too
     if (subcategories.length > 0) {
       setLocalSubcategories(subcategories);
       subcategoriesRef.current = subcategories;
     }
-    
-    // Direct reference to ensure we have subcategories even if context fails
-    const directSubcategories = activeCategory ? 
-      taxonomyService.getSubcategories(layer, activeCategory) : [];
-    
-    // If our local storage is empty but direct service has data, update it
-    if (localSubcategories.length === 0 && directSubcategories.length > 0) {
-      setLocalSubcategories(directSubcategories);
-      subcategoriesRef.current = directSubcategories;
+  }, [activeSubcategory, onSubcategorySelect, selectSubcategory, subcategories]);
+  
+  // Memoize the retry handlers to prevent recreation on every render
+  const handleCategoryRetry = useCallback(() => {
+    if (layer) {
+      selectLayer(layer);
+      // Add a small delay to ensure layer is set before reloading
+      setTimeout(() => reloadCategories(), 50);
+      logger.info(`Retrying category load for layer: ${layer}`);
+    }
+  }, [layer, reloadCategories, selectLayer]);
+  
+  const handleSubcategoryRetry = useCallback(() => {
+    if (layer && activeCategory) {
+      selectLayer(layer);
+      selectCategory(activeCategory);
+      
+      // First try direct service call
+      try {
+        const directSubcats = taxonomyService.getSubcategories(layer, activeCategory);
+        console.log(`Retry: Directly loaded ${directSubcats.length} subcategories for ${layer}.${activeCategory}`);
+        
+        // Store in local backup
+        setLocalSubcategories(directSubcats);
+        subcategoriesRef.current = directSubcats;
+      } catch (error) {
+        console.error('Error in direct subcategory load during retry:', error);
+      }
+      
+      // Then also try the context approach as fallback
+      setTimeout(() => reloadSubcategories(), 50);
+      logger.info(`Retrying subcategory load for ${layer}.${activeCategory}`);
+    }
+  }, [activeCategory, layer, reloadSubcategories, selectCategory, selectLayer]);
+  
+  // Memoized determination of which subcategories to display, with fallbacks
+  const displaySubcategoriesData = useMemo(() => {
+    // If context has subcategories, use them
+    if (subcategories.length > 0) {
+      return { displaySubcategories: subcategories, dataSource: 'context', useDirectData: false };
     }
     
-    // 5. Add timeout to verify state after update
-    setTimeout(() => {
-      console.log('AFTER subcategory selection:', {
-        layer,
-        activeCategory,
-        activeSubcategory: subcategory,
-        contextSubcategories: subcategories,
-        localCachedSubcategories: currentSubcategories,
-        localBackupSubcategories: localSubcategories,
-        refSubcategories: subcategoriesRef.current,
-        directSubcategories
-      });
-      
-      // 6. If subcategories disappeared, restore them from all available sources
-      if (subcategories.length === 0) {
-        console.log('Subcategories disappeared after selection - attempting to restore');
-        
-        // Try all available backup sources in order of preference
-        if (currentSubcategories.length > 0) {
-          console.log('Restoring from temporary cache');
-          // Force a re-render with the active subcategory
-          setActiveSubcategory(null);
-          setTimeout(() => setActiveSubcategory(subcategory), 10);
-        } 
-        else if (localSubcategories.length > 0) {
-          console.log('Restoring from local state backup');
-          // Force-update selection
-          setActiveSubcategory(null);
-          setTimeout(() => setActiveSubcategory(subcategory), 10);
-        } 
-        else if (directSubcategories.length > 0) {
-          console.log('Restoring from direct service call');
-          // Update local backup and force selection
-          setLocalSubcategories(directSubcategories);
-          subcategoriesRef.current = directSubcategories;
-          setActiveSubcategory(null);
-          setTimeout(() => setActiveSubcategory(subcategory), 10);
-        }
+    // If context is empty, try local backup options in order of preference
+    // First prefer direct service call (most reliable)
+    if (directSubcategories.length > 0) {
+      // Update our backup stores if needed
+      if (localSubcategories.length === 0) {
+        setLocalSubcategories(directSubcategories);
+        subcategoriesRef.current = directSubcategories;
       }
-    }, 50);
-  };
+      return { 
+        displaySubcategories: directSubcategories, 
+        dataSource: 'direct', 
+        useDirectData: true 
+      };
+    }
+    
+    // Then try local state backup
+    if (localSubcategories.length > 0) {
+      return { 
+        displaySubcategories: localSubcategories, 
+        dataSource: 'local', 
+        useDirectData: true 
+      };
+    }
+    
+    // Finally try reference backup
+    if (subcategoriesRef.current.length > 0) {
+      return { 
+        displaySubcategories: subcategoriesRef.current, 
+        dataSource: 'ref', 
+        useDirectData: true 
+      };
+    }
+    
+    // No subcategories available from any source
+    return { 
+      displaySubcategories: [], 
+      dataSource: 'none', 
+      useDirectData: false 
+    };
+  }, [subcategories, directSubcategories, localSubcategories]);
+  
+  // Create a debug info element for empty subcategories state
+  const subcategoryDebugInfo = useMemo(() => {
+    if (process.env.NODE_ENV !== 'development') return null;
+    
+    return (
+      <div style={{ fontSize: '12px', color: '#666', margin: '10px 0', padding: '8px', backgroundColor: '#f9f9f9', border: '1px solid #eee' }}>
+        <p>Debug Info: {JSON.stringify({
+          layer,
+          activeCategory,
+          subcategoriesState: subcategories.length,
+          directSubcategories: directSubcategories.length,
+          localBackup: localSubcategories.length,
+          refBackup: subcategoriesRef.current.length,
+          isLoadingSubcategories,
+          hasSubcategoryError: !!subcategoryError,
+          error: subcategoryError ? String(subcategoryError) : null
+        }, null, 2)}</p>
+      </div>
+    );
+  }, [
+    layer, 
+    activeCategory, 
+    subcategories.length, 
+    directSubcategories.length,
+    localSubcategories.length, 
+    isLoadingSubcategories, 
+    subcategoryError
+  ]);
   
   return (
     <div className="simple-taxonomy-selection">
@@ -263,58 +480,23 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
         </h3>
         
         {isLoadingCategories ? (
-          <div className="taxonomy-loading">Loading categories...</div>
+          <LoadingState message="Loading categories..." />
         ) : categoryError ? (
-          <div className="taxonomy-error">
-            <p>{String(categoryError)}</p>
-            <button 
-              onClick={() => {
-                // First ensure the layer is set, then reload categories
-                if (layer) {
-                  selectLayer(layer);
-                  // Add a small delay to ensure layer is set before reloading
-                  setTimeout(() => reloadCategories(), 50);
-                  logger.info(`Retrying category load for layer: ${layer}`);
-                }
-              }} 
-              className="retry-button"
-            >
-              Retry
-            </button>
-          </div>
+          <ErrorState 
+            error={categoryError}
+            onRetry={handleCategoryRetry}
+          />
         ) : categories.length === 0 ? (
-          <div className="taxonomy-empty">
-            <p>No categories found for layer {layer}</p>
-            <button 
-              onClick={() => {
-                // First ensure the layer is set, then reload categories
-                if (layer) {
-                  selectLayer(layer);
-                  // Add a small delay to ensure layer is set before reloading
-                  setTimeout(() => reloadCategories(), 50);
-                  logger.info(`Retrying category load for layer: ${layer}`);
-                }
-              }} 
-              className="retry-button"
-            >
-              Retry
-            </button>
-          </div>
+          <EmptyState 
+            message={`No categories found for layer ${layer}`}
+            onRetry={handleCategoryRetry}
+          />
         ) : (
-          <div className="taxonomy-items">
-            {categories.map(category => (
-              <div
-                key={category.code}
-                className={`taxonomy-item ${activeCategory === category.code ? 'active' : ''}`}
-                onClick={() => handleCategorySelect(category.code)}
-                data-testid={`category-${category.code}`}
-              >
-                <div className="taxonomy-item-code">{category.code}</div>
-                <div className="taxonomy-item-numeric">{category.numericCode}</div>
-                <div className="taxonomy-item-name">{category.name}</div>
-              </div>
-            ))}
-          </div>
+          <CategoriesGrid 
+            categories={categories}
+            activeCategory={activeCategory}
+            handleCategorySelect={handleCategorySelect}
+          />
         )}
       </div>
       
@@ -325,198 +507,42 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
             {activeCategory && <span className="category-indicator">Category: {activeCategory}</span>}
           </h3>
           
-          {/* ADD THIS DIAGNOSTIC BEFORE RENDERING SUBCATEGORIES */}
-          {(() => {
-            console.log('DEBUG Subcategory Rendering:', {
-              layer,
-              activeCategory,
-              subcategoriesDirectlyFromService: layer && activeCategory ? 
-                taxonomyService.getSubcategories(layer, activeCategory) : [],
-              subcategoriesFromContext: subcategories,
-              localBackupSubcategories: localSubcategories,
-              refSubcategories: subcategoriesRef.current,
-              activeSubcategory
-            });
-            return null;
-          })()}
-          
           {isLoadingSubcategories ? (
-            <div className="taxonomy-loading">Loading subcategories...</div>
+            <LoadingState message="Loading subcategories..." />
           ) : subcategoryError ? (
-            <div className="taxonomy-error">
-              <p>{String(subcategoryError)}</p>
-              <button 
-                onClick={() => {
-                  // Ensure layer and category are set before reloading
-                  if (layer && activeCategory) {
-                    selectLayer(layer);
-                    selectCategory(activeCategory);
-                    
-                    // First try direct service call
-                    try {
-                      const directSubcats = taxonomyService.getSubcategories(layer, activeCategory);
-                      console.log(`Retry: Directly loaded ${directSubcats.length} subcategories for ${layer}.${activeCategory}`);
-                    } catch (error) {
-                      console.error('Error in direct subcategory load during retry:', error);
-                    }
-                    
-                    // Then also try the context approach as fallback
-                    setTimeout(() => reloadSubcategories(), 50);
-                    logger.info(`Retrying subcategory load for ${layer}.${activeCategory}`);
-                  }
-                }} 
-                className="retry-button"
-              >
-                Retry
-              </button>
-            </div>
-          ) : subcategories.length === 0 ? (
-            (() => {
-              // Try to get subcategories directly from the service if context is empty
-              // IMPORTANT: Always call getSubcategories directly to ensure we get fresh data
-              const directSubcategories = activeCategory ? 
-                taxonomyService.getSubcategories(layer, activeCategory) : [];
-              
-              console.log(`[DIRECT] Got ${directSubcategories.length} subcategories for ${layer}.${activeCategory}`);
-              
-              // If we got subcategories directly, use them instead of showing empty state
-              if (directSubcategories.length > 0) {
-                console.log(`Using direct subcategories (${directSubcategories.length}) as fallback for ${layer}.${activeCategory}`);
-                console.log(`First subcategory: ${directSubcategories[0].code} - ${directSubcategories[0].name}`);
-                
-                // Use the subcategories directly 
-                // We don't have a direct method to set subcategories in context
-                
-                return (
-                  <div className="taxonomy-items direct-fallback">
-                    {/* Render subcategories directly from taxonomyService */}
-                    {directSubcategories.map(subcategory => (
-                      <div
-                        key={subcategory.code}
-                        className={`taxonomy-item ${activeSubcategory === subcategory.code ? 'active' : ''}`}
-                        onClick={() => handleSubcategorySelect(subcategory.code)}
-                        onDoubleClick={() => handleSubcategorySelect(subcategory.code, true)}
-                        data-testid={`subcategory-${subcategory.code}`}
-                      >
-                        <div className="taxonomy-item-code">{subcategory.code}</div>
-                        <div className="taxonomy-item-numeric">{subcategory.numericCode}</div>
-                        <div className="taxonomy-item-name">{subcategory.name}</div>
-                      </div>
-                    ))}
-                  </div>
-                );
-              }
-              
-              // Otherwise show the empty state
-              return (
-                <div className="taxonomy-empty">
-                  <p>No subcategories found for {layer}.{activeCategory}</p>
-                  <div style={{ fontSize: '12px', color: '#666', margin: '10px 0', padding: '8px', backgroundColor: '#f9f9f9', border: '1px solid #eee' }}>
-                    <p>Debug Info: {JSON.stringify({
-                      layer,
-                      activeCategory,
-                      subcategoriesState: subcategories.length,
-                      contextSubcategories: subcategories,
-                      directSubcategories: directSubcategories,
-                      isLoadingSubcategories,
-                      hasSubcategoryError: !!subcategoryError,
-                      error: subcategoryError ? String(subcategoryError) : null
-                    }, null, 2)}</p>
-                  </div>
-                  <button 
-                    onClick={() => {
-                      // Ensure layer and category are set before reloading
-                      if (layer && activeCategory) {
-                        selectLayer(layer);
-                        selectCategory(activeCategory);
-                        
-                        // First try direct service call
-                        try {
-                          const directSubcats = taxonomyService.getSubcategories(layer, activeCategory);
-                          console.log(`Retry: Directly loaded ${directSubcats.length} subcategories for ${layer}.${activeCategory}`);
-                        } catch (error) {
-                          console.error('Error in direct subcategory load during retry:', error);
-                        }
-                        
-                        // Then also try the context approach as fallback
-                        setTimeout(() => reloadSubcategories(), 50);
-                        logger.info(`Retrying subcategory load for ${layer}.${activeCategory}`);
-                      }
-                    }} 
-                    className="retry-button"
-                  >
-                    Retry
-                  </button>
-                </div>
-              );
-            })()
+            <ErrorState 
+              error={subcategoryError}
+              onRetry={handleSubcategoryRetry}
+            />
+          ) : displaySubcategoriesData.displaySubcategories.length === 0 ? (
+            <EmptyState 
+              message={`No subcategories found for ${layer}.${activeCategory}`}
+              onRetry={handleSubcategoryRetry}
+              debugInfo={subcategoryDebugInfo}
+            />
           ) : (
-            (() => {
-              // TARGETED FIX: Improved subcategory rendering logic
+            <div className={`taxonomy-items ${displaySubcategoriesData.useDirectData ? 'using-direct-data' : ''}`}>
+              <SubcategoriesGrid
+                subcategories={displaySubcategoriesData.displaySubcategories}
+                activeSubcategory={activeSubcategory}
+                handleSubcategorySelect={handleSubcategorySelect}
+              />
               
-              // 1. First get subcategories directly from service (most reliable source)
-              const directSubcategories = activeCategory ? 
-                taxonomyService.getSubcategories(layer, activeCategory) : [];
-              
-              console.log(`[SUBCATEGORY RENDER] Sources: Context=${subcategories.length}, Direct=${directSubcategories.length}, LocalBackup=${localSubcategories.length}, Ref=${subcategoriesRef.current.length}`);
-              
-              // 2. Determine best available source for subcategories
-              let displaySubcategories = subcategories;
-              let dataSource = 'context';
-              let useDirectData = false;
-              
-              // 3. If context is empty, try local backup options in order of preference
-              if (subcategories.length === 0) {
-                // First prefer direct service call (most reliable)
-                if (directSubcategories.length > 0) {
-                  displaySubcategories = directSubcategories;
-                  dataSource = 'direct';
-                  useDirectData = true;
-                  // Update our backup stores
-                  if (localSubcategories.length === 0) {
-                    setLocalSubcategories(directSubcategories);
-                    subcategoriesRef.current = directSubcategories;
-                  }
-                  console.log(`[FALLBACK-DIRECT] Using direct subcategories (${directSubcategories.length}) from service`);
-                } 
-                // Then try local state backup
-                else if (localSubcategories.length > 0) {
-                  displaySubcategories = localSubcategories;
-                  dataSource = 'local';
-                  console.log(`[FALLBACK-LOCAL] Using local backup subcategories (${localSubcategories.length})`);
-                } 
-                // Finally try reference backup
-                else if (subcategoriesRef.current.length > 0) {
-                  displaySubcategories = subcategoriesRef.current;
-                  dataSource = 'ref';
-                  console.log(`[FALLBACK-REF] Using reference backup subcategories (${subcategoriesRef.current.length})`);
-                }
-              }
-              
-              // Return the actual subcategory rendering UI
-              return (
-                <div className={`taxonomy-items ${useDirectData ? 'using-direct-data' : ''}`}>
-                  {displaySubcategories.map(subcategory => (
-                    <div
-                      key={subcategory.code}
-                      className={`taxonomy-item ${activeSubcategory === subcategory.code ? 'active' : ''}`}
-                      onClick={() => handleSubcategorySelect(subcategory.code)}
-                      onDoubleClick={() => handleSubcategorySelect(subcategory.code, true)}
-                      data-testid={`subcategory-${subcategory.code}`}
-                    >
-                      <div className="taxonomy-item-code">{subcategory.code}</div>
-                      <div className="taxonomy-item-numeric">{subcategory.numericCode}</div>
-                      <div className="taxonomy-item-name">{subcategory.name}</div>
-                    </div>
-                  ))}
-                  {useDirectData && (
-                    <div style={{ fontSize: '11px', color: '#666', margin: '8px 0', padding: '4px', backgroundColor: '#f0f8ff', border: '1px solid #d0e0ff', borderRadius: '4px' }}>
-                      Using direct service data (fallback mode)
-                    </div>
-                  )}
+              {displaySubcategoriesData.useDirectData && (
+                <div style={{ 
+                  fontSize: '11px', 
+                  color: '#666', 
+                  margin: '8px 0', 
+                  padding: '4px', 
+                  backgroundColor: '#f0f8ff', 
+                  border: '1px solid #d0e0ff', 
+                  borderRadius: '4px',
+                  textAlign: 'center'
+                }}>
+                  Using {displaySubcategoriesData.dataSource} data source (fallback mode)
                 </div>
-              );
-            })()
+              )}
+            </div>
           )}
         </div>
       )}
@@ -529,45 +555,22 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
         </div>
       )}
       
-      {/* Debug information */}
+      {/* Debug information - only in development */}
       {process.env.NODE_ENV === 'development' && (
-        <div className="taxonomy-debug">
+        <details className="taxonomy-debug">
+          <summary>Debug Information</summary>
           <p>Layer: {layer}</p>
           <p>Categories: {categories.length} available</p>
           <p>Selected Category: {activeCategory}</p>
-          <p>Subcategories: {subcategories.length} available</p>
+          <p>Subcategories: {subcategories.length} available (Context)</p>
+          <p>Direct Subcategories: {directSubcategories.length} available</p>
+          <p>Local Backup: {localSubcategories.length} available</p>
           <p>Selected Subcategory: {activeSubcategory}</p>
-          
-          <details>
-            <summary>Advanced Taxonomy State</summary>
-            <pre style={{ fontSize: '11px' }}>
-              {JSON.stringify({
-                component: {
-                  props: { layer, selectedCategory, selectedSubcategory },
-                  state: { activeCategory, activeSubcategory }
-                },
-                context: {
-                  selectedLayer: taxonomyContext?.selectedLayer,
-                  selectedCategory: taxonomyContext?.selectedCategory,
-                  selectedSubcategory: taxonomyContext?.selectedSubcategory,
-                  hfn: taxonomyContext?.hfn,
-                  mfa: taxonomyContext?.mfa
-                },
-                serviceState: {
-                  categories: categories.length,
-                  subcategories: subcategories.length,
-                  isLoadingCategories,
-                  isLoadingSubcategories,
-                  categoryError: categoryError ? String(categoryError) : null,
-                  subcategoryError: subcategoryError ? String(subcategoryError) : null
-                }
-              }, null, 2)}
-            </pre>
-          </details>
-        </div>
+          <p>Data Source: {displaySubcategoriesData.dataSource}</p>
+        </details>
       )}
     </div>
   );
 };
 
-export default SimpleTaxonomySelectionV2;
+export default React.memo(SimpleTaxonomySelectionV2);
