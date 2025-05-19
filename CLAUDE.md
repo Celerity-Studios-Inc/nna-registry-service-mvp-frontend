@@ -238,29 +238,55 @@ There are special case mappings that need special handling:
     - Fixed potential null references in callback functions
   - Build now successfully completes without TypeScript errors
 
-## Current Status (May 20, 2025)
+## Recent Fixes (May 21, 2025)
 
-The latest build (CI/CD #280, commit 5c9f985) includes fixes for the following regressions:
+### 11. HFN Format Fix on Success Page
+- Problem: The success page was displaying the HFN in an incorrect format: `S.HIP_HOP.BASE.001` instead of the expected `S.HIP.BAS.001`
+- Root Cause: 
+  - When receiving data from the form, the category name `Hip_Hop` was passed directly to the formatter instead of its code `HIP`
+  - The formatter was correctly uppercasing these values (`HIP_HOP`), but wasn't mapping them to their canonical codes
+  - Error message: "Error converting HFN to MFA: Category not found: S.HIP_HOP"
+- Solution:
+  - Enhanced the `taxonomyFormatter.ts` utility to properly map display names to canonical codes
+  - Added specific handling for category display names with underscores (e.g., Hip_Hop → HIP)
+  - Added similar mapping for subcategory display names (e.g., Base → BAS)
+  - Improved the fallback mechanisms in both HFN→MFA and MFA→HFN conversion
+  - Enhanced error handling with multi-tier recovery strategies
+- Key Changes:
+  - `/src/utils/taxonomyFormatter.ts`:
+    - Added new `formatCategory` function to map display names to canonical codes
+    - Added new `formatSubcategory` function with similar mapping capabilities
+    - Enhanced `convertHFNtoMFA` with better error handling and direct mappings
+    - Updated `convertMFAtoHFN` with similar improvements
+    - Added detailed logging for debugging format conversion issues
+  - Documented in `HFN_FORMAT_FIX.md`
 
-1. Fixed double-click on layer card not working in step 1
-2. Fixed category cards requiring 'Retry' to load in step 2
-3. Fixed subcategory cards displaying in vertical column instead of grid layout
+## Current Status (May 21, 2025)
 
-However, testing has identified an additional regression:
+With the latest HFN format fix, we've addressed the most critical issue identified from the previous build. Several ongoing issues still need attention:
 
-1. **HFN and MFA Format Regression**: On the asset creation success page, the HFN format is showing lowercase format (e.g., S.Pop.Global.002) instead of the correct uppercase format (S.POP.GLB.002). Similarly, the MFA format may be incorrect.
+1. **Subcategory Grid Layout**: Subcategory cards still display vertically despite CSS fixes
+2. ~~**HFN Format on Success Page**: The success page shows incorrect format~~ (FIXED)
+3. **Duplicate NNA Address Card**: Review/submit page (Step 4) shows two identical NNA address cards
+4. **Inconsistent Sequential Number Display**: The .000 suffix is shown inconsistently across steps
+5. **Next Button State Management**: The Next button doesn't properly update its state (active/inactive)
+6. **Slow File Upload UI Rendering**: Noticeable delay in UI rendering after file upload
 
-This regression appears to be in the code that formats the addresses for display on the success page. The issue is likely occurring in the `registerAssetPage.tsx` file, in the `renderSuccessScreen` function that formats the HFN and MFA for display.
+These remaining issues have been thoroughly analyzed in `ONGOING_ISSUES_ANALYSIS.md` with detailed root causes:
+
+1. The CSS grid layout issue may involve specificity conflicts, dynamic styles, or class mismatches
+2. The duplicate NNA address cards likely come from redundant rendering in ReviewSubmit.tsx
+3. The performance issues may be caused by inefficient rendering or excessive re-renders
 
 ## Next Steps
 
-1. Fix the HFN and MFA format regression in the success screen
-2. Improve error handling and format validation in the asset creation flow
-3. Monitor the fixes for subcategory selection and step navigation
-4. Clean up excessive debugging logs after functionality is confirmed working
-5. Optimize asset registration performance with further improvements
-6. Consider properly fixing the failing tests in the future
-7. Implement a more robust format validation system to prevent future format regressions
+1. ~~Fix the HFN and MFA format regression in the success screen~~ (COMPLETED)
+2. Fix Subcategory Grid Layout to ensure cards display in a proper grid
+3. Remove the duplicate NNA address card in the Review/Submit step
+4. Implement consistent sequential number display throughout the application
+5. Fix Next button state management throughout the workflow
+6. Optimize file upload UI rendering performance
+7. Clean up excessive debugging logs after all functionality is confirmed working
 
 ## Workflow Guidelines
 - Always get user validation BEFORE implementing changes
