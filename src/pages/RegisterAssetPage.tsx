@@ -634,8 +634,9 @@ const RegisterAssetPage: React.FC = () => {
       console.error('Error creating asset:', err);
       
       // Update progress to show error
-      if (formContainer) {
-        const progressElement = formContainer.querySelector('.submission-progress');
+      const errorFormContainer = document.querySelector('form');
+      if (errorFormContainer) {
+        const progressElement = errorFormContainer.querySelector('.submission-progress');
         if (progressElement) {
           progressElement.innerHTML = `
             <p style="color: #d32f2f; font-weight: bold;">Error: ${err instanceof Error ? err.message : 'Failed to create asset'}</p>
