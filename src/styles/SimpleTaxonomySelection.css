@@ -100,12 +100,13 @@
   cursor: pointer;
   transition: all 0.2s ease;
   background-color: #fff;
-  height: 70px; /* Fixed height for cards */
+  height: 85px; /* Taller to accommodate full names */
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   box-sizing: border-box;
   will-change: transform, opacity; /* Optimization for animations */
+  position: relative; /* Support for absolute positioning of children */
 }
 
 .taxonomy-item:hover {
@@ -261,7 +262,7 @@
 /* Apply highest specificity styles to ensure grid layout is enforced across all browsers */
 html body .simple-taxonomy-selection .taxonomy-section .taxonomy-items {
   display: grid !important;
-  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)) !important;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)) !important; /* Wider cards for more content */
   grid-template-rows: auto !important;
   grid-auto-flow: row !important;
   grid-auto-rows: auto !important;

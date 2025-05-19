@@ -40,10 +40,31 @@ const TaxonomyItemComponent = React.memo(({
       onClick={onClick}
       onDoubleClick={onDoubleClick}
       data-testid={dataTestId}
+      style={{
+        height: '85px', // Taller cards to accommodate full name
+        display: 'flex',
+        flexDirection: 'column',
+        padding: '10px',
+        boxSizing: 'border-box'
+      }}
     >
-      <div className="taxonomy-item-code">{item.code}</div>
-      <div className="taxonomy-item-numeric">{item.numericCode}</div>
-      <div className="taxonomy-item-name">{item.name}</div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px' }}>
+        <div className="taxonomy-item-code" style={{ fontWeight: 'bold', fontSize: '16px' }}>{item.code}</div>
+        <div className="taxonomy-item-numeric" style={{ color: '#666', fontSize: '14px' }}>{item.numericCode}</div>
+      </div>
+      <div className="taxonomy-item-name" style={{ 
+        fontSize: '14px',
+        color: '#333',
+        marginTop: '8px',
+        lineHeight: '1.2',
+        overflow: 'hidden',
+        display: '-webkit-box',
+        WebkitLineClamp: 2,
+        WebkitBoxOrient: 'vertical',
+        textOverflow: 'ellipsis'
+      }}>
+        {item.name}
+      </div>
     </div>
   );
 });
@@ -154,9 +175,9 @@ const SubcategoriesGrid = React.memo(({
   return (
     <div className="taxonomy-items" style={{ 
       display: 'grid',
-      gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))',
+      gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', // Wider cards for more content
       gridTemplateRows: 'auto',
-      gridAutoFlow: 'row',
+      gridAutoFlow: 'row !important', // Force row flow
       gridAutoRows: 'auto',
       gap: '12px',
       width: '100%'
@@ -279,6 +300,43 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
   // Debounce timer references
   const categoryDebounceRef = useRef<NodeJS.Timeout | null>(null);
   const subcategoryDebounceRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // CRITICAL FIX: Add global event listener for layer changes
+  // This provides an extra layer of reliability for layer switching
+  useEffect(() => {
+    // Define the event handler
+    const handleLayerChangeEvent = (event: CustomEvent) => {
+      const { layer: newLayer, timestamp } = event.detail;
+      console.log(`[EVENT] Received layerChanged event for layer ${newLayer} (timestamp: ${timestamp})`);
+      
+      // If this is our current layer, handle the change
+      if (newLayer === layer) {
+        console.log(`[EVENT] Responding to layerChanged event for current layer ${layer}`);
+        
+        // Reset all local state immediately
+        setActiveCategory(null);
+        setActiveSubcategory(null);
+        setLocalSubcategories([]);
+        subcategoriesRef.current = [];
+        
+        // Force a context update
+        selectLayer(layer);
+        
+        // Force a reload of categories
+        setTimeout(() => {
+          reloadCategories();
+        }, 50);
+      }
+    };
+    
+    // Register event listener
+    window.addEventListener('layerChanged', handleLayerChangeEvent as EventListener);
+    
+    // Clean up on unmount
+    return () => {
+      window.removeEventListener('layerChanged', handleLayerChangeEvent as EventListener);
+    };
+  }, [layer, selectLayer, reloadCategories]);
   
   // ENHANCED: Initial setup - run only once but with improved reliability
   useEffect(() => {
@@ -431,11 +489,14 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [layer, selectedCategory]); // Depends on both layer and selectedCategory changes
   
-  // Improved layer change handler - more reliable, less debouncing
+  // CRITICAL FIX: Enhanced layer change handler for more reliable switching
   useEffect(() => {
     if (!layer) return;
     
-    // STEP 1: Cancel any in-progress category loads
+    // Log layer switch to help with debugging
+    console.log(`[LAYER SWITCH] Handling layer change to: ${layer}`);
+    
+    // STEP 1: Cancel any in-progress category loads and clear timers
     if (categoryDebounceRef.current) {
       clearTimeout(categoryDebounceRef.current);
       categoryDebounceRef.current = null;
@@ -444,64 +505,147 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
     // STEP 2: Update context immediately
     selectLayer(layer);
     
-    // STEP 3: Load categories using direct service call for immediate feedback
+    // STEP 3: Create a reference to track this specific layer change operation
+    // This helps prevent race conditions when quickly switching between layers
+    const layerChangeId = Date.now().toString();
+    console.log(`[LAYER SWITCH ${layerChangeId}] Starting category load sequence`);
+    
+    // STEP 4: Load categories using direct service call for immediate feedback
     try {
+      // First attempt is immediate direct service call
       const directCategories = taxonomyService.getCategories(layer);
+      
       if (directCategories && directCategories.length > 0) {
+        console.log(`[LAYER SWITCH ${layerChangeId}] Direct load successful: ${directCategories.length} categories`);
+        
         // If we got immediate results, use a custom event to notify any listeners
         const categoryEvent = new CustomEvent('taxonomyCategoriesLoaded', {
-          detail: { layer, categories: directCategories }
+          detail: { layer, categories: directCategories, source: 'direct-service', layerChangeId }
         });
         window.dispatchEvent(categoryEvent);
-        
-        // If we already have categories in context, we don't need to continue
-        if (categories.length > 0) {
-          return;
-        }
+      } else {
+        console.warn(`[LAYER SWITCH ${layerChangeId}] Direct load returned no categories`); 
       }
     } catch (error) {
-      console.error('Error during direct category load:', error);
+      console.error(`[LAYER SWITCH ${layerChangeId}] Error during direct category load:`, error);
     }
     
-    // STEP 4: Also request categories from context for consistency
+    // STEP 5: Also request categories from context for consistency
+    console.log(`[LAYER SWITCH ${layerChangeId}] Requesting categories from context`);
     reloadCategories();
     
-    // STEP 5: Set up a safety check to ensure categories are loaded
-    const safetyCheckTimer = setTimeout(() => {
-      // If still no categories, try again using both approaches
+    // STEP 6: Set up a tiered retry approach with multiple layers of recovery
+    // First retry after a short delay (100ms) - quick but allows context to update
+    const shortRetryTimer = setTimeout(() => {
+      console.log(`[LAYER SWITCH ${layerChangeId}] Short retry check (100ms)`); 
       if (categories.length === 0) {
-        // Try direct service call first
+        console.log(`[LAYER SWITCH ${layerChangeId}] Categories still empty, trying direct service again`); 
+        // Try direct service call again
         try {
-          const safetyCategories = taxonomyService.getCategories(layer);
-          if (safetyCategories && safetyCategories.length > 0) {
+          const retryCategories = taxonomyService.getCategories(layer);
+          if (retryCategories && retryCategories.length > 0) {
+            console.log(`[LAYER SWITCH ${layerChangeId}] Short retry successful: ${retryCategories.length} categories`); 
             // Notify listeners
             const categoryEvent = new CustomEvent('taxonomyCategoriesLoaded', {
-              detail: { layer, categories: safetyCategories }
+              detail: { layer, categories: retryCategories, source: 'short-retry', layerChangeId }
             });
             window.dispatchEvent(categoryEvent);
           }
         } catch (error) {
-          console.error('Error during safety direct category load:', error);
+          console.error(`[LAYER SWITCH ${layerChangeId}] Error during short retry:`, error);
         }
-        
-        // Also try context
-        reloadCategories();
+      } else {
+        console.log(`[LAYER SWITCH ${layerChangeId}] Short retry unnecessary - already have ${categories.length} categories`); 
       }
-    }, 150);  // Longer timeout for safety check
+    }, 100);
     
+    // Second retry after a medium delay (300ms) - if short retry failed
+    const mediumRetryTimer = setTimeout(() => {
+      console.log(`[LAYER SWITCH ${layerChangeId}] Medium retry check (300ms)`); 
+      if (categories.length === 0) {
+        console.log(`[LAYER SWITCH ${layerChangeId}] Categories still empty, trying context reload`); 
+        // Try context reload
+        reloadCategories();
+        
+        // Also try direct call one more time
+        try {
+          const lastChanceCategories = taxonomyService.getCategories(layer);
+          if (lastChanceCategories && lastChanceCategories.length > 0) {
+            console.log(`[LAYER SWITCH ${layerChangeId}] Medium retry successful: ${lastChanceCategories.length} categories`); 
+            // Notify listeners
+            const categoryEvent = new CustomEvent('taxonomyCategoriesLoaded', {
+              detail: { layer, categories: lastChanceCategories, source: 'medium-retry', layerChangeId }
+            });
+            window.dispatchEvent(categoryEvent);
+          }
+        } catch (error) {
+          console.error(`[LAYER SWITCH ${layerChangeId}] Error during medium retry:`, error);
+        }
+      } else {
+        console.log(`[LAYER SWITCH ${layerChangeId}] Medium retry unnecessary - already have ${categories.length} categories`); 
+      }
+    }, 300);
+    
+    // Last resort safety check (500ms) - if everything else failed
+    const safetyCheckTimer = setTimeout(() => {
+      console.log(`[LAYER SWITCH ${layerChangeId}] Final safety check (500ms)`); 
+      if (categories.length === 0) {
+        console.warn(`[LAYER SWITCH ${layerChangeId}] CRITICAL: Categories still empty after all retries!`); 
+        // Last desperate attempt - force direct service call and explicitly update UI
+        try {
+          const emergencyCategories = taxonomyService.getCategories(layer);
+          if (emergencyCategories && emergencyCategories.length > 0) {
+            console.log(`[LAYER SWITCH ${layerChangeId}] Emergency load successful: ${emergencyCategories.length} categories`); 
+            // Notify listeners with emergency flag
+            const categoryEvent = new CustomEvent('taxonomyCategoriesLoaded', {
+              detail: { layer, categories: emergencyCategories, source: 'emergency', layerChangeId }
+            });
+            window.dispatchEvent(categoryEvent);
+            
+            // Also force a render update
+            setTimeout(() => {
+              // Force context reload one last time
+              reloadCategories();
+              // Force retry to trigger UI update
+              handleCategoryRetry();
+            }, 0);
+          } else {
+            console.error(`[LAYER SWITCH ${layerChangeId}] CRITICAL FAILURE: Could not load categories for layer ${layer} after multiple attempts!`);
+          }
+        } catch (error) {
+          console.error(`[LAYER SWITCH ${layerChangeId}] Error during emergency category load:`, error);
+        }
+      } else {
+        console.log(`[LAYER SWITCH ${layerChangeId}] Safety check successful - have ${categories.length} categories`); 
+      }
+    }, 500);
+    
+    // Clean up all timers when component unmounts or layer changes again
     return () => {
+      console.log(`[LAYER SWITCH ${layerChangeId}] Cleaning up timers from layer change sequence`);
+      clearTimeout(shortRetryTimer);
+      clearTimeout(mediumRetryTimer);
       clearTimeout(safetyCheckTimer);
       if (categoryDebounceRef.current) {
         clearTimeout(categoryDebounceRef.current);
         categoryDebounceRef.current = null;
       }
     };
-  }, [layer, selectLayer, reloadCategories, categories.length]);
+  }, [layer, selectLayer, reloadCategories, categories.length, handleCategoryRetry]);
   
-  // When layer changes, reset active category and subcategory states
+  // When layer changes, immediately reset all category and subcategory state
   useEffect(() => {
+    // Immediately reset selection states
     setActiveCategory(null);
     setActiveSubcategory(null);
+    
+    // CRITICAL FIX: Also clear local subcategories backup immediately
+    // This prevents the previous layer's subcategories from being shown while loading new ones
+    setLocalSubcategories([]);
+    subcategoriesRef.current = [];
+    
+    // Log the reset for debugging
+    console.log(`[LAYER SWITCH] Reset all category/subcategory state for layer change to: ${layer}`);
   }, [layer]);
   
   // Improved selectedCategory change handler with immediate loading
@@ -893,10 +1037,32 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
   // Memoize the retry handlers to prevent recreation on every render
   const handleCategoryRetry = useCallback(() => {
     if (layer) {
+      // ENHANCED: Force more aggressive reloads on retry
+      console.log(`[RETRY] Forcing aggressive category reload for layer: ${layer}`);
+      
+      // First update context state
       selectLayer(layer);
-      // Add a small delay to ensure layer is set before reloading
-      setTimeout(() => reloadCategories(), 50);
-      logger.info(`Retrying category load for layer: ${layer}`);
+      
+      // Force a direct service call for immediate feedback
+      try {
+        const directCategories = taxonomyService.getCategories(layer);
+        if (directCategories && directCategories.length > 0) {
+          console.log(`[RETRY] Direct category load returned ${directCategories.length} categories`);
+          // Use a custom event to notify listeners
+          const categoryEvent = new CustomEvent('taxonomyCategoriesLoaded', {
+            detail: { layer, categories: directCategories }
+          });
+          window.dispatchEvent(categoryEvent);
+        }
+      } catch (error) {
+        console.error('[RETRY] Error loading categories directly:', error);
+      }
+      
+      // Then try the standard context reload with a small delay
+      setTimeout(() => {
+        reloadCategories();
+        logger.info(`[RETRY] Sent context reload request for layer: ${layer}`);
+      }, 50);
     }
   }, [layer, reloadCategories, selectLayer]);
   
@@ -1113,10 +1279,21 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
             onRetry={handleCategoryRetry}
           />
         ) : categories.length === 0 ? (
-          <EmptyState 
-            message={`No categories found for layer ${layer}`}
-            onRetry={handleCategoryRetry}
-          />
+          // ENHANCED: When categories are empty, add an immediate auto-retry
+          // This ensures we don't get stuck with an empty state after layer changes
+          <React.Fragment>
+            <EmptyState 
+              message={`No categories found for layer ${layer}`}
+              onRetry={handleCategoryRetry}
+            />
+            {/* Auto-retry with useEffect */}
+            {React.useEffect(() => {
+              console.log(`[AUTO RETRY] Categories empty for layer ${layer}, auto-retrying...`);
+              // Only auto-retry once to avoid infinite loops
+              const timer = setTimeout(() => handleCategoryRetry(), 100);
+              return () => clearTimeout(timer);
+            }, [])}
+          </React.Fragment>
         ) : (
           <React.Fragment>
             <CategoriesGrid 
@@ -1158,7 +1335,7 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
               className={`taxonomy-items ${displaySubcategoriesData.useDirectData ? 'using-direct-data' : ''}`}
               style={{ 
                 display: 'grid',
-                gridTemplateColumns: '1fr',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', // This is the critical fix: use a proper grid layout
                 gap: '12px',
                 width: '100%'
               }}
