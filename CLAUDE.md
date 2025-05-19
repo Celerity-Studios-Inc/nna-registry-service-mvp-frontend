@@ -221,6 +221,23 @@ There are special case mappings that need special handling:
     - Added positioning context for hint elements
   - Documented in `STEP_NAVIGATION_FIX.md`
 
+### 10. TypeScript Build Error Fix (May 20, 2025)
+- Problem: Build was failing with TypeScript errors in SimpleTaxonomySelectionV2.tsx
+- Root Cause: 
+  - Duplicate declaration of `directSubcategories` variable
+  - Variable `backupSourceData` not having proper type annotation
+  - Possible null reference in setTimeout callback
+- Solution:
+  - Removed the duplicate declaration of `directSubcategories`
+  - Added proper type annotation for `backupSourceData`: `TaxonomyItem[] | null`
+  - Fixed the null reference issue by creating a non-null reference before the setTimeout callback
+- Key changes:
+  - `/src/components/asset/SimpleTaxonomySelectionV2.tsx`:
+    - Removed duplicate declarations, preventing the "variable used before declaration" error
+    - Added proper type annotations to satisfy TypeScript's type safety checks
+    - Fixed potential null references in callback functions
+  - Build now successfully completes without TypeScript errors
+
 ## Next Steps
 
 1. Monitor the comprehensive subcategory selection fix

@@ -452,41 +452,6 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
     };
   }, [selectedCategory, activeCategory, layer, selectCategory, reloadSubcategories]);
   
-  // When selectedSubcategory changes from props, update the active subcategory
-  useEffect(() => {
-    console.log(`[PROP SYNC] selectedSubcategory prop changed to: ${selectedSubcategory}, activeSubcategory state: ${activeSubcategory}`);
-    
-    if (selectedSubcategory && selectedSubcategory !== activeSubcategory) {
-      console.log(`[PROP SYNC] Updating activeSubcategory state to match prop: ${selectedSubcategory}`);
-      setActiveSubcategory(selectedSubcategory);
-      
-      // If we have no subcategories loaded but a subcategory is selected, try to recover data
-      if (subcategories.length === 0 && directSubcategories.length === 0 &&
-          localSubcategories.length === 0 && subcategoriesRef.current.length === 0) {
-        console.log(`[PROP SYNC] No subcategory data available, trying emergency load for ${layer}.${activeCategory}`);
-        
-        if (layer && activeCategory) {
-          try {
-            // Emergency direct fetch attempt 
-            const emergencySubcategories = taxonomyService.getSubcategories(layer, activeCategory);
-            if (emergencySubcategories.length > 0) {
-              console.log(`[PROP SYNC] Emergency fetch successful, got ${emergencySubcategories.length} items`);
-              
-              // Update backup stores - use setTimeout for state to avoid render cycles
-              subcategoriesRef.current = [...emergencySubcategories];
-              setTimeout(() => {
-                setLocalSubcategories([...emergencySubcategories]);
-              }, 0);
-            }
-          } catch (e) {
-            console.warn(`[PROP SYNC] Emergency fetch failed:`, e);
-          }
-        }
-      }
-    }
-  }, [selectedSubcategory, activeSubcategory, subcategories.length, directSubcategories.length, 
-      localSubcategories.length, layer, activeCategory]);
-  
   // Memoize the direct categories/subcategories fetch to prevent re-calculation on every render
   const getDirectCategories = useCallback((layer: string) => {
     if (!layer) return [];
@@ -543,6 +508,41 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
     
     return results;
   }, [layer, activeCategory, getDirectSubcategories, localSubcategories.length]);
+
+  // When selectedSubcategory changes from props, update the active subcategory
+  useEffect(() => {
+    console.log(`[PROP SYNC] selectedSubcategory prop changed to: ${selectedSubcategory}, activeSubcategory state: ${activeSubcategory}`);
+    
+    if (selectedSubcategory && selectedSubcategory !== activeSubcategory) {
+      console.log(`[PROP SYNC] Updating activeSubcategory state to match prop: ${selectedSubcategory}`);
+      setActiveSubcategory(selectedSubcategory);
+      
+      // If we have no subcategories loaded but a subcategory is selected, try to recover data
+      if (subcategories.length === 0 && directSubcategories.length === 0 &&
+          localSubcategories.length === 0 && subcategoriesRef.current.length === 0) {
+        console.log(`[PROP SYNC] No subcategory data available, trying emergency load for ${layer}.${activeCategory}`);
+        
+        if (layer && activeCategory) {
+          try {
+            // Emergency direct fetch attempt 
+            const emergencySubcategories = taxonomyService.getSubcategories(layer, activeCategory);
+            if (emergencySubcategories.length > 0) {
+              console.log(`[PROP SYNC] Emergency fetch successful, got ${emergencySubcategories.length} items`);
+              
+              // Update backup stores - use setTimeout for state to avoid render cycles
+              subcategoriesRef.current = [...emergencySubcategories];
+              setTimeout(() => {
+                setLocalSubcategories([...emergencySubcategories]);
+              }, 0);
+            }
+          } catch (e) {
+            console.warn(`[PROP SYNC] Emergency fetch failed:`, e);
+          }
+        }
+      }
+    }
+  }, [selectedSubcategory, activeSubcategory, subcategories.length, directSubcategories.length, 
+      localSubcategories.length, layer, activeCategory]);
   
   // Handle category selection with debouncing to prevent multiple rapid selections
   const handleCategorySelect = useCallback((category: string) => {
@@ -722,7 +722,7 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
     // This prevents the "disappearing subcategory" bug by ensuring we always have data
     
     // 6a. Update ref first (most reliable, doesn't trigger re-renders)
-    let backupSourceData = null;
+    let backupSourceData: TaxonomyItem[] | null = null;
     if (subcategories.length > 0) {
       backupSourceData = subcategories;
       subcategoriesRef.current = [...subcategories]; // Clone to ensure independence
@@ -740,9 +740,10 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
     // 6b. Schedule delayed local state update to ensure race conditions don't cause losses
     // This uses a timeout to decouple from the current event loop cycle
     if (backupSourceData) {
+      const sourceData = backupSourceData; // Create a non-null reference
       setTimeout(() => {
-        console.log(`[SUB SELECT] Executing delayed local state update with ${backupSourceData.length} items`);
-        setLocalSubcategories([...backupSourceData]); // Clone to ensure independence
+        console.log(`[SUB SELECT] Executing delayed local state update with ${sourceData.length} items`);
+        setLocalSubcategories([...sourceData]); // Clone to ensure independence
       }, 0);
     }
     
