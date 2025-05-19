@@ -34,6 +34,7 @@ import {
 } from '@mui/icons-material';
 import { FileUploadResponse } from '../../types/asset.types';
 import taxonomyMapper from '../../api/taxonomyMapper';
+import FilePreview from '../common/FilePreview';
 
 // Props interface
 interface ReviewSubmitProps {
