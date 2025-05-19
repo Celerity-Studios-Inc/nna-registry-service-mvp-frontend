@@ -51,22 +51,39 @@
   margin-top: 15px;
 }
 
-.taxonomy-items {
-  display: grid !important; /* Force grid display */
-  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)) !important; /* Slightly smaller cards to fit more in a row */
-  grid-template-rows: auto !important; /* Define rows explicitly */
-  grid-auto-flow: row !important; /* Force items to flow in rows */
-  grid-auto-rows: auto !important; /* Let rows size automatically based on content */
-  grid-column-gap: 12px !important; /* Horizontal spacing */
-  grid-row-gap: 12px !important; /* Vertical spacing */
+/* Fixed grid layout for taxonomy items with higher specificity */
+.taxonomy-section .taxonomy-items {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  grid-template-rows: auto;
+  grid-auto-flow: row;
+  grid-auto-rows: auto;
+  grid-column-gap: 12px;
+  grid-row-gap: 12px;
   padding: 15px;
-  max-height: 400px; /* Increased max height for more visibility */
+  max-height: 400px;
   overflow-y: auto;
-  min-height: 100px; /* Minimum height to prevent layout shifts */
+  min-height: 100px;
   box-sizing: border-box;
   transition: opacity 0.2s ease;
-  will-change: opacity, transform; /* Performance optimization */
-  position: relative; /* For absolute positioning of the hint */
+  will-change: opacity, transform;
+  position: relative;
+}
+
+/* Additional selector for higher specificity */
+.simple-taxonomy-selection .taxonomy-section .taxonomy-items {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)) !important;
+  gap: 12px !important;
+}
+
+/* Target subcategory grid specifically with even higher specificity */
+.simple-taxonomy-selection .taxonomy-section:nth-child(2) .taxonomy-items {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)) !important;
+  grid-template-rows: auto !important;
+  grid-auto-flow: row !important;
+  gap: 12px !important;
 }
 
 /* Loading placeholders */
@@ -240,12 +257,18 @@
   text-align: center;
 }
 
+/* Apply higher specificity styles to ensure grid layout is enforced */
+html body .simple-taxonomy-selection .taxonomy-section .taxonomy-items {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)) !important;
+  gap: 12px !important;
+}
+
 /* Responsive adjustments */
 @media (max-width: 767px) {
-  .taxonomy-items {
-    grid-template-columns: repeat(2, 1fr) !important; /* Force 2 columns on mobile */
-    grid-column-gap: 8px !important; /* Reduced gap on mobile */
-    grid-row-gap: 8px !important;
+  html body .simple-taxonomy-selection .taxonomy-section .taxonomy-items {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 8px !important;
   }
   
   .taxonomy-item {
@@ -264,14 +287,14 @@
 
 /* Tablet sized screens */
 @media (min-width: 768px) and (max-width: 1023px) {
-  .taxonomy-items {
-    grid-template-columns: repeat(3, 1fr) !important; /* Force 3 columns on tablets */
+  html body .simple-taxonomy-selection .taxonomy-section .taxonomy-items {
+    grid-template-columns: repeat(3, 1fr) !important;
   }
 }
 
 /* Larger screens */
 @media (min-width: 1024px) {
-  .taxonomy-items {
+  html body .simple-taxonomy-selection .taxonomy-section .taxonomy-items {
     grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)) !important;
   }
 }

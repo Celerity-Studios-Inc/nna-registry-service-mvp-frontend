@@ -260,7 +260,6 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
   
   // Prevent duplicate data loads with a ref
   const initialSetupRef = useRef<boolean>(false);
-  const isInitialCategoryLoadRef = useRef<boolean>(true);
   
   // Debounce timer references
   const categoryDebounceRef = useRef<NodeJS.Timeout | null>(null);
@@ -269,83 +268,141 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
   // ENHANCED: Initial setup - run only once but with improved reliability
   useEffect(() => {
     if (layer) {
-      console.log(`[INIT] Initial setup for layer ${layer}, initialSetupRef=${initialSetupRef.current}, selected category=${selectedCategory || 'none'}`);
+      // Log less in production for performance
+      if (process.env.NODE_ENV !== 'production') {
+        console.log(`[INIT] Initial setup for layer ${layer}, initialSetupRef=${initialSetupRef.current}, selected category=${selectedCategory || 'none'}`);
+      }
       
-      // Always call selectLayer to ensure context is updated
+      // STEP 1: Always call selectLayer to ensure context is updated
       selectLayer(layer);
       
-      // IMPORTANT: Always try loading categories directly first for immediate feedback
+      // STEP 2: Always try loading categories directly first for immediate feedback
       try {
-        console.log(`[INIT] Direct category load started for ${layer}`);
         const directCategories = taxonomyService.getCategories(layer);
         if (directCategories && directCategories.length > 0) {
-          console.log(`[INIT] Direct category load successful: ${directCategories.length} categories`);
+          if (process.env.NODE_ENV !== 'production') {
+            console.log(`[INIT] Direct category load successful: ${directCategories.length} categories`);
+          }
         }
       } catch (error) {
         console.error('[INIT] Error during direct category load:', error);
       }
       
-      // Always reload categories to ensure they appear without clicking "Retry"
+      // STEP 3: Always reload categories from context to ensure consistency
       reloadCategories();
-      console.log(`[INIT] Category reload requested for layer: ${layer}`);
       
-      // If this is the first time seeing this layer OR setup hasn't happened yet, do full initialization
+      // STEP 4: Immediate initialization with direct service calls
+      const loadCategoriesDirectly = () => {
+        try {
+          const directCats = taxonomyService.getCategories(layer);
+          if (directCats && directCats.length > 0) {
+            // Force render update with direct categories
+            // This is what prevents needing to click "Retry"
+            const categoryEvent = new CustomEvent('taxonomyCategoriesLoaded', {
+              detail: { layer, categories: directCats }
+            });
+            window.dispatchEvent(categoryEvent);
+            return directCats;
+          }
+        } catch (e) {
+          console.warn('[INIT] Direct category load failed:', e);
+        }
+        return [];
+      };
+      
+      // Always load categories directly for immediate response
+      const directCats = loadCategoriesDirectly();
+      
+      // STEP 5: If first time initialization or forced refresh needed
       if (!initialSetupRef.current) {
         initialSetupRef.current = true;
-        console.log(`[INIT] First time initialization for layer ${layer}`);
-                
-        // Scheduled auto-retry for reliability 
-        const timer = setTimeout(() => {
-          console.log(`[INIT] Scheduled initialization running for ${layer}`);
-          
-          // Double-check that categories are loaded
-          if (categories.length === 0) {
-            console.log(`[INIT] No categories loaded yet, trying again...`);
-            reloadCategories();
-          } else {
-            console.log(`[INIT] Categories already loaded (${categories.length} items)`);
+        
+        // Use tiered approach with multiple fallbacks
+        // Tier 1: Immediate load (already done above)
+        // Tier 2: Short timeout for context to catch up
+        const shortTimer = setTimeout(() => {
+          // If categories still not loaded in context but we have direct ones, use them
+          if (categories.length === 0 && directCats.length > 0) {
+            // Force another render update with direct categories
+            const categoryEvent = new CustomEvent('taxonomyCategoriesLoaded', {
+              detail: { layer, categories: directCats }
+            });
+            window.dispatchEvent(categoryEvent);
           }
           
           // If category is also provided, load subcategories
           if (selectedCategory) {
-            console.log(`[INIT] Loading subcategories for ${layer}.${selectedCategory}`);
             selectCategory(selectedCategory);
+            
+            // Try direct load first
+            try {
+              const directSubcats = taxonomyService.getSubcategories(layer, selectedCategory);
+              if (directSubcats && directSubcats.length > 0) {
+                // Store for immediate use
+                subcategoriesRef.current = [...directSubcats];
+                setLocalSubcategories([...directSubcats]);
+              }
+            } catch (e) {
+              console.warn('[INIT] Direct subcategory load on short timer failed:', e);
+            }
+            
+            // Also try context path
             reloadSubcategories();
           }
-          
-          // Set up an auto-retry timer if categories don't load within a reasonable time
-          const retryTimer = setTimeout(() => {
-            if (categories.length === 0) {
-              console.log('[INIT] Auto-retry: Still no categories, trying one last time...');
-              reloadCategories();
-            }
-          }, 300);
-          
-          return () => clearTimeout(retryTimer);
         }, 50);
         
-        return () => clearTimeout(timer);
-      } 
-      // If this is not the first time, ensure selectedCategory is correct
-      else if (selectedCategory) {
-        console.log(`[INIT] Ensuring category ${selectedCategory} is selected for layer ${layer}`);
+        // Tier 3: Medium timeout as final safety check
+        const mediumTimer = setTimeout(() => {
+          // Last chance to ensure categories are loaded
+          if (categories.length === 0) {
+            // Try one more direct load
+            const lastChanceCats = loadCategoriesDirectly();
+            
+            // If still nothing from direct load, force a context reload
+            if (lastChanceCats.length === 0) {
+              reloadCategories();
+            }
+          }
+          
+          // Same for subcategories if needed
+          if (selectedCategory && subcategories.length === 0 && 
+              localSubcategories.length === 0 && subcategoriesRef.current.length === 0) {
+            try {
+              const lastChanceSubcats = taxonomyService.getSubcategories(layer, selectedCategory);
+              if (lastChanceSubcats && lastChanceSubcats.length > 0) {
+                subcategoriesRef.current = [...lastChanceSubcats];
+                setLocalSubcategories([...lastChanceSubcats]);
+              }
+            } catch (e) {
+              console.warn('[INIT] Last chance subcategory load failed:', e);
+            }
+            
+            // Force a final context reload
+            reloadSubcategories();
+          }
+        }, 150);
         
+        // Clean up timers
+        return () => {
+          clearTimeout(shortTimer);
+          clearTimeout(mediumTimer);
+        };
+      } 
+      // STEP 6: If not first time but selectedCategory provided, ensure subcategories
+      else if (selectedCategory) {
         // Check if subcategories need to be loaded
         if (subcategories.length === 0 && directSubcategories.length === 0 && 
             localSubcategories.length === 0 && subcategoriesRef.current.length === 0) {
-          console.log(`[INIT] No subcategories found in any source, loading them now`);
+          
           selectCategory(selectedCategory);
           
           // Immediate load attempt
           try {
-            console.log(`[INIT] Direct subcategory load started for ${layer}.${selectedCategory}`);
             const directSubcats = taxonomyService.getSubcategories(layer, selectedCategory);
             if (directSubcats && directSubcats.length > 0) {
-              console.log(`[INIT] Direct subcategory load successful: ${directSubcats.length} items`);
-              
               // Store subcategories for immediate use
               subcategoriesRef.current = [...directSubcats];
-              setTimeout(() => setLocalSubcategories([...directSubcats]), 0);
+              setLocalSubcategories([...directSubcats]);
             }
           } catch (error) {
             console.error('[INIT] Error during direct subcategory load:', error);
@@ -353,67 +410,75 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
           
           // Also try context path
           reloadSubcategories();
-        } else {
-          console.log(`[INIT] Subcategories already available from some source`);
         }
       }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [layer, selectedCategory]); // Depends on both layer and selectedCategory changes
   
-  // When layer changes, update the selected layer in the taxonomy hook
-  // Use debouncing to prevent rapid/multiple calls
+  // Improved layer change handler - more reliable, less debouncing
   useEffect(() => {
-    if (layer) {
-      // Clear any previous debounce timer
-      if (categoryDebounceRef.current) {
-        clearTimeout(categoryDebounceRef.current);
-      }
-      
-      logger.info(`SimpleTaxonomySelectionV2: Setting layer to ${layer}`);
-      selectLayer(layer);
-      
-      // Debounce the categories reload to prevent multiple rapid calls
-      categoryDebounceRef.current = setTimeout(() => {
-        if (layer) {
-          // Try direct service call first for immediate response
-          try {
-            const directCategories = taxonomyService.getCategories(layer);
-            console.log(`Directly loaded ${directCategories.length} categories for layer ${layer}`);
-            // If categories are already loaded, we don't need to do anything else
-            if (categories.length > 0) {
-              console.log('Categories already loaded in context, skipping reload');
-              return;
-            }
-          } catch (error) {
-            console.error('Error during debounced direct category load:', error);
-          }
-          
-          // Fall back to context reload
-          reloadCategories();
-          // Only log the first time to reduce console noise
-          if (isInitialCategoryLoadRef.current) {
-            logger.info(`Loading categories for layer: ${layer}`);
-            isInitialCategoryLoadRef.current = false;
-          }
-          
-          // Set up an auto-retry if categories don't load
-          const retryTimer = setTimeout(() => {
-            if (categories.length === 0) {
-              logger.info('Auto-retry: Still no categories, trying again...');
-              reloadCategories();
-            }
-          }, 300);
-          
-          // Clean up retry timer
-          return () => clearTimeout(retryTimer);
-        }
-      }, 50);
+    if (!layer) return;
+    
+    // STEP 1: Cancel any in-progress category loads
+    if (categoryDebounceRef.current) {
+      clearTimeout(categoryDebounceRef.current);
+      categoryDebounceRef.current = null;
     }
     
+    // STEP 2: Update context immediately
+    selectLayer(layer);
+    
+    // STEP 3: Load categories using direct service call for immediate feedback
+    try {
+      const directCategories = taxonomyService.getCategories(layer);
+      if (directCategories && directCategories.length > 0) {
+        // If we got immediate results, use a custom event to notify any listeners
+        const categoryEvent = new CustomEvent('taxonomyCategoriesLoaded', {
+          detail: { layer, categories: directCategories }
+        });
+        window.dispatchEvent(categoryEvent);
+        
+        // If we already have categories in context, we don't need to continue
+        if (categories.length > 0) {
+          return;
+        }
+      }
+    } catch (error) {
+      console.error('Error during direct category load:', error);
+    }
+    
+    // STEP 4: Also request categories from context for consistency
+    reloadCategories();
+    
+    // STEP 5: Set up a safety check to ensure categories are loaded
+    const safetyCheckTimer = setTimeout(() => {
+      // If still no categories, try again using both approaches
+      if (categories.length === 0) {
+        // Try direct service call first
+        try {
+          const safetyCategories = taxonomyService.getCategories(layer);
+          if (safetyCategories && safetyCategories.length > 0) {
+            // Notify listeners
+            const categoryEvent = new CustomEvent('taxonomyCategoriesLoaded', {
+              detail: { layer, categories: safetyCategories }
+            });
+            window.dispatchEvent(categoryEvent);
+          }
+        } catch (error) {
+          console.error('Error during safety direct category load:', error);
+        }
+        
+        // Also try context
+        reloadCategories();
+      }
+    }, 150);  // Longer timeout for safety check
+    
     return () => {
+      clearTimeout(safetyCheckTimer);
       if (categoryDebounceRef.current) {
         clearTimeout(categoryDebounceRef.current);
+        categoryDebounceRef.current = null;
       }
     };
   }, [layer, selectLayer, reloadCategories, categories.length]);
@@ -424,44 +489,86 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
     setActiveSubcategory(null);
   }, [layer]);
   
-  // When selectedCategory changes from props, update the active category
-  // FIXED: Don't call selectCategory to prevent circular updates with parent
+  // Improved selectedCategory change handler with immediate loading
   useEffect(() => {
-    if (selectedCategory && selectedCategory !== activeCategory) {
-      setActiveCategory(selectedCategory);
-      
-      // Clear any previous debounce timer
-      if (subcategoryDebounceRef.current) {
-        clearTimeout(subcategoryDebounceRef.current);
-      }
-      
-      // Debounce the subcategories reload
-      subcategoryDebounceRef.current = setTimeout(() => {
-        if (layer && selectedCategory) {
-          selectCategory(selectedCategory); // Need to set in context
-          reloadSubcategories();
-          logger.info(`Loading subcategories for ${layer}.${selectedCategory} (from parent)`);
-        }
-      }, 100);
+    if (!selectedCategory || selectedCategory === activeCategory) return;
+    
+    // STEP 1: Update local state immediately
+    setActiveCategory(selectedCategory);
+    
+    // STEP 2: Cancel any in-progress subcategory loads
+    if (subcategoryDebounceRef.current) {
+      clearTimeout(subcategoryDebounceRef.current);
+      subcategoryDebounceRef.current = null;
     }
     
+    // Only continue if we have both layer and selectedCategory
+    if (!layer) return;
+    
+    // STEP 3: Update context
+    selectCategory(selectedCategory);
+    
+    // STEP 4: Try direct service call for immediate feedback
+    try {
+      const directSubcategories = taxonomyService.getSubcategories(layer, selectedCategory);
+      if (directSubcategories && directSubcategories.length > 0) {
+        // Store in local state and ref for immediate access
+        subcategoriesRef.current = [...directSubcategories];
+        setLocalSubcategories([...directSubcategories]);
+        
+        // Also notify any listeners
+        const subcategoryEvent = new CustomEvent('taxonomySubcategoriesLoaded', {
+          detail: { layer, category: selectedCategory, subcategories: directSubcategories }
+        });
+        window.dispatchEvent(subcategoryEvent);
+      }
+    } catch (error) {
+      console.error('Error during direct subcategory load:', error);
+    }
+    
+    // STEP 5: Also request subcategories from context for consistency
+    reloadSubcategories();
+    
+    // STEP 6: Set up a safety check to ensure subcategories are loaded
+    const safetyCheckTimer = setTimeout(() => {
+      // If still no subcategories from any source, try again
+      if (subcategories.length === 0 && directSubcategories.length === 0 && 
+          localSubcategories.length === 0 && subcategoriesRef.current.length === 0) {
+        
+        // Try direct service call first
+        try {
+          const safetySubcategories = taxonomyService.getSubcategories(layer, selectedCategory);
+          if (safetySubcategories && safetySubcategories.length > 0) {
+            // Store for immediate access
+            subcategoriesRef.current = [...safetySubcategories];
+            setLocalSubcategories([...safetySubcategories]);
+            
+            // Notify listeners
+            const subcategoryEvent = new CustomEvent('taxonomySubcategoriesLoaded', {
+              detail: { layer, category: selectedCategory, subcategories: safetySubcategories }
+            });
+            window.dispatchEvent(subcategoryEvent);
+          }
+        } catch (error) {
+          console.error('Error during safety direct subcategory load:', error);
+        }
+        
+        // Also try context
+        reloadSubcategories();
+      }
+    }, 150);  // Longer timeout for safety check
+    
     return () => {
+      clearTimeout(safetyCheckTimer);
       if (subcategoryDebounceRef.current) {
         clearTimeout(subcategoryDebounceRef.current);
+        subcategoryDebounceRef.current = null;
       }
     };
-  }, [selectedCategory, activeCategory, layer, selectCategory, reloadSubcategories]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedCategory, activeCategory, layer, selectCategory, reloadSubcategories, subcategories.length, localSubcategories.length]);
   
-  // Memoize the direct categories/subcategories fetch to prevent re-calculation on every render
-  const getDirectCategories = useCallback((layer: string) => {
-    if (!layer) return [];
-    try {
-      return taxonomyService.getCategories(layer);
-    } catch (error) {
-      console.error('Error getting direct categories:', error);
-      return [];
-    }
-  }, []);
+  // We've optimized the category loading directly in the initialization code
   
   const getDirectSubcategories = useCallback((layer: string, category: string | null) => {
     if (!layer || !category) return [];

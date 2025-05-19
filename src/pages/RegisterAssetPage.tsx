@@ -44,6 +44,7 @@ import { ComponentsForm } from '../components/asset/ComponentsForm';
 
 // Import the simplified taxonomy service and context
 import { taxonomyService } from '../services/simpleTaxonomyService';
+import { taxonomyFormatter } from '../utils/taxonomyFormatter';
 import { TaxonomyConverter } from '../services/taxonomyConverter';
 import { useTaxonomyContext } from '../contexts/TaxonomyContext';
 
@@ -1787,37 +1788,57 @@ const RegisterAssetPage: React.FC = () => {
 
     console.log(`Using layer=${layer}, category=${category}, subcategory=${subcategory}, sequential=${sequential}`);
 
-    // Use our simplified taxonomy service to generate consistent display format
-    const hfnBase = `${layer}.${category}.${subcategory}`;
-    const fullHfn = `${hfnBase}.${sequential}`;
-    let mfaFromService = '';
-
+    // Construct the raw HFN from components
+    const rawHfnBase = `${layer}.${category}.${subcategory}`;
+    const rawHfn = `${rawHfnBase}.${sequential}`;
+    
+    console.log(`Raw HFN constructed: ${rawHfn}`);
+    
+    // Use the new TaxonomyFormatter utility for consistent formatting
+    const formattedHfn = taxonomyFormatter.formatHFN(rawHfn);
+    let formattedMfa = '';
+    
     try {
-      // Try to convert using simplified taxonomy service
-      mfaFromService = taxonomyService.convertHFNtoMFA(fullHfn);
-      console.log(`Generated MFA using simplified taxonomy service: ${mfaFromService}`);
+      // Try to convert using the formatter (which uses the service internally)
+      formattedMfa = taxonomyFormatter.convertHFNtoMFA(formattedHfn);
+      console.log(`Generated MFA using taxonomy formatter: ${formattedMfa}`);
     } catch (error) {
       console.error('Error converting HFN to MFA for display:', error);
+      
+      // Attempt to generate MFA directly with the service as fallback
+      try {
+        const serviceMfa = taxonomyService.convertHFNtoMFA(formattedHfn);
+        if (serviceMfa) {
+          formattedMfa = taxonomyFormatter.formatMFA(serviceMfa);
+          console.log(`Fallback: Generated MFA using service directly: ${formattedMfa}`);
+        }
+      } catch (secondError) {
+        console.error('Both formatter and service failed to convert HFN to MFA:', secondError);
+      }
     }
-
-    // Set display values with fallbacks if service fails
-    let displayHfn = fullHfn;
-    let displayMfa = mfaFromService;
-
-    // If service failed, use fallbacks for known special cases
-    if (!mfaFromService) {
-      console.warn('Simplified taxonomy service failed for display, using fallbacks');
-
-      // Special case handling
-      if (layer === 'S' && category === 'POP' && subcategory === 'HPM') {
-        displayMfa = `2.001.007.${sequential}`;
-      } else if (layer === 'W' && category === 'BCH' && subcategory === 'SUN') {
-        displayMfa = `5.004.003.${sequential}`;
+    
+    // Set display values with guaranteed proper formatting
+    let displayHfn = formattedHfn;
+    let displayMfa = formattedMfa;
+    
+    // If all conversion methods failed, use direct special case handling
+    if (!displayMfa) {
+      console.warn('All conversion methods failed, using special case fallbacks');
+      
+      // Special case handling with formatter for consistency
+      const normalizedLayer = layer?.toUpperCase() || '';
+      const normalizedCategory = category?.toUpperCase() || '';
+      const normalizedSubcategory = subcategory?.toUpperCase() || '';
+      const formattedSequential = taxonomyFormatter.formatSequential(sequential);
+      
+      if (normalizedLayer === 'S' && normalizedCategory === 'POP' && normalizedSubcategory === 'HPM') {
+        displayMfa = `2.001.007.${formattedSequential}`;
+      } else if (normalizedLayer === 'W' && normalizedCategory === 'BCH' && normalizedSubcategory === 'SUN') {
+        displayMfa = `5.004.003.${formattedSequential}`;
       } else {
         // Default fallback based on layer
-        const layerCode = layer === 'S' ? '2' :
-                          layer === 'W' ? '5' : '0';
-        displayMfa = `${layerCode}.000.000.${sequential}`;
+        const layerCode = taxonomyFormatter.getLayerCode(normalizedLayer) || '0';
+        displayMfa = `${layerCode}.001.001.${formattedSequential}`;
       }
     }
 

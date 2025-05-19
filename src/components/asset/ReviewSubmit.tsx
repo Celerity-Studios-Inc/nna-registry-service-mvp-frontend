@@ -34,6 +34,7 @@ import {
 } from '@mui/icons-material';
 import { FileUploadResponse } from '../../types/asset.types';
 import taxonomyMapper from '../../api/taxonomyMapper';
+import { taxonomyFormatter } from '../../utils/taxonomyFormatter';
 import FilePreview from '../common/FilePreview';
 
 // Props interface
@@ -123,34 +124,62 @@ const ReviewSubmit: React.FC<ReviewSubmitProps> = ({
     components = [],
   } = assetData;
 
-  // Use taxonomy mapper to ensure consistent display across all components
-  // But first check if we have valid layer, category and subcategory information
+  // Use the new TaxonomyFormatter utility for consistent display
   let displayHfn = '';
   let displayMfa = '';
 
   if (layer && categoryCode && subcategoryCode) {
-    // We have enough information to generate formatted addresses
-    const formattedAddresses = taxonomyMapper.formatNNAAddress(
-      layer,
-      categoryCode,
-      subcategoryCode,
-      "000" // Always use "000" for display consistency
-    ) as { hfn: string, mfa: string }; // Cast to the expected type
-    displayHfn = formattedAddresses.hfn;
-    displayMfa = formattedAddresses.mfa;
-
-    // Ensure HFN always displays with alphabetic codes, never numeric
-    displayHfn = taxonomyMapper.normalizeAddressForDisplay(displayHfn, 'hfn');
-
-    console.log(`ReviewSubmit: Generated formatted addresses - HFN=${displayHfn}, MFA=${displayMfa}`);
+    // Use our centralized formatter to ensure consistent display across the application
+    // First, construct the raw HFN
+    const rawHfn = `${layer}.${categoryCode}.${subcategoryCode}.000`; // Always use 000 for display
+    
+    // Then format it properly with the utility
+    displayHfn = taxonomyFormatter.formatHFN(rawHfn);
+    
+    // Generate MFA from the formatted HFN
+    try {
+      displayMfa = taxonomyFormatter.convertHFNtoMFA(displayHfn);
+    } catch (error) {
+      console.error('Error converting HFN to MFA in ReviewSubmit:', error);
+      
+      // Fallback to the older taxonomy mapper if the formatter fails
+      try {
+        const fallbackFormattedAddresses = taxonomyMapper.formatNNAAddress(
+          layer,
+          categoryCode,
+          subcategoryCode,
+          "000" // Always use "000" for display consistency
+        ) as { hfn: string, mfa: string };
+        
+        displayMfa = fallbackFormattedAddresses.mfa;
+      } catch (fallbackError) {
+        console.error('Both formatter and legacy mapper failed:', fallbackError);
+        // Use a basic fallback format as last resort
+        const layerCode = taxonomyFormatter.getLayerCode(layer) || '0';
+        displayMfa = `${layerCode}.001.001.000`;
+      }
+    }
   } else {
     // Fallback to the values provided in props
-    displayHfn = hfn ? hfn.replace(/\.\d+$/, '.000') : '';
-    displayMfa = mfa ? mfa.replace(/\.\d+$/, '.000') : '';
-
-    // Even for fallback values, ensure consistent format
-    if (displayHfn) {
-      displayHfn = taxonomyMapper.normalizeAddressForDisplay(displayHfn, 'hfn');
+    if (hfn) {
+      // Format the HFN properly
+      const cleanHfn = hfn.replace(/\.\d+$/, '.000'); // Replace sequential with 000
+      displayHfn = taxonomyFormatter.formatHFN(cleanHfn);
+    }
+    
+    if (mfa) {
+      // Format the MFA properly
+      const cleanMfa = mfa.replace(/\.\d+$/, '.000'); // Replace sequential with 000
+      displayMfa = taxonomyFormatter.formatMFA(cleanMfa);
+    }
+    
+    // If we have HFN but no MFA, try to generate it
+    if (displayHfn && !displayMfa) {
+      try {
+        displayMfa = taxonomyFormatter.convertHFNtoMFA(displayHfn);
+      } catch (error) {
+        console.error('Error converting from HFN in fallback path:', error);
+      }
     }
   }
 
