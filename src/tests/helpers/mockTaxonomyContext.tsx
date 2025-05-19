@@ -43,6 +43,7 @@ export const createMockTaxonomyContext = (overrides = {}) => {
 
     // Reset
     reset: jest.fn(),
+    resetCategoryData: jest.fn(),
 
     // Validation
     validateSelections: jest.fn()

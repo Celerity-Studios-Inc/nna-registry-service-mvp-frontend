@@ -668,35 +668,78 @@ const RegisterAssetPage: React.FC = () => {
     setPotentialDuplicate(null);
   };
 
-  // Handle layer selection
+  // Handle layer selection - CRITICAL FIX for layer switching issue
   const handleLayerSelect = (layer: LayerOption, isDoubleClick?: boolean) => {
-    console.log(`handleLayerSelect called with isDoubleClick=${isDoubleClick}`);
-    setValue('layer', layer.code);
-    setValue('layerName', layer.name);
+    console.log(`[LAYER SELECT] Called with layer=${layer.code}, isDoubleClick=${isDoubleClick}`);
     
-    // Check if this is the training layer (T)
+    // STEP 1: First update the form values with the new layer
+    setValue('layer', layer.code, { shouldValidate: true, shouldDirty: true, shouldTouch: true });
+    setValue('layerName', layer.name, { shouldValidate: true, shouldDirty: true, shouldTouch: true });
+    
+    // STEP 2: Update special layer type flags
     const isTraining = layer.code === 'T';
     setIsTrainingLayer(isTraining);
     
-    // Check if this is the composite layer (C)
     const isComposite = layer.code === 'C';
     setIsCompositeLayer(isComposite);
     
-    // Clear category and subcategory when layer changes
-    setValue('categoryCode', '');
-    setValue('categoryName', '');
-    setValue('subcategoryCode', '');
-    setValue('subcategoryName', '');
-    setValue('subcategoryNumericCode', '');
-    setValue('hfn', '');
-    setValue('mfa', '');
-    setValue('sequential', '');
+    // STEP 3: CRITICAL FIX - Thoroughly reset all taxonomy-related form values 
+    // This ensures no lingering state from previous layer selections
+    console.log(`[LAYER SELECT] Clearing all category and subcategory state for layer switch to ${layer.code}`);
     
-    // FIXED: Do not auto-advance on double-click anymore to prevent skipping Step 2
-    // This was causing the subcategory display issue by bypassing Category/Subcategory selection
+    // Force immediate form value updates with validation flags
+    setValue('categoryCode', '', { shouldValidate: true, shouldDirty: true, shouldTouch: true });
+    setValue('categoryName', '', { shouldValidate: true, shouldDirty: true, shouldTouch: true });
+    setValue('subcategoryCode', '', { shouldValidate: true, shouldDirty: true, shouldTouch: true });
+    setValue('subcategoryName', '', { shouldValidate: true, shouldDirty: true, shouldTouch: true });
+    setValue('subcategoryNumericCode', '', { shouldValidate: true, shouldDirty: true, shouldTouch: true });
+    setValue('hfn', '', { shouldValidate: true, shouldDirty: true, shouldTouch: true });
+    setValue('mfa', '', { shouldValidate: true, shouldDirty: true, shouldTouch: true });
+    setValue('sequential', '', { shouldValidate: true, shouldDirty: true, shouldTouch: true });
+    
+    // STEP 4: Clear any stored subcategory data in session storage
+    try {
+      // Remove all stored subcategories for previous selections
+      const keysToRemove = [];
+      for (let i = 0; i < sessionStorage.length; i++) {
+        const key = sessionStorage.key(i);
+        if (key && (key.startsWith('originalSubcategory_') || 
+                   key.startsWith('selectedSubcategory_') || 
+                   key.startsWith('lastActivePair_') || 
+                   key.startsWith('subcategoryDetails_'))) {
+          keysToRemove.push(key);
+        }
+      }
+      
+      // Remove in a separate loop to avoid messing up the iteration
+      keysToRemove.forEach(key => {
+        sessionStorage.removeItem(key);
+        console.log(`[LAYER SELECT] Removed session storage key: ${key}`);
+      });
+    } catch (e) {
+      console.warn('[LAYER SELECT] Failed to clear subcategories from session storage:', e);
+    }
+    
+    // STEP 5: Also make sure taxonomy context is updated
+    taxonomyContext.selectLayer(layer.code);
+    taxonomyContext.reset(); // This ensures all context state is properly reset
+    
+    // STEP 6: Emit an event to notify components of the layer change
+    // This helps components that might not be directly in the React component tree
+    try {
+      const layerChangeEvent = new CustomEvent('layerChanged', {
+        detail: { layer: layer.code, timestamp: Date.now() }
+      });
+      window.dispatchEvent(layerChangeEvent);
+      console.log(`[LAYER SELECT] Dispatched layerChanged event for ${layer.code}`);
+    } catch (e) {
+      console.warn('[LAYER SELECT] Failed to dispatch layer change event:', e);
+    }
+    
+    // Handle double-click behavior
     if (isDoubleClick) {
-      console.log('Double-click detected in handleLayerSelect, but NOT advancing to next step anymore');
-      console.log('This fixes the issue where Step 2 was being skipped, causing validation errors');
+      console.log('[LAYER SELECT] Double-click detected but NOT auto-advancing to prevent Step 2 skipping');
+      console.log('[LAYER SELECT] This fixes the issue where subcategory selection was being bypassed');
     }
   };
 
@@ -773,6 +816,68 @@ const RegisterAssetPage: React.FC = () => {
   };
 
   // Generate HFN and MFA using taxonomy context instead of direct service calls
+  // TESTING: Add layer switching debug tracking
+  const [layerSwitchLog, setLayerSwitchLog] = useState<{timestamp: number, layer: string, categories: string[], subcategories: string[]}[]>([]);
+  
+  // Expose a diagnostic function to the global scope for console debugging
+  React.useEffect(() => {
+    // @ts-ignore - Intentionally adding to window
+    window.reportTaxonomyState = () => {
+      console.group('Taxonomy State Diagnostic Report');
+      console.log('Form Values:', getValues());
+      console.log('Active Step:', activeStep);
+      console.log('Layer:', watchLayer);
+      console.log('Category:', watchCategoryCode);
+      console.log('Subcategory:', watchSubcategoryCode);
+      console.log('Context State:', {
+        layer: taxonomyContext.selectedLayer,
+        categories: taxonomyContext.categories.map((c) => c.code),
+        category: taxonomyContext.selectedCategory,
+        subcategories: taxonomyContext.subcategories.map((s) => s.code),
+        subcategory: taxonomyContext.selectedSubcategory,
+        hfn: taxonomyContext.hfn,
+        mfa: taxonomyContext.mfa
+      });
+      console.log('Layer Switch Log:', layerSwitchLog);
+      console.groupEnd();
+      return 'Taxonomy state report complete - see console for details';
+    };
+    
+    return () => {
+      // @ts-ignore - Intentionally removing from window
+      delete window.reportTaxonomyState;
+    };
+  }, [getValues, activeStep, watchLayer, watchCategoryCode, watchSubcategoryCode, taxonomyContext, layerSwitchLog]);
+  
+  // Track layer switches to help with debugging
+  useEffect(() => {
+    if (watchLayer) {
+      const newEntry = {
+        timestamp: Date.now(),
+        layer: watchLayer,
+        categories: taxonomyContext.categories.map((c) => c.code),
+        subcategories: taxonomyContext.subcategories.map((s) => s.code)
+      };
+      
+      setLayerSwitchLog(prev => [...prev, newEntry]);
+      console.log(`[LAYER SWITCH LOG] New entry: ${JSON.stringify(newEntry)}`);
+      console.log(`[LAYER SWITCH LOG] History length: ${layerSwitchLog.length + 1}`);
+      
+      // Add a timer to check the state after 1 second
+      const verificationTimer = setTimeout(() => {
+        console.log(`[LAYER SWITCH VERIFICATION] After 1 second delay:`);
+        console.log(`Layer: ${watchLayer}`); 
+        console.log(`Categories: ${taxonomyContext.categories.length} (${taxonomyContext.categories.map((c) => c.code).join(', ')})`);
+        console.log(`Subcategories: ${taxonomyContext.subcategories.length} (${taxonomyContext.subcategories.map((s) => s.code).join(', ')})`);
+        console.log(`Selected category: ${taxonomyContext.selectedCategory}`);
+        console.log(`Selected subcategory: ${taxonomyContext.selectedSubcategory}`);
+      }, 1000);
+      
+      return () => clearTimeout(verificationTimer);
+    }
+  }, [watchLayer, taxonomyContext.categories, taxonomyContext.subcategories, layerSwitchLog.length, taxonomyContext.selectedCategory, taxonomyContext.selectedSubcategory]);
+  
+  // HFN and MFA update effect
   useEffect(() => {
     if (formData.layer && formData.categoryCode && formData.subcategoryCode) {
       // Use formatted sequential number (pad with leading zeros if needed)

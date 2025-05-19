@@ -257,6 +257,26 @@ const EmptyState = React.memo(({
   </div>
 ));
 
+// Auto retry component that encapsulates the useEffect hook to avoid conditional rendering issues
+const AutoRetry = React.memo(({ 
+  layer, 
+  onRetry
+}: {
+  layer: string;
+  onRetry: () => void;
+}) => {
+  // This is safer because the hook is now at the top level of this component
+  React.useEffect(() => {
+    console.log(`[AUTO RETRY] Categories empty for layer ${layer}, auto-retrying...`);
+    // Only auto-retry once to avoid infinite loops
+    const timer = setTimeout(() => onRetry(), 100);
+    return () => clearTimeout(timer);
+  }, [layer, onRetry]);
+  
+  // This component doesn't render anything visible
+  return null;
+});
+
 const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
   layer,
   onCategorySelect,
@@ -337,6 +357,38 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
       window.removeEventListener('layerChanged', handleLayerChangeEvent as EventListener);
     };
   }, [layer, selectLayer, reloadCategories]);
+  
+  // Define handleCategoryRetry before it's used in useEffect dependency arrays
+  const handleCategoryRetry = useCallback(() => {
+    if (layer) {
+      // ENHANCED: Force more aggressive reloads on retry
+      console.log(`[RETRY] Forcing aggressive category reload for layer: ${layer}`);
+      
+      // First update context state
+      selectLayer(layer);
+      
+      // Force a direct service call for immediate feedback
+      try {
+        const directCategories = taxonomyService.getCategories(layer);
+        if (directCategories && directCategories.length > 0) {
+          console.log(`[RETRY] Direct category load returned ${directCategories.length} categories`);
+          // Use a custom event to notify listeners
+          const categoryEvent = new CustomEvent('taxonomyCategoriesLoaded', {
+            detail: { layer, categories: directCategories }
+          });
+          window.dispatchEvent(categoryEvent);
+        }
+      } catch (error) {
+        console.error('[RETRY] Error loading categories directly:', error);
+      }
+      
+      // Then try the standard context reload with a small delay
+      setTimeout(() => {
+        reloadCategories();
+        logger.info(`[RETRY] Sent context reload request for layer: ${layer}`);
+      }, 50);
+    }
+  }, [layer, reloadCategories, selectLayer]);
   
   // ENHANCED: Initial setup - run only once but with improved reliability
   useEffect(() => {
@@ -1034,37 +1086,7 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
     }
   }, [activeCategory, activeSubcategory, directSubcategories, layer, localSubcategories, onSubcategorySelect, selectSubcategory, subcategories]);
   
-  // Memoize the retry handlers to prevent recreation on every render
-  const handleCategoryRetry = useCallback(() => {
-    if (layer) {
-      // ENHANCED: Force more aggressive reloads on retry
-      console.log(`[RETRY] Forcing aggressive category reload for layer: ${layer}`);
-      
-      // First update context state
-      selectLayer(layer);
-      
-      // Force a direct service call for immediate feedback
-      try {
-        const directCategories = taxonomyService.getCategories(layer);
-        if (directCategories && directCategories.length > 0) {
-          console.log(`[RETRY] Direct category load returned ${directCategories.length} categories`);
-          // Use a custom event to notify listeners
-          const categoryEvent = new CustomEvent('taxonomyCategoriesLoaded', {
-            detail: { layer, categories: directCategories }
-          });
-          window.dispatchEvent(categoryEvent);
-        }
-      } catch (error) {
-        console.error('[RETRY] Error loading categories directly:', error);
-      }
-      
-      // Then try the standard context reload with a small delay
-      setTimeout(() => {
-        reloadCategories();
-        logger.info(`[RETRY] Sent context reload request for layer: ${layer}`);
-      }, 50);
-    }
-  }, [layer, reloadCategories, selectLayer]);
+  // Memoize subcategory retry handler to prevent recreation on every render
   
   const handleSubcategoryRetry = useCallback(() => {
     if (layer && activeCategory) {
@@ -1286,13 +1308,7 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
               message={`No categories found for layer ${layer}`}
               onRetry={handleCategoryRetry}
             />
-            {/* Auto-retry with useEffect */}
-            {React.useEffect(() => {
-              console.log(`[AUTO RETRY] Categories empty for layer ${layer}, auto-retrying...`);
-              // Only auto-retry once to avoid infinite loops
-              const timer = setTimeout(() => handleCategoryRetry(), 100);
-              return () => clearTimeout(timer);
-            }, [])}
+            <AutoRetry layer={layer} onRetry={handleCategoryRetry} />
           </React.Fragment>
         ) : (
           <React.Fragment>
