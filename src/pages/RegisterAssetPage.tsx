@@ -691,12 +691,11 @@ const RegisterAssetPage: React.FC = () => {
     setValue('mfa', '');
     setValue('sequential', '');
     
-    // If double click, auto-advance to next step
-    // Note: We now also use the dedicated onLayerDoubleClick handler for reliability
+    // FIXED: Do not auto-advance on double-click anymore to prevent skipping Step 2
+    // This was causing the subcategory display issue by bypassing Category/Subcategory selection
     if (isDoubleClick) {
-      console.log('Double-click detected in handleLayerSelect, advancing to next step');
-      // Use setTimeout to ensure the layer selection is processed first
-      setTimeout(() => handleNext(), 50);
+      console.log('Double-click detected in handleLayerSelect, but NOT advancing to next step anymore');
+      console.log('This fixes the issue where Step 2 was being skipped, causing validation errors');
     }
   };
 
@@ -1113,8 +1112,10 @@ const RegisterAssetPage: React.FC = () => {
             }}
             onLayerDoubleClick={(layer) => {
               console.log(`RegisterAssetPage received layer double-click: ${layer}`);
-              // Advance to the next step automatically on double-click
-              handleNext();
+              // DO NOT advance to the next step automatically anymore
+              // This was causing Step 2 to be skipped
+              // Instead, handle the selection and let the normal flow continue
+              console.log(`Double-click handled without auto-advancing to preserve Step 2`);
             }}
           />
         );

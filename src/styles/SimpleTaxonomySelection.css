@@ -54,6 +54,8 @@
 .taxonomy-items {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); /* Slightly larger cards for better readability */
+  grid-auto-flow: row; /* Force grid items to flow in rows */
+  grid-auto-rows: auto; /* Let rows size automatically based on content */
   gap: 12px; /* Increase gap for better visual separation */
   padding: 15px;
   max-height: 400px; /* Increased max height for more visibility */
@@ -62,6 +64,7 @@
   box-sizing: border-box;
   transition: opacity 0.2s ease;
   will-change: opacity, transform; /* Performance optimization */
+  position: relative; /* For absolute positioning of the hint */
 }
 
 /* Loading placeholders */

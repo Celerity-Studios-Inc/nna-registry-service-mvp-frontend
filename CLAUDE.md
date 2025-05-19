@@ -198,6 +198,29 @@ There are special case mappings that need special handling:
     - Implemented advanced error recovery for all taxonomy operations
   - Documented in detail in `SUBCATEGORY_PERMANENT_FIX.md`
 
+### 9. Step Navigation and Grid Layout Fix (May 20, 2025)
+- Problem: Double-clicking a layer card in Step 1 was skipping Step 2 (Choose Taxonomy) entirely
+- Secondary Issue: Subcategory cards were displaying in a vertical column instead of a grid layout
+- Root Cause: 
+  - Double-click handler was using `handleNext()` which advanced beyond the Taxonomy Selection step
+  - CSS grid layout wasn't properly enforcing row-based flow
+- Solution:
+  - Fixed layer double-click handlers to select the layer without auto-advancing
+  - Removed the auto-navigation code that was causing Step 2 to be skipped
+  - Enhanced the CSS grid with explicit `grid-auto-flow: row` and `grid-auto-rows: auto` properties
+  - Added relative positioning to support hint elements
+- Key changes:
+  - `/src/pages/RegisterAssetPage.tsx`: 
+    - Removed auto-advancing from double-click handlers
+    - Added explicit warning logs about not auto-advancing anymore
+  - `/src/components/asset/LayerSelectorV2.tsx`: 
+    - Added a delay in the double-click handler
+    - Modified event propagation to ensure proper handling
+  - `/src/styles/SimpleTaxonomySelection.css`: 
+    - Fixed grid layout properties to ensure rows display correctly
+    - Added positioning context for hint elements
+  - Documented in `STEP_NAVIGATION_FIX.md`
+
 ## Next Steps
 
 1. Monitor the comprehensive subcategory selection fix

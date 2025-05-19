@@ -49,14 +49,21 @@ const LayerSelectorV2: React.FC<LayerSelectorV2Props> = ({
     setActiveLayer(layer);
     selectLayer(layer);
     
-    // First call the parent with isDoubleClick=true
+    // IMPORTANT: Call the parent's onLayerSelect with isDoubleClick=true
+    // This handles the selection but doesn't auto-advance steps
     console.log(`Sending layer double-click to parent: ${layer}, isDoubleClick=true`);
     onLayerSelect(layer, true);
 
-    // Also call the optional onLayerDoubleClick callback if provided
-    if (onLayerDoubleClick) {
-      onLayerDoubleClick(layer);
-    }
+    // FIXED: Small delay before calling onLayerDoubleClick to ensure state updates first
+    setTimeout(() => {
+      // Also call the optional onLayerDoubleClick callback if provided
+      if (onLayerDoubleClick) {
+        console.log(`Calling onLayerDoubleClick for ${layer}`);
+        onLayerDoubleClick(layer);
+      } else {
+        console.log(`No onLayerDoubleClick provided for ${layer}`);
+      }
+    }, 50);
   }, [selectLayer, onLayerSelect, onLayerDoubleClick]);
   
   // Get layer name
@@ -132,7 +139,12 @@ const LayerSelectorV2: React.FC<LayerSelectorV2Props> = ({
               key={layer}
               className={`layer-card ${isActive ? 'selected' : ''}`}
               onClick={() => handleLayerSelect(layer)}
-              onDoubleClick={() => handleLayerDoubleClick(layer)}
+              onDoubleClick={(e) => {
+                // Prevent event bubbling to avoid triggering click right after double-click
+                e.preventDefault();
+                e.stopPropagation();
+                handleLayerDoubleClick(layer);
+              }}
               tabIndex={0}
               role="button"
               aria-pressed={isActive}
