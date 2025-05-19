@@ -6,7 +6,7 @@
  */
 import { logger } from './logger';
 import { taxonomyService } from '../services/simpleTaxonomyService';
-import { categoryAlphaToNumeric } from '../api/codeMapping';
+import { LAYER_LOOKUPS } from '../taxonomyLookup/constants';
 
 class TaxonomyFormatter {
   /**
@@ -20,68 +20,98 @@ class TaxonomyFormatter {
   }
 
   /**
-   * Maps a category display name to its canonical code and formats it to uppercase
-   * @param category - The category name or code to format (e.g., 'pop', 'Bch', 'Hip_Hop')
-   * @returns The formatted canonical category code (e.g., 'POP', 'BCH', 'HIP')
+   * Looks up the canonical category code from the taxonomy
+   * @param layer - The layer code (e.g., 'S', 'W')
+   * @param category - The category value to format (e.g., 'pop', 'Hip_Hop')
+   * @returns The canonical category code (e.g., 'POP', 'HIP')
    */
-  formatCategory(category: string): string {
-    if (!category) return '';
+  lookupCategoryCode(layer: string, category: string): string {
+    if (!layer || !category) return category;
     
-    // First uppercase the input
-    const uppercased = category.toUpperCase();
+    // Normalize the layer code
+    const layerCode = layer.toUpperCase();
     
-    // Apply specific mappings for display names to canonical codes
-    // Hip_Hop/HIP_HOP → HIP
-    if (uppercased === 'HIP_HOP' || uppercased === 'HIP-HOP') {
+    // Special case handling for known display name issues
+    if (category.toUpperCase() === 'HIP_HOP' || category.toUpperCase() === 'HIP-HOP') {
       return 'HIP';
     }
     
-    // If the category contains underscore or hyphen, it's likely a display name
-    if (uppercased.includes('_') || uppercased.includes('-')) {
-      // Try to find the canonical code by comparing with known codes
-      for (const [code] of Object.entries(categoryAlphaToNumeric)) {
-        // Check various formats
-        const codeNoSeparators = code.replace(/[_-]/g, '');
-        const uppercasedNoSeparators = uppercased.replace(/[_-]/g, '');
-        
-        // If we have a match on the first 3 chars (common pattern)
-        if (codeNoSeparators.substring(0, 3) === uppercasedNoSeparators.substring(0, 3)) {
-          return code;
-        }
-      }
+    if (category.toUpperCase() === 'BASE') {
+      return 'BAS';
     }
     
-    return uppercased;
+    try {
+      // Get all categories for this layer from the taxonomy service
+      const categories = taxonomyService.getCategories(layerCode);
+      
+      // First try to find an exact match (ignoring case)
+      for (const cat of categories) {
+        if (cat.code.toUpperCase() === category.toUpperCase()) {
+          return cat.code;
+        }
+      }
+      
+      // Next, try to find a match based on the name
+      for (const cat of categories) {
+        if (cat.name.toUpperCase().replace(/[_\s-]/g, '') === category.toUpperCase().replace(/[_\s-]/g, '')) {
+          return cat.code;
+        }
+        
+        // Try a partial match on the first few characters
+        if (cat.code.toUpperCase().substring(0, 3) === category.toUpperCase().substring(0, 3)) {
+          return cat.code;
+        }
+      }
+    } catch (error) {
+      logger.warn(`Error looking up category code: ${error}`);
+    }
+    
+    // If we couldn't find a match, just return the uppercased category
+    return category.toUpperCase();
   }
 
   /**
-   * Maps a subcategory display name to its canonical code and formats it to uppercase
-   * @param subcategory - The subcategory name or code to format (e.g., 'bas', 'hPm', 'Base')
-   * @returns The formatted canonical subcategory code (e.g., 'BAS', 'HPM')
+   * Looks up the canonical subcategory code from the taxonomy
+   * @param layer - The layer code (e.g., 'S', 'W')
+   * @param category - The category code (e.g., 'POP', 'HIP')
+   * @param subcategory - The subcategory value to format (e.g., 'bas', 'Base')
+   * @returns The canonical subcategory code (e.g., 'BAS', 'HPM')
    */
-  formatSubcategory(subcategory: string): string {
-    if (!subcategory) return '';
+  lookupSubcategoryCode(layer: string, category: string, subcategory: string): string {
+    if (!layer || !category || !subcategory) return subcategory;
     
-    // First uppercase the input
-    const uppercased = subcategory.toUpperCase();
+    // Normalize the codes
+    const layerCode = layer.toUpperCase();
+    const categoryCode = this.lookupCategoryCode(layerCode, category);
     
-    // Apply specific mappings
-    if (uppercased === 'BASE') return 'BAS';
-    
-    // If contains underscore or hyphen, it's likely a display name
-    if (uppercased.includes('_') || uppercased.includes('-')) {
-      // Try to extract abbreviation from words (e.g., Pop_Hipster_Male → HPM)
-      const words = uppercased.split(/[_-]/);
-      if (words.length > 1) {
-        // If it's a multi-word name, take first letters
-        const abbreviation = words.map(word => word.charAt(0)).join('');
-        if (abbreviation.length >= 2) {
-          return abbreviation;
-        }
-      }
+    // Special case handling for known display name issues
+    if (subcategory.toUpperCase() === 'BASE') {
+      return 'BAS';
     }
     
-    return uppercased;
+    try {
+      // Get all subcategories for this layer and category from the taxonomy service
+      const subcategories = taxonomyService.getSubcategories(layerCode, categoryCode);
+      
+      // First try to find an exact match (ignoring case)
+      for (const subcat of subcategories) {
+        if (subcat.code.toUpperCase() === subcategory.toUpperCase()) {
+          return subcat.code;
+        }
+      }
+      
+      // Next, try to find a match based on the name
+      for (const subcat of subcategories) {
+        if (subcat.name.toUpperCase().replace(/[_\s-]/g, '') === subcategory.toUpperCase().replace(/[_\s-]/g, '')) {
+          return subcat.code;
+        }
+      }
+    } catch (error) {
+      logger.warn(`Error looking up subcategory code: ${error}`);
+    }
+    
+    // If we couldn't find a match, just return the uppercased subcategory
+    return subcategory.toUpperCase();
   }
 
   /**
@@ -115,12 +145,13 @@ class TaxonomyFormatter {
         return hfn.toUpperCase(); // Return uppercase as fallback
       }
       
-      // Destructure parts with proper names to avoid ESLint warnings
+      // Destructure parts with proper names
       const [layer, categoryPart, subcategoryPart, sequential, ...rest] = parts;
       
+      // Format parts using the lookup methods to get canonical codes
       const formattedLayer = this.formatLayer(layer);
-      const formattedCategory = this.formatCategory(categoryPart);
-      const formattedSubcategory = this.formatSubcategory(subcategoryPart);
+      const formattedCategory = this.lookupCategoryCode(formattedLayer, categoryPart);
+      const formattedSubcategory = this.lookupSubcategoryCode(formattedLayer, formattedCategory, subcategoryPart);
       const formattedSequential = this.formatSequential(sequential || '1');
       
       let formattedHFN = `${formattedLayer}.${formattedCategory}.${formattedSubcategory}.${formattedSequential}`;
@@ -187,7 +218,6 @@ class TaxonomyFormatter {
       // First, ensure HFN has consistent format with canonical codes
       const formattedHFN = this.formatHFN(hfn);
       
-      // Log the formatted HFN for debugging
       console.log(`Formatted HFN before conversion: ${formattedHFN}`);
       
       // Handle special cases directly for better reliability
@@ -203,11 +233,6 @@ class TaxonomyFormatter {
         return `5.004.003.${this.formatSequential(sequential)}`;
       }
       
-      // Handle the S.HIP.BAS case specifically
-      if (layer === 'S' && category === 'HIP' && subcategory === 'BAS') {
-        return `2.003.001.${this.formatSequential(sequential)}`;
-      }
-      
       // Try to use the taxonomy service for conversion
       try {
         const mfa = taxonomyService.convertHFNtoMFA(formattedHFN);
@@ -216,59 +241,61 @@ class TaxonomyFormatter {
         // Ensure consistent formatting of the result
         return this.formatMFA(mfa);
       } catch (serviceError) {
-        // Log and try alternative conversion methods
-        console.warn(`Taxonomy service conversion failed: ${serviceError}. Trying direct mapping...`);
+        console.warn(`Taxonomy service conversion failed: ${serviceError}. Using fallback mechanism...`);
         
-        // Direct mapping as fallback
+        // Fallback to direct lookups from the taxonomy data
         const layerCode = this.getLayerCode(layer);
-        let categoryCode = '000';
-        let subcategoryCode = '000';
-        
-        // Look up category code in mappings
-        if (category === 'HIP' || category === 'HIP_HOP') {
-          categoryCode = '003'; // Hip-Hop
-        } else if (category === 'POP') {
-          categoryCode = '001'; // Pop
-        } else if (category === 'ROK' || category === 'RCK') {
-          categoryCode = '002'; // Rock
-        } else {
-          categoryCode = '001'; // Fallback to '001'
+        if (!layerCode) {
+          throw new Error(`Invalid layer: ${layer}`);
         }
         
-        // Look up subcategory code
-        if (subcategory === 'BAS' || subcategory === 'BASE') {
-          subcategoryCode = '001'; // Base
-        } else {
-          subcategoryCode = '001'; // Fallback to '001'
+        // Look up the category in the flattened taxonomy
+        const categories = taxonomyService.getCategories(layer);
+        let categoryCode = '001'; // Default fallback
+        
+        for (const cat of categories) {
+          if (cat.code === category) {
+            categoryCode = cat.numericCode.padStart(3, '0');
+            break;
+          }
         }
         
+        // Look up the subcategory in the flattened taxonomy
+        const subcategories = taxonomyService.getSubcategories(layer, category);
+        let subcategoryCode = '001'; // Default fallback
+        
+        for (const subcat of subcategories) {
+          if (subcat.code === subcategory) {
+            subcategoryCode = subcat.numericCode.padStart(3, '0');
+            break;
+          }
+        }
+        
+        // Construct the MFA using the looked-up codes
         return `${layerCode}.${categoryCode}.${subcategoryCode}.${this.formatSequential(sequential)}`;
       }
-      
     } catch (error) {
       logger.error(`Error converting HFN to MFA: ${error instanceof Error ? error.message : 'Unknown error'}`);
       
-      // Advanced error recovery - try to construct a fallback MFA
+      // Simple fallback for error cases
       try {
         const parts = hfn.split('.');
         if (parts.length < 3) return '';
         
-        // Parse the original parts
-        const [layer, category, subcategory, sequential] = parts;
-        
-        // Map layer to numeric code
+        const layer = parts[0].toUpperCase();
         const layerCode = this.getLayerCode(layer);
-        if (!layerCode) return '';
         
-        // Try to map category to numeric code
-        let categoryCode = '001'; // Default
-        if (category.toUpperCase() === 'HIP_HOP' || category.toUpperCase() === 'HIP-HOP' || 
-            category.toUpperCase() === 'HIP') {
-          categoryCode = '003'; // Hip-Hop
+        // Handle common cases directly
+        if (layer === 'S') {
+          const category = parts[1].toUpperCase();
+          if (category === 'HIP' || category === 'HIP_HOP') {
+            return `2.003.001.${this.formatSequential(parts[3] || '1')}`;
+          } else if (category === 'POP') {
+            return `2.001.001.${this.formatSequential(parts[3] || '1')}`;
+          }
         }
         
-        // Create a basic fallback MFA with mapped codes
-        return `${layerCode}.${categoryCode}.001.${this.formatSequential(sequential)}`;
+        return `${layerCode}.001.001.${this.formatSequential(parts[3] || '1')}`;
       } catch (fallbackError) {
         logger.error(`Fallback MFA conversion also failed: ${fallbackError}`);
         return '';
@@ -289,7 +316,6 @@ class TaxonomyFormatter {
       // First, ensure MFA has consistent format
       const formattedMFA = this.formatMFA(mfa);
       
-      // Log the formatted MFA for debugging
       console.log(`Formatted MFA before conversion: ${formattedMFA}`);
       
       // Handle special cases directly for better reliability
@@ -305,7 +331,7 @@ class TaxonomyFormatter {
         return `W.BCH.SUN.${this.formatSequential(sequential)}`;
       }
       
-      // Handle the Hip-Hop case specifically
+      // Handle Hip-Hop case specifically (most common issue)
       if (layer === '2' && category === '003' && subcategory === '001') {
         return `S.HIP.BAS.${this.formatSequential(sequential)}`;
       }
@@ -315,30 +341,58 @@ class TaxonomyFormatter {
         const hfn = taxonomyService.convertMFAtoHFN(formattedMFA);
         console.log(`HFN from taxonomy service: ${hfn}`);
         
-        // Ensure consistent formatting of the result with canonical codes
+        // Ensure consistent formatting of the result
         return this.formatHFN(hfn);
       } catch (serviceError) {
-        // Log and try alternative conversion methods
-        console.warn(`Taxonomy service conversion failed: ${serviceError}. Trying direct mapping...`);
+        console.warn(`Taxonomy service conversion failed: ${serviceError}. Using fallback mechanism...`);
         
-        // Direct mapping as fallback
+        // Fallback to direct lookups from the taxonomy data
         const layerLetter = this.getLayerLetter(layer);
+        if (!layerLetter) {
+          throw new Error(`Invalid layer number: ${layer}`);
+        }
+        
+        // Now that we have the layer letter, look up the category and subcategory
+        const paddedCategory = category.padStart(3, '0');
+        const paddedSubcategory = subcategory.padStart(3, '0');
+        
+        // Get all categories for this layer
         let categoryCode = 'CAT';
         let subcategoryCode = 'SUB';
         
-        // Map numeric category codes to alphabetic codes
-        if (layer === '2') { // Stars layer
-          if (category === '001') categoryCode = 'POP';
-          else if (category === '002') categoryCode = 'ROK';
-          else if (category === '003') categoryCode = 'HIP';
+        try {
+          const categories = taxonomyService.getCategories(layerLetter);
           
-          // Map subcategory codes
-          if (subcategory === '001') subcategoryCode = 'BAS';
-        } else if (layer === '5') { // Worlds layer
-          if (category === '004') categoryCode = 'BCH';
+          // Find the category with this numeric code
+          for (const cat of categories) {
+            if (cat.numericCode === paddedCategory) {
+              categoryCode = cat.code;
+              break;
+            }
+          }
           
-          // Map subcategory codes
-          if (subcategory === '001') subcategoryCode = 'BAS';
+          // Find the subcategory with this numeric code
+          if (categoryCode !== 'CAT') {
+            const subcategories = taxonomyService.getSubcategories(layerLetter, categoryCode);
+            
+            for (const subcat of subcategories) {
+              if (subcat.numericCode === paddedSubcategory) {
+                subcategoryCode = subcat.code;
+                break;
+              }
+            }
+          }
+        } catch (lookupError) {
+          logger.warn(`Error looking up codes from taxonomy: ${lookupError}`);
+          
+          // Handle common cases as direct fallback
+          if (layer === '2') {
+            if (paddedCategory === '001') categoryCode = 'POP';
+            else if (paddedCategory === '002') categoryCode = 'ROK';
+            else if (paddedCategory === '003') categoryCode = 'HIP';
+            
+            if (paddedSubcategory === '001') subcategoryCode = 'BAS';
+          }
         }
         
         return `${layerLetter}.${categoryCode}.${subcategoryCode}.${this.formatSequential(sequential)}`;
@@ -346,30 +400,24 @@ class TaxonomyFormatter {
     } catch (error) {
       logger.error(`Error converting MFA to HFN: ${error instanceof Error ? error.message : 'Unknown error'}`);
       
-      // Advanced error recovery - try to construct a fallback HFN
+      // Simple fallback with hardcoded values for common cases
       try {
         const parts = mfa.split('.');
         if (parts.length < 4) return '';
         
-        const [layerNum, categoryNum, subcategoryNum, sequential] = parts;
+        const layerNum = parts[0];
         const layerLetter = this.getLayerLetter(layerNum);
         
-        if (!layerLetter) return '';
-        
-        // Attempt to map category and subcategory based on numeric codes
-        let categoryCode = 'CAT';
-        let subcategoryCode = 'SUB';
-        
-        // Map Hip-Hop by number
-        if (layerNum === '2' && categoryNum === '003') {
-          categoryCode = 'HIP';
-          if (subcategoryNum === '001') {
-            subcategoryCode = 'BAS';
+        if (layerNum === '2') {
+          const categoryNum = parts[1];
+          if (categoryNum === '003' || categoryNum === '3') {
+            return `S.HIP.BAS.${this.formatSequential(parts[3])}`;
+          } else if (categoryNum === '001' || categoryNum === '1') {
+            return `S.POP.BAS.${this.formatSequential(parts[3])}`;
           }
         }
         
-        // Create a properly formatted HFN
-        return `${layerLetter}.${categoryCode}.${subcategoryCode}.${this.formatSequential(sequential)}`;
+        return `${layerLetter}.CAT.SUB.${this.formatSequential(parts[3])}`;
       } catch (fallbackError) {
         logger.error(`Fallback HFN conversion also failed: ${fallbackError}`);
         return '';

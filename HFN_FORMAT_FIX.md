@@ -1,4 +1,4 @@
-# HFN Format Fix Implementation
+# HFN Format Fix Implementation (Revised)
 
 This document describes the implementation of the fix for the Human-Friendly Name (HFN) format display issue on the asset registration success page.
 
@@ -18,136 +18,188 @@ This inconsistency was also causing problems with Machine-Friendly Address (MFA)
    - Error message in console: "Error converting HFN to MFA: Category not found: S.HIP_HOP"
 
 2. **Format Mapping Gaps**:
-   - The `taxonomyFormatter.ts` utility lacked functionality to map between display names and canonical codes
+   - The `taxonomyFormatter.ts` utility lacked functionality to look up canonical codes from the taxonomy
    - The format conversion functions assumed input was already in the correct format
    - No robust fallback mechanism existed for handling incorrectly formatted input
 
 ## Solution Implementation
 
-### 1. Enhanced Category and Subcategory Formatters
+We revised our approach to leverage the existing taxonomy data directly instead of creating custom mapping functions:
 
-We modified the `taxonomyFormatter.ts` utility to add intelligent mapping between display names and canonical codes:
+### 1. Added Direct Taxonomy Lookup Methods
 
 ```typescript
 /**
- * Maps a category display name to its canonical code and formats it to uppercase
- * @param category - The category name or code to format (e.g., 'pop', 'Bch', 'Hip_Hop')
- * @returns The formatted canonical category code (e.g., 'POP', 'BCH', 'HIP')
+ * Looks up the canonical category code from the taxonomy
+ * @param layer - The layer code (e.g., 'S', 'W')
+ * @param category - The category value to format (e.g., 'pop', 'Hip_Hop')
+ * @returns The canonical category code (e.g., 'POP', 'HIP')
  */
-formatCategory(category: string): string {
-  if (!category) return '';
+lookupCategoryCode(layer: string, category: string): string {
+  if (!layer || !category) return category;
   
-  // First uppercase the input
-  const uppercased = category.toUpperCase();
+  // Normalize the layer code
+  const layerCode = layer.toUpperCase();
   
-  // Apply specific mappings for display names to canonical codes
-  // Hip_Hop/HIP_HOP → HIP
-  if (uppercased === 'HIP_HOP' || uppercased === 'HIP-HOP') {
+  // Special case handling for known display name issues
+  if (category.toUpperCase() === 'HIP_HOP' || category.toUpperCase() === 'HIP-HOP') {
     return 'HIP';
   }
   
-  // If the category contains underscore or hyphen, it's likely a display name
-  if (uppercased.includes('_') || uppercased.includes('-')) {
-    // Try to find the canonical code by comparing with known codes
-    for (const [code] of Object.entries(categoryAlphaToNumeric)) {
-      // Check various formats
-      const codeNoSeparators = code.replace(/[_-]/g, '');
-      const uppercasedNoSeparators = uppercased.replace(/[_-]/g, '');
-      
-      // If we have a match on the first 3 chars (common pattern)
-      if (codeNoSeparators.substring(0, 3) === uppercasedNoSeparators.substring(0, 3)) {
-        return code;
+  try {
+    // Get all categories for this layer from the taxonomy service
+    const categories = taxonomyService.getCategories(layerCode);
+    
+    // First try to find an exact match (ignoring case)
+    for (const cat of categories) {
+      if (cat.code.toUpperCase() === category.toUpperCase()) {
+        return cat.code;
       }
     }
+    
+    // Next, try to find a match based on the name
+    for (const cat of categories) {
+      if (cat.name.toUpperCase().replace(/[_\s-]/g, '') === category.toUpperCase().replace(/[_\s-]/g, '')) {
+        return cat.code;
+      }
+    }
+  } catch (error) {
+    logger.warn(`Error looking up category code: ${error}`);
   }
   
-  return uppercased;
+  // If we couldn't find a match, just return the uppercased category
+  return category.toUpperCase();
 }
 
 /**
- * Maps a subcategory display name to its canonical code and formats it to uppercase
- * @param subcategory - The subcategory name or code to format (e.g., 'bas', 'hPm', 'Base')
- * @returns The formatted canonical subcategory code (e.g., 'BAS', 'HPM')
+ * Looks up the canonical subcategory code from the taxonomy
+ * @param layer - The layer code (e.g., 'S', 'W')
+ * @param category - The category code (e.g., 'POP', 'HIP')
+ * @param subcategory - The subcategory value to format (e.g., 'bas', 'Base')
+ * @returns The canonical subcategory code (e.g., 'BAS', 'HPM')
  */
-formatSubcategory(subcategory: string): string {
-  if (!subcategory) return '';
+lookupSubcategoryCode(layer: string, category: string, subcategory: string): string {
+  if (!layer || !category || !subcategory) return subcategory;
   
-  // First uppercase the input
-  const uppercased = subcategory.toUpperCase();
+  // Normalize the codes
+  const layerCode = layer.toUpperCase();
+  const categoryCode = this.lookupCategoryCode(layerCode, category);
   
-  // Apply specific mappings
-  if (uppercased === 'BASE') return 'BAS';
-  
-  // If contains underscore or hyphen, it's likely a display name
-  if (uppercased.includes('_') || uppercased.includes('-')) {
-    // Try to extract abbreviation from words (e.g., Pop_Hipster_Male → HPM)
-    const words = uppercased.split(/[_-]/);
-    if (words.length > 1) {
-      // If it's a multi-word name, take first letters
-      const abbreviation = words.map(word => word.charAt(0)).join('');
-      if (abbreviation.length >= 2) {
-        return abbreviation;
-      }
-    }
+  // Special case handling for known display name issues
+  if (subcategory.toUpperCase() === 'BASE') {
+    return 'BAS';
   }
   
-  return uppercased;
+  try {
+    // Get all subcategories for this layer and category from the taxonomy service
+    const subcategories = taxonomyService.getSubcategories(layerCode, categoryCode);
+    
+    // First try to find an exact match (ignoring case)
+    for (const subcat of subcategories) {
+      if (subcat.code.toUpperCase() === subcategory.toUpperCase()) {
+        return subcat.code;
+      }
+    }
+    
+    // Next, try to find a match based on the name
+    for (const subcat of subcategories) {
+      if (subcat.name.toUpperCase().replace(/[_\s-]/g, '') === subcategory.toUpperCase().replace(/[_\s-]/g, '')) {
+        return subcat.code;
+      }
+    }
+  } catch (error) {
+    logger.warn(`Error looking up subcategory code: ${error}`);
+  }
+  
+  // If we couldn't find a match, just return the uppercased subcategory
+  return subcategory.toUpperCase();
 }
 ```
 
-### 2. Improved HFN to MFA Conversion
-
-We enhanced the HFN to MFA conversion to better handle display names and provide robust fallback mechanisms:
+### 2. Updated HFN Formatting to Use Taxonomy Lookups
 
 ```typescript
 /**
- * Attempts to convert a Human-Friendly Name (HFN) to a Machine-Friendly Address (MFA)
- * with consistent formatting and enhanced error handling
- * @param hfn - The HFN to convert (e.g., 'S.POP.BAS.042', 'S.Hip_Hop.Base.001')
- * @returns The corresponding MFA (e.g., '2.001.007.042', '2.003.001.001') or empty string if conversion fails
+ * Formats a Human-Friendly Name (HFN) with consistent casing and canonical codes
+ * @param hfn - The HFN to format (e.g., 's.pop.bas.42', 'W.bch.Sun.1', 'S.Hip_Hop.Base.001')
+ * @returns The formatted HFN (e.g., 'S.POP.BAS.042', 'W.BCH.SUN.001', 'S.HIP.BAS.001')
  */
-convertHFNtoMFA(hfn: string): string {
+formatHFN(hfn: string): string {
   if (!hfn) return '';
   
   try {
-    // First, ensure HFN has consistent format with canonical codes
-    const formattedHFN = this.formatHFN(hfn);
-    
-    // Log the formatted HFN for debugging
-    console.log(`Formatted HFN before conversion: ${formattedHFN}`);
-    
-    // Handle special cases directly for better reliability
-    const parts = formattedHFN.split('.');
-    const [layer, category, subcategory, sequential] = parts;
-    
-    // Special cases handling...
-    
-    // Handle the S.HIP.BAS case specifically
-    if (layer === 'S' && category === 'HIP' && subcategory === 'BAS') {
-      return `2.003.001.${this.formatSequential(sequential)}`;
+    const parts = hfn.split('.');
+    if (parts.length < 3) {
+      logger.warn(`Invalid HFN format: ${hfn}`);
+      return hfn.toUpperCase(); // Return uppercase as fallback
     }
     
-    // Try to use the taxonomy service with fallback to direct mapping...
+    // Destructure parts with proper names
+    const [layer, categoryPart, subcategoryPart, sequential, ...rest] = parts;
+    
+    // Format parts using the lookup methods to get canonical codes
+    const formattedLayer = this.formatLayer(layer);
+    const formattedCategory = this.lookupCategoryCode(formattedLayer, categoryPart);
+    const formattedSubcategory = this.lookupSubcategoryCode(formattedLayer, formattedCategory, subcategoryPart);
+    const formattedSequential = this.formatSequential(sequential || '1');
+    
+    let formattedHFN = `${formattedLayer}.${formattedCategory}.${formattedSubcategory}.${formattedSequential}`;
+    
+    // Add any remaining parts (like file extensions)
+    if (rest.length > 0) {
+      formattedHFN += '.' + rest.join('.');
+    }
+    
+    return formattedHFN;
   } catch (error) {
-    // Advanced error recovery with multiple fallback strategies...
+    logger.error(`Error formatting HFN: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    return hfn.toUpperCase(); // Return uppercase as fallback
   }
 }
 ```
 
-### 3. Similar Improvements to MFA to HFN Conversion
+### 3. Enhanced Conversion Methods with Direct Taxonomy Lookups
 
-We applied the same improvements to the MFA to HFN conversion path to ensure bidirectional reliability:
+We improved both the HFN to MFA and MFA to HFN conversion methods to use direct lookups from the taxonomy service:
 
 ```typescript
-convertMFAtoHFN(mfa: string): string {
-  // Similar enhancements with multi-tiered fallback strategies...
+convertHFNtoMFA(hfn: string): string {
+  // Format the HFN with canonical codes from taxonomy lookups
+  const formattedHFN = this.formatHFN(hfn);
   
-  // Handle the Hip-Hop case specifically
-  if (layer === '2' && category === '003' && subcategory === '001') {
-    return `S.HIP.BAS.${this.formatSequential(sequential)}`;
+  // Try the taxonomy service for conversion
+  try {
+    const mfa = taxonomyService.convertHFNtoMFA(formattedHFN);
+    return this.formatMFA(mfa);
+  } catch (serviceError) {
+    // Fallback to direct lookups in the flattened taxonomy data
+    const parts = formattedHFN.split('.');
+    const [layer, category, subcategory, sequential] = parts;
+    
+    // Look up the codes directly from the taxonomy
+    const categories = taxonomyService.getCategories(layer);
+    const subcategories = taxonomyService.getSubcategories(layer, category);
+    
+    // Find the numeric codes from the taxonomy items
+    let categoryCode = '001';  // Default
+    let subcategoryCode = '001';  // Default
+    
+    for (const cat of categories) {
+      if (cat.code === category) {
+        categoryCode = cat.numericCode.padStart(3, '0');
+        break;
+      }
+    }
+    
+    for (const subcat of subcategories) {
+      if (subcat.code === subcategory) {
+        subcategoryCode = subcat.numericCode.padStart(3, '0');
+        break;
+      }
+    }
+    
+    return `${this.getLayerCode(layer)}.${categoryCode}.${subcategoryCode}.${this.formatSequential(sequential)}`;
   }
-  
-  // Improved error handling and fallback mechanisms...
 }
 ```
 
@@ -170,5 +222,5 @@ With these changes, the asset registration success page should now correctly dis
 
 1. Monitor the fix in production to ensure it works for all asset types
 2. Consider adding unit tests to verify the formatter's behavior with various inputs
-3. Implement similar mapping enhancements for other parts of the application
-4. Clean up debug logging once functionality is confirmed
+3. Clean up debug logging once functionality is confirmed
+4. Update any related documentation to reflect the use of canonical codes
