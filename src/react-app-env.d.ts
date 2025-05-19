@@ -4,4 +4,5 @@
 interface Window {
   __layerChangeHandlers?: Record<string, EventListener>;
   __layerSelectionLock?: boolean;
+  __categorySelectionTimestamp?: number;
 }

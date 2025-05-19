@@ -1446,39 +1446,107 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
   // Handle category selection with debouncing to prevent multiple rapid selections
   const handleCategorySelect = useCallback(
     (category: string) => {
-      // FIXED: Prevent duplicate selections
-      if (category === activeCategory) return;
-
-      logger.info(`Category selected: ${category}`);
-      setActiveCategory(category);
-      setActiveSubcategory(null);
-      selectCategory(category);
-      onCategorySelect(category, false);
-
-      // Direct service call to load subcategories
+      // CRITICAL FIX: Enhanced category selection with error catching and throttling
       try {
-        const subcats = taxonomyService.getSubcategories(layer, category);
-
-        // Store subcategories in local backup storage
-        setLocalSubcategories(subcats);
-        subcategoriesRef.current = subcats;
-
-        // Set subcategories in context
-        selectCategory(category);
-      } catch (error) {
-        console.error('Error loading subcategories directly:', error);
-      }
-
-      // Keep the original method as a fallback, but with debouncing
-      if (subcategoryDebounceRef.current) {
-        clearTimeout(subcategoryDebounceRef.current);
-      }
-
-      subcategoryDebounceRef.current = setTimeout(() => {
-        if (layer && category) {
-          reloadSubcategories();
+        // FIXED: Prevent duplicate selections
+        if (category === activeCategory) return;
+        
+        // CRITICAL FIX: Add throttling for category selection like we did for layer selection
+        const now = Date.now();
+        const throttleTime = 500; // 500ms cooldown between category selections
+        const categoryThrottleKey = '__categorySelectionTimestamp';
+        
+        // Check if this category selection is happening too quickly after the last one
+        const lastTimestamp = window[categoryThrottleKey] || 0;
+        if (now - lastTimestamp < throttleTime) {
+          console.log(
+            `[CATEGORY SELECT] Throttled - ignoring category selection too soon after previous (${now - lastTimestamp}ms)`
+          );
+          return; // Ignore this selection
         }
-      }, 50);
+        
+        // Update throttle timestamp
+        window[categoryThrottleKey] = now;
+        
+        // Generate a unique ID for tracking this operation in logs
+        const operationId = `cat_${Date.now().toString(36)}_${Math.random().toString(36).substr(2, 5)}`;
+        logger.info(`[CATEGORY SELECT ${operationId}] Category selected: ${category}`);
+        
+        // Update local UI state immediately
+        setActiveCategory(category);
+        setActiveSubcategory(null);
+        
+        // Call context update ONCE (not twice as before)
+        console.log(`[CATEGORY SELECT ${operationId}] Updating context with: ${category}`);
+        selectCategory(category);
+        
+        // Notify parent component
+        onCategorySelect(category, false);
+        
+        // CRITICAL FIX: Make direct subcategory loading more robust
+        console.log(`[CATEGORY SELECT ${operationId}] Loading subcategories for: ${layer}.${category}`);
+        try {
+          // Pre-fetch subcategories directly from the service for immediate feedback
+          const subcats = taxonomyService.getSubcategories(layer, category);
+          
+          if (subcats && subcats.length > 0) {
+            console.log(`[CATEGORY SELECT ${operationId}] Direct load successful: ${subcats.length} subcategories`);
+            
+            // Store in multiple backup locations for resilience
+            subcategoriesRef.current = [...subcats]; // update ref first (synchronous)
+            
+            // Update local state (asynchronous)
+            setLocalSubcategories(prevSubcats => {
+              // Only update if we have items or if previous state was empty
+              if (subcats.length > 0 || prevSubcats.length === 0) {
+                return [...subcats];
+              }
+              return prevSubcats;
+            });
+            
+            // Store in session storage as ultimate backup
+            try {
+              sessionStorage.setItem(
+                `subcategoriesList_${layer}_${category}`,
+                JSON.stringify(subcats)
+              );
+            } catch (e) {
+              console.warn(`[CATEGORY SELECT ${operationId}] Session storage update failed:`, e);
+            }
+            
+            // Dispatch event to notify any listeners
+            const subcategoryEvent = new CustomEvent('taxonomySubcategoriesLoaded', {
+              detail: {
+                layer,
+                category,
+                subcategories: subcats,
+                source: 'direct-prefetch',
+                operationId
+              }
+            });
+            window.dispatchEvent(subcategoryEvent);
+          } else {
+            console.warn(`[CATEGORY SELECT ${operationId}] Direct service call returned no subcategories`);
+          }
+        } catch (error) {
+          console.error(`[CATEGORY SELECT ${operationId}] Error loading subcategories directly:`, error);
+        }
+        
+        // Schedule a context reload as a fallback with slight delay
+        if (subcategoryDebounceRef.current) {
+          clearTimeout(subcategoryDebounceRef.current);
+        }
+        
+        subcategoryDebounceRef.current = setTimeout(() => {
+          if (layer && category) {
+            console.log(`[CATEGORY SELECT ${operationId}] Executing fallback subcategory reload`);
+            reloadSubcategories();
+          }
+        }, 100); // Increased from 50ms for better reliability
+      } catch (error) {
+        // Global error handler for the entire function
+        console.error('[CATEGORY SELECT] Critical error in category selection:', error);
+      }
     },
     [
       activeCategory,

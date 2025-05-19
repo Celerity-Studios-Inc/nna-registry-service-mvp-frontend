@@ -135,12 +135,59 @@ export const performFullRecovery = async (layer?: string): Promise<boolean> => {
     resetTaxonomyStorage();
   }
   
+  // CRITICAL FIX: Reset any pending selection throttles to ensure we can make new selections
+  try {
+    // Clear all throttle keys to ensure we can make new selections after recovery
+    if (window.__layerSelectionLock) {
+      console.log('[TAXONOMY RECOVERY] Clearing layer selection lock');
+      window.__layerSelectionLock = false;
+    }
+    if (window.__categorySelectionTimestamp) {
+      console.log('[TAXONOMY RECOVERY] Clearing category selection timestamp');
+      window.__categorySelectionTimestamp = 0;
+    }
+  } catch (e) {
+    console.warn('[TAXONOMY RECOVERY] Error clearing throttle keys:', e);
+  }
+  
   // Step 2: Force refresh with a delay to allow storage changes to take effect
   return new Promise((resolve) => {
     setTimeout(() => {
       try {
         // Force refresh
         const recoveryId = forceTaxonomyRefresh(layer);
+        
+        // CRITICAL FIX: Perform additional recovery steps for the Star layer
+        // because it has special handling needs for POP category
+        if (layer === 'S') {
+          console.log(`[TAXONOMY RECOVERY ${recoveryId}] Special recovery for Star layer`);
+          
+          try {
+            // Direct service call to prefetch categories for the Star layer
+            const taxonomyService = require('../services/simpleTaxonomyService').taxonomyService;
+            const starCategories = taxonomyService.getCategories('S');
+            
+            if (starCategories && starCategories.length > 0) {
+              console.log(`[TAXONOMY RECOVERY ${recoveryId}] Pre-loaded ${starCategories.length} Star categories`);
+              
+              // Store in session storage for faster access
+              try {
+                sessionStorage.setItem('directCategories_S', JSON.stringify(starCategories));
+                
+                // Also specifically pre-load POP category subcategories since that's a common issue
+                const popSubcategories = taxonomyService.getSubcategories('S', 'POP');
+                if (popSubcategories && popSubcategories.length > 0) {
+                  console.log(`[TAXONOMY RECOVERY ${recoveryId}] Pre-loaded ${popSubcategories.length} POP subcategories`);
+                  sessionStorage.setItem('subcategoriesList_S_POP', JSON.stringify(popSubcategories));
+                }
+              } catch (e) {
+                console.warn(`[TAXONOMY RECOVERY ${recoveryId}] Session storage error:`, e);
+              }
+            }
+          } catch (e) {
+            console.warn(`[TAXONOMY RECOVERY ${recoveryId}] Special Star layer recovery error:`, e);
+          }
+        }
         
         // Wait for a bit to allow the refresh to complete
         setTimeout(() => {
