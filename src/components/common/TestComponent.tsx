@@ -1,5 +1,15 @@
 import React, { useState } from 'react';
-import { Box, Button, TextField, Typography, Paper, Select, MenuItem, FormControl, InputLabel } from '@mui/material';
+import {
+  Box,
+  Button,
+  TextField,
+  Typography,
+  Paper,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
+} from '@mui/material';
 import axios from 'axios';
 
 /**
@@ -18,17 +28,17 @@ const TestComponent: React.FC = () => {
     setLoading(true);
     setError('');
     setResponse(null);
-    
+
     try {
       console.log(`Testing API: ${method} ${endpoint}`);
-      
+
       let result;
       const config = {
         headers: {
-          'Content-Type': 'application/json'
-        }
+          'Content-Type': 'application/json',
+        },
       };
-      
+
       switch (method) {
         case 'GET':
           result = await axios.get(endpoint, config);
@@ -45,49 +55,51 @@ const TestComponent: React.FC = () => {
         default:
           result = await axios.get(endpoint, config);
       }
-      
+
       setResponse(result.data);
       console.log('API test successful:', result);
     } catch (err: any) {
       console.error('API test failed:', err);
       setError(err.message || 'An error occurred');
-      
+
       // Try to get more detailed error info
       if (err.response) {
         setResponse({
           error: true,
           status: err.response.status,
           statusText: err.response.statusText,
-          data: err.response.data
+          data: err.response.data,
         });
       }
     } finally {
       setLoading(false);
     }
   };
-  
+
   return (
     <Paper elevation={3} sx={{ p: 3, m: 2 }}>
-      <Typography variant="h5" gutterBottom>API Test Utility</Typography>
-      
+      <Typography variant="h5" gutterBottom>
+        API Test Utility
+      </Typography>
+
       <Box sx={{ mb: 2 }}>
         <TextField
           fullWidth
           label="API Endpoint"
           value={endpoint}
-          onChange={(e) => setEndpoint(e.target.value)}
+          onChange={e => setEndpoint(e.target.value)}
           margin="normal"
           variant="outlined"
           placeholder="/api/health"
         />
       </Box>
-      
+
       <Box sx={{ mb: 2 }}>
         <FormControl fullWidth margin="normal">
           <InputLabel>HTTP Method</InputLabel>
           <Select
             value={method}
-            onChange={(e) => setMethod(e.target.value as string)}
+            onChange={e => setMethod(e.target.value as string)}
             label="HTTP Method"
           >
             <MenuItem value="GET">GET</MenuItem>
@@ -97,14 +109,14 @@ const TestComponent: React.FC = () => {
           </Select>
         </FormControl>
       </Box>
-      
+
       {(method === 'POST' || method === 'PUT') && (
         <Box sx={{ mb: 2 }}>
           <TextField
             fullWidth
             label="Request Body (JSON)"
             value={requestBody}
-            onChange={(e) => setRequestBody(e.target.value)}
+            onChange={e => setRequestBody(e.target.value)}
             margin="normal"
             variant="outlined"
             multiline
@@ -112,34 +124,36 @@ const TestComponent: React.FC = () => {
           />
         </Box>
       )}
-      
-      <Button 
-        variant="contained" 
-        color="primary" 
-        onClick={handleTest} 
+
+      <Button
+        variant="contained"
+        color="primary"
+        onClick={handleTest}
         disabled={loading}
         sx={{ mb: 3 }}
       >
         {loading ? 'Testing...' : 'Test API Connection'}
       </Button>
-      
+
       {error && (
         <Typography color="error" sx={{ mb: 2 }}>
           Error: {error}
         </Typography>
       )}
-      
+
       {response && (
         <Box>
-          <Typography variant="h6" gutterBottom>Response:</Typography>
-          <Paper 
-            variant="outlined" 
-            sx={{ 
-              p: 2, 
-              maxHeight: '300px', 
+          <Typography variant="h6" gutterBottom>
+            Response:
+          </Typography>
+          <Paper
+            variant="outlined"
+            sx={{
+              p: 2,
+              maxHeight: '300px',
               overflow: 'auto',
               backgroundColor: '#f5f5f5',
-              fontFamily: 'monospace' 
+              fontFamily: 'monospace',
             }}
           >
             <pre>{JSON.stringify(response, null, 2)}</pre>

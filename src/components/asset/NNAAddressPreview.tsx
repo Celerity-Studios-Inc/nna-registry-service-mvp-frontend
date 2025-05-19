@@ -39,20 +39,22 @@ const NNAAddressPreview: React.FC<NNAAddressPreviewProps> = ({
   validationError,
 }) => {
   // For debugging
-  console.log(`NNAAddressPreview Input: layer=${layerCode}, category=${categoryCode}, subcategory=${subcategoryCode}`);
+  console.log(
+    `NNAAddressPreview Input: layer=${layerCode}, category=${categoryCode}, subcategory=${subcategoryCode}`
+  );
 
   // Use the enhanced taxonomy mapper to ensure consistent display across components
   // This handles all special cases internally and returns properly formatted addresses
   let hfnAddress = '';
   let mfaAddress = '';
-  
+
   const formattedAddresses = taxonomyMapper.formatNNAAddress(
     layerCode,
     categoryCode,
     subcategoryCode,
-    "000" // Always use "000" for display in the preview
+    '000' // Always use "000" for display in the preview
   );
-  
+
   if (typeof formattedAddresses === 'string') {
     // Legacy format - single string output
     hfnAddress = formattedAddresses;
@@ -60,7 +62,7 @@ const NNAAddressPreview: React.FC<NNAAddressPreviewProps> = ({
       layerCode,
       categoryCode,
       subcategoryCode,
-      "000",
+      '000',
       'mfa'
     ) as string;
   } else {
@@ -70,22 +72,39 @@ const NNAAddressPreview: React.FC<NNAAddressPreviewProps> = ({
   }
 
   // Log the formatted addresses for debugging
-  console.log(`NNAAddressPreview: Formatted HFN=${hfnAddress}, MFA=${mfaAddress}`);
+  console.log(
+    `NNAAddressPreview: Formatted HFN=${hfnAddress}, MFA=${mfaAddress}`
+  );
 
   // Store original subcategory for later use in the success screen
   if (subcategoryNumericCode) {
     // Store in sessionStorage to persist through the registration flow
     try {
-      sessionStorage.setItem(`originalSubcategory_${layerCode}_${categoryCode}`, subcategoryCode);
-      console.log(`Stored original subcategory: ${subcategoryCode} for ${layerCode}.${categoryCode}`);
+      sessionStorage.setItem(
+        `originalSubcategory_${layerCode}_${categoryCode}`,
+        subcategoryCode
+      );
+      console.log(
+        `Stored original subcategory: ${subcategoryCode} for ${layerCode}.${categoryCode}`
+      );
     } catch (e) {
-      console.warn('Failed to store original subcategory in sessionStorage:', e);
+      console.warn(
+        'Failed to store original subcategory in sessionStorage:',
+        e
+      );
     }
   }
 
   return (
     <Paper sx={{ p: 3, mt: 3, backgroundColor: 'background.default' }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          mb: 1,
+        }}
+      >
         <Typography variant="h6">NNA Address Preview</Typography>
         {checkingUniqueness ? (
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
@@ -112,13 +131,14 @@ const NNAAddressPreview: React.FC<NNAAddressPreviewProps> = ({
           />
         ) : null}
       </Box>
-      
+
       <Typography variant="body2" color="text.secondary" paragraph>
-        The NNA address provides a unique identifier for your asset in both human-friendly and machine-friendly formats.
+        The NNA address provides a unique identifier for your asset in both
+        human-friendly and machine-friendly formats.
       </Typography>
-      
+
       <Divider sx={{ mb: 2 }} />
-      
+
       {validationError ? (
         <Alert severity="error" sx={{ mb: 2 }}>
           {validationError}
@@ -142,7 +162,10 @@ const NNAAddressPreview: React.FC<NNAAddressPreviewProps> = ({
                   display: 'flex',
                   justifyContent: 'center',
                   alignItems: 'center',
-                  backgroundColor: theme => (theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)'),
+                  backgroundColor: theme =>
+                    theme.palette.mode === 'dark'
+                      ? 'rgba(255,255,255,0.05)'
+                      : 'rgba(0,0,0,0.02)',
                 }}
               >
                 <Typography variant="h6" fontWeight="bold" color="primary">
@@ -151,7 +174,7 @@ const NNAAddressPreview: React.FC<NNAAddressPreviewProps> = ({
               </Paper>
             </Box>
           </Grid>
-          
+
           <Grid item xs={12} sm={6}>
             <Box>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
@@ -169,11 +192,18 @@ const NNAAddressPreview: React.FC<NNAAddressPreviewProps> = ({
                   display: 'flex',
                   justifyContent: 'center',
                   alignItems: 'center',
-                  backgroundColor: theme => (theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)'),
+                  backgroundColor: theme =>
+                    theme.palette.mode === 'dark'
+                      ? 'rgba(255,255,255,0.05)'
+                      : 'rgba(0,0,0,0.02)',
                   fontFamily: 'monospace',
                 }}
               >
-                <Typography variant="h6" fontFamily="monospace" color="secondary">
+                <Typography
+                  variant="h6"
+                  fontFamily="monospace"
+                  color="secondary"
+                >
                   {mfaAddress}
                 </Typography>
               </Paper>
@@ -181,15 +211,20 @@ const NNAAddressPreview: React.FC<NNAAddressPreviewProps> = ({
           </Grid>
         </Grid>
       )}
-      
+
       <Box sx={{ mt: 2 }}>
         <Typography variant="body2" color="text.secondary">
           <strong>Format:</strong> Layer.Category.Subcategory.SequentialNumber
         </Typography>
         <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
-          <InfoIcon fontSize="small" color="info" sx={{ mr: 1, width: 18, height: 18 }} />
+          <InfoIcon
+            fontSize="small"
+            color="info"
+            sx={{ mr: 1, width: 18, height: 18 }}
+          />
           <Typography variant="caption" color="info.main">
-            The sequential number (.000) will be assigned by the system when you submit the asset.
+            The sequential number (.000) will be assigned by the system when you
+            submit the asset.
           </Typography>
         </Box>
       </Box>

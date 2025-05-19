@@ -31,12 +31,18 @@ const layerConfig: LayerConfigType = {
   // Songs layer (G)
   G: {
     icon: React.createElement(MusicNoteIcon),
-    description: 'Songs, music compositions, beats, and audio tracks for creative applications',
+    description:
+      'Songs, music compositions, beats, and audio tracks for creative applications',
     color: '#1976d2', // Blue
     fileTypes: ['audio/mp3', 'audio/wav', 'audio/ogg', 'audio/flac'],
-    examples: ['Pop song', 'Hip-hop beat', 'Classical composition', 'Sound effect'],
+    examples: [
+      'Pop song',
+      'Hip-hop beat',
+      'Classical composition',
+      'Sound effect',
+    ],
   },
-  
+
   // Stars layer (S)
   S: {
     icon: React.createElement(StarIcon),
@@ -45,7 +51,7 @@ const layerConfig: LayerConfigType = {
     fileTypes: ['image/jpeg', 'image/png', 'image/svg+xml'],
     examples: ['Celebrity profile', 'Voice talent', 'Influencer content'],
   },
-  
+
   // Looks layer (L)
   L: {
     icon: React.createElement(FaceIcon),
@@ -54,7 +60,7 @@ const layerConfig: LayerConfigType = {
     fileTypes: ['image/jpeg', 'image/png', 'image/svg+xml', 'application/pdf'],
     examples: ['Character design', 'Costume', 'Visual style guide'],
   },
-  
+
   // Moves layer (M)
   M: {
     icon: React.createElement(MoveIcon),
@@ -63,16 +69,20 @@ const layerConfig: LayerConfigType = {
     fileTypes: ['video/mp4', 'application/json', 'model/gltf+json'],
     examples: ['Dance routine', 'Character animation', 'Motion capture data'],
   },
-  
+
   // Worlds layer (W)
   W: {
     icon: React.createElement(WorldIcon),
     description: '3D environments, scenes, and virtual worlds',
     color: '#4caf50', // Green
-    fileTypes: ['model/gltf-binary', 'model/gltf+json', 'application/octet-stream'],
+    fileTypes: [
+      'model/gltf-binary',
+      'model/gltf+json',
+      'application/octet-stream',
+    ],
     examples: ['3D scene', 'Game level', 'Virtual environment'],
   },
-  
+
   // Branded layer (B)
   B: {
     icon: React.createElement(BrandingIcon),
@@ -81,7 +91,7 @@ const layerConfig: LayerConfigType = {
     fileTypes: ['image/svg+xml', 'application/pdf', 'image/png'],
     examples: ['Logo', 'Brand guide', 'Official artwork'],
   },
-  
+
   // Personalize layer (P)
   P: {
     icon: React.createElement(PersonIcon),
@@ -90,25 +100,35 @@ const layerConfig: LayerConfigType = {
     fileTypes: ['application/json', 'image/png', 'text/plain'],
     examples: ['User preferences', 'Custom avatar', 'Personal playlist'],
   },
-  
+
   // Training Data layer (T)
   T: {
     icon: React.createElement(TrainingIcon),
-    description: 'AI training datasets, prompts, and machine learning resources',
+    description:
+      'AI training datasets, prompts, and machine learning resources',
     color: '#673ab7', // Deep Purple
-    fileTypes: ['application/json', 'text/plain', 'image/png', 'application/zip'],
+    fileTypes: [
+      'application/json',
+      'text/plain',
+      'image/png',
+      'application/zip',
+    ],
     examples: ['Training dataset', 'Prompt collection', 'Model parameters'],
   },
-  
+
   // Composite layer (C)
   C: {
     icon: React.createElement(CompositeIcon),
     description: 'Combined assets that reference components from other layers',
     color: '#795548', // Brown
     fileTypes: ['application/json', 'text/plain'],
-    examples: ['Multi-layer experience', 'Cross-category bundle', 'Asset collection'],
+    examples: [
+      'Multi-layer experience',
+      'Cross-category bundle',
+      'Asset collection',
+    ],
   },
-  
+
   // Rights layer (R)
   R: {
     icon: React.createElement(RightsIcon),

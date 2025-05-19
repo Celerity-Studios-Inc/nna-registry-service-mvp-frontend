@@ -4,8 +4,17 @@ import './styles/ErrorHandling.css';
 import './styles/TaxonomyExample.css';
 import './styles/Feedback.css';
 import './styles/ErrorBoundary.css';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { ThemeProvider, createTheme, StyledEngineProvider } from '@mui/material/styles';
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+} from 'react-router-dom';
+import {
+  ThemeProvider,
+  createTheme,
+  StyledEngineProvider,
+} from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
@@ -39,6 +48,9 @@ import { taxonomyService } from './services/simpleTaxonomyService';
 import { logger, LogLevel, LogCategory } from './utils/logger';
 import LogViewer from './components/debug/LogViewer';
 import './styles/LogViewer.css';
+
+// Import new taxonomy error recovery utilities
+import { setupGlobalTaxonomyErrorHandler } from './utils/taxonomyErrorRecovery';
 
 // Log the import of taxonomy service, but let the TaxonomyInitProvider handle initialization
 logger.taxonomy(LogLevel.INFO, 'Taxonomy service imported in App.tsx');
@@ -106,12 +118,12 @@ const theme = createTheme({
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   // Check if user is authenticated
   const token = localStorage.getItem('accessToken');
-  
+
   // If not authenticated, redirect to login
   if (!token) {
     return <Navigate to="/login" />;
   }
-  
+
   // If authenticated, render children
   return <>{children}</>;
 };
@@ -119,7 +131,7 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 // Root redirect component
 const RootRedirect = () => {
   const token = localStorage.getItem('accessToken');
-  
+
   if (token) {
     return <Navigate to="/dashboard" />;
   } else {
@@ -135,6 +147,10 @@ const App: React.FC = () => {
     if (token && token.length < 10) {
       localStorage.removeItem('accessToken');
     }
+    
+    // Initialize the global taxonomy error handler
+    console.log('[APP] Setting up global taxonomy error handler');
+    setupGlobalTaxonomyErrorHandler();
   }, []);
 
   return (
@@ -148,12 +164,14 @@ const App: React.FC = () => {
             <FeedbackProvider>
               <NotificationsProvider>
                 <AuthProvider>
-                  <TaxonomyInitProvider fallback={
-                    <div className="taxonomy-loading">
-                      <div className="loading-spinner"></div>
-                      <p>Loading taxonomy data...</p>
-                    </div>
-                  }>
+                  <TaxonomyInitProvider
+                    fallback={
+                      <div className="taxonomy-loading">
+                        <div className="loading-spinner"></div>
+                        <p>Loading taxonomy data...</p>
+                      </div>
+                    }
+                  >
                     <Router>
                       <Routes>
                         <Route path="/login" element={<LoginPage />} />
@@ -164,30 +182,51 @@ const App: React.FC = () => {
                         <Route path="/connect" element={<ConnectivityHelp />} />
                         <Route path="/help" element={<ConnectivityHelp />} />
                         <Route path="/error-test" element={<ErrorTestPage />} />
-                        <Route path="/taxonomy-validator" element={<TaxonomyValidator />} />
-                        <Route path="/taxonomy-debug" element={<TaxonomyDebugPage />} />
-                        <Route path="/taxonomy-example" element={<TaxonomyExample />} />
+                        <Route
+                          path="/taxonomy-validator"
+                          element={<TaxonomyValidator />}
+                        />
+                        <Route
+                          path="/taxonomy-debug"
+                          element={<TaxonomyDebugPage />}
+                        />
+                        <Route
+                          path="/taxonomy-example"
+                          element={<TaxonomyExample />}
+                        />
                         <Route element={<MainLayout />}>
-                          <Route path="/dashboard" element={
-                            <ProtectedRoute>
-                              <DashboardPage />
-                            </ProtectedRoute>
-                          } />
-                          <Route path="/register-asset" element={
-                            <ProtectedRoute>
-                              <AssetRegistrationWrapper />
-                            </ProtectedRoute>
-                          } />
-                          <Route path="/search-assets" element={
-                            <ProtectedRoute>
-                              <SearchAssetsPage />
-                            </ProtectedRoute>
-                          } />
-                          <Route path="/assets/:id" element={
-                            <ProtectedRoute>
-                              <AssetDetailPage />
-                            </ProtectedRoute>
-                          } />
+                          <Route
+                            path="/dashboard"
+                            element={
+                              <ProtectedRoute>
+                                <DashboardPage />
+                              </ProtectedRoute>
+                            }
+                          />
+                          <Route
+                            path="/register-asset"
+                            element={
+                              <ProtectedRoute>
+                                <AssetRegistrationWrapper />
+                              </ProtectedRoute>
+                            }
+                          />
+                          <Route
+                            path="/search-assets"
+                            element={
+                              <ProtectedRoute>
+                                <SearchAssetsPage />
+                              </ProtectedRoute>
+                            }
+                          />
+                          <Route
+                            path="/assets/:id"
+                            element={
+                              <ProtectedRoute>
+                                <AssetDetailPage />
+                              </ProtectedRoute>
+                            }
+                          />
                           <Route path="/" element={<RootRedirect />} />
                         </Route>
                       </Routes>

@@ -1,6 +1,6 @@
 /**
  * LayerIcon Component
- * 
+ *
  * A component that displays an icon for a layer, with fallback to a
  * generated icon if the actual icon is not available.
  */
@@ -19,34 +19,34 @@ const LayerIcon: React.FC<LayerIconProps> = ({
   layer,
   size = 'medium',
   className = '',
-  showName = false
+  showName = false,
 }) => {
   const [iconUrl, setIconUrl] = useState<string>('');
   const [iconLoaded, setIconLoaded] = useState<boolean>(false);
   const [iconError, setIconError] = useState<boolean>(false);
-  
+
   useEffect(() => {
     // Reset state when layer changes
     setIconLoaded(false);
     setIconError(false);
-    
+
     // Get the icon URL
     const url = getLayerIcon(layer);
     setIconUrl(url);
   }, [layer]);
-  
+
   const handleIconLoad = () => {
     setIconLoaded(true);
     setIconError(false);
   };
-  
+
   const handleIconError = () => {
     setIconLoaded(false);
     setIconError(true);
   };
-  
+
   const layerName = getLayerName(layer);
-  
+
   return (
     <div className={`layer-icon ${size} ${className}`}>
       <div className="layer-icon-image">
@@ -59,23 +59,17 @@ const LayerIcon: React.FC<LayerIconProps> = ({
             className={iconLoaded ? 'loaded' : 'loading'}
           />
         ) : (
-          <div className="layer-icon-fallback">
-            {layer}
-          </div>
+          <div className="layer-icon-fallback">{layer}</div>
         )}
-        
+
         {!iconLoaded && !iconError && (
           <div className="layer-icon-loading">
             <div className="spinner"></div>
           </div>
         )}
       </div>
-      
-      {showName && (
-        <div className="layer-icon-name">
-          {layerName}
-        </div>
-      )}
+
+      {showName && <div className="layer-icon-name">{layerName}</div>}
     </div>
   );
 };

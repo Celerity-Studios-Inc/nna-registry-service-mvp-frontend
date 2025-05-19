@@ -1,6 +1,6 @@
 /**
  * LogViewer Component
- * 
+ *
  * A component for viewing and filtering application logs.
  */
 import React, { useState, useEffect } from 'react';
@@ -10,10 +10,12 @@ import '../../styles/LogViewer.css';
 const LogViewer: React.FC = () => {
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [filterLevel, setFilterLevel] = useState<LogLevel>(LogLevel.DEBUG);
-  const [filterCategory, setFilterCategory] = useState<LogCategory | 'ALL'>('ALL');
+  const [filterCategory, setFilterCategory] = useState<LogCategory | 'ALL'>(
+    'ALL'
+  );
   const [autoRefresh, setAutoRefresh] = useState<boolean>(true);
   const [isCollapsed, setIsCollapsed] = useState<boolean>(true);
-  
+
   // Fetch logs based on filters
   const fetchLogs = () => {
     if (filterCategory === 'ALL') {
@@ -22,25 +24,25 @@ const LogViewer: React.FC = () => {
       setLogs(logger.getFilteredLogs(filterLevel, filterCategory));
     }
   };
-  
+
   // Fetch logs on mount and when filters change
   useEffect(() => {
     fetchLogs();
-    
+
     // Set up auto-refresh interval
     let interval: NodeJS.Timeout | null = null;
-    
+
     if (autoRefresh) {
       interval = setInterval(fetchLogs, 1000);
     }
-    
+
     return () => {
       if (interval) {
         clearInterval(interval);
       }
     };
   }, [filterLevel, filterCategory, autoRefresh]);
-  
+
   // Get CSS class for log level
   const getLevelClassName = (level: LogLevel): string => {
     switch (level) {
@@ -56,7 +58,7 @@ const LogViewer: React.FC = () => {
         return '';
     }
   };
-  
+
   // Get text for log level
   const getLevelText = (level: LogLevel): string => {
     switch (level) {
@@ -72,7 +74,7 @@ const LogViewer: React.FC = () => {
         return 'UNKNOWN';
     }
   };
-  
+
   // Format timestamp
   const formatTimestamp = (timestamp: string): string => {
     try {
@@ -82,43 +84,42 @@ const LogViewer: React.FC = () => {
       return timestamp;
     }
   };
-  
+
   // Clear logs
   const handleClearLogs = () => {
     logger.clearLogs();
     fetchLogs();
   };
-  
+
   // Toggle auto-refresh
   const handleToggleAutoRefresh = () => {
     setAutoRefresh(!autoRefresh);
   };
-  
+
   // Toggle collapsed state
   const handleToggleCollapsed = () => {
     setIsCollapsed(!isCollapsed);
   };
-  
+
   return (
     <div className={`log-viewer ${isCollapsed ? 'collapsed' : ''}`}>
       <div className="log-viewer-header">
-        <button
-          className="log-viewer-toggle"
-          onClick={handleToggleCollapsed}
-        >
+        <button className="log-viewer-toggle" onClick={handleToggleCollapsed}>
           {isCollapsed ? 'Show Logs' : 'Hide Logs'}
         </button>
-        
+
         {!isCollapsed && (
           <>
             <h3>Log Viewer</h3>
-            
+
             <div className="log-viewer-controls">
               <div className="log-filter">
                 <label>Level:</label>
                 <select
                   value={filterLevel}
-                  onChange={(e) => setFilterLevel(Number(e.target.value) as LogLevel)}
+                  onChange={e =>
+                    setFilterLevel(Number(e.target.value) as LogLevel)
+                  }
                 >
                   <option value={LogLevel.DEBUG}>Debug+</option>
                   <option value={LogLevel.INFO}>Info+</option>
@@ -126,12 +127,14 @@ const LogViewer: React.FC = () => {
                   <option value={LogLevel.ERROR}>Error</option>
                 </select>
               </div>
-              
+
               <div className="log-filter">
                 <label>Category:</label>
                 <select
                   value={filterCategory}
-                  onChange={(e) => setFilterCategory(e.target.value as LogCategory | 'ALL')}
+                  onChange={e =>
+                    setFilterCategory(e.target.value as LogCategory | 'ALL')
+                  }
                 >
                   <option value="ALL">All</option>
                   <option value={LogCategory.GENERAL}>General</option>
@@ -140,32 +143,26 @@ const LogViewer: React.FC = () => {
                   <option value={LogCategory.API}>API</option>
                 </select>
               </div>
-              
+
               <button
                 className={`auto-refresh-button ${autoRefresh ? 'active' : ''}`}
                 onClick={handleToggleAutoRefresh}
               >
                 {autoRefresh ? 'Auto-refresh: ON' : 'Auto-refresh: OFF'}
               </button>
-              
-              <button
-                className="clear-logs-button"
-                onClick={handleClearLogs}
-              >
+
+              <button className="clear-logs-button" onClick={handleClearLogs}>
                 Clear Logs
               </button>
-              
-              <button
-                className="refresh-button"
-                onClick={fetchLogs}
-              >
+
+              <button className="refresh-button" onClick={fetchLogs}>
                 Refresh
               </button>
             </div>
           </>
         )}
       </div>
-      
+
       {!isCollapsed && (
         <div className="log-viewer-content">
           {logs.length === 0 ? (
@@ -183,17 +180,18 @@ const LogViewer: React.FC = () => {
               <tbody>
                 {logs.map((log, index) => (
                   <tr key={index} className={getLevelClassName(log.level)}>
-                    <td className="log-time">{formatTimestamp(log.timestamp)}</td>
+                    <td className="log-time">
+                      {formatTimestamp(log.timestamp)}
+                    </td>
                     <td className="log-level">{getLevelText(log.level)}</td>
                     <td className="log-category">{log.category}</td>
                     <td className="log-message">
                       <div>{log.message}</div>
                       {log.data && (
                         <div className="log-data">
-                          {typeof log.data === 'string' 
-                            ? log.data 
-                            : JSON.stringify(log.data, null, 2)
-                          }
+                          {typeof log.data === 'string'
+                            ? log.data
+                            : JSON.stringify(log.data, null, 2)}
                         </div>
                       )}
                     </td>

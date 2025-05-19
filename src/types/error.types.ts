@@ -11,4 +11,7 @@ export interface ErrorMessage {
   autoHide?: boolean;
 }
 
-export type ErrorHandler = (message: string | ErrorMessage, severity?: ErrorSeverity) => void;
+export type ErrorHandler = (
+  message: string | ErrorMessage,
+  severity?: ErrorSeverity
+) => void;

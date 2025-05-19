@@ -123,15 +123,24 @@ const formatFileTypes = (accept: string): string => {
   const types = accept.split(',').map(t => t.trim());
 
   // Group by major type
-  const imageTypes = types.filter(t => t.startsWith('image/')).map(t => t.replace('image/', ''));
-  const audioTypes = types.filter(t => t.startsWith('audio/')).map(t => t.replace('audio/', ''));
-  const videoTypes = types.filter(t => t.startsWith('video/')).map(t => t.replace('video/', ''));
-  const modelTypes = types.filter(t => t.includes('model/')).map(t => t.replace('model/', ''));
-  const otherTypes = types.filter(t =>
-    !t.startsWith('image/') &&
-    !t.startsWith('audio/') &&
-    !t.startsWith('video/') &&
-    !t.includes('model/')
+  const imageTypes = types
+    .filter(t => t.startsWith('image/'))
+    .map(t => t.replace('image/', ''));
+  const audioTypes = types
+    .filter(t => t.startsWith('audio/'))
+    .map(t => t.replace('audio/', ''));
+  const videoTypes = types
+    .filter(t => t.startsWith('video/'))
+    .map(t => t.replace('video/', ''));
+  const modelTypes = types
+    .filter(t => t.includes('model/'))
+    .map(t => t.replace('model/', ''));
+  const otherTypes = types.filter(
+    t =>
+      !t.startsWith('image/') &&
+      !t.startsWith('audio/') &&
+      !t.startsWith('video/') &&
+      !t.includes('model/')
   );
 
   const parts = [];
@@ -175,7 +184,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
 
   // Use layer-specific file types if none provided
   const accept = acceptedFileTypes || getAcceptedFileTypesByLayer(layerCode);
-  
+
   // Handle source change - commented out as source UI moved to MetadataForm
   // Keeping this handler for future use if source gets moved back
   /*
@@ -192,7 +201,9 @@ const FileUpload: React.FC<FileUploadProps> = ({
     (file: File) => {
       // Check file size first
       if (file.size > maxSize) {
-        return `${file.name} exceeds the maximum size of ${formatFileSize(maxSize)}. Please upload a smaller file.`;
+        return `${file.name} exceeds the maximum size of ${formatFileSize(
+          maxSize
+        )}. Please upload a smaller file.`;
       }
 
       // Add any layer-specific validation logic here
@@ -208,7 +219,11 @@ const FileUpload: React.FC<FileUploadProps> = ({
         return `${file.name} is not an image file. Looks layer only accepts image files.`;
       }
 
-      if (layerCode === 'M' && !file.type.startsWith('video/') && file.type !== 'application/json') {
+      if (
+        layerCode === 'M' &&
+        !file.type.startsWith('video/') &&
+        file.type !== 'application/json'
+      ) {
         return `${file.name} is not a valid file type. Moves layer only accepts video files or JSON.`;
       }
 
@@ -337,23 +352,33 @@ const FileUpload: React.FC<FileUploadProps> = ({
 
       {/* Add layer name display */}
       {layerCode && (
-        <Box sx={{ mb: 3, p: 2, bgcolor: 'background.default', borderRadius: 1, border: '1px solid rgba(0, 0, 0, 0.12)' }}>
+        <Box
+          sx={{
+            mb: 3,
+            p: 2,
+            bgcolor: 'background.default',
+            borderRadius: 1,
+            border: '1px solid rgba(0, 0, 0, 0.12)',
+          }}
+        >
           <Typography variant="subtitle1" fontWeight="bold" color="primary">
             {(() => {
               // Map layer codes to full names
               const layerNames: Record<string, string> = {
-                'G': 'Songs',
-                'S': 'Stars',
-                'L': 'Looks',
-                'M': 'Moves',
-                'W': 'Worlds',
-                'V': 'Videos',
-                'B': 'Branded Assets',
-                'C': 'Composites',
-                'T': 'Training Data',
-                'P': 'Patterns',
+                G: 'Songs',
+                S: 'Stars',
+                L: 'Looks',
+                M: 'Moves',
+                W: 'Worlds',
+                V: 'Videos',
+                B: 'Branded Assets',
+                C: 'Composites',
+                T: 'Training Data',
+                P: 'Patterns',
               };
-              return `${layerNames[layerCode] || `Layer ${layerCode}`} (${layerCode})`;
+              return `${
+                layerNames[layerCode] || `Layer ${layerCode}`
+              } (${layerCode})`;
             })()}
           </Typography>
         </Box>
@@ -468,7 +493,11 @@ const FileUpload: React.FC<FileUploadProps> = ({
       <Grid container spacing={3}>
         <Grid item xs={12} md={8}>
           <Box sx={{ mb: 2 }}>
-            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              sx={{ display: 'block', mb: 1 }}
+            >
               Maximum file size: {formatFileSize(maxSize)}
             </Typography>
           </Box>

@@ -10,7 +10,7 @@ const mockTaxonomyContext = {
   // Category data
   categories: [
     { code: 'CAT1', numericCode: '001', name: 'Category 1' },
-    { code: 'CAT2', numericCode: '002', name: 'Category 2' }
+    { code: 'CAT2', numericCode: '002', name: 'Category 2' },
   ],
   isLoadingCategories: false,
   categoryError: null,
@@ -21,7 +21,7 @@ const mockTaxonomyContext = {
   // Subcategory data
   subcategories: [
     { code: 'SUB1', numericCode: '001', name: 'Subcategory 1' },
-    { code: 'SUB2', numericCode: '002', name: 'Subcategory 2' }
+    { code: 'SUB2', numericCode: '002', name: 'Subcategory 2' },
   ],
   isLoadingSubcategories: false,
   subcategoryError: null,
@@ -40,14 +40,16 @@ const mockTaxonomyContext = {
   resetCategoryData: jest.fn(),
 
   // Validation
-  validateSelections: jest.fn()
+  validateSelections: jest.fn(),
 };
 
 // Create the context with the mock data
 export const TaxonomyContext = React.createContext(mockTaxonomyContext);
 
 // Custom hook to use the taxonomy context
-export const useTaxonomyContext = jest.fn((_options = {}) => mockTaxonomyContext);
+export const useTaxonomyContext = jest.fn(
+  (_options = {}) => mockTaxonomyContext
+);
 
 // Mock provider component
 export const TaxonomyProvider: React.FC<{

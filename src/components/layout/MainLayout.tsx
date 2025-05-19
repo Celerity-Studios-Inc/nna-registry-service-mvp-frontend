@@ -1,13 +1,41 @@
 import React, { useState, useContext } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import {
-  AppBar, Box, CssBaseline, Divider, Drawer, IconButton, List, ListItem, ListItemButton, ListItemIcon, ListItemText, Toolbar, Typography, Badge, Tooltip, Button, Dialog
+  AppBar,
+  Box,
+  CssBaseline,
+  Divider,
+  Drawer,
+  IconButton,
+  List,
+  ListItem,
+  ListItemButton,
+  ListItemIcon,
+  ListItemText,
+  Toolbar,
+  Typography,
+  Badge,
+  Tooltip,
+  Button,
+  Dialog,
 } from '@mui/material';
 import {
-  Menu as MenuIcon, Dashboard as DashboardIcon, Search as SearchIcon, Add as AddIcon, Collections as CollectionsIcon,
-  Notifications as NotificationsIcon, ChevronLeft as ChevronLeftIcon, Upload as UploadIcon, ViewList as ViewListIcon,
-  Category as CategoryIcon, DataObject as DataObjectIcon, Settings as SettingsIcon, Api as ApiIcon,
-  Logout as LogoutIcon, Login as LoginIcon, BugReport as BugReportIcon
+  Menu as MenuIcon,
+  Dashboard as DashboardIcon,
+  Search as SearchIcon,
+  Add as AddIcon,
+  Collections as CollectionsIcon,
+  Notifications as NotificationsIcon,
+  ChevronLeft as ChevronLeftIcon,
+  Upload as UploadIcon,
+  ViewList as ViewListIcon,
+  Category as CategoryIcon,
+  DataObject as DataObjectIcon,
+  Settings as SettingsIcon,
+  Api as ApiIcon,
+  Logout as LogoutIcon,
+  Login as LoginIcon,
+  BugReport as BugReportIcon,
 } from '@mui/icons-material';
 import { AuthContext } from '../../contexts/AuthContext';
 import ErrorTestComponent from '../common/ErrorTestComponent';
@@ -22,8 +50,16 @@ const navigationItems = [
   { text: 'Organize Assets', icon: <ViewListIcon />, path: '/organize-assets' },
   { text: 'Collections', icon: <CollectionsIcon />, path: '/collections' },
   { text: 'Taxonomy Browser', icon: <CategoryIcon />, path: '/taxonomy' },
-  { text: 'Taxonomy Validator', icon: <CategoryIcon />, path: '/taxonomy-validator' },
-  { text: 'Asset Analytics', icon: <DataObjectIcon />, path: '/asset-analytics' },
+  {
+    text: 'Taxonomy Validator',
+    icon: <CategoryIcon />,
+    path: '/taxonomy-validator',
+  },
+  {
+    text: 'Asset Analytics',
+    icon: <DataObjectIcon />,
+    path: '/asset-analytics',
+  },
 ];
 
 const MainLayout: React.FC = () => {
@@ -62,7 +98,14 @@ const MainLayout: React.FC = () => {
 
   const drawer = (
     <div>
-      <Toolbar sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', px: 1 }}>
+      <Toolbar
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          px: 1,
+        }}
+      >
         <Typography variant="h6" noWrap component="div">
           NNA Registry
         </Typography>
@@ -72,7 +115,7 @@ const MainLayout: React.FC = () => {
       </Toolbar>
       <Divider />
       <List>
-        {navigationItems.map((item) => (
+        {navigationItems.map(item => (
           <ListItem key={item.text} disablePadding>
             <ListItemButton
               selected={location.pathname === item.path}
@@ -91,19 +134,31 @@ const MainLayout: React.FC = () => {
       <List>
         <ListItem disablePadding>
           <ListItemButton onClick={openErrorTestDialog}>
-            <ListItemIcon><BugReportIcon /></ListItemIcon>
-            <ListItemText primary="Error Test" secondary="Test error handling" />
+            <ListItemIcon>
+              <BugReportIcon />
+            </ListItemIcon>
+            <ListItemText
+              primary="Error Test"
+              secondary="Test error handling"
+            />
           </ListItemButton>
         </ListItem>
         <ListItem disablePadding>
           <ListItemButton>
-            <ListItemIcon><ApiIcon /></ListItemIcon>
-            <ListItemText primary="API Configuration" secondary="Using Real API" />
+            <ListItemIcon>
+              <ApiIcon />
+            </ListItemIcon>
+            <ListItemText
+              primary="API Configuration"
+              secondary="Using Real API"
+            />
           </ListItemButton>
         </ListItem>
         <ListItem disablePadding>
           <ListItemButton>
-            <ListItemIcon><SettingsIcon /></ListItemIcon>
+            <ListItemIcon>
+              <SettingsIcon />
+            </ListItemIcon>
             <ListItemText primary="Settings" />
           </ListItemButton>
         </ListItem>
@@ -171,7 +226,10 @@ const MainLayout: React.FC = () => {
           variant="permanent"
           sx={{
             display: { xs: 'none', sm: 'block' },
-            '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth },
+            '& .MuiDrawer-paper': {
+              boxSizing: 'border-box',
+              width: drawerWidth,
+            },
           }}
           open
         >
@@ -180,7 +238,11 @@ const MainLayout: React.FC = () => {
       </Box>
       <Box
         component="main"
-        sx={{ flexGrow: 1, p: 3, width: { sm: `calc(100% - ${drawerWidth}px)` } }}
+        sx={{
+          flexGrow: 1,
+          p: 3,
+          width: { sm: `calc(100% - ${drawerWidth}px)` },
+        }}
       >
         <Toolbar />
         <Outlet />
@@ -196,4 +258,4 @@ const MainLayout: React.FC = () => {
   );
 };
 
-export default MainLayout; 
+export default MainLayout;

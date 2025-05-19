@@ -1,6 +1,6 @@
 /**
  * LayerSelectorV2 Component
- * 
+ *
  * An improved version of the Layer Selector component
  * that uses the useTaxonomy hook for more reliable layer selection.
  */
@@ -19,11 +19,15 @@ interface LayerSelectorV2Props {
 const LayerSelectorV2: React.FC<LayerSelectorV2Props> = ({
   onLayerSelect,
   onLayerDoubleClick,
-  selectedLayer: initialLayer
+  selectedLayer: initialLayer,
 }) => {
-  const { layers, selectedLayer, selectLayer } = useTaxonomy({ autoLoad: false });
-  const [activeLayer, setActiveLayer] = useState<string | null>(initialLayer || null);
-  
+  const { layers, selectedLayer, selectLayer } = useTaxonomy({
+    autoLoad: false,
+  });
+  const [activeLayer, setActiveLayer] = useState<string | null>(
+    initialLayer || null
+  );
+
   // When initialLayer changes, update the active layer
   useEffect(() => {
     if (initialLayer && initialLayer !== activeLayer) {
@@ -31,117 +35,149 @@ const LayerSelectorV2: React.FC<LayerSelectorV2Props> = ({
       selectLayer(initialLayer);
     }
   }, [initialLayer, activeLayer, selectLayer]);
-  
+
   // Handle layer selection
-  const handleLayerSelect = useCallback((layer: string) => {
-    logger.info(`Layer selected: ${layer}`);
-    setActiveLayer(layer);
-    selectLayer(layer);
-    
-    // Make sure to pass isDoubleClick=false explicitly
-    console.log(`Sending layer selection to parent: ${layer}, isDoubleClick=false`);
-    onLayerSelect(layer, false);
-  }, [selectLayer, onLayerSelect]);
+  const handleLayerSelect = useCallback(
+    (layer: string) => {
+      logger.info(`Layer selected: ${layer}`);
+      setActiveLayer(layer);
+      selectLayer(layer);
+
+      // Make sure to pass isDoubleClick=false explicitly
+      console.log(
+        `Sending layer selection to parent: ${layer}, isDoubleClick=false`
+      );
+      onLayerSelect(layer, false);
+    },
+    [selectLayer, onLayerSelect]
+  );
 
   // Handle layer double-click
-  const handleLayerDoubleClick = useCallback((layer: string) => {
-    logger.info(`Layer double-clicked: ${layer}`);
-    setActiveLayer(layer);
-    selectLayer(layer);
-    
-    // IMPORTANT: Call the parent's onLayerSelect with isDoubleClick=true
-    // This handles the selection but doesn't auto-advance steps
-    console.log(`Sending layer double-click to parent: ${layer}, isDoubleClick=true`);
-    onLayerSelect(layer, true);
+  const handleLayerDoubleClick = useCallback(
+    (layer: string) => {
+      logger.info(`Layer double-clicked: ${layer}`);
+      setActiveLayer(layer);
+      selectLayer(layer);
 
-    // FIXED: Larger delay before calling onLayerDoubleClick to ensure state updates first
-    // Increased from 50ms to 100ms to ensure there's enough time for state propagation
-    setTimeout(() => {
-      // Also call the optional onLayerDoubleClick callback if provided
-      if (onLayerDoubleClick) {
-        console.log(`Calling onLayerDoubleClick for ${layer}`);
-        // Call the double-click handler which should now navigate to the next step
-        onLayerDoubleClick(layer);
-      } else {
-        console.log(`No onLayerDoubleClick provided for ${layer}`);
-      }
-    }, 100);
-  }, [selectLayer, onLayerSelect, onLayerDoubleClick]);
-  
+      // IMPORTANT: Call the parent's onLayerSelect with isDoubleClick=true
+      // This handles the selection but doesn't auto-advance steps
+      console.log(
+        `Sending layer double-click to parent: ${layer}, isDoubleClick=true`
+      );
+      onLayerSelect(layer, true);
+
+      // FIXED: Larger delay before calling onLayerDoubleClick to ensure state updates first
+      // Increased from 50ms to 100ms to ensure there's enough time for state propagation
+      setTimeout(() => {
+        // Also call the optional onLayerDoubleClick callback if provided
+        if (onLayerDoubleClick) {
+          console.log(`Calling onLayerDoubleClick for ${layer}`);
+          // Call the double-click handler which should now navigate to the next step
+          onLayerDoubleClick(layer);
+        } else {
+          console.log(`No onLayerDoubleClick provided for ${layer}`);
+        }
+      }, 100);
+    },
+    [selectLayer, onLayerSelect, onLayerDoubleClick]
+  );
+
   // Get layer name
   const getLayerName = useCallback((layer: string) => {
     switch (layer) {
-      case 'G': return 'Song';
-      case 'S': return 'Star';
-      case 'L': return 'Look';
-      case 'M': return 'Moves';
-      case 'W': return 'World';
-      case 'B': return 'Branded';
-      case 'P': return 'Personalize';
-      case 'T': return 'Training Data';
-      case 'C': return 'Composites';
-      case 'R': return 'Rights';
-      default: return layer;
+      case 'G':
+        return 'Song';
+      case 'S':
+        return 'Star';
+      case 'L':
+        return 'Look';
+      case 'M':
+        return 'Moves';
+      case 'W':
+        return 'World';
+      case 'B':
+        return 'Branded';
+      case 'P':
+        return 'Personalize';
+      case 'T':
+        return 'Training Data';
+      case 'C':
+        return 'Composites';
+      case 'R':
+        return 'Rights';
+      default:
+        return layer;
     }
   }, []);
-  
+
   // Get layer description
   const getLayerDescription = useCallback((layer: string) => {
     switch (layer) {
-      case 'G': return 'Music tracks and audio';
-      case 'S': return 'Performance avatars';
-      case 'L': return 'Costumes & styling';
-      case 'M': return 'Choreography';
-      case 'W': return 'Environments';
-      case 'B': return 'Virtual product placement';
-      case 'P': return 'User-uploaded customizations';
-      case 'T': return 'Datasets for AI training';
-      case 'C': return 'Aggregated multi-layer assets';
-      case 'R': return 'Provenance and rights tracking';
-      default: return '';
+      case 'G':
+        return 'Music tracks and audio';
+      case 'S':
+        return 'Performance avatars';
+      case 'L':
+        return 'Costumes & styling';
+      case 'M':
+        return 'Choreography';
+      case 'W':
+        return 'Environments';
+      case 'B':
+        return 'Virtual product placement';
+      case 'P':
+        return 'User-uploaded customizations';
+      case 'T':
+        return 'Datasets for AI training';
+      case 'C':
+        return 'Aggregated multi-layer assets';
+      case 'R':
+        return 'Provenance and rights tracking';
+      default:
+        return '';
     }
   }, []);
-  
+
   // Get layer icon
   const getLayerIcon = useCallback((layer: string) => {
     // Emoji fallbacks if icons are not available
-    const layerEmojis: {[key: string]: string} = {
-      'G': '🎵', // Song
-      'S': '🌟', // Star
-      'L': '👚', // Look
-      'M': '💃', // Moves
-      'W': '🌍', // World
-      'B': '🏷️', // Branded
-      'P': '🔧', // Personalize
-      'T': '🧠', // Training Data
-      'C': '🧩', // Composites
-      'R': '📜'  // Rights
+    const layerEmojis: { [key: string]: string } = {
+      G: '🎵', // Song
+      S: '🌟', // Star
+      L: '👚', // Look
+      M: '💃', // Moves
+      W: '🌍', // World
+      B: '🏷️', // Branded
+      P: '🔧', // Personalize
+      T: '🧠', // Training Data
+      C: '🧩', // Composites
+      R: '📜', // Rights
     };
-    
+
     return layerEmojis[layer] || '🎮';
   }, []);
-  
+
   // Log when layers changes
   useEffect(() => {
     logger.info('Available layers for selection:', layers.join(', '));
   }, [layers]);
-  
+
   return (
     <div className="layer-selector">
       <h3>Select Layer</h3>
       <div className="layer-grid">
-        {layers.map((layer) => {
+        {layers.map(layer => {
           const isActive = activeLayer === layer;
           const layerEmoji = getLayerIcon(layer);
           const layerName = getLayerName(layer);
           const layerDescription = getLayerDescription(layer);
-          
+
           return (
             <div
               key={layer}
               className={`layer-card ${isActive ? 'selected' : ''}`}
               onClick={() => handleLayerSelect(layer)}
-              onDoubleClick={(e) => {
+              onDoubleClick={e => {
                 // Prevent event bubbling to avoid triggering click right after double-click
                 e.preventDefault();
                 e.stopPropagation();
@@ -163,19 +199,22 @@ const LayerSelectorV2: React.FC<LayerSelectorV2Props> = ({
                 <p>{layerDescription}</p>
               </div>
               {/* Visual indicator for clickability */}
-              <div className="layer-clickable-hint">
-                Click to select
-              </div>
+              <div className="layer-clickable-hint">Click to select</div>
             </div>
           );
         })}
       </div>
-      
+
       {activeLayer && (
         <div className="layer-selection-info">
-          <p>Selected Layer: <strong>{activeLayer}</strong> ({getLayerName(activeLayer)})</p>
+          <p>
+            Selected Layer: <strong>{activeLayer}</strong> (
+            {getLayerName(activeLayer)})
+          </p>
           <p className="layer-selection-hint">
-            {onLayerDoubleClick ? 'Double-click to proceed to the next step' : 'Click on a different layer to change selection'}
+            {onLayerDoubleClick
+              ? 'Double-click to proceed to the next step'
+              : 'Click on a different layer to change selection'}
           </p>
         </div>
       )}

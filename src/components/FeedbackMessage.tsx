@@ -21,7 +21,7 @@ const FeedbackMessage: React.FC<FeedbackMessageProps> = ({
   type,
   message,
   duration = 3000,
-  onClose
+  onClose,
 }) => {
   const [visible, setVisible] = useState(true);
 
@@ -36,7 +36,10 @@ const FeedbackMessage: React.FC<FeedbackMessageProps> = ({
     }
   }, [duration, onClose]);
 
-  const handleClose = (event?: React.SyntheticEvent | Event, reason?: string) => {
+  const handleClose = (
+    event?: React.SyntheticEvent | Event,
+    reason?: string
+  ) => {
     if (reason === 'clickaway') {
       return;
     }
@@ -104,7 +107,7 @@ const FeedbackMessage: React.FC<FeedbackMessageProps> = ({
           maxWidth: '500px',
           boxShadow: '0 3px 10px rgba(0, 0, 0, 0.2)',
           borderRadius: '8px',
-          mb: 2
+          mb: 2,
         }}
       >
         <AlertTitle>{getTitle()}</AlertTitle>

@@ -87,13 +87,13 @@ const getFileIcon = (mimeType: string) => {
 // Format bytes to human-readable size
 const formatBytes = (bytes: number, decimals = 2) => {
   if (bytes === 0) return '0 Bytes';
-  
+
   const k = 1024;
   const dm = decimals < 0 ? 0 : decimals;
   const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
-  
+
   const i = Math.floor(Math.log(bytes) / Math.log(k));
-  
+
   return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
 };
 
@@ -132,28 +132,31 @@ const ReviewSubmit: React.FC<ReviewSubmitProps> = ({
     // Use our centralized formatter to ensure consistent display across the application
     // First, construct the raw HFN
     const rawHfn = `${layer}.${categoryCode}.${subcategoryCode}.000`; // Always use 000 for display
-    
+
     // Then format it properly with the utility
     displayHfn = taxonomyFormatter.formatHFN(rawHfn);
-    
+
     // Generate MFA from the formatted HFN
     try {
       displayMfa = taxonomyFormatter.convertHFNtoMFA(displayHfn);
     } catch (error) {
       console.error('Error converting HFN to MFA in ReviewSubmit:', error);
-      
+
       // Fallback to the older taxonomy mapper if the formatter fails
       try {
         const fallbackFormattedAddresses = taxonomyMapper.formatNNAAddress(
           layer,
           categoryCode,
           subcategoryCode,
-          "000" // Always use "000" for display consistency
-        ) as { hfn: string, mfa: string };
-        
+          '000' // Always use "000" for display consistency
+        ) as { hfn: string; mfa: string };
+
         displayMfa = fallbackFormattedAddresses.mfa;
       } catch (fallbackError) {
-        console.error('Both formatter and legacy mapper failed:', fallbackError);
+        console.error(
+          'Both formatter and legacy mapper failed:',
+          fallbackError
+        );
         // Use a basic fallback format as last resort
         const layerCode = taxonomyFormatter.getLayerCode(layer) || '0';
         displayMfa = `${layerCode}.001.001.000`;
@@ -166,13 +169,13 @@ const ReviewSubmit: React.FC<ReviewSubmitProps> = ({
       const cleanHfn = hfn.replace(/\.\d+$/, '.000'); // Replace sequential with 000
       displayHfn = taxonomyFormatter.formatHFN(cleanHfn);
     }
-    
+
     if (mfa) {
       // Format the MFA properly
       const cleanMfa = mfa.replace(/\.\d+$/, '.000'); // Replace sequential with 000
       displayMfa = taxonomyFormatter.formatMFA(cleanMfa);
     }
-    
+
     // If we have HFN but no MFA, try to generate it
     if (displayHfn && !displayMfa) {
       try {
@@ -184,9 +187,15 @@ const ReviewSubmit: React.FC<ReviewSubmitProps> = ({
   }
 
   // Validate that all required fields are present
-  const isComplete = name && source && layer && categoryCode && subcategoryCode && files.length > 0;
-  
-  // Check if this is a composite asset 
+  const isComplete =
+    name &&
+    source &&
+    layer &&
+    categoryCode &&
+    subcategoryCode &&
+    files.length > 0;
+
+  // Check if this is a composite asset
   const isCompositeAsset = layer === 'C';
 
   return (
@@ -197,7 +206,7 @@ const ReviewSubmit: React.FC<ReviewSubmitProps> = ({
       <Typography variant="body2" color="text.secondary" paragraph>
         Review the information below before submitting your asset.
       </Typography>
-      
+
       <Divider sx={{ mb: 3 }} />
 
       {error && (
@@ -209,7 +218,8 @@ const ReviewSubmit: React.FC<ReviewSubmitProps> = ({
       {!isComplete && (
         <Alert severity="warning" sx={{ mb: 3 }}>
           <Typography variant="body1" sx={{ fontWeight: 'medium', mb: 1 }}>
-            Required information is missing. Please complete the following fields:
+            Required information is missing. Please complete the following
+            fields:
           </Typography>
           <Box component="ul" sx={{ ml: 2, mb: 0 }}>
             {!name && (
@@ -262,16 +272,27 @@ const ReviewSubmit: React.FC<ReviewSubmitProps> = ({
         {/* Asset Information */}
         <Grid item xs={12} md={6}>
           <Paper variant="outlined" sx={{ p: 2, mb: 3 }}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+            <Box
+              sx={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                mb: 2,
+              }}
+            >
               <Typography variant="subtitle1" fontWeight="bold">
                 Asset Information
               </Typography>
-              <IconButton size="small" onClick={() => onEditStep(2)} color="primary">
+              <IconButton
+                size="small"
+                onClick={() => onEditStep(2)}
+                color="primary"
+              >
                 <EditIcon fontSize="small" />
               </IconButton>
             </Box>
             <Divider sx={{ mb: 2 }} />
-            
+
             <List disablePadding>
               <ListItem disablePadding sx={{ mb: 1 }}>
                 <ListItemIcon sx={{ minWidth: 40 }}>
@@ -280,11 +301,14 @@ const ReviewSubmit: React.FC<ReviewSubmitProps> = ({
                 <ListItemText
                   primary="Name"
                   secondary={name || 'Not specified'}
-                  primaryTypographyProps={{ variant: 'body2', color: 'text.secondary' }}
+                  primaryTypographyProps={{
+                    variant: 'body2',
+                    color: 'text.secondary',
+                  }}
                   secondaryTypographyProps={{ variant: 'body1' }}
                 />
               </ListItem>
-              
+
               {description && (
                 <ListItem disablePadding sx={{ mb: 1 }}>
                   <ListItemIcon sx={{ minWidth: 40 }}>
@@ -293,12 +317,15 @@ const ReviewSubmit: React.FC<ReviewSubmitProps> = ({
                   <ListItemText
                     primary="Description"
                     secondary={description}
-                    primaryTypographyProps={{ variant: 'body2', color: 'text.secondary' }}
+                    primaryTypographyProps={{
+                      variant: 'body2',
+                      color: 'text.secondary',
+                    }}
                     secondaryTypographyProps={{ variant: 'body1' }}
                   />
                 </ListItem>
               )}
-              
+
               {source && (
                 <ListItem disablePadding sx={{ mb: 1 }}>
                   <ListItemIcon sx={{ minWidth: 40 }}>
@@ -307,12 +334,15 @@ const ReviewSubmit: React.FC<ReviewSubmitProps> = ({
                   <ListItemText
                     primary="Source"
                     secondary={source}
-                    primaryTypographyProps={{ variant: 'body2', color: 'text.secondary' }}
+                    primaryTypographyProps={{
+                      variant: 'body2',
+                      color: 'text.secondary',
+                    }}
                     secondaryTypographyProps={{ variant: 'body1' }}
                   />
                 </ListItem>
               )}
-              
+
               {tags && tags.length > 0 && (
                 <ListItem disablePadding sx={{ mb: 1 }}>
                   <ListItemIcon sx={{ minWidth: 40 }}>
@@ -320,16 +350,19 @@ const ReviewSubmit: React.FC<ReviewSubmitProps> = ({
                   </ListItemIcon>
                   <ListItemText
                     primary="Tags"
-                    primaryTypographyProps={{ variant: 'body2', color: 'text.secondary' }}
+                    primaryTypographyProps={{
+                      variant: 'body2',
+                      color: 'text.secondary',
+                    }}
                   />
                   <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
                     {tags.map((tag, index) => (
-                      <Chip 
-                        key={index} 
-                        label={tag} 
-                        size="small" 
-                        color="primary" 
-                        variant="outlined" 
+                      <Chip
+                        key={index}
+                        label={tag}
+                        size="small"
+                        color="primary"
+                        variant="outlined"
                       />
                     ))}
                   </Box>
@@ -337,19 +370,30 @@ const ReviewSubmit: React.FC<ReviewSubmitProps> = ({
               )}
             </List>
           </Paper>
-          
+
           {/* Taxonomy Information */}
           <Paper variant="outlined" sx={{ p: 2, mb: 3 }}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+            <Box
+              sx={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                mb: 2,
+              }}
+            >
               <Typography variant="subtitle1" fontWeight="bold">
                 Taxonomy Information
               </Typography>
-              <IconButton size="small" onClick={() => onEditStep(1)} color="primary">
+              <IconButton
+                size="small"
+                onClick={() => onEditStep(1)}
+                color="primary"
+              >
                 <EditIcon fontSize="small" />
               </IconButton>
             </Box>
             <Divider sx={{ mb: 2 }} />
-            
+
             <List disablePadding>
               <ListItem disablePadding sx={{ mb: 1 }}>
                 <ListItemIcon sx={{ minWidth: 40 }}>
@@ -357,12 +401,19 @@ const ReviewSubmit: React.FC<ReviewSubmitProps> = ({
                 </ListItemIcon>
                 <ListItemText
                   primary="Layer"
-                  secondary={layerName ? `${layerName} (${layer})` : layer || 'Not specified'}
-                  primaryTypographyProps={{ variant: 'body2', color: 'text.secondary' }}
+                  secondary={
+                    layerName
+                      ? `${layerName} (${layer})`
+                      : layer || 'Not specified'
+                  }
+                  primaryTypographyProps={{
+                    variant: 'body2',
+                    color: 'text.secondary',
+                  }}
                   secondaryTypographyProps={{ variant: 'body1' }}
                 />
               </ListItem>
-              
+
               <ListItem disablePadding sx={{ mb: 1 }}>
                 <ListItemIcon sx={{ minWidth: 40 }}>
                   <CategoryIcon />
@@ -380,21 +431,55 @@ const ReviewSubmit: React.FC<ReviewSubmitProps> = ({
                           {categoryCode}
                         </Box>
                       ) : (
-                        <Box component="span" sx={{ color: 'error.main', fontWeight: 'medium' }}>
+                        <Box
+                          component="span"
+                          sx={{ color: 'error.main', fontWeight: 'medium' }}
+                        >
                           Not specified (Required)
                         </Box>
                       )}
-                      
+
                       {/* Category validation indicator */}
                       {!categoryCode && (
-                        <Box sx={{ mt: 1, display: 'flex', alignItems: 'center', color: 'error.main', fontSize: '0.8rem' }}>
-                          <Box component="span" sx={{ mr: 0.5, width: 16, height: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '50%', bgcolor: 'error.main', color: 'white', fontSize: '10px', fontWeight: 'bold' }}>!</Box>
-                          <Box component="span">Required field - Please go back and select a category</Box>
+                        <Box
+                          sx={{
+                            mt: 1,
+                            display: 'flex',
+                            alignItems: 'center',
+                            color: 'error.main',
+                            fontSize: '0.8rem',
+                          }}
+                        >
+                          <Box
+                            component="span"
+                            sx={{
+                              mr: 0.5,
+                              width: 16,
+                              height: 16,
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              borderRadius: '50%',
+                              bgcolor: 'error.main',
+                              color: 'white',
+                              fontSize: '10px',
+                              fontWeight: 'bold',
+                            }}
+                          >
+                            !
+                          </Box>
+                          <Box component="span">
+                            Required field - Please go back and select a
+                            category
+                          </Box>
                         </Box>
                       )}
                     </>
                   }
-                  primaryTypographyProps={{ variant: 'body2', color: 'text.secondary' }}
+                  primaryTypographyProps={{
+                    variant: 'body2',
+                    color: 'text.secondary',
+                  }}
                   secondaryTypographyProps={{ variant: 'body1' }}
                 />
               </ListItem>
@@ -416,38 +501,77 @@ const ReviewSubmit: React.FC<ReviewSubmitProps> = ({
                           {subcategoryCode}
                         </Box>
                       ) : (
-                        <Box component="span" sx={{ color: 'error.main', fontWeight: 'medium' }}>
+                        <Box
+                          component="span"
+                          sx={{ color: 'error.main', fontWeight: 'medium' }}
+                        >
                           Not specified (Required)
                         </Box>
                       )}
-                      
+
                       {/* Subcategory validation indicator */}
                       {!subcategoryCode && (
-                        <Box sx={{ mt: 1, display: 'flex', alignItems: 'center', color: 'error.main', fontSize: '0.8rem' }}>
-                          <Box component="span" sx={{ mr: 0.5, width: 16, height: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '50%', bgcolor: 'error.main', color: 'white', fontSize: '10px', fontWeight: 'bold' }}>!</Box>
-                          <Box component="span">Required field - Please go back and select a subcategory</Box>
+                        <Box
+                          sx={{
+                            mt: 1,
+                            display: 'flex',
+                            alignItems: 'center',
+                            color: 'error.main',
+                            fontSize: '0.8rem',
+                          }}
+                        >
+                          <Box
+                            component="span"
+                            sx={{
+                              mr: 0.5,
+                              width: 16,
+                              height: 16,
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              borderRadius: '50%',
+                              bgcolor: 'error.main',
+                              color: 'white',
+                              fontSize: '10px',
+                              fontWeight: 'bold',
+                            }}
+                          >
+                            !
+                          </Box>
+                          <Box component="span">
+                            Required field - Please go back and select a
+                            subcategory
+                          </Box>
                         </Box>
                       )}
-                      
+
                       {/* Session storage recovery hint */}
-                      {(categoryCode && !subcategoryCode) && (
+                      {categoryCode && !subcategoryCode && (
                         <Box sx={{ mt: 1 }}>
-                          <Button 
-                            size="small" 
+                          <Button
+                            size="small"
                             variant="outlined"
                             color="primary"
                             onClick={() => {
                               // Try to recover from session storage
                               try {
-                                const storedSubcategory = sessionStorage.getItem(`originalSubcategory_${layer}_${categoryCode}`);
+                                const storedSubcategory =
+                                  sessionStorage.getItem(
+                                    `originalSubcategory_${layer}_${categoryCode}`
+                                  );
                                 if (storedSubcategory) {
                                   onEditStep(1); // Go back to taxonomy selection step
-                                  console.log('Found stored subcategory, redirecting to selection step');
+                                  console.log(
+                                    'Found stored subcategory, redirecting to selection step'
+                                  );
                                 } else {
                                   onEditStep(1); // Go back to taxonomy selection step anyway
                                 }
                               } catch (e) {
-                                console.warn('Error accessing session storage:', e);
+                                console.warn(
+                                  'Error accessing session storage:',
+                                  e
+                                );
                                 onEditStep(1); // Go back to taxonomy selection step
                               }
                             }}
@@ -458,30 +582,58 @@ const ReviewSubmit: React.FC<ReviewSubmitProps> = ({
                       )}
                     </>
                   }
-                  primaryTypographyProps={{ variant: 'body2', color: 'text.secondary' }}
+                  primaryTypographyProps={{
+                    variant: 'body2',
+                    color: 'text.secondary',
+                  }}
                   secondaryTypographyProps={{ variant: 'body1' }}
                 />
               </ListItem>
             </List>
           </Paper>
-          
+
           {/* NNA Address Information - Enhanced */}
           <Paper variant="outlined" sx={{ p: 2, mb: 3 }}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+            <Box
+              sx={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                mb: 2,
+              }}
+            >
               <Typography variant="subtitle1" fontWeight="bold">
                 NNA Address
               </Typography>
-              <IconButton size="small" onClick={() => onEditStep(1)} color="primary">
+              <IconButton
+                size="small"
+                onClick={() => onEditStep(1)}
+                color="primary"
+              >
                 <EditIcon fontSize="small" />
               </IconButton>
             </Box>
             <Divider sx={{ mb: 2 }} />
 
-            <Box sx={{ mb: 3, p: 2, bgcolor: '#f0f7ff', borderRadius: 1, border: '1px solid #d6e4ff' }}>
+            <Box
+              sx={{
+                mb: 3,
+                p: 2,
+                bgcolor: '#f0f7ff',
+                borderRadius: 1,
+                border: '1px solid #d6e4ff',
+              }}
+            >
               <Typography variant="subtitle2" align="center" gutterBottom>
                 Human-Friendly Name (HFN)
               </Typography>
-              <Typography variant="h5" align="center" fontWeight="bold" gutterBottom sx={{ color: '#1976d2' }}>
+              <Typography
+                variant="h5"
+                align="center"
+                fontWeight="bold"
+                gutterBottom
+                sx={{ color: '#1976d2' }}
+              >
                 {displayHfn || 'Not generated yet'}
               </Typography>
 
@@ -489,7 +641,13 @@ const ReviewSubmit: React.FC<ReviewSubmitProps> = ({
                 <Typography variant="subtitle2" align="center" gutterBottom>
                   Machine-Friendly Address (MFA)
                 </Typography>
-                <Typography variant="h5" align="center" fontFamily="monospace" gutterBottom sx={{ color: '#4a148c' }}>
+                <Typography
+                  variant="h5"
+                  align="center"
+                  fontFamily="monospace"
+                  gutterBottom
+                  sx={{ color: '#4a148c' }}
+                >
                   {displayMfa || 'Not generated yet'}
                 </Typography>
               </Box>
@@ -538,30 +696,44 @@ const ReviewSubmit: React.FC<ReviewSubmitProps> = ({
             </Box>
           </Paper>
         </Grid>
-        
+
         {/* Files Section */}
         <Grid item xs={12} md={6}>
           <Paper variant="outlined" sx={{ p: 2, mb: 3 }}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+            <Box
+              sx={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                mb: 2,
+              }}
+            >
               <Typography variant="subtitle1" fontWeight="bold">
                 Asset Files
               </Typography>
-              <IconButton size="small" onClick={() => onEditStep(2)} color="primary">
+              <IconButton
+                size="small"
+                onClick={() => onEditStep(2)}
+                color="primary"
+              >
                 <EditIcon fontSize="small" />
               </IconButton>
             </Box>
             <Divider sx={{ mb: 2 }} />
-            
+
             {files.length === 0 ? (
               <Alert severity="warning">
-                <Typography variant="body1" fontWeight="medium">No files have been uploaded.</Typography>
-                <Typography variant="body2" sx={{ mt: 1 }}>
-                  Please go back to Step 3 to upload at least one file for your asset.
+                <Typography variant="body1" fontWeight="medium">
+                  No files have been uploaded.
                 </Typography>
-                <Button 
-                  variant="outlined" 
-                  size="small" 
-                  onClick={() => onEditStep(2)} 
+                <Typography variant="body2" sx={{ mt: 1 }}>
+                  Please go back to Step 3 to upload at least one file for your
+                  asset.
+                </Typography>
+                <Button
+                  variant="outlined"
+                  size="small"
+                  onClick={() => onEditStep(2)}
                   sx={{ mt: 2 }}
                 >
                   Go to Upload Files
@@ -575,48 +747,46 @@ const ReviewSubmit: React.FC<ReviewSubmitProps> = ({
                     <Typography variant="subtitle2" gutterBottom>
                       File Preview
                     </Typography>
-                    
-                    <Paper 
-                      variant="outlined" 
-                      sx={{ 
-                        overflow: 'hidden', 
+
+                    <Paper
+                      variant="outlined"
+                      sx={{
+                        overflow: 'hidden',
                         borderRadius: 1,
                         height: '220px',
-                        backgroundColor: '#fafafa'
+                        backgroundColor: '#fafafa',
                       }}
                     >
-                      <FilePreview 
-                        file={files[0]} 
+                      <FilePreview
+                        file={files[0]}
                         height="220px"
                         showControls={false}
                       />
                     </Paper>
-                    
-                    <Typography 
-                      variant="caption" 
-                      color="text.secondary" 
-                      align="center" 
+
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      align="center"
                       sx={{ display: 'block', mt: 1 }}
                     >
                       {files[0].name} ({formatBytes(files[0].size)})
                     </Typography>
                   </Box>
                 )}
-                
+
                 <List>
                   {files.map((file, index) => {
                     // Check if the file has been uploaded
                     const uploadedFile = uploadedFiles.find(
-                      (uf) => uf.originalName === file.name
+                      uf => uf.originalName === file.name
                     );
-                    
+
                     const isUploaded = !!uploadedFile;
-                    
+
                     return (
                       <ListItem key={index} divider={index < files.length - 1}>
-                        <ListItemIcon>
-                          {getFileIcon(file.type)}
-                        </ListItemIcon>
+                        <ListItemIcon>{getFileIcon(file.type)}</ListItemIcon>
                         <ListItemText
                           primary={file.name}
                           secondary={`${formatBytes(file.size)} - ${file.type}`}
@@ -636,64 +806,110 @@ const ReviewSubmit: React.FC<ReviewSubmitProps> = ({
               </Box>
             )}
           </Paper>
-          
+
           {/* Component Assets (only for Composite layer) */}
           {isCompositeAsset && components && components.length > 0 && (
             <Paper variant="outlined" sx={{ p: 2, mb: 3 }}>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+              <Box
+                sx={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  mb: 2,
+                }}
+              >
                 <Typography variant="subtitle1" fontWeight="bold">
                   Component Assets
                 </Typography>
-                <IconButton size="small" onClick={() => onEditStep(2)} color="primary">
+                <IconButton
+                  size="small"
+                  onClick={() => onEditStep(2)}
+                  color="primary"
+                >
                   <EditIcon fontSize="small" />
                 </IconButton>
               </Box>
               <Divider sx={{ mb: 2 }} />
-              
+
               <List>
                 {components.map((component, index) => (
                   <ListItem key={index} divider={index < components.length - 1}>
                     <ListItemIcon>
-                      {component.layer === 'G' ? <AudioIcon color="primary" /> :
-                       component.layer === 'S' ? <CategoryIcon color="secondary" /> :
-                       component.layer === 'L' ? <DescriptionIcon color="success" /> :
-                       component.layer === 'M' ? <VideoIcon color="warning" /> :
-                       component.layer === 'W' ? <PublicIcon color="info" /> :
-                       <FileIcon />
-                      }
+                      {component.layer === 'G' ? (
+                        <AudioIcon color="primary" />
+                      ) : component.layer === 'S' ? (
+                        <CategoryIcon color="secondary" />
+                      ) : component.layer === 'L' ? (
+                        <DescriptionIcon color="success" />
+                      ) : component.layer === 'M' ? (
+                        <VideoIcon color="warning" />
+                      ) : component.layer === 'W' ? (
+                        <PublicIcon color="info" />
+                      ) : (
+                        <FileIcon />
+                      )}
                     </ListItemIcon>
                     <ListItemText
                       primary={component.title}
-                      secondary={component.nnaAddress || `${component.layer} layer asset`}
+                      secondary={
+                        component.nnaAddress || `${component.layer} layer asset`
+                      }
                       primaryTypographyProps={{ noWrap: true }}
                     />
                   </ListItem>
                 ))}
               </List>
-              
+
               {components.length === 0 && (
-                <Alert severity="warning">No component assets have been selected.</Alert>
+                <Alert severity="warning">
+                  No component assets have been selected.
+                </Alert>
               )}
             </Paper>
           )}
-          
+
           {/* Enhanced NNA Address Information */}
           <Paper variant="outlined" sx={{ p: 2, mb: 3 }}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+            <Box
+              sx={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                mb: 2,
+              }}
+            >
               <Typography variant="subtitle1" fontWeight="bold">
                 NNA Address
               </Typography>
-              <IconButton size="small" onClick={() => onEditStep(1)} color="primary">
+              <IconButton
+                size="small"
+                onClick={() => onEditStep(1)}
+                color="primary"
+              >
                 <EditIcon fontSize="small" />
               </IconButton>
             </Box>
             <Divider sx={{ mb: 2 }} />
 
-            <Box sx={{ mb: 3, p: 2, bgcolor: '#f0f7ff', borderRadius: 1, border: '1px solid #d6e4ff' }}>
+            <Box
+              sx={{
+                mb: 3,
+                p: 2,
+                bgcolor: '#f0f7ff',
+                borderRadius: 1,
+                border: '1px solid #d6e4ff',
+              }}
+            >
               <Typography variant="subtitle2" align="center" gutterBottom>
                 Human-Friendly Name (HFN)
               </Typography>
-              <Typography variant="h5" align="center" fontWeight="bold" gutterBottom sx={{ color: '#1976d2' }}>
+              <Typography
+                variant="h5"
+                align="center"
+                fontWeight="bold"
+                gutterBottom
+                sx={{ color: '#1976d2' }}
+              >
                 {displayHfn || 'Not generated yet'}
               </Typography>
 
@@ -701,7 +917,13 @@ const ReviewSubmit: React.FC<ReviewSubmitProps> = ({
                 <Typography variant="subtitle2" align="center" gutterBottom>
                   Machine-Friendly Address (MFA)
                 </Typography>
-                <Typography variant="h5" align="center" fontFamily="monospace" gutterBottom sx={{ color: '#4a148c' }}>
+                <Typography
+                  variant="h5"
+                  align="center"
+                  fontFamily="monospace"
+                  gutterBottom
+                  sx={{ color: '#4a148c' }}
+                >
                   {displayMfa || 'Not generated yet'}
                 </Typography>
               </Box>
@@ -751,30 +973,32 @@ const ReviewSubmit: React.FC<ReviewSubmitProps> = ({
           </Paper>
         </Grid>
       </Grid>
-      
+
       {/* Back and Submit Asset Buttons - Placed at the bottom in the same row */}
-      <Box sx={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: 'center',
-        mt: 4, 
-        mb: 1 
-      }}>
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          mt: 4,
+          mb: 1,
+        }}
+      >
         <Button
           variant="outlined"
           color="primary"
           size="large"
           onClick={() => onEditStep(2)}
           startIcon={<ChevronLeft />}
-          sx={{ 
-            px: 3, 
-            py: 1.5, 
-            borderRadius: '8px'
+          sx={{
+            px: 3,
+            py: 1.5,
+            borderRadius: '8px',
           }}
         >
           Back
         </Button>
-        
+
         {isComplete && (
           <Button
             variant="contained"
@@ -782,14 +1006,20 @@ const ReviewSubmit: React.FC<ReviewSubmitProps> = ({
             size="large"
             onClick={onSubmit}
             disabled={isSubmitting || loading}
-            startIcon={isSubmitting ? <CircularProgress size={20} color="inherit" /> : <SubmitIcon />}
-            sx={{ 
-              px: 6, 
-              py: 1.5, 
-              fontSize: '16px', 
+            startIcon={
+              isSubmitting ? (
+                <CircularProgress size={20} color="inherit" />
+              ) : (
+                <SubmitIcon />
+              )
+            }
+            sx={{
+              px: 6,
+              py: 1.5,
+              fontSize: '16px',
               fontWeight: 'bold',
               borderRadius: '8px',
-              boxShadow: 3
+              boxShadow: 3,
             }}
           >
             {isSubmitting ? 'SUBMITTING...' : 'SUBMIT ASSET'}

@@ -8,5 +8,5 @@ const api = {
 export default api;
 export const apiConfig = {
   // Use relative URL to ensure requests go through Vercel proxy
-  baseURL: '/api'
-}; 
+  baseURL: '/api',
+};

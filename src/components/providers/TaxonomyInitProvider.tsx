@@ -1,22 +1,28 @@
 /**
  * TaxonomyInitProvider Component
- * 
+ *
  * This component wraps the application and ensures the taxonomy service
  * is properly initialized before rendering children components.
  */
 import React, { useState, useEffect } from 'react';
-import { initializeTaxonomy, isTaxonomyInitialized, getTaxonomyInitError } from '../../services/taxonomyInitializer';
+import {
+  initializeTaxonomy,
+  isTaxonomyInitialized,
+  getTaxonomyInitError,
+} from '../../services/taxonomyInitializer';
 
 interface TaxonomyInitProviderProps {
   children: React.ReactNode;
   fallback?: React.ReactNode;
 }
 
-const TaxonomyInitProvider: React.FC<TaxonomyInitProviderProps> = ({ 
-  children, 
-  fallback = <div className="taxonomy-loading">Loading taxonomy data...</div>
+const TaxonomyInitProvider: React.FC<TaxonomyInitProviderProps> = ({
+  children,
+  fallback = <div className="taxonomy-loading">Loading taxonomy data...</div>,
 }) => {
-  const [isInitialized, setIsInitialized] = useState<boolean>(isTaxonomyInitialized());
+  const [isInitialized, setIsInitialized] = useState<boolean>(
+    isTaxonomyInitialized()
+  );
   const [error, setError] = useState<Error | null>(null);
   const [isRetrying, setIsRetrying] = useState<boolean>(false);
 
@@ -24,7 +30,7 @@ const TaxonomyInitProvider: React.FC<TaxonomyInitProviderProps> = ({
     try {
       const success = await initializeTaxonomy();
       setIsInitialized(success);
-      
+
       if (!success) {
         setError(getTaxonomyInitError());
       }
@@ -48,7 +54,7 @@ const TaxonomyInitProvider: React.FC<TaxonomyInitProviderProps> = ({
       <div className="taxonomy-error">
         <h3>Error Loading Taxonomy Data</h3>
         <p>{error.message}</p>
-        <button 
+        <button
           onClick={() => {
             setError(null);
             setIsRetrying(true);

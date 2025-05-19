@@ -16,7 +16,7 @@ export const createMockTaxonomyContext = (overrides = {}) => {
     // Category data
     categories: [
       { code: 'CAT1', numericCode: '001', name: 'Category 1' },
-      { code: 'CAT2', numericCode: '002', name: 'Category 2' }
+      { code: 'CAT2', numericCode: '002', name: 'Category 2' },
     ],
     isLoadingCategories: false,
     categoryError: null,
@@ -27,7 +27,7 @@ export const createMockTaxonomyContext = (overrides = {}) => {
     // Subcategory data
     subcategories: [
       { code: 'SUB1', numericCode: '001', name: 'Subcategory 1' },
-      { code: 'SUB2', numericCode: '002', name: 'Subcategory 2' }
+      { code: 'SUB2', numericCode: '002', name: 'Subcategory 2' },
     ],
     isLoadingSubcategories: false,
     subcategoryError: null,
@@ -46,12 +46,12 @@ export const createMockTaxonomyContext = (overrides = {}) => {
     resetCategoryData: jest.fn(),
 
     // Validation
-    validateSelections: jest.fn()
+    validateSelections: jest.fn(),
   };
 
   return {
     ...defaultMock,
-    ...overrides
+    ...overrides,
   };
 };
 
@@ -63,7 +63,7 @@ export const MockTaxonomyProvider: React.FC<{
   value?: any;
 }> = ({ children, value }) => {
   const mockContext = createMockTaxonomyContext(value);
-  
+
   return (
     <TaxonomyContext.Provider value={mockContext}>
       {children}

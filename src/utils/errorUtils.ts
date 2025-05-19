@@ -1,11 +1,17 @@
-import { ErrorSeverity, ErrorMessage, ErrorHandler } from '../types/error.types';
+import {
+  ErrorSeverity,
+  ErrorMessage,
+  ErrorHandler,
+} from '../types/error.types';
 
 /**
  * Helper function to format API errors for display
  * Extracts useful information from various API error formats
  */
-export const formatApiError = (error: any): { 
-  message: string; 
+export const formatApiError = (
+  error: any
+): {
+  message: string;
   title?: string;
   severity: ErrorSeverity;
 } => {
@@ -53,22 +59,26 @@ export const formatApiError = (error: any): {
       // Format validation errors nicely
       if (data.errors && typeof data.errors === 'object') {
         const errorDetails = Object.entries(data.errors)
-          .map(([field, msgs]) => `${field}: ${Array.isArray(msgs) ? msgs.join(', ') : msgs}`)
+          .map(
+            ([field, msgs]) =>
+              `${field}: ${Array.isArray(msgs) ? msgs.join(', ') : msgs}`
+          )
           .join('; ');
-        
+
         message = errorDetails || message;
       }
     } else if (status >= 500) {
       title = 'Server Error';
       message = 'The server encountered an error. Please try again later.';
     }
-  } 
+  }
   // Network error (no response)
   else if (error.request) {
     title = 'Connection Error';
-    message = 'Unable to connect to the server. Please check your internet connection.';
+    message =
+      'Unable to connect to the server. Please check your internet connection.';
     severity = 'warning';
-  } 
+  }
   // Simple error object or string
   else if (error.message) {
     message = error.message;
@@ -84,16 +94,16 @@ export const formatApiError = (error: any): {
  * Use this with try/catch blocks for consistent error handling
  */
 export const handleAsyncError = (
-  error: any, 
+  error: any,
   errorHandler: ErrorHandler,
   context?: string
 ): void => {
   console.error(`Error${context ? ` in ${context}` : ''}:`, error);
-  
+
   const formattedError = formatApiError(error);
   errorHandler({
-    message: formattedError.message, 
+    message: formattedError.message,
     title: formattedError.title,
-    severity: formattedError.severity
+    severity: formattedError.severity,
   });
 };

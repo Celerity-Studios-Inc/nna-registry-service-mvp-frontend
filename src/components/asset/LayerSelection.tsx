@@ -53,40 +53,40 @@ const LayerSelection: React.FC<LayerSelectionProps> = ({
         setLoading(true);
         // Use taxonomyService to get layers
         const allLayerOptions = taxonomyService.getLayers();
-        
+
         // If taxonomyService didn't return all layers, create mock data
         let layersToUse = allLayerOptions;
-        
+
         if (!layersToUse || layersToUse.length === 0) {
           // Create mock layers if none returned from service
           layersToUse = mvpLayerCodes.map(code => ({
             id: code,
             code: code,
             name: getLayerName(code),
-            numericCode: mvpLayerCodes.indexOf(code) + 1
+            numericCode: mvpLayerCodes.indexOf(code) + 1,
           }));
         }
-        
+
         // Filter to only show MVP layers
         const filteredLayers = layersToUse.filter((layer: LayerOption) =>
           mvpLayerCodes.includes(layer.code)
         );
-        
+
         // Sort layers according to the order in mvpLayerCodes
         filteredLayers.sort((a, b) => {
           const indexA = mvpLayerCodes.indexOf(a.code);
           const indexB = mvpLayerCodes.indexOf(b.code);
           return indexA - indexB;
         });
-        
+
         setLayers(filteredLayers);
-        
+
         // Mock layer stats
         const mockStats = mvpLayerCodes.reduce((acc, code) => {
           acc[code] = Math.floor(Math.random() * 50); // Random count between 0-49
           return acc;
         }, {} as Record<string, number>);
-        
+
         setLayerStats(mockStats);
         setError(null);
       } catch (err) {
@@ -95,24 +95,35 @@ const LayerSelection: React.FC<LayerSelectionProps> = ({
         setLoading(false);
       }
     };
-    
+
     fetchLayers();
   }, []);
-  
+
   // Helper function to get user-friendly layer names
   const getLayerName = (code: string): string => {
     switch (code) {
-      case 'G': return 'Songs';
-      case 'S': return 'Stars';
-      case 'L': return 'Looks';
-      case 'M': return 'Moves';
-      case 'W': return 'Worlds';
-      case 'B': return 'Branded';
-      case 'P': return 'Personalize';
-      case 'T': return 'Training Data';
-      case 'C': return 'Composite';
-      case 'R': return 'Rights';
-      default: return `Layer ${code}`;
+      case 'G':
+        return 'Songs';
+      case 'S':
+        return 'Stars';
+      case 'L':
+        return 'Looks';
+      case 'M':
+        return 'Moves';
+      case 'W':
+        return 'Worlds';
+      case 'B':
+        return 'Branded';
+      case 'P':
+        return 'Personalize';
+      case 'T':
+        return 'Training Data';
+      case 'C':
+        return 'Composite';
+      case 'R':
+        return 'Rights';
+      default:
+        return `Layer ${code}`;
     }
   };
 
@@ -155,7 +166,8 @@ const LayerSelection: React.FC<LayerSelectionProps> = ({
       <Grid container spacing={2}>
         {layers.map(layer => {
           // Use the imported layerConfig for layer details
-          const configDetails = layerConfig[layer.code as keyof typeof layerConfig];
+          const configDetails =
+            layerConfig[layer.code as keyof typeof layerConfig];
 
           // Fallback details if not found in config
           const details: LayerDetail = configDetails || {

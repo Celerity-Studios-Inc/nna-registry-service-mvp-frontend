@@ -9,4 +9,4 @@ export interface AssetMetadata {
 }
 
 const MetadataForm = () => <div>MetadataForm Placeholder</div>;
-export default MetadataForm; 
+export default MetadataForm;

@@ -1445,42 +1445,106 @@
           "GUC": {
             "name": "Gucci",
             "products": {
-              "001": { "code": "BAG", "name": "Bag", "description": "Designer handbags" },
-              "002": { "code": "SHO", "name": "Shoes", "description": "Luxury footwear" },
-              "003": { "code": "DRS", "name": "Dress", "description": "Couture dresses" },
-              "004": { "code": "GLS", "name": "Glasses", "description": "Designer eyewear" }
+              "001": {
+                "code": "BAG",
+                "name": "Bag",
+                "description": "Designer handbags"
+              },
+              "002": {
+                "code": "SHO",
+                "name": "Shoes",
+                "description": "Luxury footwear"
+              },
+              "003": {
+                "code": "DRS",
+                "name": "Dress",
+                "description": "Couture dresses"
+              },
+              "004": {
+                "code": "GLS",
+                "name": "Glasses",
+                "description": "Designer eyewear"
+              }
             }
           },
           "PRD": {
             "name": "Prada",
             "products": {
-              "001": { "code": "BAG", "name": "Bag", "description": "Prada handbags" },
-              "002": { "code": "GLS", "name": "Glasses", "description": "Designer eyewear" },
-              "003": { "code": "JKT", "name": "Jacket", "description": "Luxury jackets" }
+              "001": {
+                "code": "BAG",
+                "name": "Bag",
+                "description": "Prada handbags"
+              },
+              "002": {
+                "code": "GLS",
+                "name": "Glasses",
+                "description": "Designer eyewear"
+              },
+              "003": {
+                "code": "JKT",
+                "name": "Jacket",
+                "description": "Luxury jackets"
+              }
             }
           },
           "ADI": {
             "name": "Adidas",
             "products": {
-              "001": { "code": "SHO", "name": "Shoes", "description": "Adidas shoes" },
-              "002": { "code": "TRK", "name": "Track_Suits", "description": "Track suits" },
-              "003": { "code": "JRS", "name": "Jersey", "description": "Sports jerseys" }
+              "001": {
+                "code": "SHO",
+                "name": "Shoes",
+                "description": "Adidas shoes"
+              },
+              "002": {
+                "code": "TRK",
+                "name": "Track_Suits",
+                "description": "Track suits"
+              },
+              "003": {
+                "code": "JRS",
+                "name": "Jersey",
+                "description": "Sports jerseys"
+              }
             }
           },
           "BAL": {
             "name": "Balenciaga",
             "products": {
-              "001": { "code": "HAT", "name": "Hats", "description": "Designer hats" },
-              "002": { "code": "JKT", "name": "Jackets", "description": "Statement jackets" },
-              "003": { "code": "COL", "name": "Collaborations", "description": "Limited collaborations" }
+              "001": {
+                "code": "HAT",
+                "name": "Hats",
+                "description": "Designer hats"
+              },
+              "002": {
+                "code": "JKT",
+                "name": "Jackets",
+                "description": "Statement jackets"
+              },
+              "003": {
+                "code": "COL",
+                "name": "Collaborations",
+                "description": "Limited collaborations"
+              }
             }
           },
           "LVU": {
             "name": "Louis_Vuitton",
             "products": {
-              "001": { "code": "BAG", "name": "Bag", "description": "Signature bags" },
-              "002": { "code": "SCRF", "name": "Scarf", "description": "Luxury scarves" },
-              "003": { "code": "WLT", "name": "Wallet", "description": "Designer wallets" }
+              "001": {
+                "code": "BAG",
+                "name": "Bag",
+                "description": "Signature bags"
+              },
+              "002": {
+                "code": "SCRF",
+                "name": "Scarf",
+                "description": "Luxury scarves"
+              },
+              "003": {
+                "code": "WLT",
+                "name": "Wallet",
+                "description": "Designer wallets"
+              }
             }
           }
         }
@@ -1491,9 +1555,21 @@
           "NKE": {
             "name": "Nike",
             "products": {
-              "001": { "code": "DRP", "name": "Dance_Drop", "description": "Nike-sponsored dance drop" },
-              "002": { "code": "CHR", "name": "Choreography", "description": "Nike-branded dance routine" },
-              "003": { "code": "FTW", "name": "Footwork", "description": "Nike-sponsored footwork" }
+              "001": {
+                "code": "DRP",
+                "name": "Dance_Drop",
+                "description": "Nike-sponsored dance drop"
+              },
+              "002": {
+                "code": "CHR",
+                "name": "Choreography",
+                "description": "Nike-branded dance routine"
+              },
+              "003": {
+                "code": "FTW",
+                "name": "Footwork",
+                "description": "Nike-sponsored footwork"
+              }
             }
           }
         }
@@ -1504,8 +1580,16 @@
           "COK": {
             "name": "Coke",
             "products": {
-              "001": { "code": "BNR", "name": "Banner", "description": "Coke banner on stage" },
-              "002": { "code": "STG", "name": "Stage", "description": "Coke-branded stage" }
+              "001": {
+                "code": "BNR",
+                "name": "Banner",
+                "description": "Coke banner on stage"
+              },
+              "002": {
+                "code": "STG",
+                "name": "Stage",
+                "description": "Coke-branded stage"
+              }
             }
           }
         }
@@ -1516,15 +1600,31 @@
           "RBL": {
             "name": "Red_Bull",
             "products": {
-              "001": { "code": "EVT", "name": "Event_Stages", "description": "Red Bull event stages" },
-              "002": { "code": "SPT", "name": "Sports_Venues", "description": "Red Bull sports venues" }
+              "001": {
+                "code": "EVT",
+                "name": "Event_Stages",
+                "description": "Red Bull event stages"
+              },
+              "002": {
+                "code": "SPT",
+                "name": "Sports_Venues",
+                "description": "Red Bull sports venues"
+              }
             }
           },
           "FES": {
             "name": "Festivals",
             "products": {
-              "001": { "code": "COA", "name": "Coachella", "description": "Coachella stages" },
-              "002": { "code": "TML", "name": "Tomorrowland", "description": "Tomorrowland themes" }
+              "001": {
+                "code": "COA",
+                "name": "Coachella",
+                "description": "Coachella stages"
+              },
+              "002": {
+                "code": "TML",
+                "name": "Tomorrowland",
+                "description": "Tomorrowland themes"
+              }
             }
           }
         }
@@ -1535,8 +1635,16 @@
           "RBL": {
             "name": "Red_Bull",
             "products": {
-              "001": { "code": "AVT", "name": "Avatar", "description": "Red Bull-sponsored avatar" },
-              "002": { "code": "ICN", "name": "Icon", "description": "Red Bull-branded icon" }
+              "001": {
+                "code": "AVT",
+                "name": "Avatar",
+                "description": "Red Bull-sponsored avatar"
+              },
+              "002": {
+                "code": "ICN",
+                "name": "Icon",
+                "description": "Red Bull-branded icon"
+              }
             }
           }
         }

@@ -16,15 +16,17 @@ const SimpleTaxonomySelection: React.FC<SimpleTaxonomySelectionProps> = ({
   onCategorySelect,
   onSubcategorySelect,
   selectedCategory,
-  selectedSubcategory
+  selectedSubcategory,
 }) => {
   // State for taxonomy data
   const [categories, setCategories] = useState<TaxonomyItem[]>([]);
   const [subcategories, setSubcategories] = useState<TaxonomyItem[]>([]);
 
   // Internal state to track selection
-  const [internalSelectedCategory, setInternalSelectedCategory] = useState<string>(selectedCategory || '');
-  const [internalSelectedSubcategory, setInternalSelectedSubcategory] = useState<string>(selectedSubcategory || '');
+  const [internalSelectedCategory, setInternalSelectedCategory] =
+    useState<string>(selectedCategory || '');
+  const [internalSelectedSubcategory, setInternalSelectedSubcategory] =
+    useState<string>(selectedSubcategory || '');
 
   // UI state
   const [loading, setLoading] = useState<boolean>(true);
@@ -39,7 +41,10 @@ const SimpleTaxonomySelection: React.FC<SimpleTaxonomySelectionProps> = ({
   }, [selectedCategory, internalSelectedCategory]);
 
   useEffect(() => {
-    if (selectedSubcategory !== internalSelectedSubcategory && selectedSubcategory) {
+    if (
+      selectedSubcategory !== internalSelectedSubcategory &&
+      selectedSubcategory
+    ) {
       setInternalSelectedSubcategory(selectedSubcategory);
     }
   }, [selectedSubcategory, internalSelectedSubcategory]);
@@ -49,20 +54,26 @@ const SimpleTaxonomySelection: React.FC<SimpleTaxonomySelectionProps> = ({
     if (!layer) return;
 
     try {
-      console.log(`Loading categories for layer ${layer} using simplified taxonomy service...`);
+      console.log(
+        `Loading categories for layer ${layer} using simplified taxonomy service...`
+      );
 
       // Force re-initialization of the taxonomy service
       // Check if we need to reload the taxonomy data by trying to get categories
       const testCategories = taxonomyService.getCategories(layer);
       if (!testCategories || testCategories.length === 0) {
-        console.log(`WARNING: Categories for ${layer} appear to be empty, forcing taxonomy reload...`);
+        console.log(
+          `WARNING: Categories for ${layer} appear to be empty, forcing taxonomy reload...`
+        );
 
         // Try to reload the taxonomy data
-        import('../../taxonomyLookup').then(() => {
-          console.log('Taxonomy data reloaded successfully');
-        }).catch(err => {
-          console.error('Error reloading taxonomy data:', err);
-        });
+        import('../../taxonomyLookup')
+          .then(() => {
+            console.log('Taxonomy data reloaded successfully');
+          })
+          .catch(err => {
+            console.error('Error reloading taxonomy data:', err);
+          });
       }
 
       // Get categories with retry mechanism
@@ -73,7 +84,9 @@ const SimpleTaxonomySelection: React.FC<SimpleTaxonomySelectionProps> = ({
         layerCategories = taxonomyService.getCategories(layer);
 
         if (layerCategories.length === 0) {
-          console.warn(`No categories found for ${layer}, retry #${retryCount + 1}...`);
+          console.warn(
+            `No categories found for ${layer}, retry #${retryCount + 1}...`
+          );
           retryCount++;
 
           // For the Star layer, ensure we have the critical categories
@@ -82,7 +95,7 @@ const SimpleTaxonomySelection: React.FC<SimpleTaxonomySelectionProps> = ({
             const fallbackStarCategories = [
               { code: 'POP', numericCode: '001', name: 'Pop' },
               { code: 'RCK', numericCode: '002', name: 'Rock' },
-              { code: 'HIP', numericCode: '003', name: 'Hip-Hop' }
+              { code: 'HIP', numericCode: '003', name: 'Hip-Hop' },
             ] as TaxonomyItem[];
             layerCategories = fallbackStarCategories;
           }
@@ -93,12 +106,14 @@ const SimpleTaxonomySelection: React.FC<SimpleTaxonomySelectionProps> = ({
       const debugInfo = {
         layer,
         totalCategories: layerCategories.length,
-        attempts: retryCount + 1
+        attempts: retryCount + 1,
       };
       console.log(`DEBUG INFO: ${JSON.stringify(debugInfo)}`);
 
-      console.log(`Found ${layerCategories.length} categories for ${layer}:`,
-        layerCategories.map(c => c.code).join(', '));
+      console.log(
+        `Found ${layerCategories.length} categories for ${layer}:`,
+        layerCategories.map(c => c.code).join(', ')
+      );
 
       // Make sure the categories are sorted alphabetically
       const sortedCategories = [...layerCategories].sort((a, b) =>
@@ -108,10 +123,16 @@ const SimpleTaxonomySelection: React.FC<SimpleTaxonomySelectionProps> = ({
       setCategories(sortedCategories);
       setLoading(false);
       setHasAttemptedLoad(true);
-      logger.info(`Successfully loaded ${sortedCategories.length} categories for layer ${layer}`);
+      logger.info(
+        `Successfully loaded ${sortedCategories.length} categories for layer ${layer}`
+      );
     } catch (err) {
       console.error('Error loading categories:', err);
-      logger.error(`Failed to load categories for layer ${layer}: ${err instanceof Error ? err.message : 'Unknown error'}`);
+      logger.error(
+        `Failed to load categories for layer ${layer}: ${
+          err instanceof Error ? err.message : 'Unknown error'
+        }`
+      );
       setError('Failed to load categories');
       setLoading(false);
       setHasAttemptedLoad(true);
@@ -133,10 +154,17 @@ const SimpleTaxonomySelection: React.FC<SimpleTaxonomySelectionProps> = ({
       let categorySubcategories: TaxonomyItem[] = [];
 
       while (retryCount < 3 && categorySubcategories.length === 0) {
-        categorySubcategories = taxonomyService.getSubcategories(layer, selectedCategory);
+        categorySubcategories = taxonomyService.getSubcategories(
+          layer,
+          selectedCategory
+        );
 
         if (categorySubcategories.length === 0) {
-          console.warn(`No subcategories found for ${layer}.${selectedCategory}, retry #${retryCount + 1}...`);
+          console.warn(
+            `No subcategories found for ${layer}.${selectedCategory}, retry #${
+              retryCount + 1
+            }...`
+          );
           retryCount++;
 
           // Handle critical cases with fallback data
@@ -150,19 +178,19 @@ const SimpleTaxonomySelection: React.FC<SimpleTaxonomySelectionProps> = ({
                 { code: 'LGF', numericCode: '004', name: 'Pop Legend Female' },
                 { code: 'LGM', numericCode: '005', name: 'Pop Legend Male' },
                 { code: 'ICM', numericCode: '006', name: 'Pop Icon Male' },
-                { code: 'HPM', numericCode: '007', name: 'Pop Hipster Male' }
+                { code: 'HPM', numericCode: '007', name: 'Pop Hipster Male' },
               ];
               categorySubcategories = popSubcategories;
             } else if (layer === 'S' && selectedCategory === 'RCK') {
               console.log('Manually adding S.RCK subcategories...');
               const rockSubcategories: TaxonomyItem[] = [
-                { code: 'BAS', numericCode: '001', name: 'Base' }
+                { code: 'BAS', numericCode: '001', name: 'Base' },
               ];
               categorySubcategories = rockSubcategories;
             } else if (layer === 'W' && selectedCategory === 'BCH') {
               console.log('Manually adding W.BCH subcategories...');
               const beachSubcategories: TaxonomyItem[] = [
-                { code: 'SUN', numericCode: '003', name: 'Sunny' }
+                { code: 'SUN', numericCode: '003', name: 'Sunny' },
               ];
               categorySubcategories = beachSubcategories;
             }
@@ -170,8 +198,14 @@ const SimpleTaxonomySelection: React.FC<SimpleTaxonomySelectionProps> = ({
         }
       }
 
-      console.log(`Found ${categorySubcategories.length} subcategories for ${layer}.${selectedCategory} (after ${retryCount + 1} attempts):`,
-        categorySubcategories.map(s => s.code).join(', '));
+      console.log(
+        `Found ${
+          categorySubcategories.length
+        } subcategories for ${layer}.${selectedCategory} (after ${
+          retryCount + 1
+        } attempts):`,
+        categorySubcategories.map(s => s.code).join(', ')
+      );
 
       // Sort subcategories by numeric code
       const sortedSubcategories = [...categorySubcategories].sort((a, b) =>
@@ -180,7 +214,10 @@ const SimpleTaxonomySelection: React.FC<SimpleTaxonomySelectionProps> = ({
 
       setSubcategories(sortedSubcategories);
     } catch (err) {
-      console.error(`Error loading subcategories for ${layer}.${selectedCategory}:`, err);
+      console.error(
+        `Error loading subcategories for ${layer}.${selectedCategory}:`,
+        err
+      );
       setError('Failed to load subcategories');
     }
   }, [layer, selectedCategory]);
@@ -240,18 +277,28 @@ const SimpleTaxonomySelection: React.FC<SimpleTaxonomySelectionProps> = ({
             {categories.map(category => (
               <div
                 key={category.code}
-                className={`taxonomy-item ${internalSelectedCategory === category.code ? 'selected' : ''}`}
+                className={`taxonomy-item ${
+                  internalSelectedCategory === category.code ? 'selected' : ''
+                }`}
                 onClick={() => handleCategorySelect(category.code)}
                 style={{
                   cursor: 'pointer',
-                  border: internalSelectedCategory === category.code ? '2px solid #1976d2' : '1px solid #ddd',
-                  backgroundColor: internalSelectedCategory === category.code ? '#f0f7ff' : 'white',
-                  transition: 'all 0.2s ease'
+                  border:
+                    internalSelectedCategory === category.code
+                      ? '2px solid #1976d2'
+                      : '1px solid #ddd',
+                  backgroundColor:
+                    internalSelectedCategory === category.code
+                      ? '#f0f7ff'
+                      : 'white',
+                  transition: 'all 0.2s ease',
                 }}
               >
                 <div className="code">{category.code}</div>
                 <div className="numeric-code">{category.numericCode}</div>
-                <div className="name">{category.name || `Category ${category.code}`}</div>
+                <div className="name">
+                  {category.name || `Category ${category.code}`}
+                </div>
               </div>
             ))}
           </div>
@@ -266,7 +313,9 @@ const SimpleTaxonomySelection: React.FC<SimpleTaxonomySelectionProps> = ({
                 setCategories(reloadedCategories);
                 setLoading(false);
                 setHasAttemptedLoad(true);
-                console.log(`Manually reloaded categories for ${layer}, found: ${reloadedCategories.length}`);
+                console.log(
+                  `Manually reloaded categories for ${layer}, found: ${reloadedCategories.length}`
+                );
               }}
               style={{
                 padding: '8px 16px',
@@ -275,7 +324,7 @@ const SimpleTaxonomySelection: React.FC<SimpleTaxonomySelectionProps> = ({
                 border: 'none',
                 borderRadius: '4px',
                 cursor: 'pointer',
-                marginTop: '8px'
+                marginTop: '8px',
               }}
             >
               Reload Categories
@@ -292,32 +341,52 @@ const SimpleTaxonomySelection: React.FC<SimpleTaxonomySelectionProps> = ({
               {subcategories.map(subcategory => (
                 <div
                   key={subcategory.code}
-                  className={`taxonomy-item ${internalSelectedSubcategory === subcategory.code ? 'selected' : ''}`}
+                  className={`taxonomy-item ${
+                    internalSelectedSubcategory === subcategory.code
+                      ? 'selected'
+                      : ''
+                  }`}
                   onClick={() => handleSubcategorySelect(subcategory.code)}
                   style={{
                     cursor: 'pointer',
-                    border: internalSelectedSubcategory === subcategory.code ? '2px solid #1976d2' : '1px solid #ddd',
-                    backgroundColor: internalSelectedSubcategory === subcategory.code ? '#f0f7ff' : 'white',
-                    transition: 'all 0.2s ease'
+                    border:
+                      internalSelectedSubcategory === subcategory.code
+                        ? '2px solid #1976d2'
+                        : '1px solid #ddd',
+                    backgroundColor:
+                      internalSelectedSubcategory === subcategory.code
+                        ? '#f0f7ff'
+                        : 'white',
+                    transition: 'all 0.2s ease',
                   }}
                 >
                   <div className="code">{subcategory.code}</div>
                   <div className="numeric-code">{subcategory.numericCode}</div>
-                  <div className="name">{subcategory.name || `Subcategory ${subcategory.code}`}</div>
+                  <div className="name">
+                    {subcategory.name || `Subcategory ${subcategory.code}`}
+                  </div>
                 </div>
               ))}
             </div>
           ) : (
             <div className="no-data-message">
-              <p>No subcategories found for category {internalSelectedCategory}</p>
+              <p>
+                No subcategories found for category {internalSelectedCategory}
+              </p>
               <button
                 onClick={() => {
                   // Force a reload of subcategories
                   setLoading(true);
-                  const reloadedSubcategories = taxonomyService.getSubcategories(layer, internalSelectedCategory);
+                  const reloadedSubcategories =
+                    taxonomyService.getSubcategories(
+                      layer,
+                      internalSelectedCategory
+                    );
                   setSubcategories(reloadedSubcategories);
                   setLoading(false);
-                  console.log(`Manually reloaded subcategories for ${layer}.${internalSelectedCategory}, found: ${reloadedSubcategories.length}`);
+                  console.log(
+                    `Manually reloaded subcategories for ${layer}.${internalSelectedCategory}, found: ${reloadedSubcategories.length}`
+                  );
                 }}
                 style={{
                   padding: '8px 16px',
@@ -326,7 +395,7 @@ const SimpleTaxonomySelection: React.FC<SimpleTaxonomySelectionProps> = ({
                   border: 'none',
                   borderRadius: '4px',
                   cursor: 'pointer',
-                  marginTop: '8px'
+                  marginTop: '8px',
                 }}
               >
                 Reload Subcategories
@@ -337,7 +406,16 @@ const SimpleTaxonomySelection: React.FC<SimpleTaxonomySelectionProps> = ({
       )}
 
       {/* Debug information */}
-      <div className="taxonomy-debug" style={{ marginTop: '20px', fontSize: '12px', color: '#666', borderTop: '1px solid #eee', paddingTop: '10px' }}>
+      <div
+        className="taxonomy-debug"
+        style={{
+          marginTop: '20px',
+          fontSize: '12px',
+          color: '#666',
+          borderTop: '1px solid #eee',
+          paddingTop: '10px',
+        }}
+      >
         <p>Layer: {layer}</p>
         <p>Categories: {categories.length} available</p>
         <p>Selected Category: {internalSelectedCategory}</p>

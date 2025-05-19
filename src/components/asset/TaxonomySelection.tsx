@@ -80,8 +80,16 @@ const TaxonomySelection: React.FC<TaxonomySelectionProps> = ({
         categoryOptions.forEach(category => {
           // For numeric category codes, we need to make sure we display the alphabetic version
           if (/^\d+$/.test(category.code)) {
-            console.log(`Category with numeric code: ${category.code} (${category.name})`);
-            console.log(`This will display as: ${getAlphabeticCode(layerCode, category.code, category.name)}`);
+            console.log(
+              `Category with numeric code: ${category.code} (${category.name})`
+            );
+            console.log(
+              `This will display as: ${getAlphabeticCode(
+                layerCode,
+                category.code,
+                category.name
+              )}`
+            );
           }
         });
 
@@ -111,7 +119,9 @@ const TaxonomySelection: React.FC<TaxonomySelectionProps> = ({
       const categoryCode = selectedCategoryCode || '';
       const subcategoryCode = selectedSubcategoryCode || '';
 
-      console.log(`Using category code: ${categoryCode}, subcategory code: ${subcategoryCode}`);
+      console.log(
+        `Using category code: ${categoryCode}, subcategory code: ${subcategoryCode}`
+      );
 
       const response = await taxonomyService.getSequentialNumber(
         layerCode,
@@ -120,7 +130,7 @@ const TaxonomySelection: React.FC<TaxonomySelectionProps> = ({
       );
 
       setSequential(response.sequential);
-      
+
       // Original implementation - uncomment when API is ready
       /*
       const response = await api.post<{ sequential: string }>(
@@ -186,12 +196,20 @@ const TaxonomySelection: React.FC<TaxonomySelectionProps> = ({
         if (onNNAAddressChange) {
           // IMPORTANT: Get the proper alphabetic codes from the category/subcategory objects
           // This ensures that we're using the correct codes throughout the application
-          const selectedCategory = categories.find(cat => cat.code === selectedCategoryCode);
-          const selectedSubcategory = subcategories.find(sub => sub.code === selectedSubcategoryCode);
+          const selectedCategory = categories.find(
+            cat => cat.code === selectedCategoryCode
+          );
+          const selectedSubcategory = subcategories.find(
+            sub => sub.code === selectedSubcategoryCode
+          );
 
           // Use the alphabetic codes from the objects
-          let categoryAlpha = selectedCategory ? selectedCategory.code : selectedCategoryCode;
-          let subcategoryAlpha = selectedSubcategory ? selectedSubcategory.code : selectedSubcategoryCode;
+          let categoryAlpha = selectedCategory
+            ? selectedCategory.code
+            : selectedCategoryCode;
+          let subcategoryAlpha = selectedSubcategory
+            ? selectedSubcategory.code
+            : selectedSubcategoryCode;
 
           // Make sure we're using upper case for all codes
           categoryAlpha = categoryAlpha.toUpperCase();
@@ -200,14 +218,22 @@ const TaxonomySelection: React.FC<TaxonomySelectionProps> = ({
           // Special handling for S.001.HPM -> convert to S.POP.HPM
           if (layerCode === 'S' && /^\d+$/.test(categoryAlpha)) {
             if (categoryAlpha === '001') {
-              console.log(`Converting numeric code ${categoryAlpha} to POP for Stars layer`);
+              console.log(
+                `Converting numeric code ${categoryAlpha} to POP for Stars layer`
+              );
               categoryAlpha = 'POP';
             }
           }
 
           // Check if we're dealing with S.POP.HPM for additional debugging
-          if (layerCode === 'S' && categoryAlpha === 'POP' && subcategoryAlpha === 'HPM') {
-            console.log('IMPORTANT: Found S.POP.HPM combination, force generating correct HFN and MFA');
+          if (
+            layerCode === 'S' &&
+            categoryAlpha === 'POP' &&
+            subcategoryAlpha === 'HPM'
+          ) {
+            console.log(
+              'IMPORTANT: Found S.POP.HPM combination, force generating correct HFN and MFA'
+            );
           }
 
           // Create the properly formatted HFN with the alphabetic codes
@@ -215,10 +241,16 @@ const TaxonomySelection: React.FC<TaxonomySelectionProps> = ({
 
           // For S.POP.HPM, we need to handle the MFA correctly with the sequential number
           let mfaAddress;
-          if (layerCode === 'S' && categoryAlpha === 'POP' && subcategoryAlpha === 'HPM') {
+          if (
+            layerCode === 'S' &&
+            categoryAlpha === 'POP' &&
+            subcategoryAlpha === 'HPM'
+          ) {
             // Force the correct MFA for this specific case using the right sequential number
             mfaAddress = `2.001.007.${sequential}`;
-            console.log(`FORCE MAPPING: Using hardcoded MFA for S.POP.HPM: ${mfaAddress}`);
+            console.log(
+              `FORCE MAPPING: Using hardcoded MFA for S.POP.HPM: ${mfaAddress}`
+            );
           } else {
             // Generate the MFA using the standard conversion function for all other cases
             mfaAddress = convertHFNToMFA(hfnAddress);
@@ -228,19 +260,33 @@ const TaxonomySelection: React.FC<TaxonomySelectionProps> = ({
           // the real sequential number to the form for backend API to ensure correct registration
           const sequentialNum = parseInt(sequential, 10) || 1;
 
-          console.log(`Generated NNA addresses for form state: HFN=${hfnAddress}, MFA=${mfaAddress}, seq=${sequentialNum}`);
-          console.log(`Note: Preview will display with '.000' instead of the actual sequential number`);
+          console.log(
+            `Generated NNA addresses for form state: HFN=${hfnAddress}, MFA=${mfaAddress}, seq=${sequentialNum}`
+          );
+          console.log(
+            `Note: Preview will display with '.000' instead of the actual sequential number`
+          );
 
           // Use the standard conversion for all cases
-          console.log(`Using standard MFA conversion for ${hfnAddress} -> ${mfaAddress}`);
+          console.log(
+            `Using standard MFA conversion for ${hfnAddress} -> ${mfaAddress}`
+          );
 
           // Verify the correct MFA generation for S.POP.HPM
-          if (layerCode === 'S' && categoryAlpha === 'POP' && subcategoryAlpha === 'HPM') {
-            console.log(`VERIFICATION: S.POP.HPM should map to MFA 2.001.007.${sequential}`);
+          if (
+            layerCode === 'S' &&
+            categoryAlpha === 'POP' &&
+            subcategoryAlpha === 'HPM'
+          ) {
+            console.log(
+              `VERIFICATION: S.POP.HPM should map to MFA 2.001.007.${sequential}`
+            );
             // Apply a validation check - it should use the expected sequential number pattern
             const expectedPattern = `2.001.007.${sequential}`;
             if (mfaAddress !== expectedPattern) {
-              console.error(`WARNING: Expected MFA for S.POP.HPM to be ${expectedPattern} but got ${mfaAddress}`);
+              console.error(
+                `WARNING: Expected MFA for S.POP.HPM to be ${expectedPattern} but got ${mfaAddress}`
+              );
               // Force the correct value if somehow it's still wrong
               mfaAddress = expectedPattern;
             }
@@ -249,11 +295,18 @@ const TaxonomySelection: React.FC<TaxonomySelectionProps> = ({
           // Store the original subcategory code to preserve it after backend normalization
           // This will be used to display the correct subcategory in the success screen
           const originalSubcategoryCode = subcategoryAlpha;
-          console.log(`Storing original subcategory code: ${originalSubcategoryCode} for display override`);
+          console.log(
+            `Storing original subcategory code: ${originalSubcategoryCode} for display override`
+          );
 
           // Always pass the original 3-letter codes along with the MFA and HFN
           // This ensures consistency between steps
-          onNNAAddressChange(hfnAddress, mfaAddress, sequentialNum, originalSubcategoryCode);
+          onNNAAddressChange(
+            hfnAddress,
+            mfaAddress,
+            sequentialNum,
+            originalSubcategoryCode
+          );
         }
       } catch (err) {
         console.error('Error checking address uniqueness:', err);
@@ -319,23 +372,33 @@ const TaxonomySelection: React.FC<TaxonomySelectionProps> = ({
       <Divider sx={{ mb: 3 }} />
 
       {/* Add layer name display */}
-      <Box sx={{ mb: 3, p: 2, bgcolor: 'background.default', borderRadius: 1, border: '1px solid rgba(0, 0, 0, 0.12)' }}>
+      <Box
+        sx={{
+          mb: 3,
+          p: 2,
+          bgcolor: 'background.default',
+          borderRadius: 1,
+          border: '1px solid rgba(0, 0, 0, 0.12)',
+        }}
+      >
         <Typography variant="subtitle1" fontWeight="bold" color="primary">
           {(() => {
             // Map layer codes to full names
             const layerNames: Record<string, string> = {
-              'G': 'Songs',
-              'S': 'Stars',
-              'L': 'Looks',
-              'M': 'Moves',
-              'W': 'Worlds',
-              'V': 'Videos',
-              'B': 'Branded Assets',
-              'C': 'Composites',
-              'T': 'Training Data',
-              'P': 'Patterns',
+              G: 'Songs',
+              S: 'Stars',
+              L: 'Looks',
+              M: 'Moves',
+              W: 'Worlds',
+              V: 'Videos',
+              B: 'Branded Assets',
+              C: 'Composites',
+              T: 'Training Data',
+              P: 'Patterns',
             };
-            return `${layerNames[layerCode] || `Layer ${layerCode}`} (${layerCode})`;
+            return `${
+              layerNames[layerCode] || `Layer ${layerCode}`
+            } (${layerCode})`;
           })()}
         </Typography>
       </Box>
@@ -394,7 +457,11 @@ const TaxonomySelection: React.FC<TaxonomySelectionProps> = ({
                     </Tooltip>
                     <Tooltip title="Machine-Friendly Address (3-digit code)">
                       <Chip
-                        label={category.numericCode ? category.numericCode.toString().padStart(3, '0') : '000'}
+                        label={
+                          category.numericCode
+                            ? category.numericCode.toString().padStart(3, '0')
+                            : '000'
+                        }
                         size="small"
                         color="default"
                         variant="outlined"
@@ -458,7 +525,13 @@ const TaxonomySelection: React.FC<TaxonomySelectionProps> = ({
                     </Tooltip>
                     <Tooltip title="Machine-Friendly Address (3-digit code)">
                       <Chip
-                        label={subcategory.numericCode ? subcategory.numericCode.toString().padStart(3, '0') : '000'}
+                        label={
+                          subcategory.numericCode
+                            ? subcategory.numericCode
+                                .toString()
+                                .padStart(3, '0')
+                            : '000'
+                        }
                         size="small"
                         color="default"
                         variant="outlined"
@@ -473,17 +546,19 @@ const TaxonomySelection: React.FC<TaxonomySelectionProps> = ({
         </FormControl>
 
         {/* Add warning for non-HPM subcategories that will be normalized */}
-        {layerCode === 'S' && 
-         selectedCategoryCode === 'POP' && 
-         selectedSubcategoryCode && 
-         selectedSubcategoryCode !== 'HPM' && 
-         selectedSubcategoryCode !== 'BAS' && (
-          <Alert severity="info" sx={{ mt: 2, mb: 2 }}>
-            <AlertTitle>Subcategory Compatibility Note</AlertTitle>
-            While you've selected <strong>{selectedSubcategoryCode}</strong>, the system will internally use <strong>BAS</strong> for storage.
-            Your selection will be preserved in the display. This is a temporary limitation that will be addressed in a future update.
-          </Alert>
-        )}
+        {layerCode === 'S' &&
+          selectedCategoryCode === 'POP' &&
+          selectedSubcategoryCode &&
+          selectedSubcategoryCode !== 'HPM' &&
+          selectedSubcategoryCode !== 'BAS' && (
+            <Alert severity="info" sx={{ mt: 2, mb: 2 }}>
+              <AlertTitle>Subcategory Compatibility Note</AlertTitle>
+              While you've selected <strong>{selectedSubcategoryCode}</strong>,
+              the system will internally use <strong>BAS</strong> for storage.
+              Your selection will be preserved in the display. This is a
+              temporary limitation that will be addressed in a future update.
+            </Alert>
+          )}
 
         {selectedCategoryCode && selectedSubcategoryCode && (
           <>

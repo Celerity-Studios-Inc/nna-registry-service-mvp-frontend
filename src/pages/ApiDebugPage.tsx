@@ -1,5 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Typography, Button, Paper, TextField, Grid, Divider, Alert, CircularProgress } from '@mui/material';
+import {
+  Box,
+  Typography,
+  Button,
+  Paper,
+  TextField,
+  Grid,
+  Divider,
+  Alert,
+  CircularProgress,
+} from '@mui/material';
 import axios from 'axios';
 
 /**
@@ -18,7 +28,7 @@ const ApiDebugPage: React.FC = () => {
   const testEndpoints = [
     { name: 'Local Health Check', url: '/api/health' },
     { name: 'Backend Diagnostics', url: '/api/test-backend' },
-    { name: 'Real Backend Test', url: '/api/test-real-backend' }, 
+    { name: 'Real Backend Test', url: '/api/test-real-backend' },
     { name: 'Backend URL Info', url: '/api/backend-url' },
     { name: 'API Endpoint with Auth', url: '/api/assets' },
   ];
@@ -27,20 +37,20 @@ const ApiDebugPage: React.FC = () => {
   const testEndpoint = async (endpoint: string) => {
     setLoading(true);
     setError(null);
-    
+
     try {
       console.log(`Testing endpoint: ${endpoint}`);
-      
+
       const response = await axios.get(endpoint, {
         headers: {
-          'Accept': 'application/json',
+          Accept: 'application/json',
           'Content-Type': 'application/json',
         },
         timeout: 10000,
       });
-      
+
       console.log('Response:', response);
-      
+
       setResults({
         endpoint,
         status: response.status,
@@ -51,14 +61,14 @@ const ApiDebugPage: React.FC = () => {
       });
     } catch (err) {
       console.error('Error testing endpoint:', err);
-      
+
       // Extract error details
       let errorMessage = 'Unknown error';
       let errorDetails = null;
-      
+
       if (axios.isAxiosError(err)) {
         errorMessage = err.message;
-        
+
         if (err.response) {
           errorDetails = {
             status: err.response.status,
@@ -74,9 +84,11 @@ const ApiDebugPage: React.FC = () => {
       } else if (err instanceof Error) {
         errorMessage = err.message;
       }
-      
-      setError(`${errorMessage}${errorDetails ? ' (see console for details)' : ''}`);
-      
+
+      setError(
+        `${errorMessage}${errorDetails ? ' (see console for details)' : ''}`
+      );
+
       if (errorDetails) {
         console.log('Error details:', errorDetails);
       }
@@ -89,7 +101,7 @@ const ApiDebugPage: React.FC = () => {
   const toggleMockMode = () => {
     const newValue = !mockModeEnabled;
     setMockModeEnabled(newValue);
-    
+
     if (newValue) {
       localStorage.setItem('forceMockApi', 'true');
       console.log('Mock API mode enabled via localStorage');
@@ -103,7 +115,7 @@ const ApiDebugPage: React.FC = () => {
   const testAllEndpoints = async () => {
     setResults(null);
     setError(null);
-    
+
     // Test /api/test-backend first as it provides the most information
     await testEndpoint('/api/test-backend');
   };
@@ -118,11 +130,13 @@ const ApiDebugPage: React.FC = () => {
       <Typography variant="h4" gutterBottom>
         API Debug & Diagnostics
       </Typography>
-      
+
       <Alert severity="info" sx={{ mb: 3 }}>
-        This page helps diagnose API connectivity issues. It tests various endpoints and shows detailed responses to help identify where problems might be occurring.
+        This page helps diagnose API connectivity issues. It tests various
+        endpoints and shows detailed responses to help identify where problems
+        might be occurring.
       </Alert>
-      
+
       <Grid container spacing={3} sx={{ mb: 4 }}>
         <Grid item xs={12}>
           <Paper sx={{ p: 3 }}>
@@ -131,10 +145,11 @@ const ApiDebugPage: React.FC = () => {
             </Typography>
             <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
               <Typography>
-                Mock API Mode: <strong>{mockModeEnabled ? 'ENABLED' : 'DISABLED'}</strong>
+                Mock API Mode:{' '}
+                <strong>{mockModeEnabled ? 'ENABLED' : 'DISABLED'}</strong>
               </Typography>
-              <Button 
-                variant="outlined" 
+              <Button
+                variant="outlined"
                 color={mockModeEnabled ? 'error' : 'primary'}
                 onClick={toggleMockMode}
                 sx={{ ml: 2 }}
@@ -143,31 +158,37 @@ const ApiDebugPage: React.FC = () => {
               </Button>
             </Box>
             <Typography variant="body2" color="text.secondary">
-              When mock mode is enabled, the application will use fake data instead of real API calls. This can be useful for testing when the backend is unavailable.
+              When mock mode is enabled, the application will use fake data
+              instead of real API calls. This can be useful for testing when the
+              backend is unavailable.
             </Typography>
           </Paper>
         </Grid>
-        
+
         <Grid item xs={12}>
           <Paper sx={{ p: 3 }}>
             <Typography variant="h6" gutterBottom>
               Test Endpoints
             </Typography>
-            
-            <Button 
-              variant="contained" 
+
+            <Button
+              variant="contained"
               onClick={testAllEndpoints}
               disabled={loading}
               sx={{ mb: 2 }}
             >
-              {loading ? <CircularProgress size={24} color="inherit" /> : 'Run Diagnostics'}
+              {loading ? (
+                <CircularProgress size={24} color="inherit" />
+              ) : (
+                'Run Diagnostics'
+              )}
             </Button>
-            
+
             <Grid container spacing={2} sx={{ mt: 2 }}>
-              {testEndpoints.map((endpoint) => (
+              {testEndpoints.map(endpoint => (
                 <Grid item xs={12} sm={6} md={3} key={endpoint.url}>
-                  <Button 
-                    variant="outlined" 
+                  <Button
+                    variant="outlined"
                     fullWidth
                     onClick={() => testEndpoint(endpoint.url)}
                     disabled={loading}
@@ -180,25 +201,25 @@ const ApiDebugPage: React.FC = () => {
           </Paper>
         </Grid>
       </Grid>
-      
+
       {error && (
         <Alert severity="error" sx={{ mb: 3 }}>
           {error}
         </Alert>
       )}
-      
+
       {loading && (
         <Box sx={{ display: 'flex', justifyContent: 'center', mb: 3 }}>
           <CircularProgress />
         </Box>
       )}
-      
+
       {results && (
         <Paper sx={{ p: 3 }}>
           <Typography variant="h6" gutterBottom>
             Results: {results.endpoint}
           </Typography>
-          
+
           <Box sx={{ mb: 2 }}>
             <Typography variant="subtitle1">
               Status: {results.status} {results.statusText}
@@ -207,13 +228,13 @@ const ApiDebugPage: React.FC = () => {
               Timestamp: {results.timestamp}
             </Typography>
           </Box>
-          
+
           <Divider sx={{ my: 2 }} />
-          
+
           <Typography variant="subtitle1" gutterBottom>
             Response Data:
           </Typography>
-          
+
           <TextField
             multiline
             fullWidth
@@ -221,18 +242,18 @@ const ApiDebugPage: React.FC = () => {
             value={JSON.stringify(results.data, null, 2)}
             InputProps={{
               readOnly: true,
-              style: { fontFamily: 'monospace', fontSize: '0.875rem' }
+              style: { fontFamily: 'monospace', fontSize: '0.875rem' },
             }}
             minRows={10}
             maxRows={20}
           />
-          
+
           <Divider sx={{ my: 2 }} />
-          
+
           <Typography variant="subtitle1" gutterBottom>
             Response Headers:
           </Typography>
-          
+
           <TextField
             multiline
             fullWidth
@@ -240,7 +261,7 @@ const ApiDebugPage: React.FC = () => {
             value={JSON.stringify(results.headers, null, 2)}
             InputProps={{
               readOnly: true,
-              style: { fontFamily: 'monospace', fontSize: '0.875rem' }
+              style: { fontFamily: 'monospace', fontSize: '0.875rem' },
             }}
             minRows={4}
             maxRows={10}

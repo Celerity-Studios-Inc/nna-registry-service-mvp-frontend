@@ -1,4 +1,15 @@
-import { Autocomplete, CircularProgress, LinearProgress, Stack, TextField, Typography, Chip, Box, Button, Alert } from '@mui/material';
+import {
+  Autocomplete,
+  CircularProgress,
+  LinearProgress,
+  Stack,
+  TextField,
+  Typography,
+  Chip,
+  Box,
+  Button,
+  Alert,
+} from '@mui/material';
 import { Controller } from 'react-hook-form';
 import { useState, useEffect } from 'react';
 import { Asset } from '../../types/asset.types';
@@ -31,11 +42,11 @@ export const ComponentsForm = ({ control, watchLayer }: ComponentFormProps) => {
     try {
       setLoading(true);
       setError(null);
-      
+
       // In a real implementation, this would fetch from the backend API
       // For now, we'll use a mock implementation
       const response = await assetService.getAssets();
-      
+
       if (response && Array.isArray(response)) {
         setAssets(response);
       } else if (response && response.data) {
@@ -58,12 +69,12 @@ export const ComponentsForm = ({ control, watchLayer }: ComponentFormProps) => {
             tags: ['music', 'pop'],
             nnaAddress: 'G.POP.USA.001',
             metadata: {
-              machineFriendlyAddress: '1.001.001.001'
+              machineFriendlyAddress: '1.001.001.001',
             },
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString(),
             createdBy: 'system',
-            status: 'active'
+            status: 'active',
           },
           {
             id: '2',
@@ -74,17 +85,18 @@ export const ComponentsForm = ({ control, watchLayer }: ComponentFormProps) => {
             categoryCode: 'ANI',
             subcategoryCode: 'JPG',
             type: 'model',
-            gcpStorageUrl: 'https://storage.googleapis.com/sample/character.glb',
+            gcpStorageUrl:
+              'https://storage.googleapis.com/sample/character.glb',
             files: [],
             tags: ['anime', 'character'],
             nnaAddress: 'S.ANI.JPG.001',
             metadata: {
-              machineFriendlyAddress: '2.002.001.001'
+              machineFriendlyAddress: '2.002.001.001',
             },
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString(),
             createdBy: 'system',
-            status: 'active'
+            status: 'active',
           },
           {
             id: '3',
@@ -100,15 +112,15 @@ export const ComponentsForm = ({ control, watchLayer }: ComponentFormProps) => {
             tags: ['outfit', 'sci-fi'],
             nnaAddress: 'L.FUT.SCI.001',
             metadata: {
-              machineFriendlyAddress: '3.001.002.001'
+              machineFriendlyAddress: '3.001.002.001',
             },
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString(),
             createdBy: 'system',
-            status: 'active'
-          }
+            status: 'active',
+          },
         ];
-        
+
         setAssets(dummyAssets);
       }
     } catch (error) {
@@ -124,9 +136,11 @@ export const ComponentsForm = ({ control, watchLayer }: ComponentFormProps) => {
     title: `${asset.name} (${asset.nnaAddress || asset.layer})`,
     description: asset.description,
     layer: asset.layer,
-    nnaAddress: asset.nnaAddress || `${asset.layer}.${asset.categoryCode}.${asset.subcategoryCode}.001`
+    nnaAddress:
+      asset.nnaAddress ||
+      `${asset.layer}.${asset.categoryCode}.${asset.subcategoryCode}.001`,
   }));
-  
+
   if (!isCompositeLayer) {
     return null;
   }
@@ -138,15 +152,16 @@ export const ComponentsForm = ({ control, watchLayer }: ComponentFormProps) => {
       </Typography>
       <Typography variant="body2" color="text.secondary" paragraph>
         Select existing assets to include as components in this composite asset.
-        The selected assets will be referenced and linked to this composite asset.
+        The selected assets will be referenced and linked to this composite
+        asset.
       </Typography>
-      
+
       {error && (
         <Alert severity="error" sx={{ mb: 2 }}>
           {error}
         </Alert>
       )}
-      
+
       {isLoading && (
         <LinearProgress
           sx={{
@@ -154,7 +169,7 @@ export const ComponentsForm = ({ control, watchLayer }: ComponentFormProps) => {
           }}
         />
       )}
-      
+
       <Controller
         name="layerSpecificData.components"
         control={control}
@@ -166,33 +181,62 @@ export const ComponentsForm = ({ control, watchLayer }: ComponentFormProps) => {
             fullWidth
             getOptionLabel={(option: any) => option.title}
             getOptionKey={(option: any) => option.value}
-            filterOptions={(values) => {
+            filterOptions={values => {
               return values.filter(
-                item => !field?.value?.some((item2: any) => item.value === item2.value)
+                item =>
+                  !field?.value?.some(
+                    (item2: any) => item.value === item2.value
+                  )
               );
             }}
             renderOption={(props, option) => (
-              <Box component="li" {...props} sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', py: 1 }}>
+              <Box
+                component="li"
+                {...props}
+                sx={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'flex-start',
+                  py: 1,
+                }}
+              >
                 <Typography variant="body1">{option.title}</Typography>
-                <Box sx={{ display: 'flex', alignItems: 'center', width: '100%', mt: 0.5 }}>
-                  <Chip 
-                    label={option.layer} 
-                    size="small" 
-                    color="primary" 
+                <Box
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    width: '100%',
+                    mt: 0.5,
+                  }}
+                >
+                  <Chip
+                    label={option.layer}
+                    size="small"
+                    color="primary"
                     variant="outlined"
                     sx={{ mr: 1 }}
                   />
-                  <Typography variant="caption" color="text.secondary">{option.nnaAddress}</Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    {option.nnaAddress}
+                  </Typography>
                 </Box>
                 {option.description && (
-                  <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    sx={{ mt: 0.5 }}
+                  >
                     {option.description}
                   </Typography>
                 )}
               </Box>
             )}
-            renderInput={(params) => (
-              <TextField {...params} label="Select Component Assets" placeholder="Search for assets to include" />
+            renderInput={params => (
+              <TextField
+                {...params}
+                label="Select Component Assets"
+                placeholder="Search for assets to include"
+              />
             )}
             renderTags={(value, getTagProps) =>
               value.map((option, index) => (
@@ -212,7 +256,7 @@ export const ComponentsForm = ({ control, watchLayer }: ComponentFormProps) => {
           />
         )}
       />
-      
+
       {/* Display selected components summary */}
       <Controller
         name="layerSpecificData.components"
@@ -222,11 +266,12 @@ export const ComponentsForm = ({ control, watchLayer }: ComponentFormProps) => {
           if (selectedComponents.length === 0) {
             return (
               <Alert severity="info" sx={{ mt: 2 }}>
-                No components selected yet. Select at least one asset to create a composite.
+                No components selected yet. Select at least one asset to create
+                a composite.
               </Alert>
             );
           }
-          
+
           return (
             <Box sx={{ mt: 2 }}>
               <Typography variant="subtitle2" gutterBottom>

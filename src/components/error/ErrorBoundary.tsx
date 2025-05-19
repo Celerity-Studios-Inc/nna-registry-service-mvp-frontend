@@ -1,6 +1,6 @@
 /**
  * ErrorBoundary Component
- * 
+ *
  * A React error boundary that catches errors in its child component tree
  * and displays a fallback UI instead of crashing the application.
  */
@@ -21,7 +21,7 @@ interface ErrorBoundaryState {
 class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
   public state: ErrorBoundaryState = {
     hasError: false,
-    error: null
+    error: null,
   };
 
   public static getDerivedStateFromError(error: Error): ErrorBoundaryState {
@@ -32,11 +32,11 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
   public componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
     // Log the error to console
     console.error('ErrorBoundary caught an error:', error, errorInfo);
-    
+
     // Call the onError callback if provided
     this.props.onError?.(error, errorInfo);
   }
-  
+
   private handleReset = (): void => {
     this.setState({ hasError: false, error: null });
   };
@@ -47,7 +47,7 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
       if (this.props.fallback) {
         return this.props.fallback;
       }
-      
+
       // Otherwise, use the default fallback UI
       return (
         <div className="error-boundary">
@@ -59,10 +59,7 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
             <p>Technical details:</p>
             <pre>{this.state.error?.stack}</pre>
           </div>
-          <button 
-            onClick={this.handleReset}
-            className="error-reset-button"
-          >
+          <button onClick={this.handleReset} className="error-reset-button">
             Try Again
           </button>
         </div>

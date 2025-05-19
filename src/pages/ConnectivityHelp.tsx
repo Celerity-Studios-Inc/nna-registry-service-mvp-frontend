@@ -1,18 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Box, 
-  Typography, 
-  Button, 
-  Paper, 
-  Grid, 
-  TextField, 
-  Alert, 
+import {
+  Box,
+  Typography,
+  Button,
+  Paper,
+  Grid,
+  TextField,
+  Alert,
   CircularProgress,
   Divider,
   Card,
   CardContent,
   CardActions,
-  Link
+  Link,
 } from '@mui/material';
 import { Settings, Code, BugReport, Storage, Login } from '@mui/icons-material';
 import axios from 'axios';
@@ -26,7 +26,9 @@ const ConnectivityHelp: React.FC = () => {
   const [proxyInfo, setProxyInfo] = useState<any>(null);
   const [realBackendInfo, setRealBackendInfo] = useState<any>(null);
   const [backendUrlInfo, setBackendUrlInfo] = useState<any>(null);
-  const [mockMode, setMockMode] = useState(localStorage.getItem('forceMockApi') === 'true');
+  const [mockMode, setMockMode] = useState(
+    localStorage.getItem('forceMockApi') === 'true'
+  );
 
   // Load the proxy debug info on mount
   useEffect(() => {
@@ -66,7 +68,7 @@ const ConnectivityHelp: React.FC = () => {
   const toggleMockMode = () => {
     const newValue = !mockMode;
     setMockMode(newValue);
-    
+
     if (newValue) {
       localStorage.setItem('forceMockApi', 'true');
       console.log('Mock API mode enabled via localStorage');
@@ -83,7 +85,8 @@ const ConnectivityHelp: React.FC = () => {
       </Typography>
 
       <Alert severity="info" sx={{ mb: 4 }}>
-        This page provides information and tools to help you diagnose and fix API connectivity issues.
+        This page provides information and tools to help you diagnose and fix
+        API connectivity issues.
       </Alert>
 
       <Grid container spacing={4}>
@@ -91,26 +94,33 @@ const ConnectivityHelp: React.FC = () => {
         <Grid item xs={12} md={6}>
           <Card>
             <CardContent>
-              <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center' }}>
+              <Typography
+                variant="h6"
+                gutterBottom
+                sx={{ display: 'flex', alignItems: 'center' }}
+              >
                 <Settings sx={{ mr: 1 }} /> Mock API Mode
               </Typography>
               <Typography variant="body2" paragraph>
-                The application can run with mock data when the backend is unavailable or you don't have credentials.
+                The application can run with mock data when the backend is
+                unavailable or you don't have credentials.
               </Typography>
-              <Alert severity={mockMode ? "warning" : "success"} sx={{ mb: 2 }}>
-                Mock API Mode is currently: <strong>{mockMode ? "ENABLED" : "DISABLED"}</strong>
+              <Alert severity={mockMode ? 'warning' : 'success'} sx={{ mb: 2 }}>
+                Mock API Mode is currently:{' '}
+                <strong>{mockMode ? 'ENABLED' : 'DISABLED'}</strong>
               </Alert>
               <Typography variant="body2">
-                When enabled, the application will use fake data instead of real API calls.
+                When enabled, the application will use fake data instead of real
+                API calls.
               </Typography>
             </CardContent>
             <CardActions>
-              <Button 
-                variant={mockMode ? "outlined" : "contained"} 
-                color={mockMode ? "warning" : "primary"} 
+              <Button
+                variant={mockMode ? 'outlined' : 'contained'}
+                color={mockMode ? 'warning' : 'primary'}
                 onClick={toggleMockMode}
               >
-                {mockMode ? "Disable Mock Mode" : "Enable Mock Mode"}
+                {mockMode ? 'Disable Mock Mode' : 'Enable Mock Mode'}
               </Button>
             </CardActions>
           </Card>
@@ -120,22 +130,34 @@ const ConnectivityHelp: React.FC = () => {
         <Grid item xs={12} md={6}>
           <Card>
             <CardContent>
-              <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center' }}>
+              <Typography
+                variant="h6"
+                gutterBottom
+                sx={{ display: 'flex', alignItems: 'center' }}
+              >
                 <Storage sx={{ mr: 1 }} /> Backend API Status
               </Typography>
-              
+
               {realBackendInfo ? (
                 <>
-                  <Alert 
-                    severity={realBackendInfo.realBackendAvailable ? "success" : "error"} 
+                  <Alert
+                    severity={
+                      realBackendInfo.realBackendAvailable ? 'success' : 'error'
+                    }
                     sx={{ mb: 2 }}
                   >
-                    Backend API is: <strong>{realBackendInfo.realBackendAvailable ? "AVAILABLE" : "UNAVAILABLE"}</strong>
+                    Backend API is:{' '}
+                    <strong>
+                      {realBackendInfo.realBackendAvailable
+                        ? 'AVAILABLE'
+                        : 'UNAVAILABLE'}
+                    </strong>
                   </Alert>
                   <Typography variant="body2">
-                    The backend API is {realBackendInfo.realBackendAvailable ? 
-                      "responding correctly to requests" : 
-                      "not responding or returning errors"}
+                    The backend API is{' '}
+                    {realBackendInfo.realBackendAvailable
+                      ? 'responding correctly to requests'
+                      : 'not responding or returning errors'}
                   </Typography>
                 </>
               ) : (
@@ -143,9 +165,9 @@ const ConnectivityHelp: React.FC = () => {
               )}
             </CardContent>
             <CardActions>
-              <Button 
-                component={Link} 
-                href="/api-debug" 
+              <Button
+                component={Link}
+                href="/api-debug"
                 target="_blank"
                 startIcon={<BugReport />}
               >
@@ -165,33 +187,33 @@ const ConnectivityHelp: React.FC = () => {
               <Grid container spacing={2}>
                 <Grid item xs={12} md={4}>
                   <Typography variant="subtitle2">Backend URL:</Typography>
-                  <TextField 
+                  <TextField
                     fullWidth
                     variant="outlined"
                     size="small"
-                    value={backendUrlInfo.backendUrl || "Not configured"}
+                    value={backendUrlInfo.backendUrl || 'Not configured'}
                     InputProps={{ readOnly: true }}
                     sx={{ mb: 2 }}
                   />
                 </Grid>
                 <Grid item xs={12} md={4}>
                   <Typography variant="subtitle2">Mock Mode:</Typography>
-                  <TextField 
+                  <TextField
                     fullWidth
                     variant="outlined"
                     size="small"
-                    value={backendUrlInfo.mockEnabled ? "Enabled" : "Disabled"}
+                    value={backendUrlInfo.mockEnabled ? 'Enabled' : 'Disabled'}
                     InputProps={{ readOnly: true }}
                     sx={{ mb: 2 }}
                   />
                 </Grid>
                 <Grid item xs={12} md={4}>
                   <Typography variant="subtitle2">Environment:</Typography>
-                  <TextField 
+                  <TextField
                     fullWidth
                     variant="outlined"
                     size="small"
-                    value={backendUrlInfo.environment || "production"}
+                    value={backendUrlInfo.environment || 'production'}
                     InputProps={{ readOnly: true }}
                     sx={{ mb: 2 }}
                   />
@@ -209,62 +231,69 @@ const ConnectivityHelp: React.FC = () => {
             <Typography variant="h6" gutterBottom>
               How to Connect to the Real Backend
             </Typography>
-            
+
             <Alert severity="info" sx={{ mb: 3 }}>
-              To use the real backend API, you need valid credentials. Without proper authentication, 
-              the application will fall back to mock data.
+              To use the real backend API, you need valid credentials. Without
+              proper authentication, the application will fall back to mock
+              data.
             </Alert>
-            
+
             <Typography variant="subtitle1" gutterBottom>
               Steps to Connect:
             </Typography>
             <ol>
               <li>
                 <Typography paragraph>
-                  <strong>Disable Mock Mode</strong> - Make sure mock mode is disabled in the dashboard or by clicking the button above.
+                  <strong>Disable Mock Mode</strong> - Make sure mock mode is
+                  disabled in the dashboard or by clicking the button above.
                 </Typography>
               </li>
               <li>
                 <Typography paragraph>
-                  <strong>Get Valid Credentials</strong> - Obtain a valid username and password for the backend API.
+                  <strong>Get Valid Credentials</strong> - Obtain a valid
+                  username and password for the backend API.
                 </Typography>
               </li>
               <li>
                 <Typography paragraph>
-                  <strong>Login with Credentials</strong> - Use the login page with your valid credentials.
+                  <strong>Login with Credentials</strong> - Use the login page
+                  with your valid credentials.
                 </Typography>
               </li>
               <li>
                 <Typography paragraph>
-                  <strong>Verify Connection</strong> - After logging in, the application will automatically use the real API.
+                  <strong>Verify Connection</strong> - After logging in, the
+                  application will automatically use the real API.
                 </Typography>
               </li>
             </ol>
 
             <Divider sx={{ my: 2 }} />
-            
+
             <Typography variant="subtitle1" gutterBottom>
               Proxy Configuration:
             </Typography>
-            
+
             {proxyInfo ? (
               <Box sx={{ mt: 2 }}>
                 <Typography variant="subtitle2" gutterBottom>
                   API Routes:
                 </Typography>
                 <Grid container spacing={2}>
-                  {Object.entries(proxyInfo.proxyRoutes).map(([route, description]) => (
-                    <Grid item xs={12} md={6} key={route}>
-                      <Paper sx={{ p: 2, bgcolor: 'background.default' }}>
-                        <Typography variant="subtitle2" color="primary">
-                          {route}
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary">
-                          {description as string}
-                        </Typography>
-                      </Paper>
-                    </Grid>
-                  ))}
+                  {Object.entries(proxyInfo.proxyRoutes).map(
+                    ([route, description]) => (
+                      <Grid item xs={12} md={6} key={route}>
+                        <Paper sx={{ p: 2, bgcolor: 'background.default' }}>
+                          <Typography variant="subtitle2" color="primary">
+                            {route}
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary">
+                            {description as string}
+                          </Typography>
+                        </Paper>
+                      </Grid>
+                    )
+                  )}
                 </Grid>
               </Box>
             ) : (
@@ -278,10 +307,10 @@ const ConnectivityHelp: React.FC = () => {
         <Button component={Link} href="/dashboard">
           Back to Dashboard
         </Button>
-        <Button 
-          component={Link} 
-          href="/login" 
-          variant="contained" 
+        <Button
+          component={Link}
+          href="/login"
+          variant="contained"
           color="primary"
           startIcon={<Login />}
         >

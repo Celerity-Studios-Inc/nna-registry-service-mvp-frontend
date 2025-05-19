@@ -101,8 +101,16 @@ const promptCategories = [
 
 // Tags (predefined for demo)
 const commonTags = [
-  'ai', 'model', 'training', 'example', 'test', 'production',
-  'style', 'genre', 'concept', 'high-quality',
+  'ai',
+  'model',
+  'training',
+  'example',
+  'test',
+  'production',
+  'style',
+  'genre',
+  'concept',
+  'high-quality',
 ];
 
 const TrainingDataCollection: React.FC<TrainingDataProps> = ({
@@ -121,7 +129,9 @@ const TrainingDataCollection: React.FC<TrainingDataProps> = ({
 
   // State
   const [activeTab, setActiveTab] = useState(0);
-  const [trainingData, setTrainingData] = useState<TrainingData>(initialData || defaultData);
+  const [trainingData, setTrainingData] = useState<TrainingData>(
+    initialData || defaultData
+  );
   const [promptText, setPromptText] = useState('');
   const [promptCategory, setPromptCategory] = useState<string>('');
   const [promptTags, setPromptTags] = useState<string[]>([]);
@@ -141,7 +151,9 @@ const TrainingDataCollection: React.FC<TrainingDataProps> = ({
   };
 
   // Toggle trainable status
-  const handleTrainableToggle = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleTrainableToggle = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const isChecked = event.target.checked;
     setTrainingData(prev => ({
       ...prev,
@@ -242,7 +254,9 @@ const TrainingDataCollection: React.FC<TrainingDataProps> = ({
   };
 
   // Update documentation
-  const handleDocumentationChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
+  const handleDocumentationChange = (
+    event: React.ChangeEvent<HTMLTextAreaElement>
+  ) => {
     setTrainingData(prev => ({
       ...prev,
       documentation: event.target.value,
@@ -291,8 +305,8 @@ const TrainingDataCollection: React.FC<TrainingDataProps> = ({
 
       {!trainingData.isTrainable ? (
         <Alert severity="info" sx={{ mb: 3 }}>
-          This asset will not be used for model training. You can toggle this option 
-          if you want to provide training data.
+          This asset will not be used for model training. You can toggle this
+          option if you want to provide training data.
         </Alert>
       ) : (
         <>
@@ -318,7 +332,8 @@ const TrainingDataCollection: React.FC<TrainingDataProps> = ({
                 Add Training Prompts
               </Typography>
               <Typography variant="body2" color="text.secondary" paragraph>
-                Enter prompts that can be used to generate or work with this asset.
+                Enter prompts that can be used to generate or work with this
+                asset.
               </Typography>
 
               <Grid container spacing={2} sx={{ mb: 3 }}>
@@ -329,7 +344,7 @@ const TrainingDataCollection: React.FC<TrainingDataProps> = ({
                     multiline
                     rows={3}
                     value={promptText}
-                    onChange={(e) => setPromptText(e.target.value)}
+                    onChange={e => setPromptText(e.target.value)}
                     placeholder="Enter a prompt that can be used with this asset..."
                     variant="outlined"
                   />
@@ -339,8 +354,10 @@ const TrainingDataCollection: React.FC<TrainingDataProps> = ({
                     freeSolo
                     options={promptCategories}
                     value={promptCategory}
-                    onChange={(e, newValue) => setPromptCategory(newValue || '')}
-                    renderInput={(params) => (
+                    onChange={(e, newValue) =>
+                      setPromptCategory(newValue || '')
+                    }
+                    renderInput={params => (
                       <TextField
                         {...params}
                         label="Category (optional)"
@@ -355,7 +372,7 @@ const TrainingDataCollection: React.FC<TrainingDataProps> = ({
                       fullWidth
                       label="Tags (optional)"
                       value={newTag}
-                      onChange={(e) => setNewTag(e.target.value)}
+                      onChange={e => setNewTag(e.target.value)}
                       variant="outlined"
                       sx={{ mr: 1 }}
                     />
@@ -368,13 +385,17 @@ const TrainingDataCollection: React.FC<TrainingDataProps> = ({
                       Add
                     </Button>
                   </Box>
-                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mt: 1 }}>
+                  <Box
+                    sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mt: 1 }}
+                  >
                     {promptTags.map((tag, index) => (
                       <Chip
                         key={index}
                         label={tag}
                         onDelete={() => {
-                          setPromptTags(promptTags.filter((_, i) => i !== index));
+                          setPromptTags(
+                            promptTags.filter((_, i) => i !== index)
+                          );
                         }}
                         size="small"
                         color="primary"
@@ -403,7 +424,7 @@ const TrainingDataCollection: React.FC<TrainingDataProps> = ({
                 <Alert severity="info">No prompts added yet</Alert>
               ) : (
                 <Box>
-                  {trainingData.prompts.map((prompt) => (
+                  {trainingData.prompts.map(prompt => (
                     <Paper
                       key={prompt.id}
                       variant="outlined"
@@ -412,7 +433,13 @@ const TrainingDataCollection: React.FC<TrainingDataProps> = ({
                       <Typography variant="body1" sx={{ mb: 1 }}>
                         {prompt.text}
                       </Typography>
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                        }}
+                      >
                         <Box>
                           {prompt.category && (
                             <Chip
@@ -481,9 +508,12 @@ const TrainingDataCollection: React.FC<TrainingDataProps> = ({
                 <Alert severity="info">No images added yet</Alert>
               ) : (
                 <Grid container spacing={2}>
-                  {trainingData.images.map((image) => (
+                  {trainingData.images.map(image => (
                     <Grid item xs={12} sm={6} md={4} key={image.id}>
-                      <Paper variant="outlined" sx={{ p: 2, position: 'relative' }}>
+                      <Paper
+                        variant="outlined"
+                        sx={{ p: 2, position: 'relative' }}
+                      >
                         <Box sx={{ position: 'relative' }}>
                           <img
                             src={image.url}
@@ -497,7 +527,12 @@ const TrainingDataCollection: React.FC<TrainingDataProps> = ({
                           />
                           <IconButton
                             color="error"
-                            sx={{ position: 'absolute', top: 8, right: 8, bgcolor: 'rgba(255,255,255,0.7)' }}
+                            sx={{
+                              position: 'absolute',
+                              top: 8,
+                              right: 8,
+                              bgcolor: 'rgba(255,255,255,0.7)',
+                            }}
                             onClick={() => handleDeleteImage(image.id)}
                             size="small"
                           >
@@ -508,7 +543,14 @@ const TrainingDataCollection: React.FC<TrainingDataProps> = ({
                           {image.file?.name || 'Image'}
                         </Typography>
                         {image.tags && image.tags.length > 0 && (
-                          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mt: 1 }}>
+                          <Box
+                            sx={{
+                              display: 'flex',
+                              flexWrap: 'wrap',
+                              gap: 0.5,
+                              mt: 1,
+                            }}
+                          >
                             {image.tags.map((tag, index) => (
                               <Chip
                                 key={index}
@@ -543,7 +585,7 @@ const TrainingDataCollection: React.FC<TrainingDataProps> = ({
                     fullWidth
                     label="Video URL"
                     value={videoUrl}
-                    onChange={(e) => setVideoUrl(e.target.value)}
+                    onChange={e => setVideoUrl(e.target.value)}
                     placeholder="Enter a video URL (YouTube, Vimeo, etc.)"
                     variant="outlined"
                   />
@@ -553,7 +595,7 @@ const TrainingDataCollection: React.FC<TrainingDataProps> = ({
                     fullWidth
                     label="Description (optional)"
                     value={videoDescription}
-                    onChange={(e) => setVideoDescription(e.target.value)}
+                    onChange={e => setVideoDescription(e.target.value)}
                     variant="outlined"
                   />
                 </Grid>
@@ -563,7 +605,7 @@ const TrainingDataCollection: React.FC<TrainingDataProps> = ({
                       fullWidth
                       label="Tags (optional)"
                       value={newTag}
-                      onChange={(e) => setNewTag(e.target.value)}
+                      onChange={e => setNewTag(e.target.value)}
                       variant="outlined"
                       sx={{ mr: 1 }}
                     />
@@ -576,7 +618,9 @@ const TrainingDataCollection: React.FC<TrainingDataProps> = ({
                       Add
                     </Button>
                   </Box>
-                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mt: 1 }}>
+                  <Box
+                    sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mt: 1 }}
+                  >
                     {videoTags.map((tag, index) => (
                       <Chip
                         key={index}
@@ -611,7 +655,7 @@ const TrainingDataCollection: React.FC<TrainingDataProps> = ({
                 <Alert severity="info">No videos added yet</Alert>
               ) : (
                 <Box>
-                  {trainingData.videos.map((video) => (
+                  {trainingData.videos.map(video => (
                     <Paper
                       key={video.id}
                       variant="outlined"
@@ -621,11 +665,21 @@ const TrainingDataCollection: React.FC<TrainingDataProps> = ({
                         {video.url}
                       </Typography>
                       {video.description && (
-                        <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                        <Typography
+                          variant="body2"
+                          color="text.secondary"
+                          sx={{ mb: 1 }}
+                        >
                           {video.description}
                         </Typography>
                       )}
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                        }}
+                      >
                         <Box>
                           {video.tags?.map((tag, index) => (
                             <Chip
@@ -659,7 +713,8 @@ const TrainingDataCollection: React.FC<TrainingDataProps> = ({
                 Training Documentation
               </Typography>
               <Typography variant="body2" color="text.secondary" paragraph>
-                Provide additional documentation about how this asset should be used for training.
+                Provide additional documentation about how this asset should be
+                used for training.
               </Typography>
 
               <TextField

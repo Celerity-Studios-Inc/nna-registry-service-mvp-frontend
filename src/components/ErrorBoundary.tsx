@@ -2,7 +2,7 @@ import React, { Component, ErrorInfo, ReactNode } from 'react';
 
 interface Props {
   children: ReactNode;
-  fallback?: ReactNode;
+  fallback?: ReactNode | ((props: { error: Error | null }) => ReactNode);
 }
 
 interface State {
@@ -16,7 +16,7 @@ interface State {
 class ErrorBoundary extends Component<Props, State> {
   public state: State = {
     hasError: false,
-    error: null
+    error: null,
   };
 
   public static getDerivedStateFromError(error: Error): State {
@@ -31,20 +31,29 @@ class ErrorBoundary extends Component<Props, State> {
   public render() {
     if (this.state.hasError) {
       // You can render any custom fallback UI
-      return this.props.fallback || (
-        <div className="error-boundary">
-          <h2>Something went wrong.</h2>
-          <details style={{ whiteSpace: 'pre-wrap' }}>
-            {this.state.error && this.state.error.toString()}
-          </details>
-          <button
-            onClick={() => this.setState({ hasError: false })}
-            className="error-retry-button"
-          >
-            Try again
-          </button>
-        </div>
-      );
+      if (typeof this.props.fallback === 'function') {
+        // If fallback is a function, call it with the error
+        return this.props.fallback({ error: this.state.error });
+      } else if (this.props.fallback) {
+        // If fallback is a ReactNode, render it directly
+        return this.props.fallback;
+      } else {
+        // Default fallback UI
+        return (
+          <div className="error-boundary">
+            <h2>Something went wrong.</h2>
+            <details style={{ whiteSpace: 'pre-wrap' }}>
+              {this.state.error && this.state.error.toString()}
+            </details>
+            <button
+              onClick={() => this.setState({ hasError: false })}
+              className="error-retry-button"
+            >
+              Try again
+            </button>
+          </div>
+        );
+      }
     }
 
     return this.props.children;

@@ -11,7 +11,7 @@ import {
   DialogActions,
   IconButton,
   AppBar,
-  Toolbar
+  Toolbar,
 } from '@mui/material';
 import { Close as CloseIcon } from '@mui/icons-material';
 import { useError } from '../../contexts/ErrorContext';
@@ -30,7 +30,7 @@ interface ErrorTestComponentProps {
 const ErrorTestComponent: React.FC<ErrorTestComponentProps> = ({
   open = false,
   onClose,
-  isDialog = false
+  isDialog = false,
 }) => {
   const { setError } = useError();
 
@@ -100,7 +100,7 @@ const ErrorTestComponent: React.FC<ErrorTestComponentProps> = ({
       title: 'Custom Error Title',
       message: 'This is a custom error message with title and no auto-hide',
       severity: 'error',
-      autoHide: false
+      autoHide: false,
     });
   };
 
@@ -108,9 +108,10 @@ const ErrorTestComponent: React.FC<ErrorTestComponentProps> = ({
   const testValidationError = () => {
     setError({
       title: 'Validation Failed',
-      message: 'name: Name is required; email: Invalid email format; password: Password must be at least 8 characters',
+      message:
+        'name: Name is required; email: Invalid email format; password: Password must be at least 8 characters',
       severity: 'warning',
-      autoHide: true
+      autoHide: true,
     });
   };
 
@@ -227,13 +228,10 @@ const ErrorTestComponent: React.FC<ErrorTestComponentProps> = ({
   // If we're showing as a dialog, return the dialog version
   if (isDialog) {
     return (
-      <Dialog
-        open={open}
-        onClose={onClose}
-        maxWidth="md"
-        fullWidth
-      >
-        <DialogTitle sx={{ m: 0, p: 2, bgcolor: 'primary.main', color: 'white' }}>
+      <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
+        <DialogTitle
+          sx={{ m: 0, p: 2, bgcolor: 'primary.main', color: 'white' }}
+        >
           <Typography variant="h6">Error Handling Test Component</Typography>
           {onClose && (
             <IconButton

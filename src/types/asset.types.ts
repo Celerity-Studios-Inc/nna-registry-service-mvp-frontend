@@ -1,6 +1,6 @@
 export interface Asset {
   id: string;
-  _id?: string;     // Support MongoDB-style ID from backend
+  _id?: string; // Support MongoDB-style ID from backend
   name: string;
   friendlyName: string;
   nnaAddress: string;
@@ -89,16 +89,16 @@ export interface AssetSearchParams {
  * - components[]: '' (special format required by backend)
  */
 export interface AssetCreateRequest {
-  name: string;              // Used in UI but don't send to backend
-  layer: string;             // REQUIRED: Layer code
-  category?: string;         // Category code (not categoryCode)
-  subcategory?: string;      // Subcategory code (not subcategoryCode)
-  nnaAddress?: string;       // Machine Friendly Address (at the root level for consistent access)
-  source?: string;           // REQUIRED by backend API: Source of asset (e.g., "ReViz")
-  description?: string;      // Optional description
-  tags?: string[];           // Optional tags
+  name: string; // Used in UI but don't send to backend
+  layer: string; // REQUIRED: Layer code
+  category?: string; // Category code (not categoryCode)
+  subcategory?: string; // Subcategory code (not subcategoryCode)
+  nnaAddress?: string; // Machine Friendly Address (at the root level for consistent access)
+  source?: string; // REQUIRED by backend API: Source of asset (e.g., "ReViz")
+  description?: string; // Optional description
+  tags?: string[]; // Optional tags
   metadata?: Record<string, unknown>; // Optional metadata
-  files?: File[];            // Files to upload
+  files?: File[]; // Files to upload
   // Optional complex objects that will be JSON-stringified for backend
   trainingData?: {
     prompts?: string[];
@@ -106,10 +106,10 @@ export interface AssetCreateRequest {
     videos?: any[];
   };
   rights?: {
-    source?: string;         // Different from the asset "source" field
+    source?: string; // Different from the asset "source" field
     rights_split?: string;
   };
-  components?: any[];        // Components array - Note: Use components[] in FormData
+  components?: any[]; // Components array - Note: Use components[] in FormData
 }
 
 export interface AssetUpdateRequest {
@@ -329,5 +329,5 @@ export const SOURCE_OPTIONS = [
   { value: 'ReViz', label: 'ReViz' },
   { value: 'Original', label: 'Original' },
   { value: 'Licensed', label: 'Licensed' },
-  { value: 'External', label: 'External' }
+  { value: 'External', label: 'External' },
 ];

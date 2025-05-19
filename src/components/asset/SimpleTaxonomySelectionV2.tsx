@@ -145,9 +145,21 @@ const SubcategoriesGrid = React.memo(
     // CRITICAL FIX: Keep a local backup of subcategories to prevent disappearing
     const [localGridItems, setLocalGridItems] = React.useState<TaxonomyItem[]>([]);
     
+    // CRITICAL FIX: Add mounted ref to prevent setState after unmount
+    const isMountedRef = React.useRef(true);
+    
+    // Setup/cleanup mounted ref
+    React.useEffect(() => {
+      isMountedRef.current = true;
+      return () => {
+        // Set to false when component unmounts to prevent late state updates
+        isMountedRef.current = false;
+      };
+    }, []);
+    
     // CRITICAL FIX: Track when subcategories are updated to maintain consistency
     React.useEffect(() => {
-      if (subcategories.length > 0) {
+      if (isMountedRef.current && subcategories.length > 0) {
         setLocalGridItems(subcategories);
         console.log(`[GRID] Updated local grid items with ${subcategories.length} subcategories`);
       }
@@ -155,9 +167,13 @@ const SubcategoriesGrid = React.memo(
 
     // Hide the initializing message after a brief delay
     React.useEffect(() => {
+      if (!isMountedRef.current) return;
+      
       if (showInitializing) {
         const timer = setTimeout(() => {
-          setShowInitializing(false);
+          if (isMountedRef.current) {
+            setShowInitializing(false);
+          }
         }, 500);
         return () => clearTimeout(timer);
       }
@@ -166,31 +182,46 @@ const SubcategoriesGrid = React.memo(
     // CRITICAL FIX: Handle subcategory selection with additional safety
     const safelyHandleSubcategorySelect = React.useCallback(
       (code: string, isDoubleClick?: boolean) => {
-        // Safety check - capture current items before handling selection
-        const currentItems = localGridItems.length > 0 ? 
-                            [...localGridItems] : 
-                            subcategories.length > 0 ? 
-                            [...subcategories] : [];
-                            
-        // Log what's happening                    
-        console.log(`[GRID] Safely handling subcategory selection: ${code}, double-click: ${isDoubleClick}`);
-        console.log(`[GRID] Current items: ${currentItems.length}, Local: ${localGridItems.length}, Props: ${subcategories.length}`);
-        
-        // Call the handler from props
-        handleSubcategorySelect(code, isDoubleClick);
-        
-        // Schedule a verification for after selection to ensure items remain visible
-        setTimeout(() => {
-          const postItems = localGridItems.length > 0 ? 
-                          localGridItems : 
-                          subcategories.length > 0 ? 
-                          subcategories : [];
-                          
-          if (postItems.length === 0 && currentItems.length > 0) {
-            console.log(`[GRID] RECOVERY: Items disappeared after selection, restoring ${currentItems.length} items`);
-            setLocalGridItems(currentItems);
+        try {
+          // CRITICAL SAFETY: Prevent executing if component is unmounting
+          if (!isMountedRef.current) {
+            console.log(`[GRID SAFETY] Prevented selection during unmount: ${code}`);
+            return;
           }
-        }, 10);
+          
+          // Safety check - capture current items before handling selection
+          const currentItems = localGridItems.length > 0 ? 
+                              [...localGridItems] : 
+                              subcategories.length > 0 ? 
+                              [...subcategories] : [];
+                              
+          // Log what's happening                    
+          console.log(`[GRID] Safely handling subcategory selection: ${code}, double-click: ${isDoubleClick}`);
+          console.log(`[GRID] Current items: ${currentItems.length}, Local: ${localGridItems.length}, Props: ${subcategories.length}`);
+          
+          // Call the handler from props within try/catch to prevent cascading errors
+          handleSubcategorySelect(code, isDoubleClick);
+          
+          // Schedule a verification for after selection to ensure items remain visible
+          // Use a larger timeout to ensure the component has time to update
+          setTimeout(() => {
+            // CRITICAL CHECK: Only proceed if component is still mounted
+            if (!isMountedRef.current) return;
+            
+            const postItems = localGridItems.length > 0 ? 
+                            localGridItems : 
+                            subcategories.length > 0 ? 
+                            subcategories : [];
+                            
+            if (postItems.length === 0 && currentItems.length > 0) {
+              console.log(`[GRID] RECOVERY: Items disappeared after selection, restoring ${currentItems.length} items`);
+              setLocalGridItems(currentItems);
+            }
+          }, 50);
+        } catch (error) {
+          // Handle any errors during selection to prevent crashes
+          console.error(`[GRID ERROR] Error during subcategory selection:`, error);
+        }
       },
       [handleSubcategorySelect, localGridItems, subcategories]
     );
@@ -212,53 +243,80 @@ const SubcategoriesGrid = React.memo(
       return [];
     }, [subcategories, localGridItems]);
 
-    // If we just started showing this component and data is not yet available from any source,
-    // show a brief loading indicator to prevent a flash of empty state
-    if (showInitializing && displayItems.length === 0) {
-      return (
-        <div className="taxonomy-items-loader">
-          <div className="loader-content">
-            <div className="loader-text">Initializing subcategories...</div>
-            <div className="loader-bar">
-              <div className="loader-progress" />
+    // CRITICAL ERROR FIX: Wrap the rendering in error boundary & defensive checks
+    // to prevent common React Error #301 - cannot update unmounted component
+    try {
+      // If we just started showing this component and data is not yet available from any source,
+      // show a brief loading indicator to prevent a flash of empty state
+      if (showInitializing && displayItems.length === 0) {
+        return (
+          <div className="taxonomy-items-loader">
+            <div className="loader-content">
+              <div className="loader-text">Initializing subcategories...</div>
+              <div className="loader-bar">
+                <div className="loader-progress" />
+              </div>
             </div>
           </div>
+        );
+      }
+
+      // Once initialization is complete, show the regular content directly in the grid
+      return (
+        <React.Fragment>
+          {/* Just return the items directly without a wrapper div */}
+          {displayItems.map(subcategory => (
+            <TaxonomyItemComponent
+              key={subcategory.code}
+              item={subcategory}
+              isActive={activeSubcategory === subcategory.code}
+              onClick={() => safelyHandleSubcategorySelect(subcategory.code)}
+              onDoubleClick={() =>
+                safelyHandleSubcategorySelect(subcategory.code, true)
+              }
+              dataTestId={`subcategory-${subcategory.code}`}
+            />
+          ))}
+
+          {/* Add a hint to show when subcategories load but before interaction */}
+          {displayItems.length > 0 && !activeSubcategory && (
+            <div className="subcategory-hint">
+              Select a subcategory to continue
+            </div>
+          )}
+          
+          {/* CRITICAL FIX: Show fallback source indicator when needed */}
+          {dataSource && dataSource !== 'context' && displayItems.length > 0 && (
+            <div className="data-source-indicator" style={{ opacity: 0.8 }}>
+              Using {dataSource} data source (fallback mode)
+            </div>
+          )}
+        </React.Fragment>
+      );
+    } catch (error) {
+      // Last resort error handler to prevent crashing the entire app
+      console.error('[SUBCATEGORIES GRID] Render error:', error);
+      return (
+        <div className="taxonomy-error-recovery">
+          <div className="error-message">Error loading subcategories. Please try again.</div>
+          <button 
+            className="retry-button" 
+            onClick={() => {
+              if (isMountedRef.current) {
+                setShowInitializing(true);
+                setTimeout(() => {
+                  if (isMountedRef.current) {
+                    setShowInitializing(false);
+                  }
+                }, 100);
+              }
+            }}
+          >
+            Retry
+          </button>
         </div>
       );
     }
-
-    // Once initialization is complete, show the regular content directly in the grid
-    return (
-      <>
-        {/* Just return the items directly without a wrapper div */}
-        {displayItems.map(subcategory => (
-          <TaxonomyItemComponent
-            key={subcategory.code}
-            item={subcategory}
-            isActive={activeSubcategory === subcategory.code}
-            onClick={() => safelyHandleSubcategorySelect(subcategory.code)}
-            onDoubleClick={() =>
-              safelyHandleSubcategorySelect(subcategory.code, true)
-            }
-            dataTestId={`subcategory-${subcategory.code}`}
-          />
-        ))}
-
-        {/* Add a hint to show when subcategories load but before interaction */}
-        {displayItems.length > 0 && !activeSubcategory && (
-          <div className="subcategory-hint">
-            Select a subcategory to continue
-          </div>
-        )}
-        
-        {/* CRITICAL FIX: Show fallback source indicator when needed */}
-        {dataSource && dataSource !== 'context' && displayItems.length > 0 && (
-          <div className="data-source-indicator" style={{ opacity: 0.8 }}>
-            Using {dataSource} data source (fallback mode)
-          </div>
-        )}
-      </>
-    );
   }
 );
 

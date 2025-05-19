@@ -1,6 +1,6 @@
 /**
  * FeedbackDisplay Component
- * 
+ *
  * A component that displays feedback messages from the FeedbackContext.
  */
 import React from 'react';
@@ -9,15 +9,15 @@ import '../../styles/Feedback.css';
 
 const FeedbackDisplay: React.FC = () => {
   const { messages, removeFeedback } = useFeedback();
-  
+
   if (messages.length === 0) {
     return null;
   }
-  
+
   return (
     <div className="feedback-container">
       {messages.map(message => (
-        <div 
+        <div
           key={message.id}
           className={`feedback-item feedback-${message.type}`}
           data-testid={`feedback-${message.id}`}
@@ -37,7 +37,7 @@ const FeedbackDisplay: React.FC = () => {
             )}
             <span className="feedback-message">{message.message}</span>
           </div>
-          <button 
+          <button
             className="feedback-close"
             onClick={() => removeFeedback(message.id)}
             aria-label="Close"

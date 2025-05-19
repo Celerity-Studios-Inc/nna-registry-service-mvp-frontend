@@ -13,7 +13,7 @@ const GlobalErrorHandler: React.FC = () => {
   useEffect(() => {
     // Set the global error handler to use our context
     setGlobalErrorHandler(setError);
-    
+
     return () => {
       // Clean up by setting the handler to null when unmounted
       setGlobalErrorHandler(() => null);

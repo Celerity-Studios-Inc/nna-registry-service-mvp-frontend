@@ -36,7 +36,9 @@ export class TaxonomyConverter {
     // Handle numeric codes
     if (codeType === 'category') {
       const categories = taxonomyService.getCategories(layer);
-      const category = categories.find(c => c.numericCode === parseInt(code, 10));
+      const category = categories.find(
+        c => c.numericCode === parseInt(code, 10)
+      );
       return category?.code || code;
     } else {
       // For subcategory, we need the parent category
@@ -44,11 +46,20 @@ export class TaxonomyConverter {
 
       // If parent is numeric, convert it first
       if (parentCategoryCode && /^\d+$/.test(parentCategoryCode)) {
-        canonicalCategoryCode = this.getAlphabeticCode(layer, 'category', parentCategoryCode);
+        canonicalCategoryCode = this.getAlphabeticCode(
+          layer,
+          'category',
+          parentCategoryCode
+        );
       }
 
-      const subcategories = taxonomyService.getSubcategories(layer, canonicalCategoryCode);
-      const subcategory = subcategories.find(s => s.numericCode === parseInt(code, 10));
+      const subcategories = taxonomyService.getSubcategories(
+        layer,
+        canonicalCategoryCode
+      );
+      const subcategory = subcategories.find(
+        s => s.numericCode === parseInt(code, 10)
+      );
       return subcategory?.code || code;
     }
   }
@@ -62,7 +73,9 @@ export class TaxonomyConverter {
     // Handle numeric codes
     if (/^\d+$/.test(categoryCode)) {
       const categories = taxonomyService.getCategories(layer);
-      const category = categories.find(c => c.numericCode === parseInt(categoryCode, 10));
+      const category = categories.find(
+        c => c.numericCode === parseInt(categoryCode, 10)
+      );
       return category?.name || '';
     }
 
@@ -79,24 +92,38 @@ export class TaxonomyConverter {
    * @param subcategoryCode Subcategory code (e.g., "HPM" or "007")
    * @returns Subcategory name (e.g., "Pop_Hipster_Male_Stars")
    */
-  static getSubcategoryName(layer: string, categoryCode: string, subcategoryCode: string): string {
+  static getSubcategoryName(
+    layer: string,
+    categoryCode: string,
+    subcategoryCode: string
+  ): string {
     // Ensure we have the canonical category code (alphabetic)
     let canonicalCategoryCode = categoryCode;
     if (/^\d+$/.test(categoryCode)) {
       const categories = taxonomyService.getCategories(layer);
-      const category = categories.find(c => c.numericCode === parseInt(categoryCode, 10));
+      const category = categories.find(
+        c => c.numericCode === parseInt(categoryCode, 10)
+      );
       canonicalCategoryCode = category?.code || categoryCode;
     }
 
     // Handle numeric subcategory codes
     if (/^\d+$/.test(subcategoryCode)) {
-      const subcategories = taxonomyService.getSubcategories(layer, canonicalCategoryCode);
-      const subcategory = subcategories.find(s => s.numericCode === parseInt(subcategoryCode, 10));
+      const subcategories = taxonomyService.getSubcategories(
+        layer,
+        canonicalCategoryCode
+      );
+      const subcategory = subcategories.find(
+        s => s.numericCode === parseInt(subcategoryCode, 10)
+      );
       return subcategory?.name || '';
     }
-    
+
     // Handle alphabetic subcategory codes
-    const subcategories = taxonomyService.getSubcategories(layer, canonicalCategoryCode);
+    const subcategories = taxonomyService.getSubcategories(
+      layer,
+      canonicalCategoryCode
+    );
     const subcategory = subcategories.find(s => s.code === subcategoryCode);
     return subcategory?.name || '';
   }
@@ -107,7 +134,10 @@ export class TaxonomyConverter {
    * @param categoryCode Category code (e.g., "POP" or "001")
    * @returns Category name for backend (e.g., "Pop")
    */
-  static getBackendCategoryValue(layer: string, categoryCode: string | undefined): string {
+  static getBackendCategoryValue(
+    layer: string,
+    categoryCode: string | undefined
+  ): string {
     if (!categoryCode) return 'Pop'; // Default fallback
     return this.getCategoryName(layer, categoryCode);
   }
@@ -119,7 +149,11 @@ export class TaxonomyConverter {
    * @param subcategoryCode Subcategory code (e.g., "HPM" or "007")
    * @returns Subcategory name for backend (e.g., "Pop_Hipster_Male_Stars")
    */
-  static getBackendSubcategoryValue(layer: string, categoryCode: string | undefined, subcategoryCode: string | undefined): string {
+  static getBackendSubcategoryValue(
+    layer: string,
+    categoryCode: string | undefined,
+    subcategoryCode: string | undefined
+  ): string {
     if (!categoryCode || !subcategoryCode) return 'Base'; // Default fallback
     return this.getSubcategoryName(layer, categoryCode, subcategoryCode);
   }
@@ -131,22 +165,33 @@ export class TaxonomyConverter {
    * @param subcategoryCode Subcategory code (e.g., "HPM" or "007")
    * @returns Whether the combination is valid
    */
-  static isValidCombination(layer: string, categoryCode: string, subcategoryCode: string): boolean {
+  static isValidCombination(
+    layer: string,
+    categoryCode: string,
+    subcategoryCode: string
+  ): boolean {
     // Ensure we have the canonical category code (alphabetic)
     let canonicalCategoryCode = categoryCode;
     if (/^\d+$/.test(categoryCode)) {
       const categories = taxonomyService.getCategories(layer);
-      const category = categories.find(c => c.numericCode === parseInt(categoryCode, 10));
+      const category = categories.find(
+        c => c.numericCode === parseInt(categoryCode, 10)
+      );
       canonicalCategoryCode = category?.code || categoryCode;
     }
 
     // Check if subcategory exists
-    const subcategories = taxonomyService.getSubcategories(layer, canonicalCategoryCode);
-    
+    const subcategories = taxonomyService.getSubcategories(
+      layer,
+      canonicalCategoryCode
+    );
+
     if (/^\d+$/.test(subcategoryCode)) {
-      return subcategories.some(s => s.numericCode === parseInt(subcategoryCode, 10));
+      return subcategories.some(
+        s => s.numericCode === parseInt(subcategoryCode, 10)
+      );
     }
-    
+
     return subcategories.some(s => s.code === subcategoryCode);
   }
 }

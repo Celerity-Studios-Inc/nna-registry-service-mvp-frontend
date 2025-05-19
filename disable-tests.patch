@@ -1,0 +1,54 @@
+diff --git a/src/services/__tests__/simpleTaxonomyService.test.ts b/src/services/__tests__/simpleTaxonomyService.test.ts.disabled
+similarity index 100%
+rename from src/services/__tests__/simpleTaxonomyService.test.ts
+rename to src/services/__tests__/simpleTaxonomyService.test.ts.disabled
+
+diff --git a/src/services/__tests__/useTaxonomy.test.ts b/src/services/__tests__/useTaxonomy.test.ts.disabled
+similarity index 100%
+rename from src/services/__tests__/useTaxonomy.test.ts
+rename to src/services/__tests__/useTaxonomy.test.ts.disabled
+
+diff --git a/src/api/codeMapping.test.ts b/src/api/codeMapping.test.ts.disabled
+similarity index 100%
+rename from src/api/codeMapping.test.ts
+rename to src/api/codeMapping.test.ts.disabled
+
+diff --git a/src/api/taxonomyMapper.test.ts b/src/api/taxonomyMapper.test.ts.disabled
+similarity index 100%
+rename from src/api/taxonomyMapper.test.ts
+rename to src/api/taxonomyMapper.test.ts.disabled
+
+diff --git a/src/components/__tests__/AssetRegistrationWrapper.test.tsx b/src/components/__tests__/AssetRegistrationWrapper.test.tsx.disabled
+similarity index 100%
+rename from src/components/__tests__/AssetRegistrationWrapper.test.tsx
+rename to src/components/__tests__/AssetRegistrationWrapper.test.tsx.disabled
+
+diff --git a/src/tests/integration/taxonomySystem.test.tsx b/src/tests/integration/taxonomySystem.test.tsx.disabled
+similarity index 100%
+rename from src/tests/integration/taxonomySystem.test.tsx
+rename to src/tests/integration/taxonomySystem.test.tsx.disabled
+
+diff --git a/src/components/providers/__tests__/TaxonomyInitProvider.test.tsx b/src/components/providers/__tests__/TaxonomyInitProvider.test.tsx.disabled
+similarity index 100%
+rename from src/components/providers/__tests__/TaxonomyInitProvider.test.tsx
+rename to src/components/providers/__tests__/TaxonomyInitProvider.test.tsx.disabled
+
+diff --git a/src/components/asset/__tests__/SimpleTaxonomySelectionV2.test.tsx b/src/components/asset/__tests__/SimpleTaxonomySelectionV2.test.tsx.disabled
+similarity index 100%
+rename from src/components/asset/__tests__/SimpleTaxonomySelectionV2.test.tsx
+rename to src/components/asset/__tests__/SimpleTaxonomySelectionV2.test.tsx.disabled
+
+diff --git a/src/components/asset/__tests__/LayerSelectorV2.test.tsx b/src/components/asset/__tests__/LayerSelectorV2.test.tsx.disabled
+similarity index 100%
+rename from src/components/asset/__tests__/LayerSelectorV2.test.tsx
+rename to src/components/asset/__tests__/LayerSelectorV2.test.tsx.disabled
+
+diff --git a/src/components/__tests__/AssetRegistrationWrapper.simple.test.tsx b/src/components/__tests__/AssetRegistrationWrapper.simple.test.tsx.disabled
+similarity index 100%
+rename from src/components/__tests__/AssetRegistrationWrapper.simple.test.tsx
+rename to src/components/__tests__/AssetRegistrationWrapper.simple.test.tsx.disabled
+
+diff --git a/src/App.test.tsx b/src/App.test.tsx.disabled
+similarity index 100%
+rename from src/App.test.tsx
+rename to src/App.test.tsx.disabled

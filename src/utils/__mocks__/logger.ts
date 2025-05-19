@@ -22,14 +22,14 @@ export const logger = {
   warn: jest.fn(),
   error: jest.fn(),
   debug: jest.fn(),
-  
+
   // Category-specific logging methods
   api: jest.fn(),
   auth: jest.fn(),
   taxonomy: jest.fn(),
   file: jest.fn(),
   ui: jest.fn(),
-  
+
   // Internal methods (used by other methods)
-  addLogEntry: jest.fn()
+  addLogEntry: jest.fn(),
 };

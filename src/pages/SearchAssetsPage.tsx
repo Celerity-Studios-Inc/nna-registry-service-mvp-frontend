@@ -20,13 +20,21 @@ const SearchAssetsPage: React.FC = () => {
           if (Array.isArray(response.data)) {
             // Old format: response.data is the array
             setAssets(response.data);
-          } else if (typeof response.data === 'object' && response.data !== null && 'items' in response.data && Array.isArray((response.data as any).items)) {
+          } else if (
+            typeof response.data === 'object' &&
+            response.data !== null &&
+            'items' in response.data &&
+            Array.isArray((response.data as any).items)
+          ) {
             // New format: response.data.items is the array
             const dataWithItems = response.data as { items: Asset[] };
-            console.log("Using items array from API response:", dataWithItems.items.length);
+            console.log(
+              'Using items array from API response:',
+              dataWithItems.items.length
+            );
             setAssets(dataWithItems.items);
           } else {
-            console.warn("Unexpected API response format:", response);
+            console.warn('Unexpected API response format:', response);
             setAssets([]);
           }
         } else {
@@ -61,28 +69,29 @@ const SearchAssetsPage: React.FC = () => {
         onSearch={handleSearch}
         initialParams={{
           // Default to sorting by most recent
-          sort: "createdAt",
-          order: "desc",
+          sort: 'createdAt',
+          order: 'desc',
           // Limit to 10 most recent assets by default
-          limit: 10
+          limit: 10,
         }}
       />
-      
+
       {isLoading && (
         <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
           <CircularProgress />
         </Box>
       )}
-      
+
       {error && (
         <Typography color="error" sx={{ mt: 2 }}>
           {error}
         </Typography>
       )}
-      
+
       {!isLoading && !error && assets.length === 0 && (
         <Typography sx={{ mt: 2 }}>
-          No assets found. Try creating your first asset or adjusting your search criteria.
+          No assets found. Try creating your first asset or adjusting your
+          search criteria.
         </Typography>
       )}
     </Box>

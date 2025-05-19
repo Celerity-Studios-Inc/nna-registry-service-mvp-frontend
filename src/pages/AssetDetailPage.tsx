@@ -24,7 +24,7 @@ import {
   AudioFile as AudioIcon,
   VideoFile as VideoIcon,
   Image as ImageIcon,
-  InsertDriveFile as DefaultFileIcon
+  InsertDriveFile as DefaultFileIcon,
 } from '@mui/icons-material';
 import { Asset, AssetFile } from '../types/asset.types';
 import assetService from '../api/assetService';
@@ -102,8 +102,10 @@ const AssetDetail: React.FC = () => {
       // Fallback display
       const parts = [];
       if (asset.layer) parts.push(asset.layer);
-      if (asset.category || asset.categoryCode) parts.push(asset.category || asset.categoryCode);
-      if (asset.subcategory || asset.subcategoryCode) parts.push(asset.subcategory || asset.subcategoryCode);
+      if (asset.category || asset.categoryCode)
+        parts.push(asset.category || asset.categoryCode);
+      if (asset.subcategory || asset.subcategoryCode)
+        parts.push(asset.subcategory || asset.subcategoryCode);
       return parts.join(' > ');
     }
   };
@@ -139,17 +141,27 @@ const AssetDetail: React.FC = () => {
   }
 
   // Extract NNA addressing information from asset data with proper fallbacks
-  const hfn = asset.metadata?.humanFriendlyName || asset.metadata?.hfn || asset.friendlyName || asset.name;
+  const hfn =
+    asset.metadata?.humanFriendlyName ||
+    asset.metadata?.hfn ||
+    asset.friendlyName ||
+    asset.name;
 
   // For MFA, use the nnaAddress field (primary field) or check metadata properties
   // Using consistent fallback pattern across all components
-  const mfa = asset.nnaAddress || asset.metadata?.machineFriendlyAddress || asset.metadata?.mfa;
+  const mfa =
+    asset.nnaAddress ||
+    asset.metadata?.machineFriendlyAddress ||
+    asset.metadata?.mfa;
 
   console.log(`Asset detail showing HFN: ${hfn}, MFA: ${mfa}`);
 
   // If we don't have a valid MFA, log a warning
   if (!mfa) {
-    console.warn('Warning: No MFA found in asset! Asset ID:', asset.id || asset._id);
+    console.warn(
+      'Warning: No MFA found in asset! Asset ID:',
+      asset.id || asset._id
+    );
   }
 
   // Get preview URL if available
@@ -176,9 +188,7 @@ const AssetDetail: React.FC = () => {
 
       <Paper elevation={3} sx={{ p: 4 }}>
         <Box sx={{ mb: 3, display: 'flex', alignItems: 'center', gap: 2 }}>
-          <Typography variant="h4">
-            {asset.name}
-          </Typography>
+          <Typography variant="h4">{asset.name}</Typography>
           <Chip
             label={asset.status || 'active'}
             color={asset.status === 'active' ? 'success' : 'default'}
@@ -186,11 +196,7 @@ const AssetDetail: React.FC = () => {
           />
         </Box>
 
-        <Chip
-          label={getTaxonomyPath()}
-          variant="outlined"
-          sx={{ mb: 3 }}
-        />
+        <Chip label={getTaxonomyPath()} variant="outlined" sx={{ mb: 3 }} />
 
         <Grid container spacing={3}>
           {/* Left column with preview */}
@@ -231,7 +237,12 @@ const AssetDetail: React.FC = () => {
                     <Typography variant="body2" gutterBottom>
                       <strong>Tags:</strong>
                     </Typography>
-                    <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+                    <Stack
+                      direction="row"
+                      spacing={1}
+                      flexWrap="wrap"
+                      useFlexGap
+                    >
                       {asset.tags.map((tag, index) => (
                         <Chip
                           key={index}
@@ -260,7 +271,11 @@ const AssetDetail: React.FC = () => {
                   <Typography variant="body2" color="text.secondary">
                     Human-Friendly Name (HFN)
                   </Typography>
-                  <Typography variant="body1" fontWeight="medium" sx={{ wordBreak: 'break-all' }}>
+                  <Typography
+                    variant="body1"
+                    fontWeight="medium"
+                    sx={{ wordBreak: 'break-all' }}
+                  >
                     {hfn || 'Not available'}
                   </Typography>
                 </Grid>
@@ -268,7 +283,11 @@ const AssetDetail: React.FC = () => {
                   <Typography variant="body2" color="text.secondary">
                     Machine-Friendly Address (MFA)
                   </Typography>
-                  <Typography variant="body1" fontFamily="monospace" sx={{ wordBreak: 'break-all' }}>
+                  <Typography
+                    variant="body1"
+                    fontFamily="monospace"
+                    sx={{ wordBreak: 'break-all' }}
+                  >
                     {mfa || 'Not available'}
                   </Typography>
                 </Grid>
@@ -285,8 +304,15 @@ const AssetDetail: React.FC = () => {
                   <ListItemText
                     primary="Asset ID"
                     secondary={asset.id || asset._id || 'Unknown'}
-                    primaryTypographyProps={{ variant: 'body2', color: 'text.secondary' }}
-                    secondaryTypographyProps={{ variant: 'body2', fontFamily: 'monospace', sx: { wordBreak: 'break-all' } }}
+                    primaryTypographyProps={{
+                      variant: 'body2',
+                      color: 'text.secondary',
+                    }}
+                    secondaryTypographyProps={{
+                      variant: 'body2',
+                      fontFamily: 'monospace',
+                      sx: { wordBreak: 'break-all' },
+                    }}
                   />
                 </ListItem>
                 <Divider component="li" />
@@ -294,23 +320,36 @@ const AssetDetail: React.FC = () => {
                   <ListItemText
                     primary="Layer"
                     secondary={asset.layer || 'Unknown'}
-                    primaryTypographyProps={{ variant: 'body2', color: 'text.secondary' }}
+                    primaryTypographyProps={{
+                      variant: 'body2',
+                      color: 'text.secondary',
+                    }}
                   />
                 </ListItem>
                 <Divider component="li" />
                 <ListItem disablePadding sx={{ py: 1 }}>
                   <ListItemText
                     primary="Category"
-                    secondary={asset.category || asset.categoryCode || 'Unknown'}
-                    primaryTypographyProps={{ variant: 'body2', color: 'text.secondary' }}
+                    secondary={
+                      asset.category || asset.categoryCode || 'Unknown'
+                    }
+                    primaryTypographyProps={{
+                      variant: 'body2',
+                      color: 'text.secondary',
+                    }}
                   />
                 </ListItem>
                 <Divider component="li" />
                 <ListItem disablePadding sx={{ py: 1 }}>
                   <ListItemText
                     primary="Subcategory"
-                    secondary={asset.subcategory || asset.subcategoryCode || 'Unknown'}
-                    primaryTypographyProps={{ variant: 'body2', color: 'text.secondary' }}
+                    secondary={
+                      asset.subcategory || asset.subcategoryCode || 'Unknown'
+                    }
+                    primaryTypographyProps={{
+                      variant: 'body2',
+                      color: 'text.secondary',
+                    }}
                   />
                 </ListItem>
                 <Divider component="li" />
@@ -318,7 +357,10 @@ const AssetDetail: React.FC = () => {
                   <ListItemText
                     primary="Created"
                     secondary={formatDate(asset.createdAt)}
-                    primaryTypographyProps={{ variant: 'body2', color: 'text.secondary' }}
+                    primaryTypographyProps={{
+                      variant: 'body2',
+                      color: 'text.secondary',
+                    }}
                   />
                 </ListItem>
                 <Divider component="li" />
@@ -326,7 +368,10 @@ const AssetDetail: React.FC = () => {
                   <ListItemText
                     primary="Last Updated"
                     secondary={formatDate(asset.updatedAt)}
-                    primaryTypographyProps={{ variant: 'body2', color: 'text.secondary' }}
+                    primaryTypographyProps={{
+                      variant: 'body2',
+                      color: 'text.secondary',
+                    }}
                   />
                 </ListItem>
                 {asset.createdBy && (
@@ -336,7 +381,10 @@ const AssetDetail: React.FC = () => {
                       <ListItemText
                         primary="Created By"
                         secondary={asset.createdBy}
-                        primaryTypographyProps={{ variant: 'body2', color: 'text.secondary' }}
+                        primaryTypographyProps={{
+                          variant: 'body2',
+                          color: 'text.secondary',
+                        }}
                       />
                     </ListItem>
                   </>
@@ -355,14 +403,19 @@ const AssetDetail: React.FC = () => {
                     <React.Fragment key={file.id || index}>
                       {index > 0 && <Divider component="li" />}
                       <ListItem sx={{ py: 1 }}>
-                        <Box sx={{ mr: 2 }}>
-                          {getFileIcon(file)}
-                        </Box>
+                        <Box sx={{ mr: 2 }}>{getFileIcon(file)}</Box>
                         <ListItemText
                           primary={file.filename || `File ${index + 1}`}
-                          secondary={`${file.contentType || 'Unknown type'}, ${file.size ? (file.size / 1024).toFixed(1) + ' KB' : 'Unknown size'}`}
+                          secondary={`${file.contentType || 'Unknown type'}, ${
+                            file.size
+                              ? (file.size / 1024).toFixed(1) + ' KB'
+                              : 'Unknown size'
+                          }`}
                           primaryTypographyProps={{ variant: 'body2' }}
-                          secondaryTypographyProps={{ variant: 'body2', color: 'text.secondary' }}
+                          secondaryTypographyProps={{
+                            variant: 'body2',
+                            color: 'text.secondary',
+                          }}
                         />
                         {file.url && (
                           <Button
@@ -390,7 +443,13 @@ const AssetDetail: React.FC = () => {
                 Additional Metadata
               </Typography>
               <Paper variant="outlined" sx={{ p: 2 }}>
-                <pre style={{ margin: 0, whiteSpace: 'pre-wrap', overflowX: 'auto' }}>
+                <pre
+                  style={{
+                    margin: 0,
+                    whiteSpace: 'pre-wrap',
+                    overflowX: 'auto',
+                  }}
+                >
                   {JSON.stringify(asset.metadata, null, 2)}
                 </pre>
               </Paper>

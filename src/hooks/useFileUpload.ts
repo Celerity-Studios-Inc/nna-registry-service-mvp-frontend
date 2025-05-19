@@ -12,7 +12,7 @@ export const useFileUpload = () => {
       setIsUploading(true);
       setError(null);
       const response = await assetService.uploadFile(file);
-      
+
       // Convert response to FileUploadResponse
       if (response && response.response) {
         return {
@@ -36,13 +36,15 @@ export const useFileUpload = () => {
     try {
       setIsUploading(true);
       setError(null);
-      
+
       const uploadPromises = files.map(file => uploadFile(file));
       const responses = await Promise.all(uploadPromises);
-      
-      const successfulUploads = responses.filter((r): r is FileUploadResponse => r !== null);
+
+      const successfulUploads = responses.filter(
+        (r): r is FileUploadResponse => r !== null
+      );
       setUploadedFiles(prev => [...prev, ...successfulUploads]);
-      
+
       return successfulUploads;
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to upload files');
@@ -58,5 +60,12 @@ export const useFileUpload = () => {
     setIsUploading(false);
   };
 
-  return { uploadFile, addFiles, clearUploadState, isUploading, error, uploadedFiles };
-}; 
+  return {
+    uploadFile,
+    addFiles,
+    clearUploadState,
+    isUploading,
+    error,
+    uploadedFiles,
+  };
+};

@@ -1,5 +1,9 @@
 import axios from 'axios';
-import { ErrorSeverity, ErrorMessage, ErrorHandler } from '../types/error.types';
+import {
+  ErrorSeverity,
+  ErrorMessage,
+  ErrorHandler,
+} from '../types/error.types';
 
 // Create a global error handler for use outside React components
 let globalErrorHandler: ErrorHandler | null = null;
@@ -22,8 +26,8 @@ export const apiConfig = {
   debug: {
     version: '1.3',
     timestamp: new Date().toISOString(),
-    backendUrl: 'https://registry.reviz.dev/api'
-  }
+    backendUrl: 'https://registry.reviz.dev/api',
+  },
 };
 
 // For development, allow overriding mock mode via localStorage
@@ -31,7 +35,9 @@ try {
   const localStorageMockOverride = localStorage.getItem('forceMockApi');
   if (localStorageMockOverride !== null) {
     apiConfig.useMockApi = localStorageMockOverride === 'true';
-    console.log(`Using localStorage override for mock API: ${apiConfig.useMockApi}`);
+    console.log(
+      `Using localStorage override for mock API: ${apiConfig.useMockApi}`
+    );
   }
 } catch (e) {
   console.warn('Unable to access localStorage for mock API setting');
@@ -54,8 +60,15 @@ console.log(`🔄 API Client configured with baseURL: ${apiConfig.baseURL}`);
 
 // Add request logging to see all outgoing requests
 api.interceptors.request.use(request => {
-  console.log(`🔼 API Request: ${request.method?.toUpperCase()} ${request.baseURL}${request.url}`);
-  console.log('Full Request URL:', `${window.location.origin}${request.baseURL}${request.url}`);
+  console.log(
+    `🔼 API Request: ${request.method?.toUpperCase()} ${request.baseURL}${
+      request.url
+    }`
+  );
+  console.log(
+    'Full Request URL:',
+    `${window.location.origin}${request.baseURL}${request.url}`
+  );
   console.log('Request headers:', request.headers);
   console.log('Request data:', request.data);
   return request;
@@ -63,14 +76,14 @@ api.interceptors.request.use(request => {
 
 // Add request interceptor to include auth token
 api.interceptors.request.use(
-  (config) => {
+  config => {
     const token = localStorage.getItem('accessToken');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
       console.log('🔑 Added auth token to request');
     } else {
       console.warn('⚠️ No auth token found in localStorage!');
-      
+
       // For development/debugging in production environment
       // Create a test token if in development mode
       if (process.env.NODE_ENV === 'development') {
@@ -83,7 +96,7 @@ api.interceptors.request.use(
     }
     return config;
   },
-  (error) => {
+  error => {
     console.error('Error in request interceptor:', error);
     return Promise.reject(error);
   }
@@ -94,36 +107,39 @@ export let isBackendAvailable = true;
 
 // Add response interceptor to handle common error cases
 api.interceptors.response.use(
-  (response) => {
+  response => {
     console.log(`🔽 API Response: ${response.status} ${response.statusText}`);
     console.log('Response headers:', response.headers);
-    console.log('Response data preview:', 
-      JSON.stringify(response.data).substring(0, 200) + 
-      (JSON.stringify(response.data).length > 200 ? '...' : '')
+    console.log(
+      'Response data preview:',
+      JSON.stringify(response.data).substring(0, 200) +
+        (JSON.stringify(response.data).length > 200 ? '...' : '')
     );
-    
+
     // If we get a successful response, the backend is available
     isBackendAvailable = true;
-    
+
     return response;
   },
-  (error) => {
+  error => {
     console.log('❌ API Error:', error.message);
-    
+
     // Extract useful error information
     let errorMessage = 'An unknown error occurred';
     let errorTitle = 'Error';
     let severity: 'error' | 'warning' | 'info' = 'error';
-    
+
     if (error.response) {
-      console.log(`Error response status: ${error.response.status} ${error.response.statusText}`);
+      console.log(
+        `Error response status: ${error.response.status} ${error.response.statusText}`
+      );
       console.log('Error response headers:', error.response.headers);
-      
+
       try {
         // Try to log response data if available
         if (error.response.data) {
           console.log('Error response data:', error.response.data);
-          
+
           // Try to extract error message from various API formats
           if (typeof error.response.data === 'string') {
             errorMessage = error.response.data;
@@ -132,41 +148,42 @@ api.interceptors.response.use(
           } else if (error.response.data.error?.message) {
             errorMessage = error.response.data.error.message;
           } else if (error.response.data.error) {
-            errorMessage = typeof error.response.data.error === 'string' 
-              ? error.response.data.error
-              : JSON.stringify(error.response.data.error);
+            errorMessage =
+              typeof error.response.data.error === 'string'
+                ? error.response.data.error
+                : JSON.stringify(error.response.data.error);
           }
         }
       } catch (e) {
         console.log('Unable to log error response data:', e);
       }
-      
+
       // Handle 401 Unauthorized errors
       if (error.response.status === 401) {
         // Clear token and redirect to login if needed
         localStorage.removeItem('accessToken');
         errorTitle = 'Authentication Required';
         errorMessage = 'Your session has expired. Please log in again.';
-        
+
         // Redirect to login after a short delay to allow error message to be seen
         setTimeout(() => {
           window.location.href = '/login';
         }, 2000);
       }
-      
+
       // Handle 403 Forbidden errors
       if (error.response.status === 403) {
         errorTitle = 'Permission Denied';
         errorMessage = 'You do not have permission to perform this action.';
       }
-      
+
       // Handle 404 Not Found errors
       if (error.response.status === 404) {
         errorTitle = 'Resource Not Found';
         errorMessage = 'The requested resource could not be found.';
         severity = 'warning';
       }
-      
+
       // Handle 422 Validation errors
       if (error.response.status === 422) {
         errorTitle = 'Validation Error';
@@ -178,34 +195,38 @@ api.interceptors.response.use(
           }
         }
       }
-      
+
       // Handle 500 server errors
       if (error.response.status >= 500) {
         errorTitle = 'Server Error';
-        errorMessage = 'The server encountered an error. Please try again later.';
+        errorMessage =
+          'The server encountered an error. Please try again later.';
         // Set backend as potentially unavailable after multiple 500 errors
         isBackendAvailable = false;
       }
     } else if (error.request) {
       // The request was made but no response was received
-      console.log("No response received from server. Request:", error.request);
+      console.log('No response received from server. Request:', error.request);
       // If we can't connect at all, backend is definitely unavailable
       isBackendAvailable = false;
       errorTitle = 'Connection Error';
-      errorMessage = 'Unable to connect to the server. Please check your internet connection.';
-      console.warn("⚠️ Backend appears to be unavailable. Falling back to mock data for future requests.");
+      errorMessage =
+        'Unable to connect to the server. Please check your internet connection.';
+      console.warn(
+        '⚠️ Backend appears to be unavailable. Falling back to mock data for future requests.'
+      );
     }
-    
+
     // Show error using our global error handler if available
     if (globalErrorHandler) {
       globalErrorHandler({
         title: errorTitle,
         message: errorMessage,
         severity: severity,
-        autoHide: severity !== 'error' // Only auto-hide non-error messages
+        autoHide: severity !== 'error', // Only auto-hide non-error messages
       });
     }
-    
+
     return Promise.reject(error);
   }
 );

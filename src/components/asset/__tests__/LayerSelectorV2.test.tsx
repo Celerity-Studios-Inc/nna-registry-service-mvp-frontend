@@ -7,34 +7,34 @@ jest.mock('../../../hooks/useTaxonomy', () => ({
   useTaxonomy: () => ({
     layers: ['G', 'S', 'W'],
     selectedLayer: null,
-    selectLayer: jest.fn()
-  })
+    selectLayer: jest.fn(),
+  }),
 }));
 
 // Mock the logger
 jest.mock('../../../utils/logger', () => ({
   logger: {
     info: jest.fn(),
-    error: jest.fn()
-  }
+    error: jest.fn(),
+  },
 }));
 
 describe('LayerSelectorV2', () => {
   const onLayerSelect = jest.fn();
   const onLayerDoubleClick = jest.fn();
-  
+
   beforeEach(() => {
     jest.clearAllMocks();
   });
-  
+
   it('renders all layer cards', () => {
     render(<LayerSelectorV2 onLayerSelect={onLayerSelect} selectedLayer="" />);
-    
+
     expect(screen.getByTestId('layer-card-G')).toBeInTheDocument();
     expect(screen.getByTestId('layer-card-S')).toBeInTheDocument();
     expect(screen.getByTestId('layer-card-W')).toBeInTheDocument();
   });
-  
+
   it('calls onLayerSelect when a layer is clicked', () => {
     render(<LayerSelectorV2 onLayerSelect={onLayerSelect} selectedLayer="" />);
 
@@ -44,18 +44,20 @@ describe('LayerSelectorV2', () => {
   });
 
   it('calls onLayerDoubleClick when a layer is double-clicked', () => {
-    render(<LayerSelectorV2
-      onLayerSelect={onLayerSelect}
-      onLayerDoubleClick={onLayerDoubleClick}
-      selectedLayer=""
-    />);
+    render(
+      <LayerSelectorV2
+        onLayerSelect={onLayerSelect}
+        onLayerDoubleClick={onLayerDoubleClick}
+        selectedLayer=""
+      />
+    );
 
     fireEvent.doubleClick(screen.getByTestId('layer-card-S'));
 
     expect(onLayerSelect).toHaveBeenCalledWith('S', true);
     expect(onLayerDoubleClick).toHaveBeenCalledWith('S');
   });
-  
+
   it('shows the selected layer information when a layer is selected', () => {
     render(<LayerSelectorV2 onLayerSelect={onLayerSelect} selectedLayer="" />);
 

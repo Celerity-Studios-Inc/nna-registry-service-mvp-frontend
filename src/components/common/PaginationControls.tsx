@@ -1,15 +1,15 @@
 import React from 'react';
-import { 
-  Box, 
-  Pagination, 
-  PaginationItem, 
-  FormControl, 
-  Select, 
-  MenuItem, 
+import {
+  Box,
+  Pagination,
+  PaginationItem,
+  FormControl,
+  Select,
+  MenuItem,
   Typography,
   SelectChangeEvent,
   useTheme,
-  useMediaQuery
+  useMediaQuery,
 } from '@mui/material';
 import KeyboardArrowLeftIcon from '@mui/icons-material/KeyboardArrowLeft';
 import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
@@ -43,7 +43,7 @@ const PaginationControls: React.FC<PaginationControlsProps> = ({
   siblingCount = 1,
   showFirstButton = true,
   showLastButton = true,
-  disabled = false
+  disabled = false,
 }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -53,7 +53,10 @@ const PaginationControls: React.FC<PaginationControlsProps> = ({
   const endItem = Math.min(page * itemsPerPage, totalItems);
 
   // Handle page change
-  const handlePageChange = (_event: React.ChangeEvent<unknown>, value: number) => {
+  const handlePageChange = (
+    _event: React.ChangeEvent<unknown>,
+    value: number
+  ) => {
     onPageChange(value);
   };
 
@@ -63,20 +66,24 @@ const PaginationControls: React.FC<PaginationControlsProps> = ({
   };
 
   return (
-    <Box sx={{ 
-      display: 'flex', 
-      flexDirection: isMobile ? 'column' : 'row',
-      alignItems: isMobile ? 'flex-start' : 'center',
-      justifyContent: 'space-between',
-      width: '100%',
-      mt: 3,
-      mb: 2
-    }}>
-      <Box sx={{ 
-        display: 'flex', 
-        alignItems: 'center', 
-        mb: isMobile ? 2 : 0 
-      }}>
+    <Box
+      sx={{
+        display: 'flex',
+        flexDirection: isMobile ? 'column' : 'row',
+        alignItems: isMobile ? 'flex-start' : 'center',
+        justifyContent: 'space-between',
+        width: '100%',
+        mt: 3,
+        mb: 2,
+      }}
+    >
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          mb: isMobile ? 2 : 0,
+        }}
+      >
         <Typography variant="body2" color="text.secondary" mr={2}>
           Showing {startItem}-{endItem} of {totalItems} items
         </Typography>
@@ -94,7 +101,7 @@ const PaginationControls: React.FC<PaginationControlsProps> = ({
           </Select>
         </FormControl>
       </Box>
-      
+
       {totalPages > 1 && (
         <Pagination
           page={page}
@@ -104,9 +111,12 @@ const PaginationControls: React.FC<PaginationControlsProps> = ({
           showFirstButton={showFirstButton}
           showLastButton={showLastButton}
           onChange={handlePageChange}
-          renderItem={(item) => (
+          renderItem={item => (
             <PaginationItem
-              slots={{ previous: KeyboardArrowLeftIcon, next: KeyboardArrowRightIcon }}
+              slots={{
+                previous: KeyboardArrowLeftIcon,
+                next: KeyboardArrowRightIcon,
+              }}
               {...item}
             />
           )}

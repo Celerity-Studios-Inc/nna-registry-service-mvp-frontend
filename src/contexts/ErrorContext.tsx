@@ -1,7 +1,11 @@
 import React, { createContext, useState, useContext, ReactNode } from 'react';
 import { Snackbar, Alert, AlertTitle, IconButton } from '@mui/material';
 import { Close as CloseIcon } from '@mui/icons-material';
-import { ErrorSeverity, ErrorMessage, ErrorHandler } from '../types/error.types';
+import {
+  ErrorSeverity,
+  ErrorMessage,
+  ErrorHandler,
+} from '../types/error.types';
 
 interface ErrorContextType {
   setError: ErrorHandler;
@@ -11,27 +15,35 @@ interface ErrorContextType {
 
 const ErrorContext = createContext<ErrorContextType | undefined>(undefined);
 
-export const ErrorProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+export const ErrorProvider: React.FC<{ children: ReactNode }> = ({
+  children,
+}) => {
   const [errorState, setErrorState] = useState<ErrorMessage | null>(null);
 
-  const setError = (messageInput: string | ErrorMessage, severity: ErrorSeverity = 'error') => {
+  const setError = (
+    messageInput: string | ErrorMessage,
+    severity: ErrorSeverity = 'error'
+  ) => {
     if (typeof messageInput === 'string') {
       setErrorState({
         message: messageInput,
         severity,
-        autoHide: true
+        autoHide: true,
       });
     } else {
       setErrorState({
         ...messageInput,
-        autoHide: messageInput.autoHide !== false // Default to true if not specified
+        autoHide: messageInput.autoHide !== false, // Default to true if not specified
       });
     }
   };
 
   const clearError = () => setErrorState(null);
 
-  const handleClose = (event?: React.SyntheticEvent | Event, reason?: string) => {
+  const handleClose = (
+    event?: React.SyntheticEvent | Event,
+    reason?: string
+  ) => {
     if (reason === 'clickaway') {
       return;
     }
@@ -39,7 +51,9 @@ export const ErrorProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   };
 
   return (
-    <ErrorContext.Provider value={{ setError, clearError, currentError: errorState }}>
+    <ErrorContext.Provider
+      value={{ setError, clearError, currentError: errorState }}
+    >
       {children}
       <Snackbar
         open={!!errorState}
@@ -47,14 +61,14 @@ export const ErrorProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         onClose={handleClose}
         anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
       >
-        <Alert 
-          onClose={handleClose} 
-          severity={errorState?.severity || 'error'} 
-          sx={{ 
+        <Alert
+          onClose={handleClose}
+          severity={errorState?.severity || 'error'}
+          sx={{
             width: '100%',
             '& .MuiAlert-message': {
               width: '100%',
-            }
+            },
           }}
           action={
             <IconButton

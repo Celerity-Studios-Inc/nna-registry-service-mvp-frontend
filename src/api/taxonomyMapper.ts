@@ -1,19 +1,38 @@
 /**
  * Taxonomy Mapper - Handles formatting and converting between different address formats
  */
-import { LAYER_LOOKUPS, LAYER_SUBCATEGORIES } from '../taxonomyLookup/constants';
+import {
+  LAYER_LOOKUPS,
+  LAYER_SUBCATEGORIES,
+} from '../taxonomyLookup/constants';
 import { logger } from '../utils/logger';
 
 // Define layer numeric codes mapping for direct access
 export const LAYER_NUMERIC_CODES: Record<string, string> = {
-  'G': '1', 'S': '2', 'L': '3', 'M': '4', 'W': '5',
-  'B': '6', 'P': '7', 'T': '8', 'C': '9', 'R': '10'
+  G: '1',
+  S: '2',
+  L: '3',
+  M: '4',
+  W: '5',
+  B: '6',
+  P: '7',
+  T: '8',
+  C: '9',
+  R: '10',
 };
 
 // Define layer alpha codes mapping (reverse of numeric)
 export const LAYER_ALPHA_CODES: Record<string, string> = {
-  '1': 'G', '2': 'S', '3': 'L', '4': 'M', '5': 'W',
-  '6': 'B', '7': 'P', '8': 'T', '9': 'C', '10': 'R'
+  '1': 'G',
+  '2': 'S',
+  '3': 'L',
+  '4': 'M',
+  '5': 'W',
+  '6': 'B',
+  '7': 'P',
+  '8': 'T',
+  '9': 'C',
+  '10': 'R',
 };
 
 // Helper function for layer module access
@@ -21,8 +40,12 @@ function getLayerModule(layerCode: string) {
   // Create a generic layer module interface with the methods we need
   const module = {
     getCategories: () => {
-      const categories: Array<{code: string, name: string, numericCode: number}> = [];
-      
+      const categories: Array<{
+        code: string;
+        name: string;
+        numericCode: number;
+      }> = [];
+
       if (layerCode && LAYER_LOOKUPS[layerCode]) {
         // Extract categories from LAYER_LOOKUPS (keys that don't contain dots)
         for (const [key, value] of Object.entries(LAYER_LOOKUPS[layerCode])) {
@@ -30,41 +53,51 @@ function getLayerModule(layerCode: string) {
             categories.push({
               code: key,
               name: value.name,
-              numericCode: parseInt(value.numericCode, 10)
+              numericCode: parseInt(value.numericCode, 10),
             });
           }
         }
       }
-      
+
       return categories;
     },
-    
+
     getSubcategories: (categoryCode: string) => {
-      const subcategories: Array<{code: string, name: string, numericCode: number}> = [];
-      
-      if (layerCode && categoryCode && LAYER_SUBCATEGORIES[layerCode] && LAYER_SUBCATEGORIES[layerCode][categoryCode]) {
+      const subcategories: Array<{
+        code: string;
+        name: string;
+        numericCode: number;
+      }> = [];
+
+      if (
+        layerCode &&
+        categoryCode &&
+        LAYER_SUBCATEGORIES[layerCode] &&
+        LAYER_SUBCATEGORIES[layerCode][categoryCode]
+      ) {
         // Get subcategory keys for this category
-        const subcategoryKeys = LAYER_SUBCATEGORIES[layerCode][categoryCode] || [];
-        
+        const subcategoryKeys =
+          LAYER_SUBCATEGORIES[layerCode][categoryCode] || [];
+
         // Extract details for each subcategory
         for (const fullKey of subcategoryKeys) {
           const subcategoryCode = fullKey.split('.')[1]; // Get the part after the dot
           const details = LAYER_LOOKUPS[layerCode][fullKey];
-          
+
           if (details) {
             subcategories.push({
               code: subcategoryCode,
               name: details.name,
-              numericCode: parseInt(details.numericCode, 10)
+              numericCode: parseInt(details.numericCode, 10),
             });
           }
         }
       }
-      
+
       return subcategories;
-    }
+    },
   };
-  
+
   return module;
 }
 
@@ -88,7 +121,7 @@ class TaxonomyMapper {
     subcategory: string,
     sequential: string,
     format: 'hfn' | 'mfa' = 'hfn'
-  ): string | { hfn: string, mfa: string } {
+  ): string | { hfn: string; mfa: string } {
     // Return empty string if any required component is missing
     if (!layer || !category || !subcategory || !sequential) {
       return format === 'hfn' ? '' : { hfn: '', mfa: '' };
@@ -96,7 +129,7 @@ class TaxonomyMapper {
 
     // Format as Human Friendly Name (alphabetic codes)
     const hfn = `${layer}.${category}.${subcategory}.${sequential}`;
-    
+
     // Format as Machine Friendly Address (numeric codes)
     const layerNumeric = this.getLayerNumericCode(layer);
     const categoryNumeric = this.getCategoryNumericCode(layer, category);
@@ -118,7 +151,7 @@ class TaxonomyMapper {
     } else if (format === 'mfa') {
       return mfa;
     }
-    
+
     // Otherwise return object with both formats
     return { hfn, mfa };
   }

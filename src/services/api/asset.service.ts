@@ -1,6 +1,10 @@
 import axios from 'axios';
 import { apiConfig } from './api';
-import { Asset, AssetSearchResponse, FileUploadResponse } from '../../types/asset.types';
+import {
+  Asset,
+  AssetSearchResponse,
+  FileUploadResponse,
+} from '../../types/asset.types';
 
 const api = axios.create({
   baseURL: apiConfig.baseURL,
@@ -29,9 +33,13 @@ export const assetService = {
     return response.data;
   },
 
-  async searchAssets(query: string, page: number = 1, limit: number = 10): Promise<AssetSearchResponse> {
+  async searchAssets(
+    query: string,
+    page: number = 1,
+    limit: number = 10
+  ): Promise<AssetSearchResponse> {
     const response = await api.get<AssetSearchResponse>('/assets/search', {
-      params: { query, page, limit }
+      params: { query, page, limit },
     });
     return response.data;
   },
@@ -39,12 +47,16 @@ export const assetService = {
   async uploadFile(file: File): Promise<FileUploadResponse> {
     const formData = new FormData();
     formData.append('file', file);
-    
-    const response = await api.post<FileUploadResponse>('/assets/upload', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
+
+    const response = await api.post<FileUploadResponse>(
+      '/assets/upload',
+      formData,
+      {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      }
+    );
     return response.data;
-  }
-}; 
+  },
+};

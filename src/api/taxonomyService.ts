@@ -51,14 +51,17 @@ class TaxonomyService {
       console.log('Checking World layer category codes...');
       const worldLayer = this.taxonomyData['W'];
       if (worldLayer && worldLayer.categories) {
-        console.log('World layer categories:', Object.keys(worldLayer.categories).join(', '));
+        console.log(
+          'World layer categories:',
+          Object.keys(worldLayer.categories).join(', ')
+        );
 
         // Check BCH category explicitly
         if ('BCH' in worldLayer.categories) {
           const bchCategory = worldLayer.categories['BCH'];
           console.log('Found BCH category in World layer:', {
             name: bchCategory.name,
-            numericCode: bchCategory.numericCode || 'undefined'
+            numericCode: bchCategory.numericCode || 'undefined',
           });
         } else {
           console.log('BCH category not found directly in World layer');
@@ -69,7 +72,7 @@ class TaxonomyService {
           const code003Category = worldLayer.categories['003'];
           console.log('Found 003 numeric code in World layer:', {
             name: code003Category.name,
-            code: code003Category.code || 'undefined'
+            code: code003Category.code || 'undefined',
           });
         } else {
           console.log('003 numeric code not found directly in World layer');
@@ -191,7 +194,9 @@ class TaxonomyService {
       // If the category has a code property, always use it
       if (category.code) {
         alphaCode = category.code;
-        console.log(`Using category.code (${alphaCode}) from taxonomy data for category ${category.name}`);
+        console.log(
+          `Using category.code (${alphaCode}) from taxonomy data for category ${category.name}`
+        );
       }
       // If we don't have a code property, try to get it from our predefined mappings
       else {
@@ -199,7 +204,7 @@ class TaxonomyService {
         // These mappings are based on screenshots and existing data
         const layerNumericToHFN: Record<string, Record<string, string>> = {
           // Song layer (G) mappings
-          'G': {
+          G: {
             '001': 'POP', // Pop
             '002': 'ROK', // Rock
             '003': 'HIP', // Hip Hop
@@ -218,7 +223,7 @@ class TaxonomyService {
             '016': 'FNK', // Funk
           },
           // Star layer (S) mappings
-          'S': {
+          S: {
             '001': 'POP', // Pop
             '002': 'ROK', // Rock
             '003': 'HIP', // Hip Hop
@@ -229,7 +234,7 @@ class TaxonomyService {
             '008': 'REG', // Reggae
           },
           // World layer (W) mappings
-          'W': {
+          W: {
             '001': 'CLB', // Dance Clubs
             '002': 'STG', // Concert Stages
             '003': 'URB', // Urban
@@ -247,7 +252,7 @@ class TaxonomyService {
             '015': 'HIS', // Historical/Nature
           },
           // Looks layer (L) mappings
-          'L': {
+          L: {
             '001': 'POP', // Modern_Performance
             '002': 'ROK', // Traditional_Attire
             '003': 'HIP', // Stage_Ready
@@ -264,7 +269,7 @@ class TaxonomyService {
             '014': 'SPO', // Sportswear
           },
           // Moves layer (M) mappings
-          'M': {
+          M: {
             '001': 'DNC', // Dance/Pop_Dance
             '002': 'POS', // Pose/Jazz_Dance
             '003': 'FIT', // Fitness/Hip_Hop_Dance
@@ -281,28 +286,41 @@ class TaxonomyService {
             '014': 'LAT', // Latin Dance
             '015': 'BRK', // Breakdance
             '016': 'STR', // Street Dance
-          }
+          },
         };
 
         // Use correct mapping for the layer and numeric code
-        if (layerNumericToHFN[layerCode] && layerNumericToHFN[layerCode][categoryCode]) {
+        if (
+          layerNumericToHFN[layerCode] &&
+          layerNumericToHFN[layerCode][categoryCode]
+        ) {
           alphaCode = layerNumericToHFN[layerCode][categoryCode];
-          console.log(`Using fixed mapping for ${layerCode}.${categoryCode} -> ${alphaCode}`);
+          console.log(
+            `Using fixed mapping for ${layerCode}.${categoryCode} -> ${alphaCode}`
+          );
         }
         // If not found in mappings, generate from name as last resort
         else if (/^\d+$/.test(categoryCode) && category.name) {
           const nameParts = category.name.split(/[\s_-]/);
           if (nameParts.length >= 3) {
             // Use first letter of each of the first 3 parts
-            alphaCode = (nameParts[0][0] + nameParts[1][0] + nameParts[2][0]).toUpperCase();
+            alphaCode = (
+              nameParts[0][0] +
+              nameParts[1][0] +
+              nameParts[2][0]
+            ).toUpperCase();
           } else if (nameParts.length === 2) {
             // Use first two letters of first part + first letter of second part
-            alphaCode = (nameParts[0].substring(0, 2) + nameParts[1][0]).toUpperCase();
+            alphaCode = (
+              nameParts[0].substring(0, 2) + nameParts[1][0]
+            ).toUpperCase();
           } else if (category.name.length >= 3) {
             // Use first 3 letters of the name
             alphaCode = category.name.substring(0, 3).toUpperCase();
           }
-          console.log(`Generated alphabetic code ${alphaCode} for numeric category ${categoryCode} as last resort`);
+          console.log(
+            `Generated alphabetic code ${alphaCode} for numeric category ${categoryCode} as last resort`
+          );
         }
       }
 
@@ -334,7 +352,9 @@ class TaxonomyService {
     let normalizedCategoryCode = categoryCode;
     if (layerCode === 'S' && categoryCode === '001') {
       normalizedCategoryCode = 'POP';
-      console.log('Converting numeric category code 001 to POP for layer S in getSubcategories');
+      console.log(
+        'Converting numeric category code 001 to POP for layer S in getSubcategories'
+      );
     }
 
     const cacheKey = `${layerCode}.${normalizedCategoryCode}`;
@@ -353,13 +373,17 @@ class TaxonomyService {
     // If not found and we're looking for POP, try 001
     if (!category && layerCode === 'S' && normalizedCategoryCode === 'POP') {
       category = layer.categories['001'];
-      console.log('Falling back to numeric category code 001 for POP in layer S');
+      console.log(
+        'Falling back to numeric category code 001 for POP in layer S'
+      );
     }
 
     // If not found and we're looking for 001, try POP
     if (!category && layerCode === 'S' && normalizedCategoryCode === '001') {
       category = layer.categories['POP'];
-      console.log('Falling back to alphabetic category code POP for 001 in layer S');
+      console.log(
+        'Falling back to alphabetic category code POP for 001 in layer S'
+      );
     }
 
     if (!category || !category.subcategories) {
@@ -380,7 +404,8 @@ class TaxonomyService {
       }
       // If we couldn't parse it and there's no explicit numeric code, use position as fallback
       else if (isNaN(numericCode)) {
-        numericCode = Object.keys(category.subcategories).indexOf(subcategoryCode) + 1;
+        numericCode =
+          Object.keys(category.subcategories).indexOf(subcategoryCode) + 1;
       }
 
       // IMPORTANT: Use alphabetic codes for HFN display
@@ -391,14 +416,19 @@ class TaxonomyService {
       // If the subcategory has a code property, always use it
       if (subcategory.code) {
         alphaCode = subcategory.code;
-        console.log(`Using subcategory.code (${alphaCode}) from taxonomy data for subcategory ${subcategory.name}`);
+        console.log(
+          `Using subcategory.code (${alphaCode}) from taxonomy data for subcategory ${subcategory.name}`
+        );
       }
       // If no code property, use our fixed mappings
       else {
         // Layer-specific mappings for different category/subcategory combinations
-        const layerCategorySubcategoryMappings: Record<string, Record<string, Record<string, string>>> = {
+        const layerCategorySubcategoryMappings: Record<
+          string,
+          Record<string, Record<string, string>>
+        > = {
           // World layer subcategories
-          'W': {
+          W: {
             // Dance Clubs subcategories (001/CLB)
             '001': {
               '001': 'BAS', // Base
@@ -430,10 +460,10 @@ class TaxonomyService {
               '003': 'SUN', // Sunset
               '004': 'WAV', // Waves
               '005': 'PAL', // Palm
-            }
+            },
           },
           // Star layer subcategories
-          'S': {
+          S: {
             // Pop Star subcategories (001/POP)
             '001': {
               '001': 'BAS', // Base
@@ -443,16 +473,25 @@ class TaxonomyService {
               '005': 'LGM', // Pop_Legend_Male_Stars
               '006': 'ICM', // Pop_Icon_Male_Stars
               '007': 'HPM', // Pop_Hipster_Male_Stars
-            }
-          }
+            },
+          },
         };
 
         // First try layer-category-specific mapping
-        if (layerCategorySubcategoryMappings[layerCode] &&
-            layerCategorySubcategoryMappings[layerCode][categoryCode] &&
-            layerCategorySubcategoryMappings[layerCode][categoryCode][subcategoryCode]) {
-          alphaCode = layerCategorySubcategoryMappings[layerCode][categoryCode][subcategoryCode];
-          console.log(`Using layer-category-specific mapping for ${layerCode}.${categoryCode}.${subcategoryCode} -> ${alphaCode}`);
+        if (
+          layerCategorySubcategoryMappings[layerCode] &&
+          layerCategorySubcategoryMappings[layerCode][categoryCode] &&
+          layerCategorySubcategoryMappings[layerCode][categoryCode][
+            subcategoryCode
+          ]
+        ) {
+          alphaCode =
+            layerCategorySubcategoryMappings[layerCode][categoryCode][
+              subcategoryCode
+            ];
+          console.log(
+            `Using layer-category-specific mapping for ${layerCode}.${categoryCode}.${subcategoryCode} -> ${alphaCode}`
+          );
         }
         // If not found, use standard mappings for common subcategories
         else {
@@ -471,24 +510,37 @@ class TaxonomyService {
           };
 
           // Use standard mapping if available
-          if (/^\d+$/.test(subcategoryCode) && standardSubcategoryMappings[subcategoryCode]) {
+          if (
+            /^\d+$/.test(subcategoryCode) &&
+            standardSubcategoryMappings[subcategoryCode]
+          ) {
             alphaCode = standardSubcategoryMappings[subcategoryCode];
-            console.log(`Using standard subcategory mapping for numeric code ${subcategoryCode} -> ${alphaCode}`);
+            console.log(
+              `Using standard subcategory mapping for numeric code ${subcategoryCode} -> ${alphaCode}`
+            );
           }
           // Generate from name as last resort
           else if (/^\d+$/.test(subcategoryCode) && subcategory.name) {
             const nameParts = subcategory.name.split(/[\s_-]/);
             if (nameParts.length >= 3) {
               // Use first letter of each of the first 3 parts
-              alphaCode = (nameParts[0][0] + nameParts[1][0] + nameParts[2][0]).toUpperCase();
+              alphaCode = (
+                nameParts[0][0] +
+                nameParts[1][0] +
+                nameParts[2][0]
+              ).toUpperCase();
             } else if (nameParts.length === 2) {
               // Use first two letters of first part + first letter of second part
-              alphaCode = (nameParts[0].substring(0, 2) + nameParts[1][0]).toUpperCase();
+              alphaCode = (
+                nameParts[0].substring(0, 2) + nameParts[1][0]
+              ).toUpperCase();
             } else if (subcategory.name.length >= 3) {
               // Use first 3 letters of the name
               alphaCode = subcategory.name.substring(0, 3).toUpperCase();
             }
-            console.log(`Generated alphabetic code ${alphaCode} for numeric subcategory ${subcategoryCode} as last resort`);
+            console.log(
+              `Generated alphabetic code ${alphaCode} for numeric subcategory ${subcategoryCode} as last resort`
+            );
           }
         }
       }
@@ -513,7 +565,10 @@ class TaxonomyService {
     this.subcategoriesCache.set(cacheKey, subcategories);
 
     // For S.POP and S.001, cache under both keys to ensure consistency
-    if (layerCode === 'S' && (normalizedCategoryCode === 'POP' || categoryCode === '001')) {
+    if (
+      layerCode === 'S' &&
+      (normalizedCategoryCode === 'POP' || categoryCode === '001')
+    ) {
       this.subcategoriesCache.set(`${layerCode}.POP`, subcategories);
       this.subcategoriesCache.set(`${layerCode}.001`, subcategories);
     }
@@ -547,9 +602,15 @@ class TaxonomyService {
       }
 
       // Debug logging for important categories
-      if (layerCode === 'W' && (categoryCode === 'BCH' || categoryCode === '003')) {
+      if (
+        layerCode === 'W' &&
+        (categoryCode === 'BCH' || categoryCode === '003')
+      ) {
         console.log(`Looking up category code ${categoryCode} in World layer`);
-        console.log('Available category codes:', Object.keys(layer.categories).join(', '));
+        console.log(
+          'Available category codes:',
+          Object.keys(layer.categories).join(', ')
+        );
       }
 
       // Handle special case for S.001/S.POP combinations
@@ -565,23 +626,31 @@ class TaxonomyService {
       // If not found and we're looking for POP, try 001
       if (!category && layerCode === 'S' && normalizedCategoryCode === 'POP') {
         category = layer.categories['001'];
-        console.log('Falling back to numeric category code 001 for POP in layer S');
+        console.log(
+          'Falling back to numeric category code 001 for POP in layer S'
+        );
       }
 
       // If not found and we're looking for 001, try POP
       if (!category && layerCode === 'S' && normalizedCategoryCode === '001') {
         category = layer.categories['POP'];
-        console.log('Falling back to alphabetic category code POP for 001 in layer S');
+        console.log(
+          'Falling back to alphabetic category code POP for 001 in layer S'
+        );
       }
 
       // For numeric W layer codes, also normalize between code 003 and BCH
       if (!category && layerCode === 'W') {
         if (categoryCode === 'BCH') {
           category = layer.categories['003'];
-          console.log('Looking up Beach (BCH) by numeric code 003 in World layer');
+          console.log(
+            'Looking up Beach (BCH) by numeric code 003 in World layer'
+          );
         } else if (categoryCode === '003') {
           category = layer.categories['BCH'];
-          console.log('Looking up numeric code 003 by Beach (BCH) in World layer');
+          console.log(
+            'Looking up numeric code 003 by Beach (BCH) in World layer'
+          );
         }
       }
 
@@ -589,50 +658,66 @@ class TaxonomyService {
       // try to find it by comparing names case-insensitively
       if (!category && isNaN(Number(categoryCode)) && categoryCode !== '001') {
         // Try to match by code case-insensitively
-        const matchByCode = Object.entries(layer.categories).find(([code]) =>
-          code.toLowerCase() === categoryCode.toLowerCase()
+        const matchByCode = Object.entries(layer.categories).find(
+          ([code]) => code.toLowerCase() === categoryCode.toLowerCase()
         );
 
         if (matchByCode) {
-          console.log(`Found category with code matching "${categoryCode}" (case-insensitive) in layer ${layerCode}`);
+          console.log(
+            `Found category with code matching "${categoryCode}" (case-insensitive) in layer ${layerCode}`
+          );
           return matchByCode[1];
         }
 
         // Try to match by exact name
         const categoryValues = Object.values(layer.categories);
-        const matchByExactName = categoryValues.find(c => c.name === categoryCode);
+        const matchByExactName = categoryValues.find(
+          c => c.name === categoryCode
+        );
 
         if (matchByExactName) {
-          console.log(`Found category with exact name "${categoryCode}" in layer ${layerCode}`);
+          console.log(
+            `Found category with exact name "${categoryCode}" in layer ${layerCode}`
+          );
           return matchByExactName;
         }
 
         // Try to match by case-insensitive name comparison
-        const matchByName = categoryValues.find(c =>
-          c.name.toLowerCase() === categoryCode.toLowerCase() ||
-          c.name.toLowerCase().replace(/[_\s-]/g, '') === categoryCode.toLowerCase().replace(/[_\s-]/g, '')
+        const matchByName = categoryValues.find(
+          c =>
+            c.name.toLowerCase() === categoryCode.toLowerCase() ||
+            c.name.toLowerCase().replace(/[_\s-]/g, '') ===
+              categoryCode.toLowerCase().replace(/[_\s-]/g, '')
         );
 
         if (matchByName) {
-          console.log(`Found category with name matching "${categoryCode}" in layer ${layerCode}`);
+          console.log(
+            `Found category with name matching "${categoryCode}" in layer ${layerCode}`
+          );
           return matchByName;
         }
 
         // Try to match by checking if the code is contained in the name
-        const matchByPartialName = categoryValues.find(c =>
-          c.name.toLowerCase().includes(categoryCode.toLowerCase()) ||
-          categoryCode.toLowerCase().includes(c.name.toLowerCase())
+        const matchByPartialName = categoryValues.find(
+          c =>
+            c.name.toLowerCase().includes(categoryCode.toLowerCase()) ||
+            categoryCode.toLowerCase().includes(c.name.toLowerCase())
         );
 
         if (matchByPartialName) {
-          console.log(`Found category with name partially matching "${categoryCode}" in layer ${layerCode}`);
+          console.log(
+            `Found category with name partially matching "${categoryCode}" in layer ${layerCode}`
+          );
           return matchByPartialName;
         }
       }
 
       return category;
     } catch (error) {
-      console.error(`Error in getCategory for ${layerCode}.${categoryCode}:`, error);
+      console.error(
+        `Error in getCategory for ${layerCode}.${categoryCode}:`,
+        error
+      );
       return null;
     }
   }
@@ -653,12 +738,20 @@ class TaxonomyService {
       this.checkInitialized();
 
       // Special case for S.POP.HPM / S.001.HPM - hardcoded fallback
-      if (layerCode === 'S' && (categoryCode === 'POP' || categoryCode === '001') && subcategoryCode === 'HPM') {
+      if (
+        layerCode === 'S' &&
+        (categoryCode === 'POP' || categoryCode === '001') &&
+        subcategoryCode === 'HPM'
+      ) {
         console.log('Special handling for S.POP.HPM / S.001.HPM subcategory');
 
         // First try direct lookup
         const category = this.getCategory(layerCode, categoryCode);
-        if (category && category.subcategories && category.subcategories[subcategoryCode]) {
+        if (
+          category &&
+          category.subcategories &&
+          category.subcategories[subcategoryCode]
+        ) {
           const subcategory = category.subcategories[subcategoryCode];
           return {
             ...subcategory,
@@ -668,11 +761,21 @@ class TaxonomyService {
 
         // If direct lookup fails, try alternative category code
         const alternativeCategoryCode = categoryCode === 'POP' ? '001' : 'POP';
-        console.log(`Trying alternative category code ${alternativeCategoryCode} for HPM lookup`);
+        console.log(
+          `Trying alternative category code ${alternativeCategoryCode} for HPM lookup`
+        );
 
-        const alternativeCategory = this.getCategory(layerCode, alternativeCategoryCode);
-        if (alternativeCategory && alternativeCategory.subcategories && alternativeCategory.subcategories[subcategoryCode]) {
-          const subcategory = alternativeCategory.subcategories[subcategoryCode];
+        const alternativeCategory = this.getCategory(
+          layerCode,
+          alternativeCategoryCode
+        );
+        if (
+          alternativeCategory &&
+          alternativeCategory.subcategories &&
+          alternativeCategory.subcategories[subcategoryCode]
+        ) {
+          const subcategory =
+            alternativeCategory.subcategories[subcategoryCode];
           return {
             ...subcategory,
             id: `${layerCode}.${categoryCode}.${subcategory.code}`, // Keep original category code for consistent ID
@@ -680,12 +783,14 @@ class TaxonomyService {
         }
 
         // If both lookups fail, return hardcoded S.POP.HPM / S.001.HPM mapping
-        console.log('Using hardcoded fallback for S.POP.HPM / S.001.HPM subcategory');
+        console.log(
+          'Using hardcoded fallback for S.POP.HPM / S.001.HPM subcategory'
+        );
         return {
           id: `${layerCode}.${categoryCode === 'POP' ? 'POP' : '001'}.HPM`,
           name: 'Hipster_Male',
           code: 'HPM',
-          numericCode: 7
+          numericCode: 7,
         };
       }
 
@@ -697,7 +802,9 @@ class TaxonomyService {
 
       const category = this.getCategory(layerCode, normalizedCategoryCode);
       if (!category || !category.subcategories) {
-        console.warn(`Category ${categoryCode} (normalized: ${normalizedCategoryCode}) not found or has no subcategories in layer ${layerCode}`);
+        console.warn(
+          `Category ${categoryCode} (normalized: ${normalizedCategoryCode}) not found or has no subcategories in layer ${layerCode}`
+        );
         return null;
       }
 
@@ -719,7 +826,9 @@ class TaxonomyService {
       );
 
       if (caseInsensitiveMatch) {
-        console.log(`Found subcategory with case-insensitive code match: ${caseInsensitiveMatch}`);
+        console.log(
+          `Found subcategory with case-insensitive code match: ${caseInsensitiveMatch}`
+        );
         const subcategory = category.subcategories[caseInsensitiveMatch];
         return {
           ...subcategory,
@@ -729,13 +838,17 @@ class TaxonomyService {
 
       // 2. Try matching by subcategory name
       const subcategoryValues = Object.values(category.subcategories);
-      const matchByName = subcategoryValues.find(sc =>
-        sc.name.toLowerCase() === subcategoryCode.toLowerCase() ||
-        sc.name.toLowerCase().replace(/[_\s-]/g, '') === subcategoryCode.toLowerCase().replace(/[_\s-]/g, '')
+      const matchByName = subcategoryValues.find(
+        sc =>
+          sc.name.toLowerCase() === subcategoryCode.toLowerCase() ||
+          sc.name.toLowerCase().replace(/[_\s-]/g, '') ===
+            subcategoryCode.toLowerCase().replace(/[_\s-]/g, '')
       );
 
       if (matchByName) {
-        console.log(`Found subcategory with name matching "${subcategoryCode}" in ${layerCode}.${categoryCode}`);
+        console.log(
+          `Found subcategory with name matching "${subcategoryCode}" in ${layerCode}.${categoryCode}`
+        );
         return {
           ...matchByName,
           id: `${layerCode}.${category.code}.${matchByName.code}`,
@@ -743,13 +856,16 @@ class TaxonomyService {
       }
 
       // 3. Try partial name matching (helpful for cases like "Hipster" vs "Hipster_Male")
-      const matchByPartialName = subcategoryValues.find(sc =>
-        sc.name.toLowerCase().includes(subcategoryCode.toLowerCase()) ||
-        subcategoryCode.toLowerCase().includes(sc.name.toLowerCase())
+      const matchByPartialName = subcategoryValues.find(
+        sc =>
+          sc.name.toLowerCase().includes(subcategoryCode.toLowerCase()) ||
+          subcategoryCode.toLowerCase().includes(sc.name.toLowerCase())
       );
 
       if (matchByPartialName) {
-        console.log(`Found subcategory with name partially matching "${subcategoryCode}" in ${layerCode}.${categoryCode}`);
+        console.log(
+          `Found subcategory with name partially matching "${subcategoryCode}" in ${layerCode}.${categoryCode}`
+        );
         return {
           ...matchByPartialName,
           id: `${layerCode}.${category.code}.${matchByPartialName.code}`,
@@ -757,10 +873,15 @@ class TaxonomyService {
       }
 
       // If all lookups fail, return null
-      console.warn(`Subcategory ${subcategoryCode} not found in ${layerCode}.${categoryCode}`);
+      console.warn(
+        `Subcategory ${subcategoryCode} not found in ${layerCode}.${categoryCode}`
+      );
       return null;
     } catch (error) {
-      console.error(`Error in getSubcategory for ${layerCode}.${categoryCode}.${subcategoryCode}:`, error);
+      console.error(
+        `Error in getSubcategory for ${layerCode}.${categoryCode}.${subcategoryCode}:`,
+        error
+      );
       return null;
     }
   }
@@ -800,8 +921,14 @@ class TaxonomyService {
       this.checkInitialized();
 
       // IMPORTANT FIX: Handle special case for HPM subcategory in Stars layer
-      if (layerCode === 'S' && (categoryCode === 'POP' || categoryCode === '001') && subcategoryCode === 'HPM') {
-        console.log('Using known mapping for HPM subcategory in Stars layer: 7');
+      if (
+        layerCode === 'S' &&
+        (categoryCode === 'POP' || categoryCode === '001') &&
+        subcategoryCode === 'HPM'
+      ) {
+        console.log(
+          'Using known mapping for HPM subcategory in Stars layer: 7'
+        );
         return 7; // Known mapping for HPM in Stars layer
       }
 
@@ -812,19 +939,30 @@ class TaxonomyService {
       }
 
       // Try to get the subcategory directly
-      const subcategory = this.getSubcategory(layerCode, normalizedCategoryCode, subcategoryCode);
+      const subcategory = this.getSubcategory(
+        layerCode,
+        normalizedCategoryCode,
+        subcategoryCode
+      );
       if (subcategory && subcategory.numericCode !== undefined) {
-        console.log(`Found numeric code ${subcategory.numericCode} for ${layerCode}.${normalizedCategoryCode}.${subcategoryCode} using direct lookup`);
+        console.log(
+          `Found numeric code ${subcategory.numericCode} for ${layerCode}.${normalizedCategoryCode}.${subcategoryCode} using direct lookup`
+        );
         return subcategory.numericCode;
       }
 
       // If direct lookup failed, try the legacy approach with subcategories list
-      const subcategories = this.getSubcategories(layerCode, normalizedCategoryCode);
+      const subcategories = this.getSubcategories(
+        layerCode,
+        normalizedCategoryCode
+      );
 
       // First try exact match
       const exactMatch = subcategories.find(sc => sc.code === subcategoryCode);
       if (exactMatch) {
-        console.log(`Found numeric code ${exactMatch.numericCode} for ${layerCode}.${normalizedCategoryCode}.${subcategoryCode}`);
+        console.log(
+          `Found numeric code ${exactMatch.numericCode} for ${layerCode}.${normalizedCategoryCode}.${subcategoryCode}`
+        );
         return exactMatch.numericCode || 0;
       }
 
@@ -833,53 +971,71 @@ class TaxonomyService {
         sc => sc.code.toLowerCase() === subcategoryCode.toLowerCase()
       );
       if (caseInsensitiveMatch) {
-        console.log(`Found numeric code ${caseInsensitiveMatch.numericCode} for ${layerCode}.${normalizedCategoryCode}.${subcategoryCode} using case-insensitive matching`);
+        console.log(
+          `Found numeric code ${caseInsensitiveMatch.numericCode} for ${layerCode}.${normalizedCategoryCode}.${subcategoryCode} using case-insensitive matching`
+        );
         return caseInsensitiveMatch.numericCode || 0;
       }
 
       // Try name matching
       const nameMatch = subcategories.find(
-        sc => sc.name.toLowerCase() === subcategoryCode.toLowerCase() ||
-              sc.name.toLowerCase().replace(/[_\s-]/g, '') === subcategoryCode.toLowerCase().replace(/[_\s-]/g, '')
+        sc =>
+          sc.name.toLowerCase() === subcategoryCode.toLowerCase() ||
+          sc.name.toLowerCase().replace(/[_\s-]/g, '') ===
+            subcategoryCode.toLowerCase().replace(/[_\s-]/g, '')
       );
       if (nameMatch) {
-        console.log(`Found numeric code ${nameMatch.numericCode} for ${layerCode}.${normalizedCategoryCode}.${subcategoryCode} by matching name`);
+        console.log(
+          `Found numeric code ${nameMatch.numericCode} for ${layerCode}.${normalizedCategoryCode}.${subcategoryCode} by matching name`
+        );
         return nameMatch.numericCode || 0;
       }
 
       // Try partial name matching
       const partialNameMatch = subcategories.find(
-        sc => sc.name.toLowerCase().includes(subcategoryCode.toLowerCase()) ||
-              subcategoryCode.toLowerCase().includes(sc.name.toLowerCase())
+        sc =>
+          sc.name.toLowerCase().includes(subcategoryCode.toLowerCase()) ||
+          subcategoryCode.toLowerCase().includes(sc.name.toLowerCase())
       );
       if (partialNameMatch) {
-        console.log(`Found numeric code ${partialNameMatch.numericCode} for ${layerCode}.${normalizedCategoryCode}.${subcategoryCode} by partial name matching`);
+        console.log(
+          `Found numeric code ${partialNameMatch.numericCode} for ${layerCode}.${normalizedCategoryCode}.${subcategoryCode} by partial name matching`
+        );
         return partialNameMatch.numericCode || 0;
       }
 
       // Last resort: if the subcategory code is numeric, try to use it directly
       if (/^\d+$/.test(subcategoryCode)) {
         const numericValue = parseInt(subcategoryCode, 10);
-        console.log(`Using numeric subcategory code ${numericValue} directly as fallback`);
+        console.log(
+          `Using numeric subcategory code ${numericValue} directly as fallback`
+        );
         return numericValue;
       }
 
-      console.warn(`Could not find subcategory with code ${subcategoryCode} in ${layerCode}.${normalizedCategoryCode}`);
+      console.warn(
+        `Could not find subcategory with code ${subcategoryCode} in ${layerCode}.${normalizedCategoryCode}`
+      );
 
       // Last resort fallback - generate a hash-based numeric code from the string
       // This ensures we at least return something consistent even if not found
       let hashCode = 0;
       for (let i = 0; i < subcategoryCode.length; i++) {
-        hashCode = ((hashCode << 5) - hashCode) + subcategoryCode.charCodeAt(i);
+        hashCode = (hashCode << 5) - hashCode + subcategoryCode.charCodeAt(i);
         hashCode = hashCode & hashCode; // Convert to 32bit integer
       }
       // Ensure it's positive and reasonably sized (1-100 range)
       const fallbackCode = (Math.abs(hashCode) % 100) + 1;
-      console.warn(`Generated fallback numeric code ${fallbackCode} for unknown subcategory ${subcategoryCode}`);
+      console.warn(
+        `Generated fallback numeric code ${fallbackCode} for unknown subcategory ${subcategoryCode}`
+      );
 
       return fallbackCode;
     } catch (error) {
-      console.error(`Error in getSubcategoryNumericCode for ${layerCode}.${categoryCode}.${subcategoryCode}:`, error);
+      console.error(
+        `Error in getSubcategoryNumericCode for ${layerCode}.${categoryCode}.${subcategoryCode}:`,
+        error
+      );
       return -1;
     }
   }
@@ -1092,21 +1248,27 @@ class TaxonomyService {
     // IMPORTANT: Fix for category code format consistency
     // Ensure we're using alphabetic codes for the canonical path
     // If numeric code is provided for category (like "001"), convert to alphabetic (like "POP")
-    let categoryKey = category || "DEFAULT";
-    let subcategoryKey = subcategory || "DEFAULT";
+    let categoryKey = category || 'DEFAULT';
+    let subcategoryKey = subcategory || 'DEFAULT';
 
     // Check if category is in numeric format (e.g., "001") and convert to alphabetic (e.g., "POP")
     if (categoryKey && /^\d+$/.test(categoryKey)) {
       // For Stars layer with category code 001, use "POP"
       if (layerCode === 'S' && categoryKey === '001') {
         categoryKey = 'POP';
-        console.log(`Normalized category code from ${category} to ${categoryKey} for sequential numbering`);
+        console.log(
+          `Normalized category code from ${category} to ${categoryKey} for sequential numbering`
+        );
       }
     }
 
     // IMPORTANT FIX: Handle special case for HPM subcategory consistently
     // Always use the same path (S.POP.HPM) for sequential numbering regardless of how it was specified
-    if (layerCode === 'S' && (categoryKey === 'POP' || categoryKey === '001') && subcategoryKey === 'HPM') {
+    if (
+      layerCode === 'S' &&
+      (categoryKey === 'POP' || categoryKey === '001') &&
+      subcategoryKey === 'HPM'
+    ) {
       categoryKey = 'POP'; // Always use POP for consistency
       console.log(`Using normalized S.POP.HPM path for sequential numbering`);
     }
@@ -1123,7 +1285,11 @@ class TaxonomyService {
     // In a real implementation, this would query the API to get the actual next available number
 
     // Special case handling for Stars layer with HPM subcategory
-    if (layerCode === 'S' && categoryKey === 'POP' && subcategoryKey === 'HPM') {
+    if (
+      layerCode === 'S' &&
+      categoryKey === 'POP' &&
+      subcategoryKey === 'HPM'
+    ) {
       // Use a known starting point for S.POP.HPM to ensure consistency
       if (!this.sequentialCounters.has(taxonomyPath)) {
         // Start at a higher number for demonstration purposes (showing it's special-cased)
@@ -1134,14 +1300,16 @@ class TaxonomyService {
 
     // For all other paths, use a simple incrementing counter
     // but don't increment on every call (only once per component lifecycle)
-    const counter = this.sequentialCounters.has(taxonomyPath) ?
-                   this.sequentialCounters.get(taxonomyPath)! :
-                   this.initializePathCounter(taxonomyPath);
+    const counter = this.sequentialCounters.has(taxonomyPath)
+      ? this.sequentialCounters.get(taxonomyPath)!
+      : this.initializePathCounter(taxonomyPath);
 
     // Format the counter as a 3-digit string (001, 002, etc.)
     const sequential = String(counter).padStart(3, '0');
 
-    console.log(`Generated sequential number: ${sequential} for path: ${taxonomyPath}`);
+    console.log(
+      `Generated sequential number: ${sequential} for path: ${taxonomyPath}`
+    );
 
     return { sequential };
   }
@@ -1155,7 +1323,7 @@ class TaxonomyService {
     this.sequentialCounters.set(taxonomyPath, initialCounter);
     return initialCounter;
   }
-  
+
   // A map to store counters for different taxonomy paths
   private sequentialCounters: Map<string, number> = new Map();
 
@@ -1173,12 +1341,16 @@ class TaxonomyService {
     let normalizedAddress = nnaAddress;
     if (nnaAddress.startsWith('S.001.HPM.')) {
       normalizedAddress = nnaAddress.replace('S.001.HPM.', 'S.POP.HPM.');
-      console.log(`Normalized NNA address from ${nnaAddress} to ${normalizedAddress} for existence check`);
+      console.log(
+        `Normalized NNA address from ${nnaAddress} to ${normalizedAddress} for existence check`
+      );
     }
     // If using S.POP.HPM.*, convert to S.001.HPM.* for consistency
     else if (nnaAddress.startsWith('S.POP.HPM.')) {
       normalizedAddress = nnaAddress.replace('S.POP.HPM.', 'S.001.HPM.');
-      console.log(`Normalized NNA address from ${nnaAddress} to ${normalizedAddress} for existence check`);
+      console.log(
+        `Normalized NNA address from ${nnaAddress} to ${normalizedAddress} for existence check`
+      );
     }
 
     // Mock set of existing NNA addresses for testing
@@ -1189,18 +1361,22 @@ class TaxonomyService {
       'L.FAS.DRS.001',
       'G.001.001.001',
       'S.001.001.001',
-      'S.001.HPM.001',  // Added HPM address
-      'S.POP.HPM.001',  // Both versions for testing
+      'S.001.HPM.001', // Added HPM address
+      'S.POP.HPM.001', // Both versions for testing
     ];
 
     // Simulate API latency
     await new Promise(resolve => setTimeout(resolve, 300));
 
     // Check both the original and normalized address
-    const exists = existingAddresses.includes(nnaAddress) || existingAddresses.includes(normalizedAddress);
+    const exists =
+      existingAddresses.includes(nnaAddress) ||
+      existingAddresses.includes(normalizedAddress);
 
     if (exists) {
-      console.log(`NNA address ${nnaAddress} (normalized: ${normalizedAddress}) exists`);
+      console.log(
+        `NNA address ${nnaAddress} (normalized: ${normalizedAddress}) exists`
+      );
     }
 
     return exists;
@@ -1227,7 +1403,9 @@ class TaxonomyService {
       const layer = this.getLayer(layerCode);
       if (!layer) {
         // Fallback using the code directly when layer info is not found
-        console.warn(`Could not find layer "${layerCode}" in taxonomy data, using code directly`);
+        console.warn(
+          `Could not find layer "${layerCode}" in taxonomy data, using code directly`
+        );
         return layerCode;
       }
 
@@ -1242,7 +1420,9 @@ class TaxonomyService {
       let normalizedCategoryCode = categoryCode;
       if (layerCode === 'S' && categoryCode === '001') {
         normalizedCategoryCode = 'POP';
-        console.log('Normalizing category code 001 to POP for taxonomy path display');
+        console.log(
+          'Normalizing category code 001 to POP for taxonomy path display'
+        );
       }
 
       // Try to get category with normalized code first
@@ -1255,7 +1435,9 @@ class TaxonomyService {
 
       // Add category to path - use actual name if found, or code as fallback
       if (!category) {
-        console.warn(`Could not find category "${categoryCode}" in layer "${layerCode}" for taxonomy path, using code directly`);
+        console.warn(
+          `Could not find category "${categoryCode}" in layer "${layerCode}" for taxonomy path, using code directly`
+        );
         path += ` > ${categoryCode}`;
       } else {
         path += ` > ${category.name}`;
@@ -1268,35 +1450,50 @@ class TaxonomyService {
 
       // Special handling for HPM subcategory in Stars layer
       let subcategory = null;
-      if (layerCode === 'S' && (categoryCode === 'POP' || categoryCode === '001') && subcategoryCode === 'HPM') {
+      if (
+        layerCode === 'S' &&
+        (categoryCode === 'POP' || categoryCode === '001') &&
+        subcategoryCode === 'HPM'
+      ) {
         console.log('Special handling for HPM subcategory in taxonomy path');
         // Try both category codes
-        subcategory = this.getSubcategory(layerCode, 'POP', subcategoryCode) ||
-                     this.getSubcategory(layerCode, '001', subcategoryCode);
+        subcategory =
+          this.getSubcategory(layerCode, 'POP', subcategoryCode) ||
+          this.getSubcategory(layerCode, '001', subcategoryCode);
 
         // If still not found, create a hardcoded fallback for S.POP.HPM
         if (!subcategory) {
           subcategory = {
             id: `${layerCode}.${normalizedCategoryCode}.${subcategoryCode}`,
-            name: "Hipster_Male", // Known name for HPM
+            name: 'Hipster_Male', // Known name for HPM
             code: subcategoryCode,
-            numericCode: 7 // Known numeric code
+            numericCode: 7, // Known numeric code
           };
           console.log('Using hardcoded fallback for S.POP.HPM subcategory');
         }
       } else {
         // Try with normalized category code first
-        subcategory = this.getSubcategory(layerCode, normalizedCategoryCode, subcategoryCode);
+        subcategory = this.getSubcategory(
+          layerCode,
+          normalizedCategoryCode,
+          subcategoryCode
+        );
 
         // If not found with normalized code, try original code
         if (!subcategory && normalizedCategoryCode !== categoryCode) {
-          subcategory = this.getSubcategory(layerCode, categoryCode, subcategoryCode);
+          subcategory = this.getSubcategory(
+            layerCode,
+            categoryCode,
+            subcategoryCode
+          );
         }
       }
 
       // Add subcategory to path - use actual name if found, or code as fallback
       if (!subcategory) {
-        console.warn(`Could not find subcategory "${subcategoryCode}" for "${layerCode}.${categoryCode}" in taxonomy path, using code directly`);
+        console.warn(
+          `Could not find subcategory "${subcategoryCode}" for "${layerCode}.${categoryCode}" in taxonomy path, using code directly`
+        );
 
         // For numeric subcategory codes, try to make them more readable
         if (/^\d+$/.test(subcategoryCode)) {
@@ -1305,7 +1502,8 @@ class TaxonomyService {
           // Format the subcategory code to be more readable - replace underscores with spaces, capitalize words
           let readableCode = subcategoryCode.replace(/_/g, ' ');
           readableCode = readableCode.replace(/([A-Z])/g, ' $1').trim(); // Add spaces before capitals
-          readableCode = readableCode.charAt(0).toUpperCase() + readableCode.slice(1); // Capitalize first letter
+          readableCode =
+            readableCode.charAt(0).toUpperCase() + readableCode.slice(1); // Capitalize first letter
           path += ` > ${readableCode}`;
         }
       } else {
@@ -1322,11 +1520,11 @@ class TaxonomyService {
       // Format layer code
       if (layerCode) {
         const layerNames: Record<string, string> = {
-          'G': 'Songs',
-          'S': 'Stars',
-          'L': 'Looks',
-          'M': 'Moves',
-          'W': 'Worlds'
+          G: 'Songs',
+          S: 'Stars',
+          L: 'Looks',
+          M: 'Moves',
+          W: 'Worlds',
         };
         parts.push(layerNames[layerCode] || layerCode);
       }
@@ -1337,7 +1535,9 @@ class TaxonomyService {
         if (!/^\d+$/.test(categoryCode)) {
           let readableCategory = categoryCode.replace(/_/g, ' ');
           readableCategory = readableCategory.replace(/([A-Z])/g, ' $1').trim();
-          readableCategory = readableCategory.charAt(0).toUpperCase() + readableCategory.slice(1);
+          readableCategory =
+            readableCategory.charAt(0).toUpperCase() +
+            readableCategory.slice(1);
           parts.push(readableCategory);
         } else {
           parts.push(`Category ${categoryCode}`);
@@ -1349,8 +1549,12 @@ class TaxonomyService {
         // Make it more readable if it's an alphabetic code
         if (!/^\d+$/.test(subcategoryCode)) {
           let readableSubcategory = subcategoryCode.replace(/_/g, ' ');
-          readableSubcategory = readableSubcategory.replace(/([A-Z])/g, ' $1').trim();
-          readableSubcategory = readableSubcategory.charAt(0).toUpperCase() + readableSubcategory.slice(1);
+          readableSubcategory = readableSubcategory
+            .replace(/([A-Z])/g, ' $1')
+            .trim();
+          readableSubcategory =
+            readableSubcategory.charAt(0).toUpperCase() +
+            readableSubcategory.slice(1);
           parts.push(readableSubcategory);
         } else {
           parts.push(`Subcategory ${subcategoryCode}`);
