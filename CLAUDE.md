@@ -240,26 +240,26 @@ There are special case mappings that need special handling:
 
 ## Recent Fixes (May 21, 2025)
 
-### 11. HFN Format Fix on Success Page
+### 11. HFN Format Fix on Success Page (Revised)
 - Problem: The success page was displaying the HFN in an incorrect format: `S.HIP_HOP.BASE.001` instead of the expected `S.HIP.BAS.001`
 - Root Cause: 
   - When receiving data from the form, the category name `Hip_Hop` was passed directly to the formatter instead of its code `HIP`
   - The formatter was correctly uppercasing these values (`HIP_HOP`), but wasn't mapping them to their canonical codes
   - Error message: "Error converting HFN to MFA: Category not found: S.HIP_HOP"
 - Solution:
-  - Enhanced the `taxonomyFormatter.ts` utility to properly map display names to canonical codes
-  - Added specific handling for category display names with underscores (e.g., Hip_Hop → HIP)
-  - Added similar mapping for subcategory display names (e.g., Base → BAS)
-  - Improved the fallback mechanisms in both HFN→MFA and MFA→HFN conversion
-  - Enhanced error handling with multi-tier recovery strategies
+  - Revised the `taxonomyFormatter.ts` utility to use direct taxonomy lookups instead of custom mapping functions
+  - Added methods that directly look up canonical codes from the flattened taxonomy data
+  - Enhanced the HFN formatter to normalize input using these taxonomy lookups
+  - Improved error handling with direct fallbacks to taxonomy service data
+  - Maintained special case handling for known edge cases like "HIP_HOP" → "HIP" and "BASE" → "BAS"
 - Key Changes:
   - `/src/utils/taxonomyFormatter.ts`:
-    - Added new `formatCategory` function to map display names to canonical codes
-    - Added new `formatSubcategory` function with similar mapping capabilities
-    - Enhanced `convertHFNtoMFA` with better error handling and direct mappings
-    - Updated `convertMFAtoHFN` with similar improvements
-    - Added detailed logging for debugging format conversion issues
-  - Documented in `HFN_FORMAT_FIX.md`
+    - Added `lookupCategoryCode` method to get canonical category codes from taxonomy
+    - Added `lookupSubcategoryCode` method to get canonical subcategory codes
+    - Modified `formatHFN` to use these lookup methods for proper formatting
+    - Enhanced `convertHFNtoMFA` and `convertMFAtoHFN` with better taxonomy integration
+    - Added detailed logging to track format conversion issues
+  - Updated `HFN_FORMAT_FIX.md` to document the revised approach
 
 ## Current Status (May 21, 2025)
 
