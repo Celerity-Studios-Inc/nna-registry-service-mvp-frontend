@@ -337,6 +337,34 @@ There are special case mappings that need special handling:
 - Build now completes successfully with the subcategory grid layout improvements
 
 ### 14. Layer Switching Regression Fix (May 22, 2025)
+
+### 15. Disappearing Subcategory Cards Fix (May 22, 2025)
+- Problem: Selecting the BAS (Base) subcategory in the Star layer caused other subcategory cards to disappear
+- Root Causes:
+  - Race conditions in state updates during subcategory selection
+  - Insufficient state preservation mechanisms
+  - Inadequate fallback strategies when primary data sources failed
+  - Special handling required for the BAS subcategory due to its frequent use
+- Solution:
+  - Implemented comprehensive multi-tiered approach to subcategory data preservation:
+    1. Added snapshot mechanism to capture data before any state changes
+    2. Created guaranteed subcategory list from multiple sources
+    3. Enhanced local component state with multiple delayed updates
+    4. Improved session storage persistence for subcategory data
+    5. Added special case handling for Star layer BAS subcategory
+    6. Enhanced SubcategoriesGrid component with local item persistence
+    7. Improved CSS for better visibility of subcategory cards
+  - Key changes:
+    - `/src/components/asset/SimpleTaxonomySelectionV2.tsx`:
+      - Completely overhauled handleSubcategorySelect with snapshot and multi-tier approach
+      - Enhanced displaySubcategoriesData with 8 fallback tiers and better session storage
+      - Improved SubcategoriesGrid component with local state preservation
+    - `/src/styles/SimpleTaxonomySelection.css`:
+      - Enhanced z-index management for proper stacking
+      - Improved active state visibility with better shadows and outlines
+      - Fixed grid container properties to maintain visibility
+    - Created detailed documentation in `SUBCATEGORY_DISAPPEARANCE_FIX.md`
+- Results: Subcategory cards now remain visible throughout the selection process, even when selecting the BAS subcategory in the Star layer
 - Problem: When switching between layers (e.g., from Songs to Stars), the UI displayed categories from the previous layer
 - Root Cause: 
   - Race conditions in state updates during layer switching
@@ -370,15 +398,16 @@ There are special case mappings that need special handling:
 
 ## Current Status (May 22, 2025)
 
-With the latest fixes, we've addressed three of the most critical issues identified from previous testing:
+With the latest fixes, we've addressed four of the most critical issues identified from previous testing:
 
 1. ~~**Subcategory Grid Layout**: Subcategory cards still display vertically despite CSS fixes~~ (FIXED)
 2. ~~**HFN Format on Success Page**: The success page shows incorrect format~~ (FIXED)
 3. ~~**Build Issues**: TypeScript errors preventing successful builds~~ (FIXED)
-4. **Duplicate NNA Address Card**: Review/submit page (Step 4) shows two identical NNA address cards
-5. **Inconsistent Sequential Number Display**: The .000 suffix is shown inconsistently across steps
-6. **Next Button State Management**: The Next button doesn't properly update its state (active/inactive)
-7. **Slow File Upload UI Rendering**: Noticeable delay in UI rendering after file upload
+4. ~~**Disappearing Subcategory Cards**: Cards disappear after selecting BAS subcategory~~ (FIXED May 22, 2025)
+5. **Duplicate NNA Address Card**: Review/submit page (Step 4) shows two identical NNA address cards
+6. **Inconsistent Sequential Number Display**: The .000 suffix is shown inconsistently across steps
+7. **Next Button State Management**: The Next button doesn't properly update its state (active/inactive)
+8. **Slow File Upload UI Rendering**: Noticeable delay in UI rendering after file upload
 
 The remaining issues have been analyzed in `ONGOING_ISSUES_ANALYSIS.md` with detailed root causes:
 
@@ -390,11 +419,12 @@ The remaining issues have been analyzed in `ONGOING_ISSUES_ANALYSIS.md` with det
 1. ~~Fix the HFN and MFA format regression in the success screen~~ (COMPLETED)
 2. ~~Fix Subcategory Grid Layout to ensure cards display in a proper grid~~ (COMPLETED)
 3. ~~Fix TypeScript build errors for successful deployment~~ (COMPLETED)
-4. Remove the duplicate NNA address card in the Review/Submit step
-5. Implement consistent sequential number display throughout the application
-6. Fix Next button state management throughout the workflow
-7. Optimize file upload UI rendering performance
-8. Clean up excessive debugging logs after all functionality is confirmed working
+4. ~~Fix disappearing subcategory cards issue after BAS selection~~ (COMPLETED)
+5. Remove the duplicate NNA address card in the Review/Submit step
+6. Implement consistent sequential number display throughout the application
+7. Fix Next button state management throughout the workflow
+8. Optimize file upload UI rendering performance
+9. Clean up excessive debugging logs after all functionality is confirmed working
 
 ## Workflow Guidelines
 - Always get user validation BEFORE implementing changes
