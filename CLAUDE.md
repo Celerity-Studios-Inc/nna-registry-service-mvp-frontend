@@ -148,61 +148,6 @@ There are special case mappings that need special handling:
 
 - Verification: All layer switches now correctly display the appropriate categories without requiring Retry
 
-## Current State
-
-### Active Workflows
-- Only the main `ci-cd.yml` workflow is active and running
-- It builds and deploys to Vercel without running tests
-- Other workflows are disabled but preserved for future reference
-
-### Important Files Modified
-- `/src/services/simpleTaxonomyService.ts` - Enhanced with fallback mechanisms
-- `/src/components/debug/TaxonomyDebugger.tsx` - Fixed TypeScript errors
-- `/src/components/asset/SimpleTaxonomySelectionV2.tsx` - Added direct service integration and improved error handling
-- `/src/components/asset/LayerSelectorV2.tsx` - Fixed double-click event propagation
-- `/src/pages/RegisterAssetPage.tsx` - Updated event handlers and form state management
-- `/src/components/asset/ReviewSubmit.tsx` - Enhanced form validation display
-- `/src/components/common/FilePreview.tsx` - Improved file preview reliability
-- `/src/styles/SimpleTaxonomySelection.css` - Updated to use CSS Grid for better layout
-- `/.github/workflows/ci-cd.yml` - Maintained original version
-- `/.github/workflows/ci.yml.disabled` - Disabled CI workflow
-- `/.github/workflows/tests.yml.disabled` - Disabled Run Tests workflow
-- `/package.json` - Removed test:ci:skip script
-
-## Code Style Guidelines
-- TypeScript is required for all new code
-- Use functional components with React hooks
-- Imports order: React, external libs, internal components/utils
-- Formatting: Use Prettier with singleQuote, 2 space indentation, 80 char width
-- Use strong typing with explicit interfaces for props and state
-- Use Material UI (MUI) v6+ for UI components
-- Component naming: PascalCase for components, camelCase for variables/functions
-- Error handling: Use try/catch blocks for async operations
-- CSS: Use MUI's sx prop or styled components pattern
-- Follow React best practices for performance (useMemo, useCallback)
-
-## Recent Fixes (May 19, 2025)
-
-### 7. Form Validation and File Preview Issues - FIXED
-- Problem: Users encountered several issues in the asset registration workflow:
-  1. Form validation in Review & Submit step showed errors but didn't indicate what was missing
-  2. File preview not working correctly, especially for certain file types
-  3. Category and subcategory not displaying in Review step (showing "-")
-  4. Unable to complete asset registration due to these issues
-
-- Root Causes:
-  1. Form state not being properly persisted between steps
-  2. FilePreview component lacking robust error handling for different file types
-  3. Validation messages not providing clear guidance on what needs fixing
-  4. Performance issues causing slow UI response
-
-- Implemented Fixes:
-  1. Enhanced form state persistence for category and subcategory selection
-  2. Fixed FilePreview component to handle different file types and URLs properly
-  3. Improved form validation with clear error indicators in ReviewSubmit
-  4. Optimized UI responsiveness with performance improvements
-  - Key changes documented in `FORM_VALIDATION_FIX.md`
-
 ## Recent Fixes (May 20, 2025)
 
 ### 8. Subcategory Disappearance Permanent Fix
@@ -337,34 +282,6 @@ There are special case mappings that need special handling:
 - Build now completes successfully with the subcategory grid layout improvements
 
 ### 14. Layer Switching Regression Fix (May 22, 2025)
-
-### 15. Disappearing Subcategory Cards Fix (May 22, 2025)
-- Problem: Selecting the BAS (Base) subcategory in the Star layer caused other subcategory cards to disappear
-- Root Causes:
-  - Race conditions in state updates during subcategory selection
-  - Insufficient state preservation mechanisms
-  - Inadequate fallback strategies when primary data sources failed
-  - Special handling required for the BAS subcategory due to its frequent use
-- Solution:
-  - Implemented comprehensive multi-tiered approach to subcategory data preservation:
-    1. Added snapshot mechanism to capture data before any state changes
-    2. Created guaranteed subcategory list from multiple sources
-    3. Enhanced local component state with multiple delayed updates
-    4. Improved session storage persistence for subcategory data
-    5. Added special case handling for Star layer BAS subcategory
-    6. Enhanced SubcategoriesGrid component with local item persistence
-    7. Improved CSS for better visibility of subcategory cards
-  - Key changes:
-    - `/src/components/asset/SimpleTaxonomySelectionV2.tsx`:
-      - Completely overhauled handleSubcategorySelect with snapshot and multi-tier approach
-      - Enhanced displaySubcategoriesData with 8 fallback tiers and better session storage
-      - Improved SubcategoriesGrid component with local state preservation
-    - `/src/styles/SimpleTaxonomySelection.css`:
-      - Enhanced z-index management for proper stacking
-      - Improved active state visibility with better shadows and outlines
-      - Fixed grid container properties to maintain visibility
-    - Created detailed documentation in `SUBCATEGORY_DISAPPEARANCE_FIX.md`
-- Results: Subcategory cards now remain visible throughout the selection process, even when selecting the BAS subcategory in the Star layer
 - Problem: When switching between layers (e.g., from Songs to Stars), the UI displayed categories from the previous layer
 - Root Cause: 
   - Race conditions in state updates during layer switching
@@ -396,23 +313,84 @@ There are special case mappings that need special handling:
   - Created `/LAYER_SWITCHING_FIX.md` with detailed documentation
 - Results: Layer switching now reliably displays the correct categories for each layer without requiring retry or refreshes
 
+### 15. Disappearing Subcategory Cards Fix (May 22, 2025)
+- Problem: Selecting the BAS (Base) subcategory in the Star layer caused other subcategory cards to disappear
+- Root Causes:
+  - Race conditions in state updates during subcategory selection
+  - Insufficient state preservation mechanisms
+  - Inadequate fallback strategies when primary data sources failed
+  - Special handling required for the BAS subcategory due to its frequent use
+- Solution:
+  - Implemented comprehensive multi-tiered approach to subcategory data preservation:
+    1. Added snapshot mechanism to capture data before any state changes
+    2. Created guaranteed subcategory list from multiple sources
+    3. Enhanced local component state with multiple delayed updates
+    4. Improved session storage persistence for subcategory data
+    5. Added special case handling for Star layer BAS subcategory
+    6. Enhanced SubcategoriesGrid component with local item persistence
+    7. Improved CSS for better visibility of subcategory cards
+  - Key changes:
+    - `/src/components/asset/SimpleTaxonomySelectionV2.tsx`:
+      - Completely overhauled handleSubcategorySelect with snapshot and multi-tier approach
+      - Enhanced displaySubcategoriesData with 8 fallback tiers and better session storage
+      - Improved SubcategoriesGrid component with local state preservation
+    - `/src/styles/SimpleTaxonomySelection.css`:
+      - Enhanced z-index management for proper stacking
+      - Improved active state visibility with better shadows and outlines
+      - Fixed grid container properties to maintain visibility
+    - Created detailed documentation in `SUBCATEGORY_DISAPPEARANCE_FIX.md`
+- Results: Subcategory cards now remain visible throughout the selection process, even when selecting the BAS subcategory in the Star layer
+
+### 16. React Error #301 Fix (May 22, 2025)
+- Problem: Selecting the Pop category in the Star layer would result in React Error #301 with error message about updating unmounted components
+- Root Causes:
+  - Multiple layer switch events firing in rapid succession
+  - Race conditions during state updates
+  - Components attempting to update state after unmounting
+  - Lack of defensive error handling for taxonomy operations
+- Solution:
+  - Added comprehensive error handling system for taxonomy-related errors:
+    1. Implemented throttling for layer selection events (300ms cooldown)
+    2. Enhanced SubcategoriesGrid with unmount safety checks (isMountedRef)
+    3. Created TaxonomyErrorRecovery component for better UX during errors
+    4. Added global taxonomy error handler to prevent app crashes
+    5. Improved ErrorBoundary to support function fallbacks for better context
+    6. Added automatic recovery mechanisms with exponential backoff
+  - Key changes:
+    - `/src/pages/RegisterAssetPage.tsx`:
+      - Added throttling for layer selection to prevent rapid multiple events
+      - Enhanced error handling during layer switching
+    - `/src/components/asset/SimpleTaxonomySelectionV2.tsx`:
+      - Added isMountedRef to prevent setState after unmounting
+      - Enhanced SubcategoriesGrid with try/catch blocks for safe rendering
+      - Added defensive checks before any state updates
+    - `/src/components/TaxonomyErrorRecovery.tsx` (new):
+      - Created specialized component for handling taxonomy errors
+      - Implemented auto-retry functionality with countdown
+    - `/src/utils/taxonomyErrorRecovery.ts` (new):
+      - Added utility functions for taxonomy error recovery
+      - Created session storage cleanup functions
+      - Implemented global error handler for React Error #301
+    - `/src/components/ErrorBoundary.tsx`:
+      - Enhanced to support function fallbacks for better error context
+    - `/src/App.tsx`:
+      - Added global error handler setup in initialization
+    - Created detailed documentation in `TAXONOMY_SERVICE_ERROR_FIX.md`
+- Results: The application now properly handles errors during taxonomy loading, prevents React Error #301, and provides graceful recovery options to users
+
 ## Current Status (May 22, 2025)
 
-With the latest fixes, we've addressed four of the most critical issues identified from previous testing:
+With the latest fixes, we've addressed five of the most critical issues identified from previous testing:
 
 1. ~~**Subcategory Grid Layout**: Subcategory cards still display vertically despite CSS fixes~~ (FIXED)
 2. ~~**HFN Format on Success Page**: The success page shows incorrect format~~ (FIXED)
 3. ~~**Build Issues**: TypeScript errors preventing successful builds~~ (FIXED)
 4. ~~**Disappearing Subcategory Cards**: Cards disappear after selecting BAS subcategory~~ (FIXED May 22, 2025)
-5. **Duplicate NNA Address Card**: Review/submit page (Step 4) shows two identical NNA address cards
-6. **Inconsistent Sequential Number Display**: The .000 suffix is shown inconsistently across steps
-7. **Next Button State Management**: The Next button doesn't properly update its state (active/inactive)
-8. **Slow File Upload UI Rendering**: Noticeable delay in UI rendering after file upload
-
-The remaining issues have been analyzed in `ONGOING_ISSUES_ANALYSIS.md` with detailed root causes:
-
-1. The duplicate NNA address cards likely come from redundant rendering in ReviewSubmit.tsx
-2. The performance issues may be caused by inefficient rendering or excessive re-renders
+5. ~~**React Error #301**: Error when selecting Pop category in Star layer~~ (FIXED May 22, 2025)
+6. **Duplicate NNA Address Card**: Review/submit page (Step 4) shows two identical NNA address cards
+7. **Inconsistent Sequential Number Display**: The .000 suffix is shown inconsistently across steps
+8. **Next Button State Management**: The Next button doesn't properly update its state (active/inactive)
+9. **Slow File Upload UI Rendering**: Noticeable delay in UI rendering after file upload
 
 ## Next Steps
 
@@ -420,11 +398,40 @@ The remaining issues have been analyzed in `ONGOING_ISSUES_ANALYSIS.md` with det
 2. ~~Fix Subcategory Grid Layout to ensure cards display in a proper grid~~ (COMPLETED)
 3. ~~Fix TypeScript build errors for successful deployment~~ (COMPLETED)
 4. ~~Fix disappearing subcategory cards issue after BAS selection~~ (COMPLETED)
-5. Remove the duplicate NNA address card in the Review/Submit step
-6. Implement consistent sequential number display throughout the application
-7. Fix Next button state management throughout the workflow
-8. Optimize file upload UI rendering performance
-9. Clean up excessive debugging logs after all functionality is confirmed working
+5. ~~Fix React Error #301 during taxonomy loading~~ (COMPLETED)
+6. Remove the duplicate NNA address card in the Review/Submit step
+7. Implement consistent sequential number display throughout the application
+8. Fix Next button state management throughout the workflow
+9. Optimize file upload UI rendering performance
+10. Clean up excessive debugging logs after all functionality is confirmed working
+
+## Important Files Modified
+
+- `/src/services/simpleTaxonomyService.ts` - Enhanced with fallback mechanisms
+- `/src/components/debug/TaxonomyDebugger.tsx` - Fixed TypeScript errors
+- `/src/components/asset/SimpleTaxonomySelectionV2.tsx` - Added direct service integration, improved error handling, and unmount safety checks
+- `/src/components/asset/LayerSelectorV2.tsx` - Fixed double-click event propagation
+- `/src/pages/RegisterAssetPage.tsx` - Updated event handlers, form state management, and added throttling
+- `/src/components/asset/ReviewSubmit.tsx` - Enhanced form validation display
+- `/src/components/common/FilePreview.tsx` - Improved file preview reliability
+- `/src/styles/SimpleTaxonomySelection.css` - Updated to use CSS Grid for better layout
+- `/src/utils/taxonomyErrorRecovery.ts` - Added new utility for taxonomy error recovery
+- `/src/components/TaxonomyErrorRecovery.tsx` - Added new component for error handling
+- `/src/components/ErrorBoundary.tsx` - Enhanced to support function fallbacks
+- `/src/App.tsx` - Added global taxonomy error handler
+- `/src/components/AssetRegistrationWrapper.tsx` - Improved error handling
+
+## Code Style Guidelines
+- TypeScript is required for all new code
+- Use functional components with React hooks
+- Imports order: React, external libs, internal components/utils
+- Formatting: Use Prettier with singleQuote, 2 space indentation, 80 char width
+- Use strong typing with explicit interfaces for props and state
+- Use Material UI (MUI) v6+ for UI components
+- Component naming: PascalCase for components, camelCase for variables/functions
+- Error handling: Use try/catch blocks for async operations
+- CSS: Use MUI's sx prop or styled components pattern
+- Follow React best practices for performance (useMemo, useCallback)
 
 ## Workflow Guidelines
 - Always get user validation BEFORE implementing changes

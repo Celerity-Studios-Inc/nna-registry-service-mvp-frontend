@@ -333,7 +333,7 @@ const AssetRegistrationWrapper: React.FC = () => {
             </details>
           )}
         </div>
-      )
+      )}
     >
       {/* Provide taxonomy context to RegisterAssetPage */}
       <TaxonomyProvider options={{ autoLoad: false, showFeedback: true }}>
