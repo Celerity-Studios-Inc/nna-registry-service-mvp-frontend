@@ -439,6 +439,9 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
   // Debounce timer references
   const categoryDebounceRef = useRef<NodeJS.Timeout | null>(null);
   const subcategoryDebounceRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // CRITICAL FIX: Unique component ID for event listener tracking
+  const componentId = useRef(`tsx_${Math.random().toString(36).substring(2, 9)}`).current;
 
   // ENHANCED FIX: Add improved global event listeners for layer changes
   // This provides multiple layers of reliability for layer switching
@@ -701,9 +704,8 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
     };
 
     // Register event listeners
-    // CRITICAL FIX: We need to check for existing listeners to prevent duplicates
-    // Use a unique persistent ID for this component instance
-    const componentId = useRef(`tsx_${Math.random().toString(36).substring(2, 9)}`).current;
+    // CRITICAL FIX: Use the componentId defined outside this effect to track handlers
+    // (moved the useRef outside this effect to comply with React Hooks rules)
     
     // Only add the event listener if we don't already have one for this component
     if (!window.__layerChangeHandlers) {
