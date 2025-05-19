@@ -54,16 +54,18 @@ const LayerSelectorV2: React.FC<LayerSelectorV2Props> = ({
     console.log(`Sending layer double-click to parent: ${layer}, isDoubleClick=true`);
     onLayerSelect(layer, true);
 
-    // FIXED: Small delay before calling onLayerDoubleClick to ensure state updates first
+    // FIXED: Larger delay before calling onLayerDoubleClick to ensure state updates first
+    // Increased from 50ms to 100ms to ensure there's enough time for state propagation
     setTimeout(() => {
       // Also call the optional onLayerDoubleClick callback if provided
       if (onLayerDoubleClick) {
         console.log(`Calling onLayerDoubleClick for ${layer}`);
+        // Call the double-click handler which should now navigate to the next step
         onLayerDoubleClick(layer);
       } else {
         console.log(`No onLayerDoubleClick provided for ${layer}`);
       }
-    }, 50);
+    }, 100);
   }, [selectLayer, onLayerSelect, onLayerDoubleClick]);
   
   // Get layer name

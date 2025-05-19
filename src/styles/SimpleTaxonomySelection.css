@@ -52,11 +52,13 @@
 }
 
 .taxonomy-items {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); /* Slightly larger cards for better readability */
-  grid-auto-flow: row; /* Force grid items to flow in rows */
-  grid-auto-rows: auto; /* Let rows size automatically based on content */
-  gap: 12px; /* Increase gap for better visual separation */
+  display: grid !important; /* Force grid display */
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)) !important; /* Slightly smaller cards to fit more in a row */
+  grid-template-rows: auto !important; /* Define rows explicitly */
+  grid-auto-flow: row !important; /* Force items to flow in rows */
+  grid-auto-rows: auto !important; /* Let rows size automatically based on content */
+  grid-column-gap: 12px !important; /* Horizontal spacing */
+  grid-row-gap: 12px !important; /* Vertical spacing */
   padding: 15px;
   max-height: 400px; /* Increased max height for more visibility */
   overflow-y: auto;
@@ -241,7 +243,9 @@
 /* Responsive adjustments */
 @media (max-width: 767px) {
   .taxonomy-items {
-    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    grid-template-columns: repeat(2, 1fr) !important; /* Force 2 columns on mobile */
+    grid-column-gap: 8px !important; /* Reduced gap on mobile */
+    grid-row-gap: 8px !important;
   }
   
   .taxonomy-item {
@@ -255,6 +259,20 @@
   
   .taxonomy-item-name {
     font-size: 0.75rem;
+  }
+}
+
+/* Tablet sized screens */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .taxonomy-items {
+    grid-template-columns: repeat(3, 1fr) !important; /* Force 3 columns on tablets */
+  }
+}
+
+/* Larger screens */
+@media (min-width: 1024px) {
+  .taxonomy-items {
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)) !important;
   }
 }
 

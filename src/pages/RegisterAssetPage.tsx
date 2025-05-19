@@ -1112,10 +1112,13 @@ const RegisterAssetPage: React.FC = () => {
             }}
             onLayerDoubleClick={(layer) => {
               console.log(`RegisterAssetPage received layer double-click: ${layer}`);
-              // DO NOT advance to the next step automatically anymore
-              // This was causing Step 2 to be skipped
-              // Instead, handle the selection and let the normal flow continue
-              console.log(`Double-click handled without auto-advancing to preserve Step 2`);
+              // We need to properly handle double-click by advancing to the next step
+              // but only after ensuring state is properly updated
+              console.log(`Layer double-click detected, advancing to next step...`);
+              // Add a small delay to ensure the layer selection is fully processed
+              setTimeout(() => {
+                handleNext();
+              }, 50);
             }}
           />
         );

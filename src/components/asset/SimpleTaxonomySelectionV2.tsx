@@ -274,31 +274,31 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
       // Always call selectLayer to ensure context is updated
       selectLayer(layer);
       
+      // IMPORTANT: Always try loading categories directly first for immediate feedback
+      try {
+        console.log(`[INIT] Direct category load started for ${layer}`);
+        const directCategories = taxonomyService.getCategories(layer);
+        if (directCategories && directCategories.length > 0) {
+          console.log(`[INIT] Direct category load successful: ${directCategories.length} categories`);
+        }
+      } catch (error) {
+        console.error('[INIT] Error during direct category load:', error);
+      }
+      
+      // Always reload categories to ensure they appear without clicking "Retry"
+      reloadCategories();
+      console.log(`[INIT] Category reload requested for layer: ${layer}`);
+      
       // If this is the first time seeing this layer OR setup hasn't happened yet, do full initialization
       if (!initialSetupRef.current) {
         initialSetupRef.current = true;
         console.log(`[INIT] First time initialization for layer ${layer}`);
-        
-        // Start loading categories right away - don't wait for timer
-        try {
-          console.log(`[INIT] Direct category load started for ${layer}`);
-          const directCategories = taxonomyService.getCategories(layer);
-          if (directCategories && directCategories.length > 0) {
-            console.log(`[INIT] Direct category load successful: ${directCategories.length} categories`);
-          }
-        } catch (error) {
-          console.error('[INIT] Error during direct category load:', error);
-        }
-        
-        // Immediate callback path for faster loading and UI response
-        reloadCategories();
-        console.log(`[INIT] Category reload requested for layer: ${layer}`);
-        
-        // Scheduled second attempt with auto-retry for reliability 
+                
+        // Scheduled auto-retry for reliability 
         const timer = setTimeout(() => {
           console.log(`[INIT] Scheduled initialization running for ${layer}`);
           
-          // Also use context for consistency
+          // Double-check that categories are loaded
           if (categories.length === 0) {
             console.log(`[INIT] No categories loaded yet, trying again...`);
             reloadCategories();
