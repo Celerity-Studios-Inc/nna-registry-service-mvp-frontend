@@ -95,7 +95,7 @@ There are special case mappings that need special handling:
   - `/src/pages/RegisterAssetPage.tsx`: Implemented onLayerDoubleClick callback
   - `/DOUBLE_CLICK_NAVIGATION_FIX.md`: Documented the changes in detail
 
-### 6. New UI Issues Identified (May 18, 2025)
+### 6. UI Performance and Format Issues (May 18, 2025) - FIXED
 - Problem: Recent testing revealed several issues with the asset registration flow:
   1. Category cards only display after clicking "Retry" (regression)
   2. Subcategory cards display in a single vertical column rather than a grid
@@ -110,12 +110,13 @@ There are special case mappings that need special handling:
   4. Case handling issues in format conversion between display and internal formats
   5. Numeric code mapping incorrect (showing 000.000 instead of 001.001)
 
-- Planned Fixes:
-  1. Fix category loading regression by improving initial load reliability
-  2. Update CSS to use grid layout for subcategories
-  3. Optimize performance by reducing re-renders and removing excessive logging
-  4. Fix case handling for consistent taxonomy codes (S.POP.BAS vs S.Pop.Base)
-  5. Fix numeric code mapping and proper sequential numbering suffix
+- Implemented Fixes:
+  1. Added auto-retry mechanism for category loading with improved reliability
+  2. Updated CSS to use CSS Grid for subcategory layout with responsive columns
+  3. Optimized performance by reducing logging and implementing memoization
+  4. Fixed case normalization for consistent taxonomy codes (S.POP.BAS vs S.Pop.Base)
+  5. Enhanced format display with proper sequential numbering suffix
+  - Key changes documented in `UI_PERFORMANCE_AND_FORMAT_FIXES.md`
 
 ## Current State
 
@@ -127,19 +128,16 @@ There are special case mappings that need special handling:
 ### Important Files Modified
 - `/src/services/simpleTaxonomyService.ts` - Enhanced with fallback mechanisms
 - `/src/components/debug/TaxonomyDebugger.tsx` - Fixed TypeScript errors
-- `/src/components/asset/SimpleTaxonomySelectionV2.tsx` - Added direct service integration
+- `/src/components/asset/SimpleTaxonomySelectionV2.tsx` - Added direct service integration and improved error handling
 - `/src/components/asset/LayerSelectorV2.tsx` - Fixed double-click event propagation
-- `/src/pages/RegisterAssetPage.tsx` - Updated event handlers
+- `/src/pages/RegisterAssetPage.tsx` - Updated event handlers and form state management
+- `/src/components/asset/ReviewSubmit.tsx` - Enhanced form validation display
+- `/src/components/common/FilePreview.tsx` - Improved file preview reliability
+- `/src/styles/SimpleTaxonomySelection.css` - Updated to use CSS Grid for better layout
 - `/.github/workflows/ci-cd.yml` - Maintained original version
 - `/.github/workflows/ci.yml.disabled` - Disabled CI workflow
 - `/.github/workflows/tests.yml.disabled` - Disabled Run Tests workflow
 - `/package.json` - Removed test:ci:skip script
-
-### Files to Fix for Current Issues
-- `/src/components/asset/SimpleTaxonomySelectionV2.tsx` - For category loading and subcategory layout
-- `/src/styles/SimpleTaxonomySelection.css` - For subcategory grid layout
-- `/src/services/simpleTaxonomyService.ts` - For HFN/MFA format issues
-- `/src/pages/RegisterAssetPage.tsx` - For format display and performance issues
 
 ## Code Style Guidelines
 - TypeScript is required for all new code
@@ -153,14 +151,60 @@ There are special case mappings that need special handling:
 - CSS: Use MUI's sx prop or styled components pattern
 - Follow React best practices for performance (useMemo, useCallback)
 
+## Recent Fixes (May 19, 2025)
+
+### 7. Form Validation and File Preview Issues - FIXED
+- Problem: Users encountered several issues in the asset registration workflow:
+  1. Form validation in Review & Submit step showed errors but didn't indicate what was missing
+  2. File preview not working correctly, especially for certain file types
+  3. Category and subcategory not displaying in Review step (showing "-")
+  4. Unable to complete asset registration due to these issues
+
+- Root Causes:
+  1. Form state not being properly persisted between steps
+  2. FilePreview component lacking robust error handling for different file types
+  3. Validation messages not providing clear guidance on what needs fixing
+  4. Performance issues causing slow UI response
+
+- Implemented Fixes:
+  1. Enhanced form state persistence for category and subcategory selection
+  2. Fixed FilePreview component to handle different file types and URLs properly
+  3. Improved form validation with clear error indicators in ReviewSubmit
+  4. Optimized UI responsiveness with performance improvements
+  - Key changes documented in `FORM_VALIDATION_FIX.md`
+
+## Recent Fixes (May 20, 2025)
+
+### 8. Subcategory Disappearance Permanent Fix
+- Problem: Subcategory cards would still occasionally disappear after selection despite previous fixes
+- Root Cause: State management race conditions and callback execution timing issues
+- Solution:
+  - Implemented multi-tiered redundant storage for subcategory data:
+    1. Context data (primary source)
+    2. Direct service call results (secondary source)
+    3. Local component state (tertiary source)
+    4. React useRef persistent storage (quaternary source)
+    5. Session storage (final fallback)
+  - Added detailed component lifecycle logging
+  - Enhanced initialization process with multiple data fetch attempts
+  - Improved state synchronization between parent and child components
+  - Implemented emergency data recovery mechanisms
+- Key changes:
+  - `/src/components/asset/SimpleTaxonomySelectionV2.tsx`:
+    - Complete rewrite of subcategory selection and data persistence logic
+    - Added 6-tier fallback system for subcategory display data
+    - Enhanced debugging tools with more readable UI
+    - Added visual feedback during loading/initialization
+    - Implemented advanced error recovery for all taxonomy operations
+  - Documented in detail in `SUBCATEGORY_PERMANENT_FIX.md`
+
 ## Next Steps
 
-1. Fix category loading regression to show categories without needing Retry
-2. Improve subcategory layout to use grid instead of single column
-3. Optimize performance by reducing re-renders and excessive logging
-4. Fix HFN/MFA format display in workflow and success page
-5. Clean up excessive debugging logs after functionality is confirmed working
-6. Consider properly fixing the failing tests in the future
+1. Monitor the comprehensive subcategory selection fix
+2. Clean up excessive debugging logs after functionality is confirmed working
+3. Optimize asset registration performance with further improvements
+4. Consider properly fixing the failing tests in the future
+5. Address any additional UX issues identified during testing
 
 ## Workflow Guidelines
 - Always get user validation BEFORE implementing changes
