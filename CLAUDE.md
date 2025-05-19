@@ -117,6 +117,36 @@ There are special case mappings that need special handling:
   4. Fixed case normalization for consistent taxonomy codes (S.POP.BAS vs S.Pop.Base)
   5. Enhanced format display with proper sequential numbering suffix
   - Key changes documented in `UI_PERFORMANCE_AND_FORMAT_FIXES.md`
+  
+### 7. Layer Switching Issue Fix (May 18, 2025)
+- Problem: When switching between layers in Step 1, the UI continued to display category cards from the previously selected layer
+- Impact: Users would see incorrect categories, and when trying to use the Retry button for subcategories, it wouldn't work because the layer+category combination was invalid
+
+- Root Causes:
+  1. Insufficient state clearing when layer changes - previous categories remained in memory
+  2. Race conditions during layer switching - new categories loading before old ones cleared
+  3. Component relying on context updates which sometimes happened asynchronously
+  4. Missing direct cleanup of locally cached subcategories when layer changed
+
+- Implemented Fixes:
+  1. Enhanced SimpleTaxonomySelectionV2 with comprehensive layer change detection:
+     - Immediate clearing of local state and refs when layer changes
+     - Multi-tiered retry approach with 100ms, 300ms, and 500ms safety checks
+     - Added custom events to notify all components of layer changes
+     - Implemented emergency data recovery when normal loading methods fail
+  
+  2. Updated TaxonomyContext and useTaxonomy hook with enhanced state management:
+     - Added explicit resetCategoryData method for targeted resets
+     - Made selectLayer method forcefully clear all related state
+     - Fixed category/subcategory data persistence between layer changes
+  
+  3. Improved RegisterAssetPage layer selection handler:
+     - Added thorough session storage cleanup for taxonomy data
+     - Enhanced form state updates with validation flags
+     - Added diagnostic logging and debugging tools
+     - Used CustomEvents to coordinate state changes across components
+
+- Verification: All layer switches now correctly display the appropriate categories without requiring Retry
 
 ## Current State
 
@@ -285,16 +315,38 @@ There are special case mappings that need special handling:
     - Applied grid layout to loading/initializing states
   - Documented in `SUBCATEGORY_GRID_LAYOUT_FIX.md`
 
+### 13. TypeScript Build Fixes for Grid Layout (May 22, 2025)
+- Problem: The grid layout implementation was causing TypeScript build errors
+- Root Cause:
+  - Syntax error with an extra closing curly brace in RegisterAssetPage.tsx
+  - Function used before declaration in SimpleTaxonomySelectionV2.tsx
+  - Missing resetCategoryData function in TaxonomyContext mocks
+- Solution:
+  - Fixed syntax error in RegisterAssetPage layer switch verification code
+  - Re-ordered function declarations in SimpleTaxonomySelectionV2.tsx to prevent "used before declaration" errors
+  - Updated mock implementations to include all required functions
+  - Created comprehensive documentation of the build fixes
+- Key Changes:
+  - `/src/pages/RegisterAssetPage.tsx`:
+    - Removed extra closing curly brace in useEffect block
+  - `/src/components/asset/SimpleTaxonomySelectionV2.tsx`:
+    - Moved handleCategoryRetry declaration before its usage in dependency arrays
+  - `/src/contexts/__mocks__/TaxonomyContext.tsx` and `/src/tests/helpers/mockTaxonomyContext.tsx`:
+    - Added missing resetCategoryData function to mocks
+  - Updated `SUBCATEGORY_GRID_LAYOUT_FIX.md` with build fix details
+- Build now completes successfully with the subcategory grid layout improvements
+
 ## Current Status (May 22, 2025)
 
-With the latest fixes, we've addressed two of the most critical issues identified from previous testing:
+With the latest fixes, we've addressed three of the most critical issues identified from previous testing:
 
 1. ~~**Subcategory Grid Layout**: Subcategory cards still display vertically despite CSS fixes~~ (FIXED)
 2. ~~**HFN Format on Success Page**: The success page shows incorrect format~~ (FIXED)
-3. **Duplicate NNA Address Card**: Review/submit page (Step 4) shows two identical NNA address cards
-4. **Inconsistent Sequential Number Display**: The .000 suffix is shown inconsistently across steps
-5. **Next Button State Management**: The Next button doesn't properly update its state (active/inactive)
-6. **Slow File Upload UI Rendering**: Noticeable delay in UI rendering after file upload
+3. ~~**Build Issues**: TypeScript errors preventing successful builds~~ (FIXED)
+4. **Duplicate NNA Address Card**: Review/submit page (Step 4) shows two identical NNA address cards
+5. **Inconsistent Sequential Number Display**: The .000 suffix is shown inconsistently across steps
+6. **Next Button State Management**: The Next button doesn't properly update its state (active/inactive)
+7. **Slow File Upload UI Rendering**: Noticeable delay in UI rendering after file upload
 
 The remaining issues have been analyzed in `ONGOING_ISSUES_ANALYSIS.md` with detailed root causes:
 
@@ -305,11 +357,12 @@ The remaining issues have been analyzed in `ONGOING_ISSUES_ANALYSIS.md` with det
 
 1. ~~Fix the HFN and MFA format regression in the success screen~~ (COMPLETED)
 2. ~~Fix Subcategory Grid Layout to ensure cards display in a proper grid~~ (COMPLETED)
-3. Remove the duplicate NNA address card in the Review/Submit step
-4. Implement consistent sequential number display throughout the application
-5. Fix Next button state management throughout the workflow
-6. Optimize file upload UI rendering performance
-7. Clean up excessive debugging logs after all functionality is confirmed working
+3. ~~Fix TypeScript build errors for successful deployment~~ (COMPLETED)
+4. Remove the duplicate NNA address card in the Review/Submit step
+5. Implement consistent sequential number display throughout the application
+6. Fix Next button state management throughout the workflow
+7. Optimize file upload UI rendering performance
+8. Clean up excessive debugging logs after all functionality is confirmed working
 
 ## Workflow Guidelines
 - Always get user validation BEFORE implementing changes
