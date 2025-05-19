@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Taxonomy Refactoring Critical Test Cases</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 20px;
+      background-color: #f5f5f5;
+    }
+    
+    h1 {
+      color: #1976d2;
+      border-bottom: 2px solid #1976d2;
+      padding-bottom: 10px;
+    }
+    
+    .test-section {
+      background-color: white;
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .test-header {
+      font-size: 1.2em;
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+    
+    .test-description {
+      color: #555;
+      margin-bottom: 20px;
+    }
+    
+    .result-container {
+      background-color: #f9f9f9;
+      border-radius: 4px;
+      padding: 15px;
+      margin-top: 15px;
+      border-left: 4px solid #ccc;
+    }
+    
+    .status {
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+    
+    .status.pass {
+      color: #4caf50;
+    }
+    
+    .status.fail {
+      color: #f44336;
+    }
+    
+    .result-details {
+      font-family: monospace;
+      white-space: pre-wrap;
+      background-color: #f1f1f1;
+      padding: 10px;
+      border-radius: 4px;
+      margin-top: 10px;
+      max-height: 200px;
+      overflow: auto;
+    }
+    
+    button {
+      background-color: #1976d2;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+      margin-right: 10px;
+    }
+    
+    button:hover {
+      background-color: #1565c0;
+    }
+    
+    button:disabled {
+      background-color: #cccccc;
+      cursor: not-allowed;
+    }
+    
+    .toggle-ui {
+      display: flex;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    
+    .toggle-ui label {
+      margin-right: 10px;
+    }
+    
+    .toggle-switch {
+      position: relative;
+      display: inline-block;
+      width: 60px;
+      height: 34px;
+    }
+    
+    .toggle-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #ccc;
+      transition: .4s;
+      border-radius: 34px;
+    }
+    
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 26px;
+      width: 26px;
+      left: 4px;
+      bottom: 4px;
+      background-color: white;
+      transition: .4s;
+      border-radius: 50%;
+    }
+    
+    input:checked + .slider {
+      background-color: #2196F3;
+    }
+    
+    input:checked + .slider:before {
+      transform: translateX(26px);
+    }
+    
+    .test-summary {
+      margin-top: 20px;
+      padding: 15px;
+      background-color: #e8f5e9;
+      border-radius: 4px;
+      border-left: 4px solid #4caf50;
+    }
+  </style>
+</head>
+<body>
+  <h1>Taxonomy Refactoring Critical Test Cases</h1>
+  
+  <div class="toggle-ui">
+    <label for="uiVersion">UI Version:</label>
+    <div class="toggle-switch">
+      <input type="checkbox" id="uiVersion" checked>
+      <span class="slider"></span>
+    </div>
+    <span id="versionLabel">New UI</span>
+  </div>
+  
+  <div class="test-section">
+    <div class="test-header">Test Overview</div>
+    <div class="test-description">
+      This page verifies the critical taxonomy mapping cases that were the focus of the refactoring project.
+      The tests specifically validate:
+      <ul>
+        <li>S.POP.HPM.001 → 2.001.007.001 mapping</li>
+        <li>W.BCH.SUN.001 → 5.004.003.001 mapping</li>
+        <li>Rapid layer switching behavior</li>
+      </ul>
+    </div>
+    <button id="runTestsBtn">Run All Tests</button>
+    <button id="clearResultsBtn">Clear Results</button>
+  </div>
+  
+  <div class="test-section">
+    <div class="test-header">Special Case: S.POP.HPM</div>
+    <div class="test-description">
+      Verifies that the Star/Pop/Hip-Hop Male combination correctly maps to the expected MFA address.
+      This combination previously caused React Error #301.
+    </div>
+    <div class="input-values">
+      <strong>HFN:</strong> S.POP.HPM.001<br>
+      <strong>Expected MFA:</strong> 2.001.007.001
+    </div>
+    <div id="starPopHpmResult" class="result-container" style="display:none;">
+      <div id="starPopHpmStatus" class="status">Running test...</div>
+      <div id="starPopHpmDetails" class="result-details"></div>
+    </div>
+  </div>
+  
+  <div class="test-section">
+    <div class="test-header">Special Case: W.BCH.SUN</div>
+    <div class="test-description">
+      Verifies that the World/Beach/Sunny combination correctly maps to the expected MFA address.
+      This combination previously generated an incorrect MFA.
+    </div>
+    <div class="input-values">
+      <strong>HFN:</strong> W.BCH.SUN.001<br>
+      <strong>Expected MFA:</strong> 5.004.003.001
+    </div>
+    <div id="worldBeachSunResult" class="result-container" style="display:none;">
+      <div id="worldBeachSunStatus" class="status">Running test...</div>
+      <div id="worldBeachSunDetails" class="result-details"></div>
+    </div>
+  </div>
+  
+  <div class="test-section">
+    <div class="test-header">Rapid Layer Switching</div>
+    <div class="test-description">
+      Verifies that rapidly switching between layers maintains correct state.
+      Previous implementation had race conditions that caused errors.
+    </div>
+    <div id="rapidSwitchingResult" class="result-container" style="display:none;">
+      <div id="rapidSwitchingStatus" class="status">Running test...</div>
+      <div id="rapidSwitchingDetails" class="result-details"></div>
+    </div>
+  </div>
+  
+  <div id="testSummary" class="test-summary" style="display:none;">
+    <h2>Test Summary</h2>
+    <div id="summaryContent"></div>
+  </div>
+  
+  <script>
+    // Set up UI toggle
+    const uiVersionToggle = document.getElementById('uiVersion');
+    const versionLabel = document.getElementById('versionLabel');
+    
+    uiVersionToggle.addEventListener('change', function() {
+      const isNewUi = this.checked;
+      versionLabel.textContent = isNewUi ? 'New UI' : 'Old UI';
+      
+      // Update UI version parameter in localStorage and URL
+      localStorage.setItem('preferredUIVersion', isNewUi ? 'new' : 'old');
+      
+      const url = new URL(window.location.href);
+      url.searchParams.set('uiVersion', isNewUi ? 'new' : 'old');
+      window.history.replaceState({}, '', url);
+    });
+    
+    // Initialize UI version from URL or localStorage
+    function initializeUiVersion() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const urlVersion = urlParams.get('uiVersion');
+      
+      if (urlVersion === 'old' || urlVersion === 'new') {
+        uiVersionToggle.checked = urlVersion === 'new';
+        versionLabel.textContent = urlVersion === 'new' ? 'New UI' : 'Old UI';
+        localStorage.setItem('preferredUIVersion', urlVersion);
+      } else {
+        // Check localStorage
+        const storedVersion = localStorage.getItem('preferredUIVersion');
+        if (storedVersion === 'old' || storedVersion === 'new') {
+          uiVersionToggle.checked = storedVersion === 'new';
+          versionLabel.textContent = storedVersion === 'new' ? 'New UI' : 'Old UI';
+        }
+      }
+    }
+    
+    // Initialize on page load
+    document.addEventListener('DOMContentLoaded', initializeUiVersion);
+    
+    // Wait for taxonomyService to be loaded
+    const waitForTaxonomyService = () => {
+      return new Promise((resolve) => {
+        const checkInterval = setInterval(() => {
+          if (window.taxonomyService) {
+            clearInterval(checkInterval);
+            resolve(window.taxonomyService);
+          }
+        }, 100);
+      });
+    };
+    
+    // Test functions will be implemented after loading the service
+    let testFunctions = {
+      starPopHpm: null,
+      worldBeachSun: null,
+      rapidSwitching: null
+    };
+    
+    // Load the taxonomy service script
+    function loadTaxonomyScript() {
+      return new Promise((resolve, reject) => {
+        const script = document.createElement('script');
+        script.src = '/scripts/test-critical-cases.js';
+        script.onload = () => resolve();
+        script.onerror = () => reject(new Error('Failed to load test script'));
+        document.head.appendChild(script);
+      });
+    }
+    
+    // Set up button handlers
+    document.getElementById('runTestsBtn').addEventListener('click', async () => {
+      try {
+        await loadTaxonomyScript();
+        
+        // Check if the test function was exported
+        if (typeof window.runTaxonomyTests === 'function') {
+          // Run the tests
+          window.runTaxonomyTests();
+          
+          // Display all result containers
+          document.querySelectorAll('.result-container').forEach(container => {
+            container.style.display = 'block';
+          });
+          
+          // Show summary
+          const summaryEl = document.getElementById('testSummary');
+          summaryEl.style.display = 'block';
+          
+          // Assuming the test script populates these elements:
+          // - #starPopHpmStatus, #starPopHpmDetails
+          // - #worldBeachSunStatus, #worldBeachSunDetails
+          // - #rapidSwitchingStatus, #rapidSwitchingDetails
+          // - #summaryContent
+        } else {
+          alert('Test function not found. Please check the console for errors.');
+        }
+      } catch (error) {
+        console.error('Error running tests:', error);
+        alert('Failed to run tests. See console for details.');
+      }
+    });
+    
+    document.getElementById('clearResultsBtn').addEventListener('click', () => {
+      // Hide all result containers
+      document.querySelectorAll('.result-container').forEach(container => {
+        container.style.display = 'none';
+      });
+      
+      // Hide summary
+      document.getElementById('testSummary').style.display = 'none';
+      
+      // Clear result content
+      document.querySelectorAll('.result-details').forEach(el => {
+        el.textContent = '';
+      });
+      
+      document.querySelectorAll('.status').forEach(el => {
+        el.textContent = 'Running test...';
+        el.classList.remove('pass', 'fail');
+      });
+    });
+  </script>
+</body>
+</html>

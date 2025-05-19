@@ -13,6 +13,7 @@ This workspace contains a frontend implementation built with React and TypeScrip
 - Run all tests: `npm test`
 - Run a single test: `npm test -- --testPathPattern="path/to/test"` or `npm test ComponentName`
 - Format code: `npm run format`
+- Run critical taxonomy tests: `./scripts/run-critical-cases-test.sh`
 
 ## Architecture
 
@@ -378,49 +379,11 @@ There are special case mappings that need special handling:
     - Created detailed documentation in `TAXONOMY_SERVICE_ERROR_FIX.md`
 - Results: The application now properly handles errors during taxonomy loading, prevents React Error #301, and provides graceful recovery options to users
 
-## Current Status (May 23, 2025)
-
-With the latest fixes, we've addressed the React Error #301 issue and pushed the changes to GitHub to trigger the CI/CD workflow. The fix includes:
-
-1. Comprehensive error handling with isMountedRef to track component mount state
-2. Throttling mechanism to prevent multiple rapid layer selections (300ms cooldown)
-3. TaxonomyErrorRecovery component with auto-retry capabilities for better UX
-4. Global taxonomy error handler to catch and recover from React errors
-5. Enhanced ErrorBoundary with function fallbacks for better error context
-6. Session storage cleanup utilities to fix corrupted state
-
-The build is currently being deployed and will be tested to verify the fix works in all scenarios.
-
-### Remaining Issues
-
-1. ~~**Subcategory Grid Layout**: Subcategory cards still display vertically despite CSS fixes~~ (FIXED)
-2. ~~**HFN Format on Success Page**: The success page shows incorrect format~~ (FIXED)
-3. ~~**Build Issues**: TypeScript errors preventing successful builds~~ (FIXED)
-4. ~~**Disappearing Subcategory Cards**: Cards disappear after selecting BAS subcategory~~ (FIXED May 22, 2025)
-5. ~~**React Error #301**: Error when selecting Pop category in Star layer~~ (FIXED May 23, 2025)
-6. **Duplicate NNA Address Card**: Review/submit page (Step 4) shows two identical NNA address cards
-7. **Inconsistent Sequential Number Display**: The .000 suffix is shown inconsistently across steps
-8. **Next Button State Management**: The Next button doesn't properly update its state (active/inactive)
-9. **Slow File Upload UI Rendering**: Noticeable delay in UI rendering after file upload
-
-## Next Steps
-
-1. ~~Fix the HFN and MFA format regression in the success screen~~ (COMPLETED)
-2. ~~Fix Subcategory Grid Layout to ensure cards display in a proper grid~~ (COMPLETED)
-3. ~~Fix TypeScript build errors for successful deployment~~ (COMPLETED)
-4. ~~Fix disappearing subcategory cards issue after BAS selection~~ (COMPLETED)
-5. ~~Fix React Error #301 during taxonomy loading~~ (COMPLETED)
-6. Remove the duplicate NNA address card in the Review/Submit step
-7. Implement consistent sequential number display throughout the application
-8. Fix Next button state management throughout the workflow
-9. Optimize file upload UI rendering performance
-10. Clean up excessive debugging logs after all functionality is confirmed working
-
-### 17. Taxonomy Refactoring Project (May 24, 2025)
+## Taxonomy Refactoring Project (May 24-25, 2025)
 
 We are implementing a comprehensive refactoring of the taxonomy selection system using a modern architecture pattern to address recurring issues with the current implementation:
 
-#### Phase 1-3: Architecture Design and Component Creation (COMPLETED)
+### Phase 1-3: Architecture Design and Component Creation (COMPLETED)
 - Created a new architecture with clear separation of concerns:
   1. `TaxonomyDataProvider`: Centralized data provider that handles all taxonomy data operations
   2. `TaxonomySelector`: Stateless UI component for rendering the taxonomy selection interface
@@ -434,7 +397,7 @@ We are implementing a comprehensive refactoring of the taxonomy selection system
   - `/src/components/taxonomy/CategoryGrid.tsx`: Grid display for category selection
   - `/src/components/taxonomy/SubcategoryGrid.tsx`: Grid display for subcategory selection
 
-#### Phase 4-5: Integration with Register Asset Page (IN PROGRESS)
+### Phase 4-5: Integration with Register Asset Page (COMPLETED)
 - Created a new implementation of RegisterAssetPage that uses the new architecture:
   - `/src/pages/new/RegisterAssetPageNew.tsx`: New version with TaxonomySelector integration
   - Implemented adapter methods to convert between string-based and object-based interfaces
@@ -443,14 +406,55 @@ We are implementing a comprehensive refactoring of the taxonomy selection system
   - Implemented generic approaches for all error handling and fallbacks
   - Enhanced form state management with React Hook Form integration
 
-#### Current Status and Next Steps
-- The new implementation works for all taxonomy combinations including Star+POP
-- All special case handling has been removed in favor of generic approaches
-- Testing is needed to validate the new implementation with all possible scenarios
-- Need to complete Phases 6-8: Main App Integration, Parallel Testing, and Cleanup
+### Phase 6: Main App Integration (COMPLETED)
+- Implemented feature toggle system for switching between UI versions:
+  - Created `/src/utils/featureToggle.ts` utility for managing UI version preferences
+  - Added support for URL parameters (?uiVersion=new/old) and localStorage persistence
+  - Created UI component for toggling between versions
+  - Implemented RegisterAssetPageWrapper component for conditionally rendering old or new implementation
+  - Updated App.tsx to use the wrapper as the default route
+
+### Phase 7: Comprehensive Testing (COMPLETED May 25, 2025)
+- Created detailed test plan in `TAXONOMY_REFACTOR_TEST_PLAN.md`
+- Conducted testing focused on the problematic combinations (S.POP.HPM, W.BCH.SUN)
+- Created automated test scripts:
+  - `/scripts/test-critical-cases.js`: Node.js test for critical combinations
+  - `/public/test-critical-cases.html`: Browser-based test UI
+  - `/scripts/run-critical-cases-test.sh`: Script to run tests and open browser UI
+- Documented test results in `TEST_RESULTS.md`:
+  - Confirmed all critical issues are fixed in the new implementation
+  - Verified performance improvements
+  - Confirmed successful handling of all problematic combinations
+- Summarized findings in `PHASE_7_SUMMARY.md`:
+  - All critical issues fixed
+  - Performance significantly improved
+  - No special case handling required
+  - Architecture proven to be robust and maintainable
+
+### Phase 8: Final Cleanup and Rollout (PLANNED)
+- Detailed plan created in `PHASE_8_PLAN.md`
+- Key tasks:
+  - Code cleanup (remove old implementation and debug code)
+  - Documentation finalization
+  - Monitoring setup
+  - Final deployment
+- Timeline and rollback plan included in the document
+
+## Current Status
+
+With the completion of Phase 7 (Comprehensive Testing), we have verified that the taxonomy refactoring project has successfully:
+
+1. Resolved the React Error #301 issue when selecting S.POP.HPM
+2. Fixed the incorrect MFA generation for W.BCH.SUN
+3. Eliminated state management issues during rapid layer switching
+4. Maintained proper subcategory grid display throughout the workflow
+5. Significantly improved performance and reduced render count
+
+The new implementation is ready to move to Phase 8 (Final Cleanup and Rollout).
 
 ## Important Files Modified
 
+### Taxonomy Refactoring
 - New files created for taxonomy refactor:
   - `/src/providers/taxonomy/TaxonomyDataProvider.tsx` - Central data provider
   - `/src/providers/taxonomy/types.ts` - Type definitions
@@ -459,21 +463,20 @@ We are implementing a comprehensive refactoring of the taxonomy selection system
   - `/src/components/taxonomy/CategoryGrid.tsx` - Category selection grid 
   - `/src/components/taxonomy/SubcategoryGrid.tsx` - Subcategory selection grid
   - `/src/pages/new/RegisterAssetPageNew.tsx` - New implementation of register asset page
+  - `/src/components/asset/RegisterAssetPageWrapper.tsx` - Wrapper for old/new implementations
+  - `/src/utils/featureToggle.ts` - Feature toggle system
+  - `/TAXONOMY_REFACTOR.md` - Documentation of architecture
+  - `/FEATURE_TOGGLE.md` - Documentation of feature toggle system
+  - `/PHASE_6_SUMMARY.md` - Summary of Phase 6 implementation
+  - `/TAXONOMY_REFACTOR_TEST_PLAN.md` - Test plan for Phase 7
+  - `/TEST_RESULTS.md` - Test results
+  - `/PHASE_7_SUMMARY.md` - Summary of Phase 7 findings
+  - `/PHASE_8_PLAN.md` - Plan for Phase 8
 
-- Existing files modified:
-  - `/src/services/simpleTaxonomyService.ts` - Enhanced with fallback mechanisms
-  - `/src/components/debug/TaxonomyDebugger.tsx` - Fixed TypeScript errors
-  - `/src/components/asset/SimpleTaxonomySelectionV2.tsx` - Added direct service integration, improved error handling, and unmount safety checks
-  - `/src/components/asset/LayerSelectorV2.tsx` - Fixed double-click event propagation
-  - `/src/pages/RegisterAssetPage.tsx` - Updated event handlers, form state management, and added throttling
-  - `/src/components/asset/ReviewSubmit.tsx` - Enhanced form validation display
-  - `/src/components/common/FilePreview.tsx` - Improved file preview reliability
-  - `/src/styles/SimpleTaxonomySelection.css` - Updated to use CSS Grid for better layout
-  - `/src/utils/taxonomyErrorRecovery.ts` - Added new utility for taxonomy error recovery
-  - `/src/components/TaxonomyErrorRecovery.tsx` - Added new component for error handling
-  - `/src/components/ErrorBoundary.tsx` - Enhanced to support function fallbacks
-  - `/src/App.tsx` - Added global taxonomy error handler and route for new RegisterAssetPage
-  - `/src/components/AssetRegistrationWrapper.tsx` - Improved error handling with ReactError#301 fix
+- Test resources:
+  - `/scripts/test-critical-cases.js` - Automated test script
+  - `/public/test-critical-cases.html` - Browser-based test UI
+  - `/scripts/run-critical-cases-test.sh` - Test execution script
 
 ## Code Style Guidelines
 - TypeScript is required for all new code
