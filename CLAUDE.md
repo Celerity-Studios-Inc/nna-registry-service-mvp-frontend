@@ -261,27 +261,50 @@ There are special case mappings that need special handling:
     - Added detailed logging to track format conversion issues
   - Updated `HFN_FORMAT_FIX.md` to document the revised approach
 
-## Current Status (May 21, 2025)
+## Recent Fixes (May 22, 2025)
 
-With the latest HFN format fix, we've addressed the most critical issue identified from the previous build. Several ongoing issues still need attention:
+### 12. Subcategory Grid Layout Fix
+- Problem: Subcategory cards were displaying in a vertical column (stacked on top of each other) rather than in a grid layout
+- Root Cause:
+  - CSS specificity conflicts where grid layout styles were being overridden
+  - Inconsistent CSS application across different component states
+  - Dynamic styles possibly interfering with the grid layout
+- Solution:
+  - Enhanced CSS with maximum specificity selectors to enforce grid layout
+  - Added explicit inline grid styles to all relevant components
+  - Fixed parent container layout and ensured consistent styling
+  - Applied grid layout to loading/initializing states for consistency
+- Key Changes:
+  - `/src/styles/SimpleTaxonomySelection.css`:
+    - Added higher specificity CSS rules with `!important` declarations
+    - Targeted subcategory container specifically with `:nth-child(2)` selector
+    - Added responsive grid adjustments for different screen sizes
+  - `/src/components/asset/SimpleTaxonomySelectionV2.tsx`:
+    - Added inline grid styles to the `SubcategoriesGrid` component
+    - Fixed parent wrapper layout with explicit grid styling
+    - Applied grid layout to loading/initializing states
+  - Documented in `SUBCATEGORY_GRID_LAYOUT_FIX.md`
 
-1. **Subcategory Grid Layout**: Subcategory cards still display vertically despite CSS fixes
+## Current Status (May 22, 2025)
+
+With the latest fixes, we've addressed two of the most critical issues identified from previous testing:
+
+1. ~~**Subcategory Grid Layout**: Subcategory cards still display vertically despite CSS fixes~~ (FIXED)
 2. ~~**HFN Format on Success Page**: The success page shows incorrect format~~ (FIXED)
 3. **Duplicate NNA Address Card**: Review/submit page (Step 4) shows two identical NNA address cards
 4. **Inconsistent Sequential Number Display**: The .000 suffix is shown inconsistently across steps
 5. **Next Button State Management**: The Next button doesn't properly update its state (active/inactive)
 6. **Slow File Upload UI Rendering**: Noticeable delay in UI rendering after file upload
 
-These remaining issues have been thoroughly analyzed in `ONGOING_ISSUES_ANALYSIS.md` with detailed root causes:
+The remaining issues have been analyzed in `ONGOING_ISSUES_ANALYSIS.md` with detailed root causes:
 
-1. The CSS grid layout issue may involve specificity conflicts, dynamic styles, or class mismatches
-2. The duplicate NNA address cards likely come from redundant rendering in ReviewSubmit.tsx
-3. The performance issues may be caused by inefficient rendering or excessive re-renders
+1. The duplicate NNA address cards likely come from redundant rendering in ReviewSubmit.tsx
+2. The performance issues may be caused by inefficient rendering or excessive re-renders
 
 ## Next Steps
 
 1. ~~Fix the HFN and MFA format regression in the success screen~~ (COMPLETED)
-2. Fix Subcategory Grid Layout to ensure cards display in a proper grid
+2. ~~Fix Subcategory Grid Layout to ensure cards display in a proper grid~~ (COMPLETED)
 3. Remove the duplicate NNA address card in the Review/Submit step
 4. Implement consistent sequential number display throughout the application
 5. Fix Next button state management throughout the workflow

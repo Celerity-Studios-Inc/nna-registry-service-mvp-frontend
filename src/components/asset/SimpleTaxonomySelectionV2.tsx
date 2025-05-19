@@ -102,12 +102,19 @@ const SubcategoriesGrid = React.memo(({
   // show a brief loading indicator to prevent a flash of empty state
   if (showInitializing && subcategories.length === 0) {
     return (
-      <div className="taxonomy-items initializing">
+      <div className="taxonomy-items initializing" style={{ 
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))',
+        gridTemplateRows: 'auto',
+        gap: '12px',
+        width: '100%'
+      }}>
         <div style={{ 
           textAlign: 'center', 
           padding: '20px', 
           color: '#666',
-          width: '100%'
+          width: '100%',
+          gridColumn: '1 / -1'  // Span all columns
         }}>
           <div style={{ fontSize: '14px', marginBottom: '10px' }}>
             Initializing subcategories...
@@ -143,9 +150,17 @@ const SubcategoriesGrid = React.memo(({
     );
   }
   
-  // Once initialization is complete, show the regular content
+  // Once initialization is complete, show the regular content with explicit grid layout
   return (
-    <div className="taxonomy-items">
+    <div className="taxonomy-items" style={{ 
+      display: 'grid',
+      gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))',
+      gridTemplateRows: 'auto',
+      gridAutoFlow: 'row',
+      gridAutoRows: 'auto',
+      gap: '12px',
+      width: '100%'
+    }}>
       {subcategories.map(subcategory => (
         <TaxonomyItemComponent
           key={subcategory.code}
@@ -1139,7 +1154,15 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
               debugInfo={subcategoryDebugInfo}
             />
           ) : (
-            <div className={`taxonomy-items ${displaySubcategoriesData.useDirectData ? 'using-direct-data' : ''}`}>
+            <div 
+              className={`taxonomy-items ${displaySubcategoriesData.useDirectData ? 'using-direct-data' : ''}`}
+              style={{ 
+                display: 'grid',
+                gridTemplateColumns: '1fr',
+                gap: '12px',
+                width: '100%'
+              }}
+            >
               <SubcategoriesGrid
                 subcategories={displaySubcategoriesData.displaySubcategories}
                 activeSubcategory={activeSubcategory}

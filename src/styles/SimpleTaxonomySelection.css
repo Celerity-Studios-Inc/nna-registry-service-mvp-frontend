@@ -53,13 +53,12 @@
 
 /* Fixed grid layout for taxonomy items with higher specificity */
 .taxonomy-section .taxonomy-items {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
-  grid-template-rows: auto;
-  grid-auto-flow: row;
-  grid-auto-rows: auto;
-  grid-column-gap: 12px;
-  grid-row-gap: 12px;
+  display: grid !important;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)) !important;
+  grid-template-rows: auto !important;
+  grid-auto-flow: row !important;
+  grid-auto-rows: auto !important;
+  gap: 12px !important;
   padding: 15px;
   max-height: 400px;
   overflow-y: auto;
@@ -70,10 +69,12 @@
   position: relative;
 }
 
-/* Additional selector for higher specificity */
-.simple-taxonomy-selection .taxonomy-section .taxonomy-items {
+/* Additional selector for higher specificity - for category section */
+.simple-taxonomy-selection .taxonomy-section:first-child .taxonomy-items {
   display: grid !important;
   grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)) !important;
+  grid-template-rows: auto !important;
+  grid-auto-flow: row !important;
   gap: 12px !important;
 }
 
@@ -257,11 +258,15 @@
   text-align: center;
 }
 
-/* Apply higher specificity styles to ensure grid layout is enforced */
+/* Apply highest specificity styles to ensure grid layout is enforced across all browsers */
 html body .simple-taxonomy-selection .taxonomy-section .taxonomy-items {
   display: grid !important;
   grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)) !important;
+  grid-template-rows: auto !important;
+  grid-auto-flow: row !important;
+  grid-auto-rows: auto !important;
   gap: 12px !important;
+  width: 100% !important;
 }
 
 /* Responsive adjustments */
