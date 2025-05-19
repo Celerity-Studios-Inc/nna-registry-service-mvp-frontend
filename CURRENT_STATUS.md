@@ -1,151 +1,167 @@
-# Current Project Status - May 22, 2025
+# Current Project Status - May 25, 2025
 
 ## Recently Completed Work
 
-1. **Disappearing Subcategory Cards Fix** (May 22, 2025):
-   - Fixed issue where subcategory cards would disappear after selecting BAS (Base) subcategory
-   - Implemented comprehensive state preservation with multiple redundant backups
-   - Enhanced SubcategoriesGrid component with local state handling
-   - Improved CSS for better visibility of subcategory cards
-   - Document: [SUBCATEGORY_DISAPPEARANCE_FIX.md](./SUBCATEGORY_DISAPPEARANCE_FIX.md)
-   - Commit: 074a45c - "Fix disappearing subcategory cards issue after BAS selection"
+1. **Phase 8, Step 2: Clean Up Old Implementation** (May 25, 2025):
+   - Removed legacy components and utilities
+   - Updated references to use new implementation components
+   - Verified compatibility with successful build
+   - Document: [PHASE_8_STEP_2_SUMMARY.md](./PHASE_8_STEP_2_SUMMARY.md)
    - Files changed:
-     - src/components/asset/SimpleTaxonomySelectionV2.tsx
-     - src/styles/SimpleTaxonomySelection.css
+     - src/pages/RegisterAssetPage.tsx (deleted)
+     - src/components/asset/LayerSelector.tsx (deleted)
+     - src/components/asset/SimpleTaxonomySelection.tsx (deleted)
+     - src/components/asset/TaxonomySelection.tsx (deleted)
+     - src/api/taxonomyMapper.ts (deleted)
+     - src/pages/TaxonomyDebugPage.tsx (updated)
+     - src/components/asset/NNAAddressPreview.tsx (updated)
+     - src/components/asset/ReviewSubmit.tsx (updated)
+     - src/components/AssetRegistrationWrapper.tsx (updated)
 
-2. **UI Performance and Format Fixes** (May 18, 2025):
-   - Fixed category loading regression (no longer requires "Retry" click)
-   - Improved subcategory layout to use grid instead of single column
-   - Enhanced performance by reducing unnecessary re-renders and logging
-   - Fixed HFN/MFA format issues (consistent case, proper numeric codes)
-   - Document: [UI_PERFORMANCE_AND_FORMAT_FIXES.md](./UI_PERFORMANCE_AND_FORMAT_FIXES.md)
+2. **Phase 8, Step 1: Remove Feature Toggle** (May 24, 2025):
+   - Removed UIVersionToggle component and featureToggle utility
+   - Updated RegisterAssetPageWrapper to always use the new implementation
+   - Removed UI version toggle styles and references in test files
+   - Document: [PHASE_8_STEP_1_SUMMARY.md](./PHASE_8_STEP_1_SUMMARY.md)
    - Files changed:
-     - src/components/asset/SimpleTaxonomySelectionV2.tsx
-     - src/styles/SimpleTaxonomySelection.css
-     - src/services/simpleTaxonomyService.ts
-     - src/pages/RegisterAssetPage.tsx
+     - src/components/asset/RegisterAssetPageWrapper.tsx (simplified)
+     - src/components/common/UIVersionToggle.tsx (deleted)
+     - src/utils/featureToggle.ts (deleted)
+     - src/styles/UIVersionToggle.css (deleted)
+     - src/pages/TaxonomySelectorTestPage.tsx (updated)
+     - public/test-critical-cases.html (updated)
 
-3. **Double-Click Navigation Fix** (May 18, 2025): 
-   - Fixed event propagation in LayerSelectorV2.tsx 
-   - Implemented onLayerDoubleClick handler in RegisterAssetPage.tsx
-   - Added proper coordination between click handlers and navigation
-   - Document: [DOUBLE_CLICK_NAVIGATION_FIX.md](./DOUBLE_CLICK_NAVIGATION_FIX.md)
-   - Files changed: 
-     - src/components/asset/LayerSelectorV2.tsx
-     - src/pages/RegisterAssetPage.tsx
+3. **Comprehensive Testing of Taxonomy Refactoring** (May 23, 2025):
+   - Verified critical combinations work correctly (S.POP.HPM, W.BCH.SUN)
+   - Confirmed performance improvements and state management fixes
+   - Created detailed test results documentation
+   - Document: [PHASE_7_SUMMARY.md](./PHASE_7_SUMMARY.md)
+   - Files created/updated:
+     - scripts/test-critical-cases.js
+     - public/test-critical-cases.html
+     - scripts/run-critical-cases-test.sh
 
-4. **Layer Switching Regression Fix** (May 18, 2025):
-   - Fixed issue where previous layer's categories would remain visible after switching layers
-   - Implemented enhanced state cleanup and reset during layer changes
-   - Added multi-tiered approach with 100ms, 300ms, and 500ms safety checks
-   - Improved diagnostics with custom events for notification
-   - Document: [LAYER_SWITCHING_FIX.md](./LAYER_SWITCHING_FIX.md)
-   - Files changed:
-     - src/components/asset/SimpleTaxonomySelectionV2.tsx
-     - src/hooks/useTaxonomy.ts
-     - src/pages/RegisterAssetPage.tsx
+3. **Taxonomy Refactoring Main Implementation** (May 22, 2025):
+   - Created new architecture with TaxonomyDataProvider
+   - Implemented stateless TaxonomySelector component system
+   - Created new RegisterAssetPageNew implementation
+   - Added feature toggle for gradual rollout (now removed)
+   - Documents: [TAXONOMY_REFACTOR.md](./TAXONOMY_REFACTOR.md)
+   - Files created:
+     - src/providers/taxonomy/TaxonomyDataProvider.tsx
+     - src/components/taxonomy/TaxonomySelector.tsx (and related grid components)
+     - src/pages/new/RegisterAssetPageNew.tsx
 
 ## Current Status
 
-The application is currently building and deploying via GitHub CI/CD pipeline. The asset registration flow has been significantly improved with the following enhancements:
+We are now in Phase 8 (Final Cleanup and Rollout) of the taxonomy refactoring project:
+
+1. **Completed Step 1: Remove Feature Toggle**
+   - The new implementation is now the only option
+   - Feature toggle system has been completely removed
+   - All related code, styles, and references have been cleaned up
+   
+2. **Completed Step 2: Clean Up Old Implementation**
+   - Removed original RegisterAssetPage component
+   - Removed legacy taxonomy selection components
+   - Removed taxonomyMapper utility
+   - Updated references to use new implementation
+   - Build verified for compatibility
+   
+3. **Next: Step 3 - Code Optimization**
+   - Planning removal of debug code and console.logs
+   - Identifying performance bottlenecks
+   - Preparing to address ESLint warnings
+   - Planning test improvements
+
+The application is currently building and deploying via GitHub CI/CD pipeline. The asset registration flow has been significantly improved with the new taxonomy implementation:
 
 1. **Layer Selection**: Properly switches layers with correct categories displayed
-2. **Category Loading**: Categories now load automatically when a layer is selected
-3. **Subcategory Display**: Subcategories display in a proper grid layout and remain visible after selection
-4. **UI Responsiveness**: Interface is more responsive with optimized rendering and reduced logging
+2. **Category Loading**: Categories load automatically when a layer is selected
+3. **Subcategory Display**: Subcategories display in a proper grid layout and remain visible
+4. **UI Responsiveness**: Interface is more responsive with optimized rendering
 5. **HFN/MFA Formats**: Consistent formatting throughout the workflow and on success page
 
-## Issues Fixed
+## Issues Fixed with Taxonomy Refactoring
 
-1. **Disappearing Subcategory Cards**:
-   - Problem: Subcategory cards would disappear after selecting BAS (Base) subcategory in Star layer
-   - Solution: Implemented multi-tiered data preservation system with redundant backups
+1. **React Error #301**:
+   - Problem: Selecting S.POP.HPM combination would cause React Error #301
+   - Solution: New architecture with proper state management and error handling
+   
+2. **Incorrect MFA Generation**:
+   - Problem: W.BCH.SUN.001 mapped to incorrect MFA address
+   - Solution: Enhanced taxonomy mapping with improved error recovery
+   
+3. **Layer Switching Issues**:
+   - Problem: State corruption during rapid layer switching
+   - Solution: Proper state isolation and cleanup in new architecture
 
-2. **Layer Switching Regression**:
-   - Problem: Previous layer's categories remained visible after switching layers
-   - Solution: Enhanced state management with tiered cleanup and verification
+4. **Subcategory Display Problems**:
+   - Problem: Subcategories disappearing or displaying incorrectly
+   - Solution: Improved state management and rendering approach
 
-3. **Category Loading Regression**:
-   - Problem: Categories only appeared after clicking "Retry" button
-   - Solution: Enhanced direct loading with automatic retry mechanism
+5. **Performance Issues**:
+   - Problem: Excessive re-renders and slow UI
+   - Solution: Stateless components and centralized data management
 
-4. **Subcategory Layout Problems**:
-   - Problem: Subcategories displayed in a single vertical column
-   - Solution: Updated CSS to use grid layout for better space utilization
+## Next Steps for Phase 8
 
-5. **UI Performance Issues**:
-   - Problem: Slow response times with significant lag between clicks and UI updates
-   - Solution: Reduced excessive logging, optimized state updates, and improved rendering performance
-
-6. **HFN/MFA Format Issues**:
-   - Problem: Inconsistent formats with missing or incorrect numeric codes
-   - Solution: Implemented consistent case handling and proper numeric code generation
-
-## Remaining Issues
-
-1. **Duplicate NNA Address Card**: Review/submit page (Step 4) shows two identical NNA address cards
-2. **Inconsistent Sequential Number Display**: The .000 suffix is shown inconsistently across steps
-3. **Next Button State Management**: The Next button doesn't properly update its state (active/inactive)
-4. **Slow File Upload UI Rendering**: Noticeable delay in UI rendering after file upload
-
-## Next Steps
-
-1. Remove the duplicate NNA address card in the Review/Submit step
-2. Implement consistent sequential number display throughout the application
-3. Fix Next button state management throughout the workflow
-4. Optimize file upload UI rendering performance
-5. Clean up excessive debugging logs after all functionality is confirmed working
+1. **Step 2: Clean Up Old Implementation**
+   - Remove the original RegisterAssetPage component
+   - Clean up legacy taxonomy selection components
+   - Remove special case handling methods
+   - Fix imports throughout the codebase
+   
+2. **Step 3: Code Optimization**
+   - Remove debug code and console.logs
+   - Optimize performance bottlenecks
+   - Conduct performance testing
+   
+3. **Step 4: Documentation Update**
+   - Create ARCHITECTURE.md with design details
+   - Create IMPLEMENTATION.md with implementation specifics
+   - Create TESTING.md with testing approach and results
+   - Update README.md with high-level overview
 
 ## Technical Details
 
-### Key Features Implemented (Most Recent)
+### Key Files Changed in Step 1
 
-1. **Snapshot Mechanism for Subcategory Preservation**:
+1. **RegisterAssetPageWrapper.tsx** (simplified):
    ```typescript
-   // CRITICAL FIX: Take a snapshot of current subcategories before any state changes
-   const subcategoriesSnapshot = {
-     context: [...subcategories],
-     direct: [...directSubcategories],
-     local: [...localSubcategories],
-     ref: [...subcategoriesRef.current]
+   import React from 'react';
+   import { Box } from '@mui/material';
+   import RegisterAssetPageNew from '../../pages/new/RegisterAssetPageNew';
+   
+   /**
+    * Wrapper component that renders the new RegisterAssetPage implementation
+    * This component previously switched between old and new implementations,
+    * but now solely uses the new implementation after feature toggle removal.
+    */
+   const RegisterAssetPageWrapper: React.FC = () => {
+     // Log for context
+     console.log('[RegisterAssetPageWrapper] Using new implementation');
+   
+     return (
+       <Box position="relative">
+         <RegisterAssetPageNew />
+       </Box>
+     );
    };
    
-   // Create a guaranteed subcategories list that will survive the state updates
-   const guaranteedSubcategoriesList = [source selection logic];
+   export default RegisterAssetPageWrapper;
    ```
 
-2. **Enhanced SubcategoriesGrid Component**:
-   ```typescript
-   // CRITICAL FIX: Keep a local backup of subcategories to prevent disappearing
-   const [localGridItems, setLocalGridItems] = React.useState<TaxonomyItem[]>([]);
-   
-   // Track when subcategories are updated to maintain consistency
-   React.useEffect(() => {
-     if (subcategories.length > 0) {
-       setLocalGridItems(subcategories);
-     }
-   }, [subcategories]);
-   ```
-
-3. **Improved CSS for Subcategory Cards**:
-   ```css
-   .taxonomy-item.active {
-     border-color: #007bff;
-     background-color: #e8f4ff;
-     transform: translateY(-2px);
-     box-shadow: 0 3px 8px rgba(0, 123, 255, 0.4);
-     z-index: 5; /* Make active item highest */
-     position: relative;
-     outline: 2px solid #007bff; /* Extra outline to ensure visibility */
-   }
-   ```
+2. **Files Removed**:
+   - UIVersionToggle.tsx: Component that provided toggle UI
+   - featureToggle.ts: Utility for managing UI version preferences
+   - UIVersionToggle.css: Styles for the toggle component
 
 ## Branch Information
 
 - Current branch: main
 - Last commits: 
+  - "Remove feature toggle system (Phase 8, Step 1)"
   - 074a45c - "Fix disappearing subcategory cards issue after BAS selection"
   - 2fd5041 - "Fix subcategory grid layout with CSS enhancements"
   - 19661e5 - "Fix style element in FileUploader by removing unsupported jsx attribute"
-  - ac59b1a - "Fix TypeScript build error in FileUploader by reordering function declarations"
-  - f7d30e4 - "Optimize taxonomy selection and file upload components"

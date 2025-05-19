@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import RegisterAssetPage from '../pages/RegisterAssetPage';
+import RegisterAssetPageWrapper from '../components/asset/RegisterAssetPageWrapper';
 import { taxonomyService } from '../services/simpleTaxonomyService';
 import { useFeedback } from '../contexts/FeedbackContext';
 import ErrorBoundary from './ErrorBoundary';
@@ -335,9 +335,9 @@ const AssetRegistrationWrapper: React.FC = () => {
         </div>
       )}
     >
-      {/* Provide taxonomy context to RegisterAssetPage */}
+      {/* Provide taxonomy context to RegisterAssetPageWrapper */}
       <TaxonomyProvider options={{ autoLoad: false, showFeedback: true }}>
-        <RegisterAssetPage />
+        <RegisterAssetPageWrapper />
       </TaxonomyProvider>
     </ErrorBoundary>
   );

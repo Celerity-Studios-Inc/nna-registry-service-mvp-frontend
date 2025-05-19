@@ -90,60 +90,7 @@
       cursor: not-allowed;
     }
     
-    .toggle-ui {
-      display: flex;
-      align-items: center;
-      margin-bottom: 20px;
-    }
-    
-    .toggle-ui label {
-      margin-right: 10px;
-    }
-    
-    .toggle-switch {
-      position: relative;
-      display: inline-block;
-      width: 60px;
-      height: 34px;
-    }
-    
-    .toggle-switch input {
-      opacity: 0;
-      width: 0;
-      height: 0;
-    }
-    
-    .slider {
-      position: absolute;
-      cursor: pointer;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background-color: #ccc;
-      transition: .4s;
-      border-radius: 34px;
-    }
-    
-    .slider:before {
-      position: absolute;
-      content: "";
-      height: 26px;
-      width: 26px;
-      left: 4px;
-      bottom: 4px;
-      background-color: white;
-      transition: .4s;
-      border-radius: 50%;
-    }
-    
-    input:checked + .slider {
-      background-color: #2196F3;
-    }
-    
-    input:checked + .slider:before {
-      transform: translateX(26px);
-    }
+    /* UI toggle styles removed as the feature toggle has been removed */
     
     .test-summary {
       margin-top: 20px;
@@ -157,20 +104,13 @@
 <body>
   <h1>Taxonomy Refactoring Critical Test Cases</h1>
   
-  <div class="toggle-ui">
-    <label for="uiVersion">UI Version:</label>
-    <div class="toggle-switch">
-      <input type="checkbox" id="uiVersion" checked>
-      <span class="slider"></span>
-    </div>
-    <span id="versionLabel">New UI</span>
-  </div>
+  <!-- UI Version toggle removed - new implementation is now the only option -->
   
   <div class="test-section">
     <div class="test-header">Test Overview</div>
     <div class="test-description">
       This page verifies the critical taxonomy mapping cases that were the focus of the refactoring project.
-      The tests specifically validate:
+      The new implementation is now the only option, and these tests validate:
       <ul>
         <li>S.POP.HPM.001 → 2.001.007.001 mapping</li>
         <li>W.BCH.SUN.001 → 5.004.003.001 mapping</li>
@@ -231,43 +171,8 @@
   </div>
   
   <script>
-    // Set up UI toggle
-    const uiVersionToggle = document.getElementById('uiVersion');
-    const versionLabel = document.getElementById('versionLabel');
-    
-    uiVersionToggle.addEventListener('change', function() {
-      const isNewUi = this.checked;
-      versionLabel.textContent = isNewUi ? 'New UI' : 'Old UI';
-      
-      // Update UI version parameter in localStorage and URL
-      localStorage.setItem('preferredUIVersion', isNewUi ? 'new' : 'old');
-      
-      const url = new URL(window.location.href);
-      url.searchParams.set('uiVersion', isNewUi ? 'new' : 'old');
-      window.history.replaceState({}, '', url);
-    });
-    
-    // Initialize UI version from URL or localStorage
-    function initializeUiVersion() {
-      const urlParams = new URLSearchParams(window.location.search);
-      const urlVersion = urlParams.get('uiVersion');
-      
-      if (urlVersion === 'old' || urlVersion === 'new') {
-        uiVersionToggle.checked = urlVersion === 'new';
-        versionLabel.textContent = urlVersion === 'new' ? 'New UI' : 'Old UI';
-        localStorage.setItem('preferredUIVersion', urlVersion);
-      } else {
-        // Check localStorage
-        const storedVersion = localStorage.getItem('preferredUIVersion');
-        if (storedVersion === 'old' || storedVersion === 'new') {
-          uiVersionToggle.checked = storedVersion === 'new';
-          versionLabel.textContent = storedVersion === 'new' ? 'New UI' : 'Old UI';
-        }
-      }
-    }
-    
-    // Initialize on page load
-    document.addEventListener('DOMContentLoaded', initializeUiVersion);
+    // UI Version toggle code removed - new implementation is now the only option
+    // No need to initialize UI version preference as the new implementation is always used
     
     // Wait for taxonomyService to be loaded
     const waitForTaxonomyService = () => {

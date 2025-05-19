@@ -33,7 +33,7 @@ import {
   Public as PublicIcon,
 } from '@mui/icons-material';
 import { FileUploadResponse } from '../../types/asset.types';
-import taxonomyMapper from '../../api/taxonomyMapper';
+import { taxonomyService } from '../../services/simpleTaxonomyService';
 import { taxonomyFormatter } from '../../utils/taxonomyFormatter';
 import FilePreview from '../common/FilePreview';
 
@@ -144,14 +144,9 @@ const ReviewSubmit: React.FC<ReviewSubmitProps> = ({
 
       // Fallback to the older taxonomy mapper if the formatter fails
       try {
-        const fallbackFormattedAddresses = taxonomyMapper.formatNNAAddress(
-          layer,
-          categoryCode,
-          subcategoryCode,
-          '000' // Always use "000" for display consistency
-        ) as { hfn: string; mfa: string };
-
-        displayMfa = fallbackFormattedAddresses.mfa;
+        // Try directly with taxonomyService as fallback
+        const fallbackMfa = taxonomyService.convertHFNtoMFA(`${layer}.${categoryCode}.${subcategoryCode}.001`);
+        displayMfa = fallbackMfa || '0.000.000.000'; // Default if conversion fails completely
       } catch (fallbackError) {
         console.error(
           'Both formatter and legacy mapper failed:',

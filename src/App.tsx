@@ -18,7 +18,6 @@ import {
 import CssBaseline from '@mui/material/CssBaseline';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
-import RegisterAssetPage from './pages/RegisterAssetPage';
 import RegisterAssetPageNew from './pages/new/RegisterAssetPageNew';
 import SearchAssetsPage from './pages/SearchAssetsPage';
 import AssetDetailPage from './pages/AssetDetailPage';
@@ -41,7 +40,6 @@ import ErrorBoundary from './components/error/ErrorBoundary';
 import GlobalErrorHandler from './components/common/GlobalErrorHandler';
 import TestComponent from './components/common/TestComponent';
 import ApiRouteAlert from './components/common/ApiRouteAlert';
-import UIVersionToggle from './components/common/UIVersionToggle';
 import TaxonomyValidator from './components/TaxonomyValidator';
 import AssetRegistrationWrapper from './components/AssetRegistrationWrapper';
 import RegisterAssetPageWrapper from './components/asset/RegisterAssetPageWrapper';
@@ -53,7 +51,6 @@ import { taxonomyService } from './services/simpleTaxonomyService';
 import { logger, LogLevel, LogCategory } from './utils/logger';
 import LogViewer from './components/debug/LogViewer';
 import './styles/LogViewer.css';
-import './styles/UIVersionToggle.css';
 
 // Import new taxonomy error recovery utilities
 import { setupGlobalTaxonomyErrorHandler } from './utils/taxonomyErrorRecovery';
@@ -208,14 +205,6 @@ const App: React.FC = () => {
                           path="/taxonomy-selector-test"
                           element={<TaxonomySelectorTestPage />}
                         />
-                        <Route
-                          path="/register-asset-new"
-                          element={
-                            <ProtectedRoute>
-                              <RegisterAssetPageNew />
-                            </ProtectedRoute>
-                          }
-                        />
                         <Route element={<MainLayout />}>
                           <Route
                             path="/dashboard"
@@ -254,7 +243,6 @@ const App: React.FC = () => {
                       </Routes>
                     </Router>
                     <FeedbackDisplay />
-                    <UIVersionToggle />
                   </TaxonomyInitProvider>
                 </AuthProvider>
               </NotificationsProvider>

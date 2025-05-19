@@ -15,7 +15,8 @@ import {
   Error as ErrorIcon,
   Info as InfoIcon,
 } from '@mui/icons-material';
-import taxonomyMapper from '../../api/taxonomyMapper';
+import { taxonomyService } from '../../services/simpleTaxonomyService';
+import { taxonomyFormatter } from '../../utils/taxonomyFormatter';
 
 interface NNAAddressPreviewProps {
   layerCode: string;
@@ -43,32 +44,17 @@ const NNAAddressPreview: React.FC<NNAAddressPreviewProps> = ({
     `NNAAddressPreview Input: layer=${layerCode}, category=${categoryCode}, subcategory=${subcategoryCode}`
   );
 
-  // Use the enhanced taxonomy mapper to ensure consistent display across components
+  // Use the taxonomyFormatter utility to ensure consistent display
   // This handles all special cases internally and returns properly formatted addresses
-  let hfnAddress = '';
-  let mfaAddress = '';
-
-  const formattedAddresses = taxonomyMapper.formatNNAAddress(
-    layerCode,
-    categoryCode,
-    subcategoryCode,
-    '000' // Always use "000" for display in the preview
-  );
-
-  if (typeof formattedAddresses === 'string') {
-    // Legacy format - single string output
-    hfnAddress = formattedAddresses;
-    mfaAddress = taxonomyMapper.formatNNAAddress(
-      layerCode,
-      categoryCode,
-      subcategoryCode,
-      '000',
-      'mfa'
-    ) as string;
-  } else {
-    // Enhanced format - object with hfn and mfa properties
-    hfnAddress = formattedAddresses.hfn;
-    mfaAddress = formattedAddresses.mfa;
+  const hfn = `${layerCode}.${categoryCode}.${subcategoryCode}.001`;
+  
+  // Get formatted addresses
+  const hfnAddress = taxonomyFormatter.formatHFN(hfn);
+  const mfaAddress = taxonomyService.convertHFNtoMFA(hfn) || '';
+  
+  // If MFA conversion failed, provide a fallback
+  if (!mfaAddress) {
+    console.warn(`Failed to convert HFN: ${hfn} to MFA, using fallback`);
   }
 
   // Log the formatted addresses for debugging

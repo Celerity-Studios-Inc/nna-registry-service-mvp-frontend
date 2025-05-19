@@ -3,7 +3,6 @@ import { TaxonomyDataProvider } from '../providers/taxonomy/TaxonomyDataProvider
 import { TaxonomySelector, TaxonomySelectorMUI } from '../components/taxonomy';
 import { Box, Container, Typography, Divider, Tab, Tabs, Paper, Button, Link } from '@mui/material';
 import { Link as RouterLink } from 'react-router-dom';
-import { createURLWithUIVersion } from '../utils/featureToggle';
 
 /**
  * Test page for the new stateless TaxonomySelector component
@@ -76,7 +75,7 @@ const TaxonomySelectorTestPage: React.FC = () => {
         </Typography>
         
         <Typography variant="body1" paragraph>
-          This page tests the new stateless TaxonomySelector component that uses the 
+          This page tests the new TaxonomySelector component that uses the 
           TaxonomyDataProvider as its single source of truth.
         </Typography>
         
@@ -89,24 +88,6 @@ const TaxonomySelectorTestPage: React.FC = () => {
               color="primary"
             >
               Try Asset Registration Page
-            </Button>
-            
-            <Button 
-              component="a" 
-              href={createURLWithUIVersion('new')}
-              variant="contained" 
-              color="secondary"
-            >
-              Force New UI Version
-            </Button>
-            
-            <Button 
-              component="a" 
-              href={createURLWithUIVersion('old')}
-              variant="outlined" 
-              color="secondary"
-            >
-              Force Old UI Version
             </Button>
           </Box>
         </Box>

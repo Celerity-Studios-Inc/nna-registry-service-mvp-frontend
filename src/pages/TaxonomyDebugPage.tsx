@@ -9,8 +9,8 @@ import {
 } from '@mui/material';
 import TaxonomyDebug from '../components/TaxonomyDebug';
 import TaxonomyDebugger from '../components/debug/TaxonomyDebugger';
-import LayerSelector from '../components/asset/LayerSelector';
-import SimpleTaxonomySelection from '../components/asset/SimpleTaxonomySelection';
+import LayerSelector from '../components/asset/LayerSelectorV2';
+import SimpleTaxonomySelection from '../components/asset/SimpleTaxonomySelectionV2';
 import { TaxonomyProvider } from '../contexts/TaxonomyContext';
 
 const TaxonomyDebugPage: React.FC = () => {
