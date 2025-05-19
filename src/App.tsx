@@ -27,6 +27,7 @@ import ConnectivityHelp from './pages/ConnectivityHelp';
 import ErrorTestPage from './pages/ErrorTestPage';
 import TaxonomyDebugPage from './pages/TaxonomyDebugPage';
 import TaxonomyTestPage from './pages/TaxonomyTestPage';
+import TaxonomySelectorTestPage from './pages/TaxonomySelectorTestPage';
 import TaxonomyDebugger from './components/debug/TaxonomyDebugger';
 import './styles/TaxonomyDebugger.css';
 import { AuthProvider } from './contexts/AuthContext';
@@ -198,6 +199,10 @@ const App: React.FC = () => {
                         <Route
                           path="/taxonomy-test"
                           element={<TaxonomyTestPage />}
+                        />
+                        <Route
+                          path="/taxonomy-selector-test"
+                          element={<TaxonomySelectorTestPage />}
                         />
                         <Route element={<MainLayout />}>
                           <Route
