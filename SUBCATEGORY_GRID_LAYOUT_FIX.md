@@ -1,6 +1,10 @@
-# Subcategory Grid Layout Fix
+# Subcategory Grid Layout Fix - Revised
 
-This document describes the implementation of the fix for the subcategory grid layout issue in the asset registration flow.
+This document describes the revised implementation of the fix for the subcategory grid layout issue in the asset registration flow.
+
+## Update (May 22, 2025)
+
+Despite the previous CSS fixes, testing revealed persistent issues with the subcategory grid layout. The cards were still displaying in a vertical column rather than a proper grid. We've implemented a more comprehensive fix that completely restructures how the grid components are rendered.
 
 ## Issue Description
 
@@ -198,10 +202,78 @@ To ensure our grid layout fixes could successfully build, we addressed several T
 
 These fixes ensured our code could successfully build with TypeScript and prevented regression issues in the test suite.
 
+## Revised Solution (May 22, 2025)
+
+After observing continued issues with the grid layout, we implemented a more radical solution that:
+
+1. **Removes Nested Grids**: Eliminated nested grid structures that were causing layout conflicts
+2. **Simplifies Component Structure**: Changed SubcategoriesGrid to return direct children without wrappers
+3. **Uses Higher CSS Specificity**: Added a dedicated `.fixed-grid` class with maximum specificity rules
+4. **Standardizes Grid Patterns**: Unified grid layout implementation across all components
+5. **Separates Style from Structure**: Moved all styles from inline JSX to CSS classes
+
+### Key Structural Changes
+
+```jsx
+// Before: Nested grid structure with potential conflicts
+<div className="taxonomy-items" style={{...gridStyles}}>
+  <SubcategoriesGrid ...props />
+</div>
+
+// After: Flattened structure with single grid container
+<div className="taxonomy-items fixed-grid">
+  <SubcategoriesGrid ...props />
+</div>
+```
+
+### SubcategoriesGrid Component Changes
+
+```jsx
+// Before: Component wrapped its children in another div with grid styles
+return (
+  <div className="taxonomy-items" style={{...gridStyles}}>
+    {subcategories.map(subcategory => (
+      <TaxonomyItemComponent ... />
+    ))}
+  </div>
+);
+
+// After: Component returns direct children without wrapper
+return (
+  <>
+    {subcategories.map(subcategory => (
+      <TaxonomyItemComponent ... />
+    ))}
+  </>
+);
+```
+
+### CSS Enhancements
+
+```css
+/* New dedicated class for grid layout with maximum specificity */
+.taxonomy-section .taxonomy-items.fixed-grid {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)) !important;
+  grid-template-rows: auto !important;
+  grid-auto-flow: row !important;
+  grid-auto-rows: auto !important;
+  gap: 12px !important;
+  width: 100% !important;
+  padding: 15px !important;
+  box-sizing: border-box !important;
+  position: relative !important;
+}
+```
+
+## Verification and Testing
+
+These revised changes have been implemented and should address the persistent vertical layout issue seen in the subcategory grid. The fix eliminates nested grid structures that were causing conflicts and ensures that all grid containers follow a consistent pattern.
+
 ## Next Steps
 
 1. Monitor the fix in production to ensure it works across all devices and browsers
-2. Consider consolidating the grid layout CSS to reduce duplication
+2. Address any UI freezing/performance issues that may be related to the grid layout
 3. Add tooltips for cards with truncated text for improved accessibility
-4. Gather user feedback to confirm the usability improvements
-5. Clean up ESLint warnings in a future maintenance pass to improve code quality
+4. Consider implementing a virtualized grid for better performance with large numbers of cards
+5. Clean up excessive console logging after fixes are confirmed working

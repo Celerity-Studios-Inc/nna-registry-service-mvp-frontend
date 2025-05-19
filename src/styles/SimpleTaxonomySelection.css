@@ -69,6 +69,20 @@
   position: relative;
 }
 
+/* Special class to force grid for subcategories */
+.taxonomy-section .taxonomy-items.fixed-grid {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)) !important;
+  grid-template-rows: auto !important;
+  grid-auto-flow: row !important;
+  grid-auto-rows: auto !important;
+  gap: 12px !important;
+  width: 100% !important;
+  padding: 15px !important;
+  box-sizing: border-box !important;
+  position: relative !important;
+}
+
 /* Additional selector for higher specificity - for category section */
 .simple-taxonomy-selection .taxonomy-section:first-child .taxonomy-items {
   display: grid !important;
@@ -247,16 +261,85 @@
   margin-bottom: 15px;
 }
 
-/* Fallback indicator styling */
-.using-direct-data-indicator {
+/* Fallback indicator and helper classes */
+.data-source-indicator {
   font-size: 11px; 
   color: #666; 
   margin: 8px 0; 
-  padding: 4px;
+  padding: 6px;
   background-color: #f0f8ff; 
   border: 1px solid #d0e0ff; 
   border-radius: 4px;
   text-align: center;
+  grid-column: 1 / -1; /* Span all columns */
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Loader styles */
+.taxonomy-items-loader {
+  padding: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  min-height: 150px;
+  box-sizing: border-box;
+}
+
+.loader-content {
+  text-align: center;
+  width: 100%;
+}
+
+.loader-text {
+  font-size: 14px;
+  margin-bottom: 10px;
+  color: #666;
+}
+
+.loader-bar {
+  width: 60px;
+  height: 6px;
+  background: #f0f0f0;
+  border-radius: 3px;
+  margin: 0 auto;
+  overflow: hidden;
+  position: relative;
+}
+
+.loader-progress {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 30%;
+  background: #1976d2;
+  border-radius: 3px;
+  animation: loadingAnimation 1.5s infinite ease-in-out;
+}
+
+@keyframes loadingAnimation {
+  0% { left: -30%; }
+  100% { left: 100%; }
+}
+
+/* Hint for subcategory selection */
+.subcategory-hint {
+  position: absolute;
+  bottom: 10px;
+  left: 10px;
+  right: 10px;
+  background: rgba(25, 118, 210, 0.1);
+  color: #1976d2;
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: bold;
+  text-align: center;
+  pointer-events: none; /* Don't block clicks */
+  z-index: 1;
+  grid-column: 1 / -1; /* Span all columns */
 }
 
 /* Apply highest specificity styles to ensure grid layout is enforced across all browsers */

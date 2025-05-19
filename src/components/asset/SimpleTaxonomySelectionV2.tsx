@@ -80,7 +80,7 @@ const CategoriesGrid = React.memo(({
   handleCategorySelect: (category: string) => void;
 }) => {
   return (
-    <div className="taxonomy-items">
+    <>
       {categories.map(category => (
         <TaxonomyItemComponent
           key={category.code}
@@ -90,7 +90,7 @@ const CategoriesGrid = React.memo(({
           dataTestId={`category-${category.code}`}
         />
       ))}
-    </div>
+    </>
   );
 });
 
@@ -123,65 +123,21 @@ const SubcategoriesGrid = React.memo(({
   // show a brief loading indicator to prevent a flash of empty state
   if (showInitializing && subcategories.length === 0) {
     return (
-      <div className="taxonomy-items initializing" style={{ 
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))',
-        gridTemplateRows: 'auto',
-        gap: '12px',
-        width: '100%'
-      }}>
-        <div style={{ 
-          textAlign: 'center', 
-          padding: '20px', 
-          color: '#666',
-          width: '100%',
-          gridColumn: '1 / -1'  // Span all columns
-        }}>
-          <div style={{ fontSize: '14px', marginBottom: '10px' }}>
-            Initializing subcategories...
+      <div className="taxonomy-items-loader">
+        <div className="loader-content">
+          <div className="loader-text">Initializing subcategories...</div>
+          <div className="loader-bar">
+            <div className="loader-progress" />
           </div>
-          <div style={{ 
-            width: '50px', 
-            height: '6px', 
-            background: '#f0f0f0', 
-            borderRadius: '3px',
-            margin: '0 auto',
-            overflow: 'hidden',
-            position: 'relative'
-          }}>
-            <div style={{ 
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              height: '100%',
-              width: '30%',
-              background: '#1976d2',
-              borderRadius: '3px',
-              animation: 'loadingAnimation 1.5s infinite ease-in-out'
-            }} />
-          </div>
-          <style>{`
-            @keyframes loadingAnimation {
-              0% { left: -30%; }
-              100% { left: 100%; }
-            }
-          `}</style>
         </div>
       </div>
     );
   }
   
-  // Once initialization is complete, show the regular content with explicit grid layout
+  // Once initialization is complete, show the regular content directly in the grid
   return (
-    <div className="taxonomy-items" style={{ 
-      display: 'grid',
-      gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', // Wider cards for more content
-      gridTemplateRows: 'auto',
-      gridAutoFlow: 'row !important', // Force row flow
-      gridAutoRows: 'auto',
-      gap: '12px',
-      width: '100%'
-    }}>
+    <>
+      {/* Just return the items directly without a wrapper div */}
       {subcategories.map(subcategory => (
         <TaxonomyItemComponent
           key={subcategory.code}
@@ -195,31 +151,24 @@ const SubcategoriesGrid = React.memo(({
       
       {/* Add a hint to show when subcategories load but before interaction */}
       {subcategories.length > 0 && !activeSubcategory && (
-        <div style={{
-          position: 'absolute',
-          bottom: '10px',
-          left: '10px',
-          right: '10px',
-          background: 'rgba(25, 118, 210, 0.1)',
-          color: '#1976d2',
-          padding: '8px 12px',
-          borderRadius: '4px',
-          fontSize: '13px',
-          fontWeight: 'bold',
-          textAlign: 'center',
-          pointerEvents: 'none', // Don't block clicks
-          zIndex: 1
-        }}>
+        <div className="subcategory-hint">
           Select a subcategory to continue
         </div>
       )}
-    </div>
+    </>
   );
 });
 
 // Loading state component
 const LoadingState = React.memo(({ message }: { message: string }) => (
-  <div className="taxonomy-loading">{message}</div>
+  <div className="taxonomy-loading">
+    <div className="loader-content">
+      <div className="loader-text">{message}</div>
+      <div className="loader-bar">
+        <div className="loader-progress" />
+      </div>
+    </div>
+  </div>
 ));
 
 // Error state component with retry button
@@ -1461,18 +1410,18 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
             <AutoRetry layer={layer} onRetry={handleCategoryRetry} />
           </React.Fragment>
         ) : (
-          <React.Fragment>
+          <div className="taxonomy-items fixed-grid">
             <CategoriesGrid 
               categories={categories}
               activeCategory={activeCategory}
               handleCategorySelect={handleCategorySelect}
             />
             {categories.length === 0 && (
-              <div style={{ textAlign: 'center', padding: '10px', fontSize: '12px', color: '#666' }}>
+              <div className="data-source-indicator">
                 Attempting to load categories directly...
               </div>
             )}
-          </React.Fragment>
+          </div>
         )}
       </div>
       
@@ -1498,13 +1447,7 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
             />
           ) : (
             <div 
-              className={`taxonomy-items ${displaySubcategoriesData.useDirectData ? 'using-direct-data' : ''}`}
-              style={{ 
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', // This is the critical fix: use a proper grid layout
-                gap: '12px',
-                width: '100%'
-              }}
+              className={`taxonomy-items fixed-grid ${displaySubcategoriesData.useDirectData ? 'using-direct-data' : ''}`}
             >
               <SubcategoriesGrid
                 subcategories={displaySubcategoriesData.displaySubcategories}
@@ -1514,16 +1457,7 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
               />
               
               {displaySubcategoriesData.useDirectData && (
-                <div style={{ 
-                  fontSize: '11px', 
-                  color: '#666', 
-                  margin: '8px 0', 
-                  padding: '4px', 
-                  backgroundColor: '#f0f8ff', 
-                  border: '1px solid #d0e0ff', 
-                  borderRadius: '4px',
-                  textAlign: 'center'
-                }}>
+                <div className="data-source-indicator">
                   Using {displaySubcategoriesData.dataSource} data source (fallback mode)
                 </div>
               )}
