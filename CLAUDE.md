@@ -416,21 +416,64 @@ The build is currently being deployed and will be tested to verify the fix works
 9. Optimize file upload UI rendering performance
 10. Clean up excessive debugging logs after all functionality is confirmed working
 
+### 17. Taxonomy Refactoring Project (May 24, 2025)
+
+We are implementing a comprehensive refactoring of the taxonomy selection system using a modern architecture pattern to address recurring issues with the current implementation:
+
+#### Phase 1-3: Architecture Design and Component Creation (COMPLETED)
+- Created a new architecture with clear separation of concerns:
+  1. `TaxonomyDataProvider`: Centralized data provider that handles all taxonomy data operations
+  2. `TaxonomySelector`: Stateless UI component for rendering the taxonomy selection interface
+  3. Supporting components: `LayerGrid`, `CategoryGrid`, `SubcategoryGrid` (all stateless)
+
+- Key Components Created:
+  - `/src/providers/taxonomy/TaxonomyDataProvider.tsx`: Central data provider with caching and error handling
+  - `/src/providers/taxonomy/types.ts`: Type definitions for the new taxonomy system
+  - `/src/components/taxonomy/TaxonomySelector.tsx`: Main stateless component for taxonomy selection UI
+  - `/src/components/taxonomy/LayerGrid.tsx`: Grid display for layer selection
+  - `/src/components/taxonomy/CategoryGrid.tsx`: Grid display for category selection
+  - `/src/components/taxonomy/SubcategoryGrid.tsx`: Grid display for subcategory selection
+
+#### Phase 4-5: Integration with Register Asset Page (IN PROGRESS)
+- Created a new implementation of RegisterAssetPage that uses the new architecture:
+  - `/src/pages/new/RegisterAssetPageNew.tsx`: New version with TaxonomySelector integration
+  - Implemented adapter methods to convert between string-based and object-based interfaces
+  - Added feature toggle to switch between old and new implementations
+  - Removed special case handling for specific taxonomy combinations (S+POP+HPM)
+  - Implemented generic approaches for all error handling and fallbacks
+  - Enhanced form state management with React Hook Form integration
+
+#### Current Status and Next Steps
+- The new implementation works for all taxonomy combinations including Star+POP
+- All special case handling has been removed in favor of generic approaches
+- Testing is needed to validate the new implementation with all possible scenarios
+- Need to complete Phases 6-8: Main App Integration, Parallel Testing, and Cleanup
+
 ## Important Files Modified
 
-- `/src/services/simpleTaxonomyService.ts` - Enhanced with fallback mechanisms
-- `/src/components/debug/TaxonomyDebugger.tsx` - Fixed TypeScript errors
-- `/src/components/asset/SimpleTaxonomySelectionV2.tsx` - Added direct service integration, improved error handling, and unmount safety checks
-- `/src/components/asset/LayerSelectorV2.tsx` - Fixed double-click event propagation
-- `/src/pages/RegisterAssetPage.tsx` - Updated event handlers, form state management, and added throttling
-- `/src/components/asset/ReviewSubmit.tsx` - Enhanced form validation display
-- `/src/components/common/FilePreview.tsx` - Improved file preview reliability
-- `/src/styles/SimpleTaxonomySelection.css` - Updated to use CSS Grid for better layout
-- `/src/utils/taxonomyErrorRecovery.ts` - Added new utility for taxonomy error recovery
-- `/src/components/TaxonomyErrorRecovery.tsx` - Added new component for error handling
-- `/src/components/ErrorBoundary.tsx` - Enhanced to support function fallbacks
-- `/src/App.tsx` - Added global taxonomy error handler
-- `/src/components/AssetRegistrationWrapper.tsx` - Improved error handling with ReactError#301 fix
+- New files created for taxonomy refactor:
+  - `/src/providers/taxonomy/TaxonomyDataProvider.tsx` - Central data provider
+  - `/src/providers/taxonomy/types.ts` - Type definitions
+  - `/src/components/taxonomy/TaxonomySelector.tsx` - Main component
+  - `/src/components/taxonomy/LayerGrid.tsx` - Layer selection grid
+  - `/src/components/taxonomy/CategoryGrid.tsx` - Category selection grid 
+  - `/src/components/taxonomy/SubcategoryGrid.tsx` - Subcategory selection grid
+  - `/src/pages/new/RegisterAssetPageNew.tsx` - New implementation of register asset page
+
+- Existing files modified:
+  - `/src/services/simpleTaxonomyService.ts` - Enhanced with fallback mechanisms
+  - `/src/components/debug/TaxonomyDebugger.tsx` - Fixed TypeScript errors
+  - `/src/components/asset/SimpleTaxonomySelectionV2.tsx` - Added direct service integration, improved error handling, and unmount safety checks
+  - `/src/components/asset/LayerSelectorV2.tsx` - Fixed double-click event propagation
+  - `/src/pages/RegisterAssetPage.tsx` - Updated event handlers, form state management, and added throttling
+  - `/src/components/asset/ReviewSubmit.tsx` - Enhanced form validation display
+  - `/src/components/common/FilePreview.tsx` - Improved file preview reliability
+  - `/src/styles/SimpleTaxonomySelection.css` - Updated to use CSS Grid for better layout
+  - `/src/utils/taxonomyErrorRecovery.ts` - Added new utility for taxonomy error recovery
+  - `/src/components/TaxonomyErrorRecovery.tsx` - Added new component for error handling
+  - `/src/components/ErrorBoundary.tsx` - Enhanced to support function fallbacks
+  - `/src/App.tsx` - Added global taxonomy error handler and route for new RegisterAssetPage
+  - `/src/components/AssetRegistrationWrapper.tsx` - Improved error handling with ReactError#301 fix
 
 ## Code Style Guidelines
 - TypeScript is required for all new code

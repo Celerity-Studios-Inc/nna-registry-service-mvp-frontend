@@ -19,6 +19,7 @@ import CssBaseline from '@mui/material/CssBaseline';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import RegisterAssetPage from './pages/RegisterAssetPage';
+import RegisterAssetPageNew from './pages/new/RegisterAssetPageNew';
 import SearchAssetsPage from './pages/SearchAssetsPage';
 import AssetDetailPage from './pages/AssetDetailPage';
 import DashboardPage from './pages/DashboardPage';
@@ -203,6 +204,14 @@ const App: React.FC = () => {
                         <Route
                           path="/taxonomy-selector-test"
                           element={<TaxonomySelectorTestPage />}
+                        />
+                        <Route
+                          path="/register-asset-new"
+                          element={
+                            <ProtectedRoute>
+                              <RegisterAssetPageNew />
+                            </ProtectedRoute>
+                          }
                         />
                         <Route element={<MainLayout />}>
                           <Route

@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { TaxonomyDataProvider } from '../providers/taxonomy/TaxonomyDataProvider';
 import { TaxonomySelector, TaxonomySelectorMUI } from '../components/taxonomy';
-import { Box, Container, Typography, Divider, Tab, Tabs, Paper } from '@mui/material';
+import { Box, Container, Typography, Divider, Tab, Tabs, Paper, Button, Link } from '@mui/material';
+import { Link as RouterLink } from 'react-router-dom';
 
 /**
  * Test page for the new stateless TaxonomySelector component
@@ -77,6 +78,18 @@ const TaxonomySelectorTestPage: React.FC = () => {
           This page tests the new stateless TaxonomySelector component that uses the 
           TaxonomyDataProvider as its single source of truth.
         </Typography>
+        
+        <Box sx={{ mb: 2 }}>
+          <Button 
+            component={RouterLink} 
+            to="/register-asset-new" 
+            variant="contained" 
+            color="primary"
+            sx={{ mb: 2 }}
+          >
+            Try New Asset Registration Page
+          </Button>
+        </Box>
         
         <Box sx={{ mb: 4 }}>
           <Paper sx={{ p: 2, mb: 2 }}>
