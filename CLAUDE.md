@@ -238,13 +238,29 @@ There are special case mappings that need special handling:
     - Fixed potential null references in callback functions
   - Build now successfully completes without TypeScript errors
 
+## Current Status (May 20, 2025)
+
+The latest build (CI/CD #280, commit 5c9f985) includes fixes for the following regressions:
+
+1. Fixed double-click on layer card not working in step 1
+2. Fixed category cards requiring 'Retry' to load in step 2
+3. Fixed subcategory cards displaying in vertical column instead of grid layout
+
+However, testing has identified an additional regression:
+
+1. **HFN and MFA Format Regression**: On the asset creation success page, the HFN format is showing lowercase format (e.g., S.Pop.Global.002) instead of the correct uppercase format (S.POP.GLB.002). Similarly, the MFA format may be incorrect.
+
+This regression appears to be in the code that formats the addresses for display on the success page. The issue is likely occurring in the `registerAssetPage.tsx` file, in the `renderSuccessScreen` function that formats the HFN and MFA for display.
+
 ## Next Steps
 
-1. Monitor the comprehensive subcategory selection fix
-2. Clean up excessive debugging logs after functionality is confirmed working
-3. Optimize asset registration performance with further improvements
-4. Consider properly fixing the failing tests in the future
-5. Address any additional UX issues identified during testing
+1. Fix the HFN and MFA format regression in the success screen
+2. Improve error handling and format validation in the asset creation flow
+3. Monitor the fixes for subcategory selection and step navigation
+4. Clean up excessive debugging logs after functionality is confirmed working
+5. Optimize asset registration performance with further improvements
+6. Consider properly fixing the failing tests in the future
+7. Implement a more robust format validation system to prevent future format regressions
 
 ## Workflow Guidelines
 - Always get user validation BEFORE implementing changes
