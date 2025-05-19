@@ -812,19 +812,16 @@ const RegisterAssetPage: React.FC = () => {
       `[LAYER SELECT] Called with layer=${layer.code}, isDoubleClick=${isDoubleClick}`
     );
     
-    // CRITICAL FIX: Add throttling to prevent rapid multiple layer selections
+    // CRITICAL FIX: More aggressive throttling to prevent rapid multiple layer selections
     const now = Date.now();
-    const throttleTime = 300; // 300ms cooldown between layer selections
+    const throttleTime = 500; // 500ms cooldown between ANY layer selections (increased from 300ms)
     
-    // Check if this is a duplicate selection or happening too quickly
-    if (
-      layerSelectionThrottleRef.current.lastLayer === layer.code &&
-      now - layerSelectionThrottleRef.current.lastTimestamp < throttleTime
-    ) {
+    // Enhanced throttling - now check for ANY layer selection being too quick, not just duplicates
+    if (now - layerSelectionThrottleRef.current.lastTimestamp < throttleTime) {
       console.log(
-        `[LAYER SELECT] Throttled - ignoring duplicate selection of ${layer.code} (last: ${Date.now() - layerSelectionThrottleRef.current.lastTimestamp}ms ago)`
+        `[LAYER SELECT] Throttled - ignoring layer selection request as previous selection was only ${Date.now() - layerSelectionThrottleRef.current.lastTimestamp}ms ago`
       );
-      return; // Ignore this selection
+      return; // Ignore this selection completely
     }
     
     // Clear any pending throttle timeout
@@ -832,13 +829,24 @@ const RegisterAssetPage: React.FC = () => {
       clearTimeout(layerSelectionThrottleRef.current.throttleTimeout);
     }
     
+    // Add a global lock to prevent ANY layer-related operations during this throttle period
+    const globalLockKey = '__layerSelectionLock';
+    if (window[globalLockKey]) {
+      console.log(`[LAYER SELECT] Throttled - global lock is active`);
+      return; // Another layer selection is in progress
+    }
+    
+    // Set global lock
+    window[globalLockKey] = true;
+    
     // Update throttle state
     layerSelectionThrottleRef.current = {
       lastLayer: layer.code,
       lastTimestamp: now,
       throttleTimeout: setTimeout(() => {
-        // Reset throttle state after timeout
+        // Reset throttle state and global lock after timeout
         layerSelectionThrottleRef.current.throttleTimeout = null;
+        window[globalLockKey] = false;
       }, throttleTime)
     };
 

@@ -245,6 +245,13 @@ const SubcategoriesGrid = React.memo(
 
     // CRITICAL ERROR FIX: Wrap the rendering in error boundary & defensive checks
     // to prevent common React Error #301 - cannot update unmounted component
+    
+    // Most important safety check: never attempt render if component is unmounting
+    if (!isMountedRef.current) {
+      console.log(`[GRID SAFETY] Prevented render during unmount`);
+      return null;
+    }
+    
     try {
       // If we just started showing this component and data is not yet available from any source,
       // show a brief loading indicator to prevent a flash of empty state
@@ -436,6 +443,10 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
   // ENHANCED FIX: Add improved global event listeners for layer changes
   // This provides multiple layers of reliability for layer switching
   useEffect(() => {
+    // CRITICAL FIX: Add window.__layerChangeHandlers type declaration for TypeScript
+    if (!window.__layerChangeHandlers) {
+      window.__layerChangeHandlers = {};
+    }
     // Cleanup function to remove all event listeners at once
     const cleanupListeners: (() => void)[] = [];
 
@@ -471,8 +482,9 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
       setLocalSubcategories([]);
       subcategoriesRef.current = [];
 
-      // Force a context update with the NEW layer value from the event
-      selectLayer(newLayer);
+      // CRITICAL FIX: Don't call selectLayer again as it creates a circular update pattern
+      // The parent already called this, we just need to handle our local component state
+      // selectLayer(newLayer); // Removed to prevent circular layer selection
 
       // Use a tiered approach with multiple timeouts for better reliability
 
@@ -689,9 +701,25 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
     };
 
     // Register event listeners
+    // CRITICAL FIX: We need to check for existing listeners to prevent duplicates
+    // Use a unique persistent ID for this component instance
+    const componentId = useRef(`tsx_${Math.random().toString(36).substring(2, 9)}`).current;
+    
+    // Only add the event listener if we don't already have one for this component
+    if (!window.__layerChangeHandlers) {
+      window.__layerChangeHandlers = {};
+    }
+    
+    // Remove any existing handler for this component
+    if (window.__layerChangeHandlers[componentId]) {
+      window.removeEventListener('layerChanged', window.__layerChangeHandlers[componentId]);
+    }
+    
+    // Store the handler reference and add the listener
+    window.__layerChangeHandlers[componentId] = handleLayerChangeEvent as EventListener;
     window.addEventListener(
       'layerChanged',
-      handleLayerChangeEvent as EventListener
+      window.__layerChangeHandlers[componentId]
     );
     window.addEventListener(
       'taxonomyCategoriesLoaded',
@@ -726,6 +754,12 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
     return () => {
       // Execute all cleanup functions
       cleanupListeners.forEach(cleanup => cleanup());
+      
+      // CRITICAL FIX: Also specifically remove our handler from the global registry
+      if (window.__layerChangeHandlers?.[componentId]) {
+        window.removeEventListener('layerChanged', window.__layerChangeHandlers[componentId]);
+        delete window.__layerChangeHandlers[componentId];
+      }
     };
   }, [selectLayer, reloadCategories, categories, layer]);
 
@@ -957,8 +991,9 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
       categoryDebounceRef.current = null;
     }
 
-    // STEP 2: Update context immediately
-    selectLayer(layer);
+    // STEP 2: Don't update context here - this would cause a circular update
+    // The layer is already set in taxonomyContext by the parent component
+    // selectLayer(layer); // Removed to prevent circular updates
 
     // STEP 3: Create a reference to track this specific layer change operation
     // This helps prevent race conditions when quickly switching between layers
