@@ -668,24 +668,56 @@ const RegisterAssetPage: React.FC = () => {
     setPotentialDuplicate(null);
   };
 
-  // Handle layer selection - CRITICAL FIX for layer switching issue
+  // Handle layer selection - ENHANCED FIX for layer switching issue
   const handleLayerSelect = (layer: LayerOption, isDoubleClick?: boolean) => {
     console.log(`[LAYER SELECT] Called with layer=${layer.code}, isDoubleClick=${isDoubleClick}`);
     
-    // STEP 1: First update the form values with the new layer
+    // Generate a unique ID for this layer change operation to track throughout the process
+    const layerChangeId = `lc_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
+    console.log(`[LAYER SELECT ${layerChangeId}] Starting layer switch operation to ${layer.code}`);
+    
+    // DIAGNOSTIC: Log the taxonomy context state before layer switch
+    console.log(`[LAYER SELECT ${layerChangeId}] Before switch - taxonomyContext.selectedLayer: ${taxonomyContext.selectedLayer}`);
+    console.log(`[LAYER SELECT ${layerChangeId}] Before switch - taxonomyContext.categories: ${JSON.stringify(taxonomyContext.categories.map(c => c.code))}`);
+    console.log(`[LAYER SELECT ${layerChangeId}] Before switch - taxonomyContext.selectedCategory: ${taxonomyContext.selectedCategory}`);
+    
+    // STEP 1: First emit the event to notify components BEFORE form state changes
+    // This ensures components can reset their state before receiving updated props
+    try {
+      const layerChangeEvent = new CustomEvent('layerChanged', {
+        detail: { 
+          layer: layer.code, 
+          timestamp: Date.now(),
+          previousLayer: taxonomyContext.selectedLayer,
+          operationId: layerChangeId
+        }
+      });
+      window.dispatchEvent(layerChangeEvent);
+      console.log(`[LAYER SELECT ${layerChangeId}] Dispatched layerChanged event for ${layer.code}`);
+    } catch (e) {
+      console.warn(`[LAYER SELECT ${layerChangeId}] Failed to dispatch layer change event:`, e);
+    }
+    
+    // STEP 2: CRITICAL FIX - Reset taxonomy context BEFORE updating any other state
+    // This is a key change in the sequence - reset taxonomy state first
+    console.log(`[LAYER SELECT ${layerChangeId}] Resetting taxonomy context`);
+    taxonomyContext.reset(); // First reset all context state
+    
+    // STEP 3: Update the form values with the new layer
+    console.log(`[LAYER SELECT ${layerChangeId}] Updating form values for layer ${layer.code}`);
     setValue('layer', layer.code, { shouldValidate: true, shouldDirty: true, shouldTouch: true });
     setValue('layerName', layer.name, { shouldValidate: true, shouldDirty: true, shouldTouch: true });
     
-    // STEP 2: Update special layer type flags
+    // STEP 4: Update special layer type flags
     const isTraining = layer.code === 'T';
     setIsTrainingLayer(isTraining);
     
     const isComposite = layer.code === 'C';
     setIsCompositeLayer(isComposite);
     
-    // STEP 3: CRITICAL FIX - Thoroughly reset all taxonomy-related form values 
+    // STEP 5: Thoroughly reset all taxonomy-related form values 
     // This ensures no lingering state from previous layer selections
-    console.log(`[LAYER SELECT] Clearing all category and subcategory state for layer switch to ${layer.code}`);
+    console.log(`[LAYER SELECT ${layerChangeId}] Clearing all category and subcategory form state`);
     
     // Force immediate form value updates with validation flags
     setValue('categoryCode', '', { shouldValidate: true, shouldDirty: true, shouldTouch: true });
@@ -697,7 +729,7 @@ const RegisterAssetPage: React.FC = () => {
     setValue('mfa', '', { shouldValidate: true, shouldDirty: true, shouldTouch: true });
     setValue('sequential', '', { shouldValidate: true, shouldDirty: true, shouldTouch: true });
     
-    // STEP 4: Clear any stored subcategory data in session storage
+    // STEP 6: Clear any stored subcategory data in session storage
     try {
       // Remove all stored subcategories for previous selections
       const keysToRemove = [];
@@ -714,32 +746,92 @@ const RegisterAssetPage: React.FC = () => {
       // Remove in a separate loop to avoid messing up the iteration
       keysToRemove.forEach(key => {
         sessionStorage.removeItem(key);
-        console.log(`[LAYER SELECT] Removed session storage key: ${key}`);
+        console.log(`[LAYER SELECT ${layerChangeId}] Removed session storage key: ${key}`);
       });
     } catch (e) {
-      console.warn('[LAYER SELECT] Failed to clear subcategories from session storage:', e);
+      console.warn(`[LAYER SELECT ${layerChangeId}] Failed to clear subcategories from session storage:`, e);
     }
     
-    // STEP 5: Also make sure taxonomy context is updated
-    taxonomyContext.selectLayer(layer.code);
-    taxonomyContext.reset(); // This ensures all context state is properly reset
-    
-    // STEP 6: Emit an event to notify components of the layer change
-    // This helps components that might not be directly in the React component tree
+    // STEP 7: Direct service call to prefetch categories for the new layer
+    // This provides a fast fallback if context-based loading fails
     try {
-      const layerChangeEvent = new CustomEvent('layerChanged', {
-        detail: { layer: layer.code, timestamp: Date.now() }
-      });
-      window.dispatchEvent(layerChangeEvent);
-      console.log(`[LAYER SELECT] Dispatched layerChanged event for ${layer.code}`);
+      const taxonomyService = require('../services/simpleTaxonomyService').taxonomyService;
+      const directCategories = taxonomyService.getCategories(layer.code);
+      
+      console.log(`[LAYER SELECT ${layerChangeId}] Direct service call returned ${directCategories.length} categories for ${layer.code}`);
+      
+      // Store the layer and category data in session storage for emergency recovery
+      if (directCategories.length > 0) {
+        sessionStorage.setItem(`directCategories_${layer.code}`, JSON.stringify(directCategories));
+        console.log(`[LAYER SELECT ${layerChangeId}] Stored ${directCategories.length} categories in session storage`);
+        
+        // Also broadcast via custom event for any component to consume
+        const categoriesEvent = new CustomEvent('taxonomyCategoriesLoaded', {
+          detail: { 
+            layer: layer.code, 
+            categories: directCategories,
+            source: 'direct-prefetch',
+            operationId: layerChangeId
+          }
+        });
+        window.dispatchEvent(categoriesEvent);
+      }
     } catch (e) {
-      console.warn('[LAYER SELECT] Failed to dispatch layer change event:', e);
+      console.warn(`[LAYER SELECT ${layerChangeId}] Failed to prefetch categories:`, e);
     }
+    
+    // STEP 8: Now update taxonomy context with new layer and force category reload
+    // Increased timeouts for more reliable sequencing
+    setTimeout(() => {
+      console.log(`[LAYER SELECT ${layerChangeId}] Setting taxonomy context layer to ${layer.code}`);
+      taxonomyContext.selectLayer(layer.code);
+      
+      // Force reload of categories for the new layer with a short delay
+      setTimeout(() => {
+        console.log(`[LAYER SELECT ${layerChangeId}] Forcing reload of categories for layer ${layer.code}`);
+        taxonomyContext.reloadCategories();
+        
+        // Dispatch another event after categories are reloaded (third-tier backup)
+        setTimeout(() => {
+          // Check if categories loaded successfully
+          if (taxonomyContext.categories.length === 0) {
+            console.log(`[LAYER SELECT ${layerChangeId}] Categories still not loaded, triggering emergency reload`);
+            
+            // Final attempt - force another reload and broadcast event
+            taxonomyContext.reloadCategories();
+            
+            // Also broadcast the emergency reload event
+            const emergencyEvent = new CustomEvent('taxonomyEmergencyReload', {
+              detail: { 
+                layer: layer.code,
+                timestamp: Date.now(),
+                operationId: layerChangeId
+              }
+            });
+            window.dispatchEvent(emergencyEvent);
+          } else {
+            console.log(`[LAYER SELECT ${layerChangeId}] Categories loaded successfully: ${taxonomyContext.categories.length} items`);
+          }
+        }, 300);
+      }, 100);
+    }, 100);
+    
+    // Add delayed diagnostic after layer change to verify it took effect
+    setTimeout(() => {
+      console.log(`[LAYER SELECT ${layerChangeId}] After switch (500ms) - taxonomyContext.selectedLayer: ${taxonomyContext.selectedLayer}`);
+      console.log(`[LAYER SELECT ${layerChangeId}] After switch (500ms) - taxonomyContext.categories: ${JSON.stringify(taxonomyContext.categories.map(c => c.code))}`);
+      console.log(`[LAYER SELECT ${layerChangeId}] After switch (500ms) - form values: ${JSON.stringify({
+        layer: getValues('layer'),
+        layerName: getValues('layerName'),
+        categoryCode: getValues('categoryCode'),
+        categoryName: getValues('categoryName')
+      })}`);
+    }, 500);
     
     // Handle double-click behavior
     if (isDoubleClick) {
-      console.log('[LAYER SELECT] Double-click detected but NOT auto-advancing to prevent Step 2 skipping');
-      console.log('[LAYER SELECT] This fixes the issue where subcategory selection was being bypassed');
+      console.log(`[LAYER SELECT ${layerChangeId}] Double-click detected but NOT auto-advancing to prevent Step 2 skipping`);
+      console.log(`[LAYER SELECT ${layerChangeId}] This fixes the issue where subcategory selection was being bypassed`);
     }
   };
 

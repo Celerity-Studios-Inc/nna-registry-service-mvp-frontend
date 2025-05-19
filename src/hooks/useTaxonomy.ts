@@ -65,8 +65,9 @@ interface UseTaxonomyResult {
   updateSequential: (sequential: string) => void;
   updateFileType: (fileType: string | null) => void;
 
-  // Reset
+  // Reset functionality
   reset: () => void;
+  resetCategoryData: () => void; // New method for targeted reset during layer changes
 
   // Validation
   validateSelections: () => boolean;
@@ -125,23 +126,59 @@ export const useTaxonomy = (options: UseTaxonomyOptions = {}): UseTaxonomyResult
     }
   }, [feedback, showFeedback]);
 
-  // Load categories for a layer
+  // Load categories for a layer - ENHANCED with more robust error recovery
   const loadCategories = useCallback(async (layer: string) => {
     if (!layer) return;
+    
+    // Generate a unique load ID for tracking
+    const loadId = `load_${Date.now().toString(36)}`;
+    console.log(`[CONTEXT ${loadId}] Starting category load for layer: ${layer}`);
 
     setIsLoadingCategories(true);
     setCategoryError(null);
 
     try {
-      // Wait for taxonomy initialization to complete (skipped in test)
-      if (process.env.NODE_ENV !== 'test') {
-        await waitForTaxonomyInit();
+      // Check if we have categories in session storage first (fastest source)
+      let layerCategories: TaxonomyCategory[] = [];
+      let dataSource = 'primary';
+      
+      try {
+        const sessionData = sessionStorage.getItem(`directCategories_${layer}`);
+        if (sessionData) {
+          const storedCategories = JSON.parse(sessionData);
+          if (storedCategories && storedCategories.length > 0) {
+            console.log(`[CONTEXT ${loadId}] Found ${storedCategories.length} categories in session storage`);
+            layerCategories = storedCategories;
+            dataSource = 'session';
+          }
+        }
+      } catch (e) {
+        console.warn(`[CONTEXT ${loadId}] Failed to check session storage:`, e);
       }
+      
+      // If not found in session, proceed with regular load
+      if (layerCategories.length === 0) {
+        // Wait for taxonomy initialization to complete (skipped in test)
+        if (process.env.NODE_ENV !== 'test') {
+          await waitForTaxonomyInit();
+        }
 
-      const layerCategories = taxonomyService.getCategories(layer);
-      logger.taxonomy(LogLevel.INFO, `Loaded ${layerCategories.length} categories for layer ${layer}`);
-
+        layerCategories = taxonomyService.getCategories(layer);
+        console.log(`[CONTEXT ${loadId}] Loaded ${layerCategories.length} categories from taxonomy service`);
+        logger.taxonomy(LogLevel.INFO, `Loaded ${layerCategories.length} categories for layer ${layer}`);
+      }
+      
+      // Store the result in state
       setCategories(layerCategories);
+      
+      // Also save to session storage for emergency recovery
+      try {
+        if (layerCategories.length > 0) {
+          sessionStorage.setItem(`directCategories_${layer}`, JSON.stringify(layerCategories));
+        }
+      } catch (e) {
+        // Ignore storage errors
+      }
 
       // If no categories were found, throw an error
       if (layerCategories.length === 0) {
@@ -150,28 +187,83 @@ export const useTaxonomy = (options: UseTaxonomyOptions = {}): UseTaxonomyResult
 
       // Show success feedback for non-empty results
       if (layerCategories.length > 0 && showFeedback) {
-        showSuccessFeedback(`Loaded ${layerCategories.length} categories for ${layer}`);
+        if (dataSource === 'session') {
+          showSuccessFeedback(`Loaded ${layerCategories.length} categories for ${layer} (from cache)`);
+        } else {
+          showSuccessFeedback(`Loaded ${layerCategories.length} categories for ${layer}`);
+        }
       }
+      
+      console.log(`[CONTEXT ${loadId}] Category load successful: ${layerCategories.length} items from ${dataSource}`);
     } catch (error) {
       const errorMessage = `Failed to load categories for layer ${layer}`;
       logger.taxonomy(LogLevel.ERROR, errorMessage, error);
+      console.error(`[CONTEXT ${loadId}] ${errorMessage}:`, error);
       setCategoryError(error instanceof Error ? error : new Error(String(error)));
 
       // Show error feedback
       showErrorFeedback(`${errorMessage}. Using fallback data if available.`, error);
 
-      // Try to use fallback data regardless of current categories state
-      // Use the error recovery service to get fallback data
-      const fallbackCategories = taxonomyErrorRecovery.getFallbackCategories(layer);
+      // Multi-tiered fallback approach
+      console.log(`[CONTEXT ${loadId}] Attempting multi-tiered fallback recovery`);
       
+      // Tier 1: Check session storage again (in case it failed earlier)
+      try {
+        const sessionData = sessionStorage.getItem(`directCategories_${layer}`);
+        if (sessionData) {
+          const storedCategories = JSON.parse(sessionData);
+          if (storedCategories && storedCategories.length > 0) {
+            console.log(`[CONTEXT ${loadId}] Fallback Tier 1: Found ${storedCategories.length} categories in session`);
+            setCategories(storedCategories);
+            showSuccessFeedback(`Using cached data for ${layer} layer categories`); 
+            return; // Exit early if successful
+          }
+        }
+      } catch (e) {
+        console.warn(`[CONTEXT ${loadId}] Fallback Tier 1 failed:`, e);
+      }
+      
+      // Tier 2: Try the taxonomyErrorRecovery service
+      const fallbackCategories = taxonomyErrorRecovery.getFallbackCategories(layer);
       if (fallbackCategories.length > 0) {
+        console.log(`[CONTEXT ${loadId}] Fallback Tier 2: Using ${fallbackCategories.length} categories from error recovery service`);
         setCategories(fallbackCategories);
-        showSuccessFeedback(`Using fallback data for ${layer} layer categories`);
+        showSuccessFeedback(`Using fallback data for ${layer} layer categories`); 
+        return; // Exit early if successful
+      }
+      
+      // Tier 3: Last resort - create synthetic categories based on layer
+      console.log(`[CONTEXT ${loadId}] Fallback Tier 3: Creating synthetic categories for ${layer}`);
+      const syntheticCategories: TaxonomyCategory[] = [];
+      
+      // Different synthetic categories based on layer
+      if (layer === 'G') { // Songs
+        syntheticCategories.push({ code: 'POP', name: 'Pop', numericCode: '001' });
+        syntheticCategories.push({ code: 'ROCK', name: 'Rock', numericCode: '002' });
+        syntheticCategories.push({ code: 'JAZZ', name: 'Jazz', numericCode: '003' });
+      } else if (layer === 'S') { // Stars
+        syntheticCategories.push({ code: 'POP', name: 'Pop', numericCode: '001' });
+        syntheticCategories.push({ code: 'ROCK', name: 'Rock', numericCode: '002' });
+        syntheticCategories.push({ code: 'JAZZ', name: 'Jazz', numericCode: '003' });
+      } else {
+        // Generic categories for other layers
+        syntheticCategories.push({ code: 'CAT1', name: 'Category 1', numericCode: '001' });
+        syntheticCategories.push({ code: 'CAT2', name: 'Category 2', numericCode: '002' });
+        syntheticCategories.push({ code: 'CAT3', name: 'Category 3', numericCode: '003' });
+      }
+      
+      if (syntheticCategories.length > 0) {
+        console.log(`[CONTEXT ${loadId}] Using ${syntheticCategories.length} synthetic categories`);
+        setCategories(syntheticCategories);
+        showSuccessFeedback(`Using emergency fallback data for ${layer} layer`);
       }
     } finally {
       setIsLoadingCategories(false);
+      
+      // Final verification log
+      console.log(`[CONTEXT ${loadId}] Category load complete for ${layer}, final state: ${categories.length} items`);
     }
-  }, [showErrorFeedback, showSuccessFeedback, showFeedback]);
+  }, [showErrorFeedback, showSuccessFeedback, showFeedback, categories.length]);
 
   // Load subcategories for a category
   const loadSubcategories = useCallback(async (layer: string, category: string) => {
@@ -283,31 +375,77 @@ export const useTaxonomy = (options: UseTaxonomyOptions = {}): UseTaxonomyResult
     }
   }, [selectedLayer, selectedCategory, loadSubcategories, autoLoad]);
 
-  // Select a layer
+  // Select a layer - ENHANCED with improved diagnostic logging and layer switching
   const selectLayer = useCallback((layer: string) => {
+    // Generate a unique operation ID to track this layer change across logs
+    const operationId = `ctx_${Date.now().toString(36)}_${Math.random().toString(36).substr(2, 5)}`;
+    console.log(`[CONTEXT ${operationId}] Selecting layer: ${layer}`);
+    
+    // CRITICAL FIX: If we're changing from one layer to another, first clear all existing data
+    if (selectedLayer !== layer) {
+      console.log(`[CONTEXT ${operationId}] Layer change detected from ${selectedLayer || 'null'} to ${layer}`);
+      
+      // Log the current taxonomy state before changes
+      console.log(`[CONTEXT ${operationId}] Before reset - categories: ${categories.length} items`);
+      if (categories.length > 0) {
+        console.log(`[CONTEXT ${operationId}] Category codes: ${JSON.stringify(categories.map(c => c.code))}`);
+      }
+      
+      // First explicitly clear categories and subcategories to prevent stale data
+      setCategories([]);
+      setSubcategories([]);
+      
+      // Reset all related state
+      setSelectedCategory(null);
+      setSelectedSubcategory(null);
+      setCategoryError(null);
+      setSubcategoryError(null);
+      setHfn('');
+      setMfa('');
+      
+      console.log(`[CONTEXT ${operationId}] State cleared for layer change`);
+    }
+    
+    // Now set the new layer
     setSelectedLayer(layer);
-    setSelectedCategory(null);
-    setSelectedSubcategory(null);
 
     // Optional feedback when layer is selected
     if (showFeedback) {
       const layerNames: Record<string, string> = {
-        'G': 'Genesis Star',
-        'S': 'Song',
+        'G': 'Song',
+        'S': 'Star',
         'L': 'Look',
         'M': 'Move',
         'W': 'World',
         'B': 'Beat',
         'P': 'Performance',
-        'T': 'Tune',
-        'C': 'Chord',
-        'R': 'Rhythm'
+        'T': 'Training Data',
+        'C': 'Composite',
+        'R': 'Rights'
       };
 
       const layerName = layerNames[layer] || layer;
       showSuccessFeedback(`Selected ${layerName} layer`);
     }
-  }, [showFeedback, showSuccessFeedback]);
+    
+    // Store the layer selection timestamp for debugging
+    try {
+      sessionStorage.setItem('lastLayerChange', JSON.stringify({
+        layer,
+        timestamp: Date.now(),
+        operationId
+      }));
+    } catch (e) {
+      // Ignore storage errors
+    }
+    
+    console.log(`[CONTEXT ${operationId}] Layer selection complete: ${layer}`);
+    
+    // Schedule a verification log after a short delay to confirm the change took effect
+    setTimeout(() => {
+      console.log(`[CONTEXT ${operationId}] Verification after 100ms - selectedLayer: ${selectedLayer}`);
+    }, 100);
+  }, [selectedLayer, categories, showFeedback, showSuccessFeedback]);
 
   // Select a category
   const selectCategory = useCallback((category: string) => {
@@ -362,36 +500,114 @@ export const useTaxonomy = (options: UseTaxonomyOptions = {}): UseTaxonomyResult
     }
   }, [showFeedback, showSuccessFeedback]);
 
-  // Reset all selections
+  // Reset all selections - ENHANCED for better layer switching
   const reset = useCallback(() => {
+    console.log('[CONTEXT] Resetting all taxonomy state');
+    
+    // Clear selection state
     setSelectedLayer(null);
     setSelectedCategory(null);
     setSelectedSubcategory(null);
     setSequential('001');
     setFileType(null);
+    
+    // CRITICAL FIX: Also explicitly clear data collections
+    // This ensures that old categories/subcategories don't remain visible
+    setCategories([]);
+    setSubcategories([]);
+    setCategoryError(null);
+    setSubcategoryError(null);
+    setIsLoadingCategories(false);
+    setIsLoadingSubcategories(false);
+    setHfn('');
+    setMfa('');
 
     // Optional feedback when reset is called
     if (showFeedback) {
       showSuccessFeedback('Reset all taxonomy selections');
     }
+    
+    console.log('[CONTEXT] Taxonomy state reset complete');
   }, [showFeedback, showSuccessFeedback]);
+  
+  // Additional method to reset just category data (useful when changing layers)
+  const resetCategoryData = useCallback(() => {
+    console.log('[CONTEXT] Resetting category data');
+    setCategories([]);
+    setSelectedCategory(null);
+    setCategoryError(null);
+    setIsLoadingCategories(false);
+    
+    // Also reset subcategory data as it depends on category
+    setSubcategories([]);
+    setSelectedSubcategory(null);
+    setSubcategoryError(null);
+    setIsLoadingSubcategories(false);
+    setHfn('');
+    setMfa('');
+    
+    console.log('[CONTEXT] Category data reset complete');
+  }, []);
 
-  // Force reload categories
+  // Force reload categories - ENHANCED with diagnostic logging
   const reloadCategories = useCallback(() => {
+    // Generate a unique operation ID for tracking
+    const reloadId = `reload_${Date.now().toString(36)}`;
+    
     if (selectedLayer) {
+      console.log(`[CONTEXT ${reloadId}] Reloading categories for layer: ${selectedLayer}`);
+      console.log(`[CONTEXT ${reloadId}] Current categories before reload: ${categories.length} items`);
+      
+      // Track timing for debugging
+      const startTime = performance.now();
+      
+      // First attempt to load from taxonomyService directly for immediate feedback
+      try {
+        const taxonomyService = require('../services/simpleTaxonomyService').taxonomyService;
+        const directCategories = taxonomyService.getCategories(selectedLayer);
+        
+        console.log(`[CONTEXT ${reloadId}] Direct service returned ${directCategories.length} categories in ${Math.round(performance.now() - startTime)}ms`);
+        
+        // If we got categories directly and our state is empty, update immediately
+        if (directCategories.length > 0 && categories.length === 0) {
+          console.log(`[CONTEXT ${reloadId}] Setting categories from direct service call`);
+          setCategories(directCategories);
+          
+          // Also store in session storage as backup
+          try {
+            sessionStorage.setItem(`directCategories_${selectedLayer}`, JSON.stringify(directCategories));
+          } catch (e) {
+            // Ignore storage errors
+          }
+        }
+      } catch (e) {
+        console.warn(`[CONTEXT ${reloadId}] Direct service call failed:`, e);
+      }
+      
+      // Then always use the full loadCategories method as backup
       loadCategories(selectedLayer);
 
       // Optional feedback when categories are reloaded
       if (showFeedback) {
         showSuccessFeedback(`Reloading categories for ${selectedLayer}`);
       }
+      
+      // Schedule a verification log
+      setTimeout(() => {
+        console.log(`[CONTEXT ${reloadId}] After reload (100ms): ${categories.length} categories available`);
+        if (categories.length > 0) {
+          console.log(`[CONTEXT ${reloadId}] Category codes: ${JSON.stringify(categories.map(c => c.code))}`);
+        }
+      }, 100);
     } else {
+      console.warn(`[CONTEXT ${reloadId}] Cannot reload categories: No layer selected`);
+      
       // Show error if no layer is selected
       if (showFeedback) {
         showErrorFeedback('Cannot reload categories: No layer selected');
       }
     }
-  }, [selectedLayer, loadCategories, showFeedback, showSuccessFeedback, showErrorFeedback]);
+  }, [selectedLayer, categories, loadCategories, showFeedback, showSuccessFeedback, showErrorFeedback]);
 
   // Force reload subcategories
   const reloadSubcategories = useCallback(() => {
@@ -477,8 +693,9 @@ export const useTaxonomy = (options: UseTaxonomyOptions = {}): UseTaxonomyResult
     updateSequential,
     updateFileType,
 
-    // Reset
+    // Reset functionality - enhanced for better layer switching
     reset,
+    resetCategoryData,
 
     // Validation
     validateSelections

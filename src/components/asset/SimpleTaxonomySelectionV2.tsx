@@ -321,42 +321,192 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
   const categoryDebounceRef = useRef<NodeJS.Timeout | null>(null);
   const subcategoryDebounceRef = useRef<NodeJS.Timeout | null>(null);
   
-  // CRITICAL FIX: Add global event listener for layer changes
-  // This provides an extra layer of reliability for layer switching
+  // ENHANCED FIX: Add improved global event listeners for layer changes
+  // This provides multiple layers of reliability for layer switching
   useEffect(() => {
-    // Define the event handler
+    // Cleanup function to remove all event listeners at once
+    const cleanupListeners: (() => void)[] = [];
+    
+    // 1. Primary layer change event handler
     const handleLayerChangeEvent = (event: CustomEvent) => {
-      const { layer: newLayer, timestamp } = event.detail;
-      console.log(`[EVENT] Received layerChanged event for layer ${newLayer} (timestamp: ${timestamp})`);
+      const { layer: newLayer, timestamp, operationId } = event.detail;
+      console.log(`[EVENT ${operationId || 'unknown'}] Received layerChanged event for layer ${newLayer} (timestamp: ${timestamp})`);
       
-      // If this is our current layer, handle the change
-      if (newLayer === layer) {
-        console.log(`[EVENT] Responding to layerChanged event for current layer ${layer}`);
+      // Handle the event regardless of current layer value - immediate reset
+      console.log(`[EVENT ${operationId || 'unknown'}] Responding to layerChanged event for layer ${newLayer}`);
+      
+      // CRITICAL FIX: Immediately cancel any ongoing operations or timers
+      if (categoryDebounceRef.current) {
+        clearTimeout(categoryDebounceRef.current);
+        categoryDebounceRef.current = null;
+      }
+      if (subcategoryDebounceRef.current) {
+        clearTimeout(subcategoryDebounceRef.current);
+        subcategoryDebounceRef.current = null;
+      }
+      
+      // Reset all local state immediately
+      setActiveCategory(null);
+      setActiveSubcategory(null);
+      setLocalSubcategories([]);
+      subcategoriesRef.current = [];
+      
+      // Force a context update with the NEW layer value from the event
+      selectLayer(newLayer);
+      
+      // Use a tiered approach with multiple timeouts for better reliability
+      
+      // Tier 1: Immediate reload attempt (100ms)
+      setTimeout(() => {
+        console.log(`[EVENT ${operationId || 'unknown'}] Tier 1 (100ms): Forcing category reload for layer ${newLayer}`);
+        reloadCategories();
         
-        // Reset all local state immediately
+        // Check if direct categories are available in session storage
+        try {
+          const directCategoriesJson = sessionStorage.getItem(`directCategories_${newLayer}`);
+          if (directCategoriesJson) {
+            const directCategories = JSON.parse(directCategoriesJson);
+            if (directCategories && directCategories.length > 0) {
+              console.log(`[EVENT ${operationId || 'unknown'}] Found ${directCategories.length} categories in session storage for layer ${newLayer}`);
+              // Dispatch event to notify other components
+              const storageEvent = new CustomEvent('taxonomyCategoriesLoaded', {
+                detail: { 
+                  layer: newLayer, 
+                  categories: directCategories,
+                  source: 'session-storage',
+                  operationId: operationId
+                }
+              });
+              window.dispatchEvent(storageEvent);
+            }
+          }
+        } catch (e) {
+          console.warn(`[EVENT ${operationId || 'unknown'}] Failed to check session storage:`, e);
+        }
+      }, 100);
+      
+      // Tier 2: Secondary reload attempt (250ms)
+      setTimeout(() => {
+        console.log(`[EVENT ${operationId || 'unknown'}] Tier 2 (250ms): Checking category load status for layer ${newLayer}`);
+        // If categories still not loaded, try direct service call
+        if (categories.length === 0) {
+          console.log(`[EVENT ${operationId || 'unknown'}] Tier 2: Categories still empty, trying direct service call`);
+          try {
+            const taxonomyService = require('../../services/simpleTaxonomyService').taxonomyService;
+            const directCategories = taxonomyService.getCategories(newLayer);
+            
+            if (directCategories && directCategories.length > 0) {
+              console.log(`[EVENT ${operationId || 'unknown'}] Tier 2: Direct service call returned ${directCategories.length} categories`);
+              // Dispatch event to notify other components
+              const directEvent = new CustomEvent('taxonomyCategoriesLoaded', {
+                detail: { 
+                  layer: newLayer, 
+                  categories: directCategories,
+                  source: 'tier2-direct',
+                  operationId: operationId
+                }
+              });
+              window.dispatchEvent(directEvent);
+            }
+          } catch (e) {
+            console.warn(`[EVENT ${operationId || 'unknown'}] Tier 2: Direct service call failed:`, e);
+          }
+          
+          // Also try context reload again
+          reloadCategories();
+        } else {
+          console.log(`[EVENT ${operationId || 'unknown'}] Tier 2: Categories already loaded: ${categories.length} items`);
+        }
+      }, 250);
+      
+      // Tier 3: Final check and emergency reload (400ms)
+      setTimeout(() => {
+        console.log(`[EVENT ${operationId || 'unknown'}] Tier 3 (400ms): Final check for layer ${newLayer}`);
+        console.log(`[EVENT ${operationId || 'unknown'}] Tier 3: Current categories: ${JSON.stringify(categories.map(c => c.code))}`);
+        
+        if (categories.length === 0) {
+          console.log(`[EVENT ${operationId || 'unknown'}] Tier 3: CRITICAL - Categories still empty after multiple attempts`);
+          // Last resort: Force category reload and dispatch emergency event
+          reloadCategories();
+          
+          // Notify parent component of the emergency
+          const emergencyEvent = new CustomEvent('taxonomyEmergencyReload', {
+            detail: { 
+              layer: newLayer,
+              timestamp: Date.now(),
+              operationId: operationId
+            }
+          });
+          window.dispatchEvent(emergencyEvent);
+        }
+      }, 400);
+    };
+    
+    // 2. Add listener for categories loaded event
+    const handleCategoriesLoadedEvent = (event: CustomEvent) => {
+      const { layer: eventLayer, categories: eventCategories, source } = event.detail;
+      
+      // Only handle if this is for our current layer
+      if (eventLayer === layer) {
+        console.log(`[CATEGORIES EVENT] Received taxonomyCategoriesLoaded event with ${eventCategories.length} categories from source: ${source}`);
+      }
+    };
+    
+    // 3. Add listener for emergency reload event
+    const handleEmergencyReloadEvent = (event: CustomEvent) => {
+      const { layer: emergencyLayer, operationId } = event.detail;
+      
+      console.log(`[EMERGENCY ${operationId || 'unknown'}] Received emergency reload event for layer ${emergencyLayer}`);
+      
+      // Only handle if this is for our current layer
+      if (emergencyLayer === layer) {
+        console.log(`[EMERGENCY ${operationId || 'unknown'}] This event is for our current layer: ${layer}`);
+        
+        // Forced reset sequence
         setActiveCategory(null);
         setActiveSubcategory(null);
         setLocalSubcategories([]);
         subcategoriesRef.current = [];
         
-        // Force a context update
-        selectLayer(layer);
-        
-        // Force a reload of categories
-        setTimeout(() => {
-          reloadCategories();
-        }, 50);
+        // Emergency category reload from direct service
+        try {
+          const taxonomyService = require('../../services/simpleTaxonomyService').taxonomyService;
+          const emergencyCategories = taxonomyService.getCategories(layer);
+          
+          if (emergencyCategories && emergencyCategories.length > 0) {
+            console.log(`[EMERGENCY ${operationId || 'unknown'}] Direct service call returned ${emergencyCategories.length} emergency categories`);
+            
+            // Force state update with these categories
+            const updateEvent = new CustomEvent('forceUpdateCategories', {
+              detail: { 
+                layer: layer, 
+                categories: emergencyCategories
+              }
+            });
+            window.dispatchEvent(updateEvent);
+          }
+        } catch (e) {
+          console.warn(`[EMERGENCY ${operationId || 'unknown'}] Emergency reload failed:`, e);
+        }
       }
     };
     
-    // Register event listener
+    // Register event listeners
     window.addEventListener('layerChanged', handleLayerChangeEvent as EventListener);
+    window.addEventListener('taxonomyCategoriesLoaded', handleCategoriesLoadedEvent as EventListener);
+    window.addEventListener('taxonomyEmergencyReload', handleEmergencyReloadEvent as EventListener);
+    
+    // Add cleanup functions
+    cleanupListeners.push(() => window.removeEventListener('layerChanged', handleLayerChangeEvent as EventListener));
+    cleanupListeners.push(() => window.removeEventListener('taxonomyCategoriesLoaded', handleCategoriesLoadedEvent as EventListener));
+    cleanupListeners.push(() => window.removeEventListener('taxonomyEmergencyReload', handleEmergencyReloadEvent as EventListener));
     
     // Clean up on unmount
     return () => {
-      window.removeEventListener('layerChanged', handleLayerChangeEvent as EventListener);
+      // Execute all cleanup functions
+      cleanupListeners.forEach(cleanup => cleanup());
     };
-  }, [layer, selectLayer, reloadCategories]);
+  }, [selectLayer, reloadCategories, categories, layer]);
   
   // Define handleCategoryRetry before it's used in useEffect dependency arrays
   const handleCategoryRetry = useCallback(() => {

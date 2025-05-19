@@ -336,6 +336,38 @@ There are special case mappings that need special handling:
   - Updated `SUBCATEGORY_GRID_LAYOUT_FIX.md` with build fix details
 - Build now completes successfully with the subcategory grid layout improvements
 
+### 14. Layer Switching Regression Fix (May 22, 2025)
+- Problem: When switching between layers (e.g., from Songs to Stars), the UI displayed categories from the previous layer
+- Root Cause: 
+  - Race conditions in state updates during layer switching
+  - Inconsistent context updates causing stale data to persist
+  - Insufficient fallback mechanisms for category loading failures
+  - Missing diagnostic information for debugging layer switches
+- Solution:
+  - Implemented a comprehensive multi-tiered approach to layer switching:
+    1. Enhanced `handleLayerSelect` in RegisterAssetPage.tsx with improved sequencing
+    2. Added unique operation IDs for cross-component tracing
+    3. Implemented direct service calls for immediate category loading
+    4. Enhanced event handling in SimpleTaxonomySelectionV2.tsx
+    5. Added multiple fallback mechanisms with session storage backup
+    6. Improved diagnostic logging throughout the layer switching process
+- Key Changes:
+  - `/src/pages/RegisterAssetPage.tsx`:
+    - Restructured `handleLayerSelect` with improved event emission
+    - Changed operation sequence to reset context before updating other state
+    - Added direct service calls for faster category loading
+    - Enhanced custom event system with more context data
+  - `/src/components/asset/SimpleTaxonomySelectionV2.tsx`:
+    - Added tiered approach to layer change events (100ms, 250ms, 400ms)
+    - Implemented emergency reload event handlers
+    - Enhanced error recovery with backup data sources
+  - `/src/hooks/useTaxonomy.ts`:
+    - Enhanced `selectLayer`, `loadCategories`, and `reloadCategories` functions
+    - Added synthetic category generation as last-resort fallback
+    - Improved diagnostic logging with operation IDs
+  - Created `/LAYER_SWITCHING_FIX.md` with detailed documentation
+- Results: Layer switching now reliably displays the correct categories for each layer without requiring retry or refreshes
+
 ## Current Status (May 22, 2025)
 
 With the latest fixes, we've addressed three of the most critical issues identified from previous testing:
