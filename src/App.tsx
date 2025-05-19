@@ -41,8 +41,10 @@ import ErrorBoundary from './components/error/ErrorBoundary';
 import GlobalErrorHandler from './components/common/GlobalErrorHandler';
 import TestComponent from './components/common/TestComponent';
 import ApiRouteAlert from './components/common/ApiRouteAlert';
+import UIVersionToggle from './components/common/UIVersionToggle';
 import TaxonomyValidator from './components/TaxonomyValidator';
 import AssetRegistrationWrapper from './components/AssetRegistrationWrapper';
+import RegisterAssetPageWrapper from './components/asset/RegisterAssetPageWrapper';
 import TaxonomyInitProvider from './components/providers/TaxonomyInitProvider';
 import TaxonomyExample from './components/examples/TaxonomyExample';
 
@@ -51,6 +53,7 @@ import { taxonomyService } from './services/simpleTaxonomyService';
 import { logger, LogLevel, LogCategory } from './utils/logger';
 import LogViewer from './components/debug/LogViewer';
 import './styles/LogViewer.css';
+import './styles/UIVersionToggle.css';
 
 // Import new taxonomy error recovery utilities
 import { setupGlobalTaxonomyErrorHandler } from './utils/taxonomyErrorRecovery';
@@ -226,7 +229,7 @@ const App: React.FC = () => {
                             path="/register-asset"
                             element={
                               <ProtectedRoute>
-                                <AssetRegistrationWrapper />
+                                <RegisterAssetPageWrapper />
                               </ProtectedRoute>
                             }
                           />
@@ -251,6 +254,7 @@ const App: React.FC = () => {
                       </Routes>
                     </Router>
                     <FeedbackDisplay />
+                    <UIVersionToggle />
                   </TaxonomyInitProvider>
                 </AuthProvider>
               </NotificationsProvider>
