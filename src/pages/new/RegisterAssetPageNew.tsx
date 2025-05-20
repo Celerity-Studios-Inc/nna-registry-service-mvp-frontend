@@ -1146,17 +1146,17 @@ const RegisterAssetPageNew: React.FC = () => {
     debugLog(`[TaxonomySelector] Selected category ${category}`);
     logger.ui(LogLevel.INFO, `User selected category: ${category}`);
     
-    // Create a CategoryOption for the original handler
-    // Find the category in the categories returned by taxonomyService
-    const availableCategories = taxonomyService.getCategories(watchLayer);
-    const categoryObj = availableCategories.find(cat => cat.code === category);
-    
-    if (!categoryObj) {
-      logger.taxonomy(LogLevel.ERROR, `Failed to find category ${category} for layer ${watchLayer}`);
-      return;
-    }
-    
-    if (categoryObj) {
+    try {
+      // Create a CategoryOption for the original handler
+      // Find the category in the categories returned by taxonomyService
+      const availableCategories = taxonomyService.getCategories(watchLayer);
+      const categoryObj = availableCategories.find(cat => cat.code === category);
+      
+      if (!categoryObj) {
+        logger.taxonomy(LogLevel.ERROR, `Failed to find category ${category} for layer ${watchLayer}`);
+        return;
+      }
+      
       // Convert TaxonomyItem to CategoryOption
       const categoryOption: CategoryOption = {
         id: categoryObj.code,
@@ -1164,27 +1164,30 @@ const RegisterAssetPageNew: React.FC = () => {
         name: categoryObj.name,
         numericCode: categoryObj.numericCode ? parseInt(categoryObj.numericCode) : undefined
       };
+      
       // Call the original handler with our formatted option
       handleCategorySelect(categoryOption);
+    } catch (error) {
+      logger.taxonomy(LogLevel.ERROR, `Error in handleTaxonomySelectorCategorySelect: ${error}`);
     }
-  }, [taxonomyService, watchLayer]);
+  }, [watchLayer, handleCategorySelect]);
   
   // Handle subcategory selection for the new TaxonomySelector component
   const handleTaxonomySelectorSubcategorySelect = useCallback((subcategory: string, isDoubleClick?: boolean) => {
     debugLog(`[TaxonomySelector] Selected subcategory ${subcategory}, doubleClick: ${isDoubleClick}`);
     logger.ui(LogLevel.INFO, `User selected subcategory: ${subcategory}`);
     
-    // Create a SubcategoryOption for the original handler
-    // Find the subcategory in the subcategories returned by taxonomyService
-    const availableSubcategories = taxonomyService.getSubcategories(watchLayer, watchCategoryCode);
-    const subcategoryObj = availableSubcategories.find(subcat => subcat.code === subcategory);
-    
-    if (!subcategoryObj) {
-      console.error(`Failed to find subcategory ${subcategory} for ${watchLayer}.${watchCategoryCode}`);
-      return;
-    }
-    
-    if (subcategoryObj) {
+    try {
+      // Create a SubcategoryOption for the original handler
+      // Find the subcategory in the subcategories returned by taxonomyService
+      const availableSubcategories = taxonomyService.getSubcategories(watchLayer, watchCategoryCode);
+      const subcategoryObj = availableSubcategories.find(subcat => subcat.code === subcategory);
+      
+      if (!subcategoryObj) {
+        console.error(`Failed to find subcategory ${subcategory} for ${watchLayer}.${watchCategoryCode}`);
+        return;
+      }
+      
       // Convert TaxonomyItem to SubcategoryOption
       const subcategoryOption: SubcategoryOption = {
         id: subcategoryObj.code,
@@ -1192,10 +1195,13 @@ const RegisterAssetPageNew: React.FC = () => {
         name: subcategoryObj.name,
         numericCode: subcategoryObj.numericCode ? parseInt(subcategoryObj.numericCode) : undefined
       };
+      
       // Call the original handler with our formatted option
       handleSubcategorySelect(subcategoryOption, isDoubleClick);
+    } catch (error) {
+      logger.taxonomy(LogLevel.ERROR, `Error in handleTaxonomySelectorSubcategorySelect: ${error}`);
     }
-  }, [taxonomyService, watchLayer, watchCategoryCode]);
+  }, [watchLayer, watchCategoryCode, handleSubcategorySelect]);
 
   // Handle potential duplicate confirmation
   const handleConfirmDuplicate = () => {
