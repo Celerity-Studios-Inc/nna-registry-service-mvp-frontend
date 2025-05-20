@@ -1,9 +1,13 @@
 import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { Box, Typography, Button, Paper } from '@mui/material';
+import { logger, LogLevel } from '../../utils/logger';
 
 interface Props {
   children: ReactNode;
-  fallback?: ReactNode;
+  fallback?: ReactNode | ((error: Error, resetError: () => void) => ReactNode);
+  onError?: (error: Error, errorInfo: ErrorInfo) => void;
+  resetOnPropsChange?: boolean;
+  componentName?: string;
 }
 
 interface State {
@@ -30,8 +34,21 @@ class ErrorBoundary extends Component<Props, State> {
       errorInfo,
     });
 
-    // Log the error to an error reporting service
-    console.error('Uncaught error:', error, errorInfo);
+    // Get component name for better error reporting
+    const componentName = this.props.componentName || 'UnnamedComponent';
+    
+    // Log the error to our structured logger
+    logger.general(
+      LogLevel.ERROR, 
+      `Error caught by ErrorBoundary in ${componentName}:`, 
+      { error, errorInfo }
+    );
+    
+    // Also log to console for development
+    console.error(`[ErrorBoundary:${componentName}]`, error, errorInfo);
+    
+    // Call the onError callback if provided
+    this.props.onError?.(error, errorInfo);
 
     // Here you could add calls to error monitoring services like Sentry
     // if (typeof window.Sentry !== 'undefined') {
@@ -47,10 +64,25 @@ class ErrorBoundary extends Component<Props, State> {
     });
   };
 
+  public componentDidUpdate(prevProps: Props): void {
+    // Reset error state when props change, if configured
+    if (
+      this.props.resetOnPropsChange && 
+      this.state.hasError && 
+      prevProps.children !== this.props.children
+    ) {
+      this.handleReset();
+    }
+  }
+  
   public render(): ReactNode {
     if (this.state.hasError) {
       // Custom fallback UI
       if (this.props.fallback) {
+        // Support function fallbacks that receive error and reset function
+        if (typeof this.props.fallback === 'function') {
+          return this.props.fallback(this.state.error!, this.handleReset);
+        }
         return this.props.fallback;
       }
 
