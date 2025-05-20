@@ -1246,12 +1246,11 @@ const RegisterAssetPageNew: React.FC = () => {
 
   // Placeholder for the render method - more to be added
   return (
-    <TaxonomyDataProvider>
-      <Container maxWidth="lg">
-        <Box sx={{ mt: 4, mb: 4 }}>
-          <Typography variant="h4" gutterBottom>
-            Register New Asset
-          </Typography>
+    <Container maxWidth="lg">
+      <Box sx={{ mt: 4, mb: 4 }}>
+        <Typography variant="h4" gutterBottom>
+          Register New Asset
+        </Typography>
           
           <FormControlLabel
             control={
@@ -1684,7 +1683,6 @@ const RegisterAssetPageNew: React.FC = () => {
           </Paper>
         </Box>
       </Container>
-    </TaxonomyDataProvider>
   );
 };
 

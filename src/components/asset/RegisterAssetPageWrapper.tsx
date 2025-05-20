@@ -2,6 +2,7 @@ import React from 'react';
 import { Box } from '@mui/material';
 import RegisterAssetPageNew from '../../pages/new/RegisterAssetPageNew';
 import { debugLog, logger, LogLevel, LogCategory } from '../../utils/logger';
+import { TaxonomyProvider } from '../../contexts/TaxonomyContext';
 
 /**
  * Wrapper component that renders the new RegisterAssetPage implementation
@@ -17,7 +18,9 @@ const RegisterAssetPageWrapper: React.FC = React.memo(() => {
 
   return (
     <Box position="relative">
-      <RegisterAssetPageNew />
+      <TaxonomyProvider>
+        <RegisterAssetPageNew />
+      </TaxonomyProvider>
     </Box>
   );
 });
