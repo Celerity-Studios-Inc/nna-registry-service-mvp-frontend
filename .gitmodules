@@ -1,0 +1,14 @@
+[submodule "fresh-clone"]
+	path = fresh-clone
+	url = .
+	ignore = dirty
+
+[submodule "repo-clone"]
+	path = repo-clone
+	url = .
+	ignore = dirty
+
+[submodule "repo-clone/repo-clone"]
+	path = repo-clone/repo-clone
+	url = .
+	ignore = dirty
