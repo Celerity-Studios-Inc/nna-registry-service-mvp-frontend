@@ -49,8 +49,22 @@ const TaxonomySelector: React.FC<TaxonomySelectorProps> = ({
     
     // Make sure we pass the category to the parent handler
     try {
-      onCategorySelect(category);
-      console.log(`[TaxonomySelector] Category selection propagated to parent: ${category}`);
+      // Force a setTimeout to avoid potential React state batching issues
+      setTimeout(() => {
+        // Verify selected layer is still valid before proceeding
+        if (selectedLayer) {
+          // Call the parent handler
+          onCategorySelect(category);
+          console.log(`[TaxonomySelector] Category selection propagated to parent: ${category}`);
+          
+          // Verify selection was processed
+          setTimeout(() => {
+            console.log(`[TaxonomySelector] Verification check - Selected category should be: ${category}`);
+          }, 50);
+        } else {
+          console.warn(`[TaxonomySelector] Cannot select category: No layer selected`);
+        }
+      }, 0);
     } catch (error) {
       console.error(`[TaxonomySelector] Error in category selection handler:`, error);
     }

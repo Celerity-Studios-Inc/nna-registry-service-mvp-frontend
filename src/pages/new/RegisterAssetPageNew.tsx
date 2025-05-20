@@ -318,6 +318,13 @@ const RegisterAssetPageNew: React.FC = () => {
     message: string;
     confidence: 'high' | 'medium' | 'low';
   } | null>(null);
+  
+  // State to track displayed selections for UI feedback
+  const [displayedSelections, setDisplayedSelections] = useState({
+    layer: '',
+    category: 'None',
+    subcategory: 'None'
+  });
 
   // React Hook Form setup with explicit type cast to resolve typescript issue
   const methods = useForm({
@@ -858,6 +865,13 @@ const RegisterAssetPageNew: React.FC = () => {
       shouldTouch: true,
     });
 
+    // Update displayed selections immediately for UI feedback
+    setDisplayedSelections({
+      layer: layer.code,
+      category: 'None',
+      subcategory: 'None'
+    });
+
     // Update taxonomy context with new layer
     setTimeout(() => {
       taxonomyContext.selectLayer(layer.code);
@@ -865,6 +879,7 @@ const RegisterAssetPageNew: React.FC = () => {
       // Force reload of categories for the new layer
       setTimeout(() => {
         taxonomyContext.reloadCategories();
+        console.log(`[RegisterAssetPageNew] Categories reloaded for layer: ${layer.code}`);
       }, 100);
     }, 100);
 
@@ -902,8 +917,20 @@ const RegisterAssetPageNew: React.FC = () => {
     setValue('mfa', '');
     setValue('sequential', '');
 
+    // Update displayed selections immediately for UI feedback
+    setDisplayedSelections(prev => ({
+      ...prev,
+      category: category.code
+    }));
+
     // Update taxonomy context
     taxonomyContext.selectCategory(category.code);
+    
+    // Verification check to ensure state was updated
+    setTimeout(() => {
+      const currentCategory = getValues('categoryCode');
+      console.log(`[RegisterAssetPageNew] Verification - Form category value after update: ${currentCategory}`);
+    }, 100);
   };
 
   // Handle subcategory selection - Enhanced to ensure proper form state updates
@@ -933,8 +960,20 @@ const RegisterAssetPageNew: React.FC = () => {
       { shouldValidate: true }
     );
 
+    // Update displayed selections immediately for UI feedback
+    setDisplayedSelections(prev => ({
+      ...prev,
+      subcategory: subcategory.code
+    }));
+
     // Update taxonomy context
     taxonomyContext.selectSubcategory(subcategory.code);
+
+    // Verification check to ensure state was updated
+    setTimeout(() => {
+      const currentSubcategory = getValues('subcategoryCode');
+      console.log(`[RegisterAssetPageNew] Verification - Form subcategory value after update: ${currentSubcategory}`);
+    }, 100);
 
     // If double click, add a small delay before advancing to ensure state is updated
     if (isDoubleClick) {
