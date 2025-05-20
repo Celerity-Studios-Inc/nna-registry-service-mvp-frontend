@@ -19,29 +19,7 @@ const LayerGrid: React.FC<LayerGridProps> = ({
 }) => {
   // Get taxonomy data from context
   const { taxonomyData } = useTaxonomyData();
-
-  // No taxonomy data available
-  if (!taxonomyData) {
-    return (
-      <div className="taxonomy-empty">
-        <div className="empty-message">No taxonomy data available</div>
-      </div>
-    );
-  }
-
-  // Create layer items from taxonomy data - memoized to prevent recreation on rerenders
-  const layers = useMemo(() => {
-    debugLog(`[LayerGrid] Creating layer items from taxonomy data`);
-    return Object.keys(taxonomyData.layers).map(layer => {
-      // Create a simple item representation for each layer
-      return {
-        code: layer,
-        name: getLayerName(layer),
-        numericCode: getLayerNumericCode(layer)
-      };
-    });
-  }, [taxonomyData, getLayerName, getLayerNumericCode]);
-
+  
   // Helper function to get layer name - memoized to prevent recalculation
   const getLayerName = useMemo(() => {
     const nameMap: Record<string, string> = {
@@ -75,6 +53,32 @@ const LayerGrid: React.FC<LayerGridProps> = ({
     };
     return (layer: string): string => codeMap[layer] || '';
   }, []);
+
+  // Create layer items from taxonomy data - memoized to prevent recreation on rerenders
+  const layers = useMemo(() => {
+    if (!taxonomyData) {
+      return [];
+    }
+    
+    debugLog(`[LayerGrid] Creating layer items from taxonomy data`);
+    return Object.keys(taxonomyData.layers).map(layer => {
+      // Create a simple item representation for each layer
+      return {
+        code: layer,
+        name: getLayerName(layer),
+        numericCode: getLayerNumericCode(layer)
+      };
+    });
+  }, [taxonomyData, getLayerName, getLayerNumericCode]);
+
+  // No taxonomy data available
+  if (!taxonomyData) {
+    return (
+      <div className="taxonomy-empty">
+        <div className="empty-message">No taxonomy data available</div>
+      </div>
+    );
+  }
 
   return (
     <div className="taxonomy-grid">

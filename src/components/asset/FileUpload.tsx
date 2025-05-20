@@ -149,7 +149,7 @@ const formatFileTypes = (accept: string): string => {
   return parts.join('; ');
 };
 
-const FileUpload: React.FC<FileUploadProps> = React.memo(({ // Add React.memo
+const FileUpload: React.FC<FileUploadProps> = ({
   onFilesChange,
   onSourceChange,
   initialSource = 'ReViz', // Default to ReViz as shown in Swagger docs

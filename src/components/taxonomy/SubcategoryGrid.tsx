@@ -29,17 +29,6 @@ const SubcategoryGrid: React.FC<SubcategoryGridProps> = ({
     return getSubcategories(layer, category);
   }, [layer, category, getSubcategories]);
 
-  // No subcategories available
-  if (subcategories.length === 0) {
-    return (
-      <div className="taxonomy-empty">
-        <div className="empty-message">
-          No subcategories found for {layer}.{category}
-        </div>
-      </div>
-    );
-  }
-
   // Handle subcategory selection with check for Star+POP combination
   // Memoized to maintain reference stability between renders
   const handleSubcategorySelect = useCallback((subcategory: string, isDoubleClick?: boolean) => {
@@ -55,6 +44,17 @@ const SubcategoryGrid: React.FC<SubcategoryGridProps> = ({
     // Call the parent handler
     onSubcategorySelect(subcategory, isDoubleClick);
   }, [layer, category, onSubcategorySelect]);
+
+  // No subcategories available
+  if (subcategories.length === 0) {
+    return (
+      <div className="taxonomy-empty">
+        <div className="empty-message">
+          No subcategories found for {layer}.{category}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>

@@ -27,6 +27,13 @@ const CategoryGrid: React.FC<CategoryGridProps> = ({
     return getCategories(layer);
   }, [layer, getCategories]);
 
+  // Memoize the category selection handler to maintain reference stability
+  const handleCategorySelect = useCallback((categoryCode: string) => {
+    debugLog(`[CategoryGrid] Category selected: ${categoryCode}`);
+    logger.taxonomy(LogLevel.DEBUG, `Category selected: ${layer}.${categoryCode}`);
+    onCategorySelect(categoryCode);
+  }, [layer, onCategorySelect]);
+
   // No categories available
   if (categories.length === 0) {
     return (
@@ -35,13 +42,6 @@ const CategoryGrid: React.FC<CategoryGridProps> = ({
       </div>
     );
   }
-
-  // Memoize the category selection handler to maintain reference stability
-  const handleCategorySelect = useCallback((categoryCode: string) => {
-    debugLog(`[CategoryGrid] Category selected: ${categoryCode}`);
-    logger.taxonomy(LogLevel.DEBUG, `Category selected: ${layer}.${categoryCode}`);
-    onCategorySelect(categoryCode);
-  }, [layer, onCategorySelect]);
 
   return (
     <div className="taxonomy-grid">
