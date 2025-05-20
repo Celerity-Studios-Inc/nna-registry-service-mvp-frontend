@@ -28,6 +28,7 @@ import ErrorTestPage from './pages/ErrorTestPage';
 import TaxonomyDebugPage from './pages/TaxonomyDebugPage';
 import TaxonomyTestPage from './pages/TaxonomyTestPage';
 import TaxonomySelectorTestPage from './pages/TaxonomySelectorTestPage';
+import AssetRegistration from './pages/AssetRegistration';
 import TaxonomyDebugger from './components/debug/TaxonomyDebugger';
 import './styles/TaxonomyDebugger.css';
 import { AuthProvider } from './contexts/AuthContext';
@@ -204,6 +205,10 @@ const App: React.FC = () => {
                         <Route
                           path="/taxonomy-selector-test"
                           element={<TaxonomySelectorTestPage />}
+                        />
+                        <Route
+                          path="/register-asset-simple"
+                          element={<AssetRegistration />}
                         />
                         <Route element={<MainLayout />}>
                           <Route
