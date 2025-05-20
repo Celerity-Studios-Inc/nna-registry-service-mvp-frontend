@@ -36,7 +36,7 @@ export type StorageEventHandler = (event: StorageEvent) => void;
 /**
  * Class for handling both session and local storage with fallbacks
  */
-class Storage implements StorageStrategy {
+class CustomStorage implements StorageStrategy {
   private primaryType: StorageType;
   private fallbackType: StorageType;
   private eventHandlers: Map<string, StorageEventHandler> = new Map();
@@ -108,7 +108,7 @@ class Storage implements StorageStrategy {
    * @param type Storage type
    * @returns Storage object or null if not available
    */
-  private getStorage(type: StorageType): Storage | null {
+  private getStorage(type: StorageType): globalThis.Storage | null {
     if (this.isStorageAvailable(type)) {
       return type === 'session' ? window.sessionStorage : window.localStorage;
     }
@@ -119,7 +119,7 @@ class Storage implements StorageStrategy {
    * Get the best available storage
    * @returns The best available storage or null if none available
    */
-  private getBestStorage(): Storage | null {
+  private getBestStorage(): globalThis.Storage | null {
     // Try primary storage first
     const primaryStorage = this.getStorage(this.primaryType);
     if (primaryStorage) return primaryStorage;
@@ -325,7 +325,7 @@ class Storage implements StorageStrategy {
 }
 
 // Create a storage instance with session storage as primary and local storage as fallback
-const storage = new Storage('session', 'local');
+const storage = new CustomStorage('session', 'local');
 
 /**
  * Utility for persisting and retrieving taxonomy selection state
