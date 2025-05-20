@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Taxonomy Selection Test</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+      margin: 0;
+      padding: 20px;
+      background-color: #f5f5f5;
+      color: #333;
+    }
+    .container {
+      max-width: 960px;
+      margin: 0 auto;
+      background-color: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      padding: 20px;
+    }
+    h1 {
+      color: #2c3e50;
+      border-bottom: 1px solid #eee;
+      padding-bottom: 10px;
+    }
+    h2 {
+      color: #3498db;
+      margin-top: 30px;
+    }
+    .test-section {
+      margin-bottom: 30px;
+      padding: 15px;
+      border: 1px solid #e1e1e1;
+      border-radius: 4px;
+    }
+    .test-title {
+      font-weight: bold;
+      margin-bottom: 10px;
+      font-size: 18px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 10px;
+      margin-top: 15px;
+    }
+    .card {
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      padding: 10px;
+      cursor: pointer;
+      transition: background-color 0.2s;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100px;
+      text-align: center;
+    }
+    .card:hover {
+      background-color: #f0f7fd;
+      border-color: #3498db;
+    }
+    .card.selected {
+      background-color: #3498db;
+      color: white;
+      border-color: #2980b9;
+    }
+    .code {
+      font-size: 24px;
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+    .name {
+      font-size: 14px;
+    }
+    .log-container {
+      margin-top: 20px;
+      padding: 10px;
+      background-color: #f8f9fa;
+      border: 1px solid #e1e1e1;
+      border-radius: 4px;
+      max-height: 300px;
+      overflow-y: auto;
+      font-family: monospace;
+    }
+    .log-entry {
+      margin: 5px 0;
+      font-size: 14px;
+    }
+    .success {
+      color: #27ae60;
+    }
+    .error {
+      color: #e74c3c;
+    }
+    .info {
+      color: #3498db;
+    }
+    .button {
+      background-color: #3498db;
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+      margin-top: 10px;
+    }
+    .button:hover {
+      background-color: #2980b9;
+    }
+    .status {
+      margin-top: 20px;
+      padding: 15px;
+      border-radius: 4px;
+      font-weight: bold;
+    }
+    .status.success {
+      background-color: #d4f5d4;
+      border: 1px solid #27ae60;
+    }
+    .status.error {
+      background-color: #fad7d7;
+      border: 1px solid #e74c3c;
+    }
+    .address-display {
+      margin-top: 20px;
+      padding: 15px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      background-color: #f9f9f9;
+    }
+    .address {
+      font-family: monospace;
+      font-size: 18px;
+      font-weight: bold;
+      margin: 5px 0;
+    }
+    .address-label {
+      font-weight: bold;
+      color: #7f8c8d;
+      margin-right: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Taxonomy Selection Test</h1>
+    <p>This page tests the state synchronization fix for the taxonomy selection workflow. It simulates the core functionality of the useTaxonomy hook without React's state batching issues.</p>
+    
+    <div class="test-section">
+      <div class="test-title">Step 1: Select a Layer</div>
+      <div id="layer-grid" class="grid"></div>
+    </div>
+    
+    <div class="test-section">
+      <div class="test-title">Step 2: Select a Category</div>
+      <div id="category-grid" class="grid"></div>
+    </div>
+    
+    <div class="test-section">
+      <div class="test-title">Step 3: Select a Subcategory</div>
+      <div id="subcategory-grid" class="grid"></div>
+    </div>
+    
+    <div class="address-display">
+      <div><span class="address-label">HFN:</span><span id="hfn-display" class="address">-</span></div>
+      <div><span class="address-label">MFA:</span><span id="mfa-display" class="address">-</span></div>
+    </div>
+    
+    <div id="status-container"></div>
+    
+    <h2>Log</h2>
+    <div id="log-container" class="log-container"></div>
+    
+    <button id="clear-log" class="button">Clear Log</button>
+  </div>
+
+  <script>
+    // Test data
+    const STANDARD_LAYER_NAMES = {
+      'G': 'Song',
+      'S': 'Star',
+      'L': 'Look',
+      'M': 'Move',
+      'W': 'World',
+      'B': 'Beat',
+      'P': 'Prop',
+      'T': 'Training',
+      'C': 'Character',
+      'R': 'Rights'
+    };
+    
+    // Mock taxonomy data
+    const taxonomyData = {
+      'G': [
+        { code: 'POP', name: 'Pop Music', numericCode: '001' },
+        { code: 'ROCK', name: 'Rock Music', numericCode: '002' },
+        { code: 'JAZZ', name: 'Jazz Music', numericCode: '003' }
+      ],
+      'S': [
+        { code: 'POP', name: 'Pop Star', numericCode: '001' },
+        { code: 'ROCK', name: 'Rock Star', numericCode: '002' },
+        { code: 'JAZZ', name: 'Jazz Star', numericCode: '003' }
+      ],
+      'L': [
+        { code: 'CAS', name: 'Casual', numericCode: '001' },
+        { code: 'FORM', name: 'Formal', numericCode: '002' },
+        { code: 'SPT', name: 'Sports', numericCode: '003' }
+      ],
+      'M': [
+        { code: 'DNE', name: 'Dance Move', numericCode: '001' },
+        { code: 'ACT', name: 'Action', numericCode: '002' },
+        { code: 'SPC', name: 'Special', numericCode: '003' }
+      ],
+      'W': [
+        { code: 'BCH', name: 'Beach', numericCode: '001' },
+        { code: 'CTY', name: 'City', numericCode: '002' },
+        { code: 'FST', name: 'Forest', numericCode: '003' }
+      ]
+    };
+    
+    // Subcategories by layer and category
+    const subcategoryData = {
+      'G.POP': [
+        { code: 'DNC', name: 'Dance', numericCode: '001' },
+        { code: 'RNB', name: 'R&B', numericCode: '002' },
+        { code: 'TRP', name: 'Trap', numericCode: '003' }
+      ],
+      'S.POP': [
+        { code: 'BAS', name: 'Base', numericCode: '001' },
+        { code: 'HPM', name: 'Hipster Male', numericCode: '007' }
+      ],
+      'L.CAS': [
+        { code: 'SHRT', name: 'Shirt', numericCode: '001' },
+        { code: 'PANT', name: 'Pants', numericCode: '002' },
+        { code: 'HAT', name: 'Hat', numericCode: '003' }
+      ],
+      'M.DNE': [
+        { code: 'SPIN', name: 'Spin', numericCode: '001' },
+        { code: 'JUMP', name: 'Jump', numericCode: '002' },
+        { code: 'FLIP', name: 'Flip', numericCode: '003' }
+      ],
+      'W.BCH': [
+        { code: 'SUN', name: 'Sunny', numericCode: '001' },
+        { code: 'CLDY', name: 'Cloudy', numericCode: '002' }
+      ]
+    };
+    
+    // MFA mapping (simplified for testing)
+    const mfaMapping = {
+      'G.POP.DNC.001': '1.001.001.001',
+      'S.POP.BAS.001': '2.001.001.001',
+      'S.POP.HPM.001': '2.001.007.001', // Special case
+      'L.CAS.SHRT.001': '3.001.001.001',
+      'M.DNE.SPIN.001': '4.001.001.001',
+      'W.BCH.SUN.001': '5.001.001.001'
+    };
+    
+    // State
+    let selectedLayer = null;
+    let selectedCategory = null;
+    let selectedSubcategory = null;
+    let hfn = '';
+    let mfa = '';
+    
+    // DOM elements
+    const layerGrid = document.getElementById('layer-grid');
+    const categoryGrid = document.getElementById('category-grid');
+    const subcategoryGrid = document.getElementById('subcategory-grid');
+    const hfnDisplay = document.getElementById('hfn-display');
+    const mfaDisplay = document.getElementById('mfa-display');
+    const logContainer = document.getElementById('log-container');
+    const statusContainer = document.getElementById('status-container');
+    const clearLogButton = document.getElementById('clear-log');
+    
+    // Initialize
+    function init() {
+      // Render layers
+      renderLayers();
+      
+      // Event listener for clear log button
+      clearLogButton.addEventListener('click', () => {
+        logContainer.innerHTML = '';
+        log('Log cleared', 'info');
+      });
+      
+      log('Taxonomy Selection Test initialized', 'info');
+    }
+    
+    // Logging
+    function log(message, type = 'info') {
+      const entry = document.createElement('div');
+      entry.className = `log-entry ${type}`;
+      entry.textContent = message;
+      logContainer.appendChild(entry);
+      logContainer.scrollTop = logContainer.scrollHeight;
+    }
+    
+    // Display status
+    function showStatus(message, success = true) {
+      statusContainer.innerHTML = '';
+      const status = document.createElement('div');
+      status.className = `status ${success ? 'success' : 'error'}`;
+      status.textContent = message;
+      statusContainer.appendChild(status);
+    }
+    
+    // Render layers
+    function renderLayers() {
+      layerGrid.innerHTML = '';
+      
+      Object.keys(STANDARD_LAYER_NAMES).forEach(layer => {
+        const card = createCard(
+          layer,
+          STANDARD_LAYER_NAMES[layer],
+          layer === selectedLayer,
+          () => selectLayer(layer)
+        );
+        layerGrid.appendChild(card);
+      });
+    }
+    
+    // Render categories
+    function renderCategories() {
+      categoryGrid.innerHTML = '';
+      
+      if (!selectedLayer) {
+        return;
+      }
+      
+      const categories = taxonomyData[selectedLayer] || [];
+      
+      if (categories.length === 0) {
+        log(`No categories found for layer ${selectedLayer}`, 'error');
+        return;
+      }
+      
+      categories.forEach(category => {
+        const card = createCard(
+          category.code,
+          category.name,
+          category.code === selectedCategory,
+          () => selectCategory(category.code)
+        );
+        categoryGrid.appendChild(card);
+      });
+    }
+    
+    // Render subcategories
+    function renderSubcategories() {
+      subcategoryGrid.innerHTML = '';
+      
+      if (!selectedLayer || !selectedCategory) {
+        return;
+      }
+      
+      const key = `${selectedLayer}.${selectedCategory}`;
+      const subcategories = subcategoryData[key] || [];
+      
+      if (subcategories.length === 0) {
+        log(`No subcategories found for ${key}`, 'error');
+        return;
+      }
+      
+      subcategories.forEach(subcategory => {
+        const card = createCard(
+          subcategory.code,
+          subcategory.name,
+          subcategory.code === selectedSubcategory,
+          () => selectSubcategory(subcategory.code)
+        );
+        subcategoryGrid.appendChild(card);
+      });
+    }
+    
+    // Create a card element
+    function createCard(code, name, selected, onClick) {
+      const card = document.createElement('div');
+      card.className = `card ${selected ? 'selected' : ''}`;
+      
+      const codeElement = document.createElement('div');
+      codeElement.className = 'code';
+      codeElement.textContent = code;
+      
+      const nameElement = document.createElement('div');
+      nameElement.className = 'name';
+      nameElement.textContent = name;
+      
+      card.appendChild(codeElement);
+      card.appendChild(nameElement);
+      
+      card.addEventListener('click', onClick);
+      
+      return card;
+    }
+    
+    // Select a layer
+    function selectLayer(layer) {
+      log(`Selecting layer: ${layer}`, 'info');
+      
+      // Check if already selected
+      if (layer === selectedLayer) {
+        log(`Layer ${layer} already selected`, 'info');
+        return;
+      }
+      
+      // Update state
+      selectedLayer = layer;
+      selectedCategory = null;
+      selectedSubcategory = null;
+      hfn = '';
+      mfa = '';
+      
+      // Update UI
+      renderLayers();
+      renderCategories();
+      renderSubcategories();
+      updateAddressDisplay();
+      
+      log(`Selected layer: ${layer} (${STANDARD_LAYER_NAMES[layer]})`, 'success');
+    }
+    
+    // Select a category
+    function selectCategory(category) {
+      log(`Selecting category: ${category}`, 'info');
+      
+      // Check if already selected
+      if (category === selectedCategory) {
+        log(`Category ${category} already selected`, 'info');
+        return;
+      }
+      
+      // Check if layer is selected
+      if (!selectedLayer) {
+        log('Cannot select category: No layer selected', 'error');
+        showStatus('Please select a layer first', false);
+        return;
+      }
+      
+      // Update state
+      selectedCategory = category;
+      selectedSubcategory = null;
+      hfn = '';
+      mfa = '';
+      
+      // Update UI
+      renderCategories();
+      renderSubcategories();
+      updateAddressDisplay();
+      
+      const categoryObj = taxonomyData[selectedLayer].find(c => c.code === category);
+      log(`Selected category: ${category} (${categoryObj ? categoryObj.name : 'Unknown'})`, 'success');
+    }
+    
+    // Select a subcategory
+    function selectSubcategory(subcategory) {
+      log(`Selecting subcategory: ${subcategory}`, 'info');
+      
+      // Check if already selected
+      if (subcategory === selectedSubcategory) {
+        log(`Subcategory ${subcategory} already selected`, 'info');
+        return;
+      }
+      
+      // Check if layer and category are selected
+      if (!selectedLayer) {
+        log('Cannot select subcategory: No layer selected', 'error');
+        showStatus('Please select a layer first', false);
+        return;
+      }
+      
+      if (!selectedCategory) {
+        log('Cannot select subcategory: No category selected', 'error');
+        showStatus('Please select a category first', false);
+        return;
+      }
+      
+      // Update state
+      selectedSubcategory = subcategory;
+      
+      // Generate HFN and MFA
+      hfn = `${selectedLayer}.${selectedCategory}.${selectedSubcategory}.001`;
+      const key = `${selectedLayer}.${selectedCategory}.${selectedSubcategory}.001`;
+      mfa = mfaMapping[key] || '';
+      
+      // Update UI
+      renderSubcategories();
+      updateAddressDisplay();
+      
+      const key2 = `${selectedLayer}.${selectedCategory}`;
+      const subcategoryObj = subcategoryData[key2].find(s => s.code === subcategory);
+      log(`Selected subcategory: ${subcategory} (${subcategoryObj ? subcategoryObj.name : 'Unknown'})`, 'success');
+      
+      if (mfa) {
+        log(`Generated HFN: ${hfn}`, 'success');
+        log(`Generated MFA: ${mfa}`, 'success');
+        showStatus('Taxonomy selection complete!', true);
+      } else {
+        log(`Failed to generate MFA for HFN: ${hfn}`, 'error');
+        showStatus('Failed to generate MFA', false);
+      }
+    }
+    
+    // Update address display
+    function updateAddressDisplay() {
+      hfnDisplay.textContent = hfn || '-';
+      mfaDisplay.textContent = mfa || '-';
+    }
+    
+    // Initialize on page load
+    document.addEventListener('DOMContentLoaded', init);
+  </script>
+</body>
+</html>

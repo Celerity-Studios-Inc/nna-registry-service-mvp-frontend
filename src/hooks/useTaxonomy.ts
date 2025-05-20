@@ -13,7 +13,7 @@
  *
  * @module useTaxonomy
  */
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { taxonomyService } from '../services/simpleTaxonomyService';
 import { waitForTaxonomyInit } from '../services/taxonomyInitializer';
 import { taxonomyErrorRecovery } from '../services/taxonomyErrorRecovery';
@@ -93,31 +93,56 @@ export const useTaxonomy = (
   const { autoLoad = true, showFeedback = true } = options;
   const feedback = useFeedback();
 
+  // Generate a stable context ID for this hook instance
+  const contextId = useRef<string>(`ctx_${Math.random().toString(36).substr(2, 9)}`).current;
+  
   // Layer state
   const [layers] = useState<string[]>(DEFAULT_LAYERS);
   const [selectedLayer, setSelectedLayer] = useState<string | null>(null);
+  const selectedLayerRef = useRef<string | null>(selectedLayer);
 
   // Category state
   const [categories, setCategories] = useState<TaxonomyCategory[]>([]);
-  const [isLoadingCategories, setIsLoadingCategories] =
-    useState<boolean>(false);
+  const categoriesRef = useRef<TaxonomyCategory[]>(categories);
+  const [isLoadingCategories, setIsLoadingCategories] = useState<boolean>(false);
   const [categoryError, setCategoryError] = useState<Error | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const selectedCategoryRef = useRef<string | null>(selectedCategory);
 
   // Subcategory state
   const [subcategories, setSubcategories] = useState<TaxonomySubcategory[]>([]);
-  const [isLoadingSubcategories, setIsLoadingSubcategories] =
-    useState<boolean>(false);
+  const subcategoriesRef = useRef<TaxonomySubcategory[]>(subcategories);
+  const [isLoadingSubcategories, setIsLoadingSubcategories] = useState<boolean>(false);
   const [subcategoryError, setSubcategoryError] = useState<Error | null>(null);
-  const [selectedSubcategory, setSelectedSubcategory] = useState<string | null>(
-    null
-  );
+  const [selectedSubcategory, setSelectedSubcategory] = useState<string | null>(null);
+  const selectedSubcategoryRef = useRef<string | null>(selectedSubcategory);
 
   // HFN/MFA state
   const [sequential, setSequential] = useState<string>('001');
   const [fileType, setFileType] = useState<string | null>(null);
   const [hfn, setHfn] = useState<string>('');
   const [mfa, setMfa] = useState<string>('');
+  
+  // Update refs when state changes to keep them in sync
+  useEffect(() => {
+    selectedLayerRef.current = selectedLayer;
+  }, [selectedLayer]);
+  
+  useEffect(() => {
+    categoriesRef.current = categories;
+  }, [categories]);
+  
+  useEffect(() => {
+    selectedCategoryRef.current = selectedCategory;
+  }, [selectedCategory]);
+  
+  useEffect(() => {
+    subcategoriesRef.current = subcategories;
+  }, [subcategories]);
+  
+  useEffect(() => {
+    selectedSubcategoryRef.current = selectedSubcategory;
+  }, [selectedSubcategory]);
 
   // Helper for showing user-friendly feedback messages
   const showErrorFeedback = useCallback(
@@ -538,31 +563,31 @@ export const useTaxonomy = (
     }
   }, [selectedLayer, selectedCategory, loadSubcategories, autoLoad]);
 
-  // Select a layer - ENHANCED with improved diagnostic logging and layer switching
+  // Select a layer - ENHANCED with improved diagnostic logging, layer switching, and state synchronization
   const selectLayer = useCallback(
     (layer: string) => {
       // Generate a unique operation ID to track this layer change across logs
       const operationId = `ctx_${Date.now().toString(36)}_${Math.random()
         .toString(36)
         .substr(2, 5)}`;
-      console.log(`[CONTEXT ${operationId}] Selecting layer: ${layer}`);
+      console.log(`[CONTEXT ${contextId}:${operationId}] Selecting layer: ${layer}`);
 
       // CRITICAL FIX: If we're changing from one layer to another, first clear all existing data
-      if (selectedLayer !== layer) {
+      if (selectedLayerRef.current !== layer) {
         console.log(
-          `[CONTEXT ${operationId}] Layer change detected from ${
-            selectedLayer || 'null'
+          `[CONTEXT ${contextId}:${operationId}] Layer change detected from ${
+            selectedLayerRef.current || 'null'
           } to ${layer}`
         );
 
         // Log the current taxonomy state before changes
         console.log(
-          `[CONTEXT ${operationId}] Before reset - categories: ${categories.length} items`
+          `[CONTEXT ${contextId}:${operationId}] Before reset - categories: ${categoriesRef.current.length} items`
         );
-        if (categories.length > 0) {
+        if (categoriesRef.current.length > 0) {
           console.log(
-            `[CONTEXT ${operationId}] Category codes: ${JSON.stringify(
-              categories.map(c => c.code)
+            `[CONTEXT ${contextId}:${operationId}] Category codes: ${JSON.stringify(
+              categoriesRef.current.map(c => c.code)
             )}`
           );
         }
@@ -579,11 +604,26 @@ export const useTaxonomy = (
         setHfn('');
         setMfa('');
 
-        console.log(`[CONTEXT ${operationId}] State cleared for layer change`);
+        console.log(`[CONTEXT ${contextId}:${operationId}] State cleared for layer change`);
       }
 
+      // Update the ref immediately for synchronous operations
+      selectedLayerRef.current = layer;
+      
       // Now set the new layer
       setSelectedLayer(layer);
+      
+      // Immediately invoke useEffect behavior to load categories
+      // This ensures categories start loading right away, avoiding state batch update delays
+      if (autoLoad) {
+        console.log(`[CONTEXT ${contextId}:${operationId}] Proactively loading categories for ${layer}`);
+        // Use setTimeout with 0ms to ensure this runs after the current synchronous code block
+        setTimeout(() => {
+          if (selectedLayerRef.current === layer) {
+            loadCategories(layer);
+          }
+        }, 0);
+      }
 
       // Optional feedback when layer is selected
       if (showFeedback) {
@@ -600,6 +640,7 @@ export const useTaxonomy = (
             layer,
             timestamp: Date.now(),
             operationId,
+            contextId
           })
         );
       } catch (e) {
@@ -607,68 +648,119 @@ export const useTaxonomy = (
       }
 
       console.log(
-        `[CONTEXT ${operationId}] Layer selection complete: ${layer}`
+        `[CONTEXT ${contextId}:${operationId}] Layer selection complete: ${layer}`
       );
 
-      // Schedule a verification log after a short delay to confirm the change took effect
+      // Schedule verification logs to track state changes over time
       setTimeout(() => {
         console.log(
-          `[CONTEXT ${operationId}] Verification after 100ms - selectedLayer: ${selectedLayer}`
+          `[CONTEXT ${contextId}:${operationId}] Verification after 100ms - selectedLayer: ${selectedLayerRef.current}`
         );
       }, 100);
+      
+      setTimeout(() => {
+        console.log(
+          `[CONTEXT ${contextId}:${operationId}] Verification after 300ms - categories: ${categoriesRef.current.length} items`
+        );
+      }, 300);
     },
-    [selectedLayer, categories, showFeedback, showSuccessFeedback]
+    [selectedLayer, autoLoad, loadCategories, contextId, showFeedback, showSuccessFeedback]
   );
 
-  // Select a category
+  // Select a category - ENHANCED with ref updates and state verification
   const selectCategory = useCallback(
     (category: string) => {
+      // Generate a unique operation ID to track this action across logs
+      const operationId = `cat_${Date.now().toString(36)}_${Math.random().toString(36).substr(2, 5)}`;
+      console.log(`[CONTEXT ${contextId}:${operationId}] Selecting category: ${category}`);
+      
       // FIXED: Prevent duplicate selections to avoid unnecessary re-renders
-      if (category === selectedCategory) return;
+      if (category === selectedCategoryRef.current) {
+        console.log(`[CONTEXT ${contextId}:${operationId}] Category ${category} already selected, skipping`); 
+        return;
+      }
 
+      // Update ref immediately for synchronous operations
+      selectedCategoryRef.current = category;
+      
+      // Update state
       setSelectedCategory(category);
       setSelectedSubcategory(null);
+      
+      // Immediately invoke useEffect behavior to load subcategories
+      // This ensures subcategories start loading right away, avoiding state batch update delays
+      if (autoLoad && selectedLayerRef.current) {
+        console.log(`[CONTEXT ${contextId}:${operationId}] Proactively loading subcategories for ${selectedLayerRef.current}.${category}`);
+        // Use setTimeout with 0ms to ensure this runs after the current synchronous code block
+        setTimeout(() => {
+          if (selectedCategoryRef.current === category) {
+            loadSubcategories(selectedLayerRef.current!, category);
+          }
+        }, 0);
+      }
 
       // Find full category name and display in feedback
-      if (showFeedback && selectedLayer) {
-        const categoryObj = categories.find(cat => cat.code === category);
+      if (showFeedback && selectedLayerRef.current) {
+        const categoryObj = categoriesRef.current.find(cat => cat.code === category);
         if (categoryObj) {
           showSuccessFeedback(`Selected ${categoryObj.name} category`);
         }
       }
+      
+      // Schedule verification logs to track state changes
+      setTimeout(() => {
+        console.log(
+          `[CONTEXT ${contextId}:${operationId}] Verification after 100ms - selectedCategory: ${selectedCategoryRef.current}`
+        );
+      }, 100);
     },
     [
-      categories,
-      selectedLayer,
-      selectedCategory,
+      contextId,
+      autoLoad,
+      loadSubcategories,
       showFeedback,
       showSuccessFeedback,
     ]
   );
 
-  // Select a subcategory
+  // Select a subcategory - ENHANCED with ref updates and better state verification
   const selectSubcategory = useCallback(
     (subcategory: string) => {
+      // Generate a unique operation ID to track this action across logs
+      const operationId = `subcat_${Date.now().toString(36)}_${Math.random().toString(36).substr(2, 5)}`;
+      console.log(`[CONTEXT ${contextId}:${operationId}] Selecting subcategory: ${subcategory}`);
+      
       // FIXED: Prevent duplicate selections to avoid unnecessary re-renders
-      if (subcategory === selectedSubcategory) return;
+      if (subcategory === selectedSubcategoryRef.current) {
+        console.log(`[CONTEXT ${contextId}:${operationId}] Subcategory ${subcategory} already selected, skipping`);
+        return;
+      }
 
+      // Update ref immediately for synchronous operations
+      selectedSubcategoryRef.current = subcategory;
+      
+      // Update state
       setSelectedSubcategory(subcategory);
 
       // Find full subcategory name and display in feedback
-      if (showFeedback && selectedLayer && selectedCategory) {
-        const subcategoryObj = subcategories.find(
+      if (showFeedback && selectedLayerRef.current && selectedCategoryRef.current) {
+        const subcategoryObj = subcategoriesRef.current.find(
           subcat => subcat.code === subcategory
         );
         if (subcategoryObj) {
           showSuccessFeedback(`Selected ${subcategoryObj.name} subcategory`);
         }
       }
+      
+      // Schedule verification log to track state changes
+      setTimeout(() => {
+        console.log(
+          `[CONTEXT ${contextId}:${operationId}] Verification after 100ms - selectedSubcategory: ${selectedSubcategoryRef.current}`
+        );
+      }, 100);
     },
     [
-      subcategories,
-      selectedLayer,
-      selectedCategory,
-      selectedSubcategory,
+      contextId,
       showFeedback,
       showSuccessFeedback,
     ]
