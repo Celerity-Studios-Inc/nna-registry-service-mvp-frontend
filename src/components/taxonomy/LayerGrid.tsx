@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useMemo, useCallback } from 'react';
 import TaxonomyItem from './TaxonomyItem';
 import { useTaxonomyData } from '../../providers/taxonomy/TaxonomyDataProvider';
+import { logger, LogLevel, debugLog } from '../../utils/logger';
 import { TaxonomyItem as TaxonomyItemType } from '../../providers/taxonomy/types';
 
 interface LayerGridProps {
@@ -28,18 +29,21 @@ const LayerGrid: React.FC<LayerGridProps> = ({
     );
   }
 
-  // Create layer items from taxonomy data
-  const layers = Object.keys(taxonomyData.layers).map(layer => {
-    // Create a simple item representation for each layer
-    return {
-      code: layer,
-      name: getLayerName(layer),
-      numericCode: getLayerNumericCode(layer)
-    };
-  });
+  // Create layer items from taxonomy data - memoized to prevent recreation on rerenders
+  const layers = useMemo(() => {
+    debugLog(`[LayerGrid] Creating layer items from taxonomy data`);
+    return Object.keys(taxonomyData.layers).map(layer => {
+      // Create a simple item representation for each layer
+      return {
+        code: layer,
+        name: getLayerName(layer),
+        numericCode: getLayerNumericCode(layer)
+      };
+    });
+  }, [taxonomyData, getLayerName, getLayerNumericCode]);
 
-  // Helper function to get layer name
-  function getLayerName(layer: string): string {
+  // Helper function to get layer name - memoized to prevent recalculation
+  const getLayerName = useMemo(() => {
     const nameMap: Record<string, string> = {
       'S': 'Star',
       'W': 'World',
@@ -52,11 +56,11 @@ const LayerGrid: React.FC<LayerGridProps> = ({
       'C': 'Character',
       'R': 'Rights'
     };
-    return nameMap[layer] || layer;
-  }
+    return (layer: string): string => nameMap[layer] || layer;
+  }, []);
 
-  // Helper function to get layer numeric code
-  function getLayerNumericCode(layer: string): string {
+  // Helper function to get layer numeric code - memoized to prevent recalculation
+  const getLayerNumericCode = useMemo(() => {
     const codeMap: Record<string, string> = {
       'G': '1',
       'S': '2',
@@ -69,8 +73,8 @@ const LayerGrid: React.FC<LayerGridProps> = ({
       'C': '9',
       'R': '10'
     };
-    return codeMap[layer] || '';
-  }
+    return (layer: string): string => codeMap[layer] || '';
+  }, []);
 
   return (
     <div className="taxonomy-grid">
@@ -87,4 +91,12 @@ const LayerGrid: React.FC<LayerGridProps> = ({
   );
 };
 
-export default React.memo(LayerGrid);
+// Create custom comparison function for memoization
+const arePropsEqual = (prevProps: LayerGridProps, nextProps: LayerGridProps) => {
+  return prevProps.selectedLayer === nextProps.selectedLayer;
+};
+
+// Add displayName for debugging
+LayerGrid.displayName = 'LayerGrid';
+
+export default React.memo(LayerGrid, arePropsEqual);

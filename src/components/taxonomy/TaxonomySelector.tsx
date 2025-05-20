@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { useTaxonomyData } from '../../providers/taxonomy/TaxonomyDataProvider';
 import LayerGrid from './LayerGrid';
 import CategoryGrid from './CategoryGrid';
 import SubcategoryGrid from './SubcategoryGrid';
 import './TaxonomySelector.css';
+import { debugLog, logger, LogLevel } from '../../utils/logger';
 
 export interface TaxonomySelectorProps {
   selectedLayer: string;
@@ -33,6 +34,31 @@ const TaxonomySelector: React.FC<TaxonomySelectorProps> = ({
     error, 
     refreshTaxonomyData 
   } = useTaxonomyData();
+  
+  // Memoized handlers for child components
+  const handleLayerSelect = useCallback((layer: string) => {
+    debugLog(`[TaxonomySelector] Layer selected: ${layer}`);
+    logger.taxonomy(LogLevel.INFO, `Layer selected: ${layer}`);
+    onLayerSelect(layer);
+  }, [onLayerSelect]);
+  
+  const handleCategorySelect = useCallback((category: string) => {
+    debugLog(`[TaxonomySelector] Category selected: ${selectedLayer}.${category}`);
+    logger.taxonomy(LogLevel.INFO, `Category selected: ${selectedLayer}.${category}`);
+    onCategorySelect(category);
+  }, [selectedLayer, onCategorySelect]);
+  
+  const handleSubcategorySelect = useCallback((subcategory: string, isDoubleClick?: boolean) => {
+    debugLog(
+      `[TaxonomySelector] Subcategory selected: ${selectedLayer}.${selectedCategory}.${subcategory} (double-click: ${Boolean(isDoubleClick)})`
+    );
+    logger.taxonomy(
+      LogLevel.INFO, 
+      `Complete taxonomy selection: ${selectedLayer}.${selectedCategory}.${subcategory}`,
+      { isDoubleClick }
+    );
+    onSubcategorySelect(subcategory, isDoubleClick);
+  }, [selectedLayer, selectedCategory, onSubcategorySelect]);
 
   // Handle loading state
   if (loadingState === 'loading') {
@@ -77,7 +103,7 @@ const TaxonomySelector: React.FC<TaxonomySelectorProps> = ({
         <h3 className="section-title">Select Layer</h3>
         <LayerGrid 
           selectedLayer={selectedLayer} 
-          onLayerSelect={onLayerSelect} 
+          onLayerSelect={handleLayerSelect} 
         />
       </div>
 
@@ -91,7 +117,7 @@ const TaxonomySelector: React.FC<TaxonomySelectorProps> = ({
           <CategoryGrid
             layer={selectedLayer}
             selectedCategory={selectedCategory}
-            onCategorySelect={onCategorySelect}
+            onCategorySelect={handleCategorySelect}
           />
         </div>
       )}
@@ -107,7 +133,7 @@ const TaxonomySelector: React.FC<TaxonomySelectorProps> = ({
             layer={selectedLayer}
             category={selectedCategory}
             selectedSubcategory={selectedSubcategory}
-            onSubcategorySelect={onSubcategorySelect}
+            onSubcategorySelect={handleSubcategorySelect}
           />
         </div>
       )}
@@ -124,4 +150,18 @@ const TaxonomySelector: React.FC<TaxonomySelectorProps> = ({
   );
 };
 
-export default React.memo(TaxonomySelector);
+// Custom comparison function for memoization
+const arePropsEqual = (prevProps: TaxonomySelectorProps, nextProps: TaxonomySelectorProps) => {
+  // Compare all selection state
+  return (
+    prevProps.selectedLayer === nextProps.selectedLayer &&
+    prevProps.selectedCategory === nextProps.selectedCategory &&
+    prevProps.selectedSubcategory === nextProps.selectedSubcategory
+    // Handler functions are intentionally excluded as they should be stable references from parent
+  );
+};
+
+// Add displayName for debugging in React DevTools
+TaxonomySelector.displayName = 'TaxonomySelector';
+
+export default React.memo(TaxonomySelector, arePropsEqual);

@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useMemo, useCallback } from 'react';
 import TaxonomyItem from './TaxonomyItem';
 import { useTaxonomyData } from '../../providers/taxonomy/TaxonomyDataProvider';
-import { debugLog } from '../../utils/logger';
+import { debugLog, logger, LogLevel } from '../../utils/logger';
 
 interface SubcategoryGridProps {
   layer: string;
@@ -23,8 +23,11 @@ const SubcategoryGrid: React.FC<SubcategoryGridProps> = ({
   // Get taxonomy data from context
   const { getSubcategories } = useTaxonomyData();
 
-  // Get subcategories for the selected layer and category
-  const subcategories = getSubcategories(layer, category);
+  // Get subcategories for the selected layer and category - memoized to prevent recalculation
+  const subcategories = useMemo(() => {
+    debugLog(`[SubcategoryGrid] Getting subcategories for ${layer}.${category}`);
+    return getSubcategories(layer, category);
+  }, [layer, category, getSubcategories]);
 
   // No subcategories available
   if (subcategories.length === 0) {
@@ -38,18 +41,20 @@ const SubcategoryGrid: React.FC<SubcategoryGridProps> = ({
   }
 
   // Handle subcategory selection with check for Star+POP combination
-  const handleSubcategorySelect = (subcategory: string, isDoubleClick?: boolean) => {
+  // Memoized to maintain reference stability between renders
+  const handleSubcategorySelect = useCallback((subcategory: string, isDoubleClick?: boolean) => {
     // Special log for Star+POP selections for debugging
     const isStarPop = layer === 'S' && category === 'POP';
     if (isStarPop) {
       debugLog(
         `[SUBCATEGORY SELECT] Selecting S.POP.${subcategory} (double-click: ${Boolean(isDoubleClick)})`
       );
+      logger.taxonomy(LogLevel.DEBUG, `Star Pop subcategory selected: ${subcategory}`);
     }
     
     // Call the parent handler
     onSubcategorySelect(subcategory, isDoubleClick);
-  };
+  }, [layer, category, onSubcategorySelect]);
 
   return (
     <>
@@ -76,4 +81,18 @@ const SubcategoryGrid: React.FC<SubcategoryGridProps> = ({
   );
 };
 
-export default React.memo(SubcategoryGrid);
+// Add custom comparison function for memoization that compares props deeply
+const arePropsEqual = (prevProps: SubcategoryGridProps, nextProps: SubcategoryGridProps) => {
+  return (
+    prevProps.layer === nextProps.layer &&
+    prevProps.category === nextProps.category &&
+    prevProps.selectedSubcategory === nextProps.selectedSubcategory
+    // onSubcategorySelect is intentionally excluded to avoid over-optimization
+    // as function reference changes are handled by useCallback in parent components
+  );
+};
+
+// Add displayName for debugging in React DevTools
+SubcategoryGrid.displayName = 'SubcategoryGrid';
+
+export default React.memo(SubcategoryGrid, arePropsEqual);

@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useMemo, useCallback } from 'react';
 import TaxonomyItem from './TaxonomyItem';
 import { useTaxonomyData } from '../../providers/taxonomy/TaxonomyDataProvider';
+import { debugLog, logger, LogLevel } from '../../utils/logger';
 
 interface CategoryGridProps {
   layer: string;
@@ -20,8 +21,11 @@ const CategoryGrid: React.FC<CategoryGridProps> = ({
   // Get taxonomy data from context
   const { getCategories } = useTaxonomyData();
 
-  // Get categories for selected layer
-  const categories = getCategories(layer);
+  // Get categories for selected layer - memoized to prevent recalculation
+  const categories = useMemo(() => {
+    debugLog(`[CategoryGrid] Getting categories for layer ${layer}`);
+    return getCategories(layer);
+  }, [layer, getCategories]);
 
   // No categories available
   if (categories.length === 0) {
@@ -32,6 +36,13 @@ const CategoryGrid: React.FC<CategoryGridProps> = ({
     );
   }
 
+  // Memoize the category selection handler to maintain reference stability
+  const handleCategorySelect = useCallback((categoryCode: string) => {
+    debugLog(`[CategoryGrid] Category selected: ${categoryCode}`);
+    logger.taxonomy(LogLevel.DEBUG, `Category selected: ${layer}.${categoryCode}`);
+    onCategorySelect(categoryCode);
+  }, [layer, onCategorySelect]);
+
   return (
     <div className="taxonomy-grid">
       {categories.map(category => (
@@ -39,7 +50,7 @@ const CategoryGrid: React.FC<CategoryGridProps> = ({
           key={category.code}
           item={category}
           isActive={selectedCategory === category.code}
-          onClick={() => onCategorySelect(category.code)}
+          onClick={() => handleCategorySelect(category.code)}
           dataTestId={`category-${category.code}`}
         />
       ))}
@@ -47,4 +58,16 @@ const CategoryGrid: React.FC<CategoryGridProps> = ({
   );
 };
 
-export default React.memo(CategoryGrid);
+// Add custom comparison function for memoization
+const arePropsEqual = (prevProps: CategoryGridProps, nextProps: CategoryGridProps) => {
+  return (
+    prevProps.layer === nextProps.layer &&
+    prevProps.selectedCategory === nextProps.selectedCategory
+    // onCategorySelect is intentionally excluded as it should be wrapped in useCallback by parent
+  );
+};
+
+// Add displayName for debugging in React DevTools
+CategoryGrid.displayName = 'CategoryGrid';
+
+export default React.memo(CategoryGrid, arePropsEqual);

@@ -1,5 +1,6 @@
 import React from 'react';
 import { TaxonomyItem as TaxonomyItemType } from '../../providers/taxonomy/types';
+import { debugLog } from '../../utils/logger';
 
 interface TaxonomyItemProps {
   item: TaxonomyItemType;
@@ -34,4 +35,25 @@ const TaxonomyItem: React.FC<TaxonomyItemProps> = ({
   );
 };
 
-export default React.memo(TaxonomyItem);
+// Create custom comparison function for optimized memoization
+const arePropsEqual = (prevProps: TaxonomyItemProps, nextProps: TaxonomyItemProps) => {
+  // Deep comparison of the item props to prevent unnecessary re-renders
+  const itemEqual = 
+    prevProps.item.code === nextProps.item.code &&
+    prevProps.item.name === nextProps.item.name &&
+    prevProps.item.numericCode === nextProps.item.numericCode;
+  
+  const propsEqual = 
+    itemEqual &&
+    prevProps.isActive === nextProps.isActive &&
+    prevProps.dataTestId === nextProps.dataTestId;
+  
+  // Skip comparison of event handlers as they should be wrapped in useCallback in parent
+  
+  return propsEqual;
+};
+
+// Add displayName for debugging in React DevTools
+TaxonomyItem.displayName = 'TaxonomyItem';
+
+export default React.memo(TaxonomyItem, arePropsEqual);
