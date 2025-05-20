@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback, useMemo } from 'react';
 import { taxonomyService } from '../../services/simpleTaxonomyService';
 import { logger, LogLevel } from '../../utils/logger';
 import { 
@@ -211,7 +211,7 @@ export const TaxonomyDataProvider: React.FC<{children: React.ReactNode}> = ({ ch
     try {
       return taxonomyService.getCategories(layer);
     } catch (err) {
-      console.error(`[TAXONOMY PROVIDER] Error getting categories for layer ${layer}:`, err);
+      logger.taxonomy(LogLevel.ERROR, `Error getting categories for layer ${layer}:`, err);
       return [];
     }
   }, [taxonomyData]);
@@ -231,7 +231,7 @@ export const TaxonomyDataProvider: React.FC<{children: React.ReactNode}> = ({ ch
     try {
       return taxonomyService.getSubcategories(layer, category);
     } catch (err) {
-      console.error(`[TAXONOMY PROVIDER] Error getting subcategories for ${layer}.${category}:`, err);
+      logger.taxonomy(LogLevel.ERROR, `Error getting subcategories for ${layer}.${category}:`, err);
       return [];
     }
   }, [taxonomyData]);
@@ -243,7 +243,7 @@ export const TaxonomyDataProvider: React.FC<{children: React.ReactNode}> = ({ ch
     try {
       return taxonomyService.convertHFNtoMFA(hfn);
     } catch (err) {
-      console.error('[TAXONOMY PROVIDER] Error converting HFN to MFA:', err);
+      logger.taxonomy(LogLevel.ERROR, 'Error converting HFN to MFA:', err);
       return '';
     }
   }, []);
@@ -255,7 +255,7 @@ export const TaxonomyDataProvider: React.FC<{children: React.ReactNode}> = ({ ch
     try {
       return taxonomyService.convertMFAtoHFN(mfa);
     } catch (err) {
-      console.error('[TAXONOMY PROVIDER] Error converting MFA to HFN:', err);
+      logger.taxonomy(LogLevel.ERROR, 'Error converting MFA to HFN:', err);
       return '';
     }
   }, []);
@@ -267,7 +267,7 @@ export const TaxonomyDataProvider: React.FC<{children: React.ReactNode}> = ({ ch
     try {
       return taxonomyService.validateHFN(hfn);
     } catch (err) {
-      console.error('[TAXONOMY PROVIDER] Error validating HFN:', err);
+      logger.taxonomy(LogLevel.ERROR, 'Error validating HFN:', err);
       return false;
     }
   }, []);
@@ -280,7 +280,7 @@ export const TaxonomyDataProvider: React.FC<{children: React.ReactNode}> = ({ ch
       const { layer, category, subcategory } = path;
       return `${layer}.${category}.${subcategory}.001`;
     } catch (err) {
-      console.error('[TAXONOMY PROVIDER] Error building HFN:', err);
+      logger.taxonomy(LogLevel.ERROR, 'Error building HFN:', err);
       return '';
     }
   }, []);
@@ -347,4 +347,10 @@ export const TaxonomyDataProvider: React.FC<{children: React.ReactNode}> = ({ ch
 /**
  * Custom hook to use taxonomy data
  */
+/**
+ * Custom hook to use taxonomy data
+ */
 export const useTaxonomyData = () => useContext(TaxonomyContext);
+
+// Add displayName for debugging
+TaxonomyDataProvider.displayName = 'TaxonomyDataProvider';

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useForm, SubmitHandler, FormProvider } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
@@ -50,6 +50,7 @@ import { taxonomyService } from '../../services/simpleTaxonomyService';
 import { taxonomyFormatter } from '../../utils/taxonomyFormatter';
 import { TaxonomyConverter } from '../../services/taxonomyConverter';
 import { useTaxonomyContext } from '../../contexts/TaxonomyContext';
+import { logger, LogLevel, debugLog } from '../../utils/logger';
 
 // Import styles
 import '../../styles/SimpleTaxonomySelection.css';
@@ -209,7 +210,7 @@ interface FormData {
  * A new version of the RegisterAssetPage that uses the TaxonomySelector component
  * for a more reliable taxonomy selection experience.
  */
-const RegisterAssetPageNew: React.FC = () => {
+const RegisterAssetPageNew: React.FC = React.memo(() => {
   // Toggle between old and new UI
   const [useNewInterface, setUseNewInterface] = useState<boolean>(true);
 
@@ -775,26 +776,29 @@ const RegisterAssetPageNew: React.FC = () => {
   };
 
   // Handle navigation between steps
-  const handleNext = () => {
+  const handleNext = useCallback(() => {
     setActiveStep(prevActiveStep => prevActiveStep + 1);
-  };
+    debugLog('[RegisterAssetPageNew] Moving to next step');
+  }, []);
 
-  const handleBack = () => {
+  const handleBack = useCallback(() => {
     setActiveStep(prevActiveStep => prevActiveStep - 1);
-  };
+    debugLog('[RegisterAssetPageNew] Moving to previous step');
+  }, []);
 
   // Adapted handler methods for TaxonomySelector component
   
   // Handle layer selection for the new TaxonomySelector component
-  const handleTaxonomySelectorLayerSelect = (layer: string) => {
-    console.log(`TaxonomySelector: Selected layer ${layer}`);
+  const handleTaxonomySelectorLayerSelect = useCallback((layer: string) => {
+    debugLog(`[TaxonomySelector] Selected layer ${layer}`);
+    logger.ui(LogLevel.INFO, `User selected layer: ${layer}`);
     
     // CRITICAL FIX: Throttle to prevent rapid multiple layer selections
     const now = Date.now();
     const throttleTime = 500;
     
     if (now - layerSelectionThrottleRef.current.lastTimestamp < throttleTime) {
-      console.log(`[TaxonomySelector] Throttled layer selection`);
+      debugLog(`[TaxonomySelector] Throttled layer selection`);
       return;
     }
     
@@ -817,11 +821,12 @@ const RegisterAssetPageNew: React.FC = () => {
     
     // Call the original handler with our formatted option
     handleLayerSelect(layerOption);
-  };
+  }, [handleLayerSelect]);
   
   // Handle category selection for the new TaxonomySelector component
-  const handleTaxonomySelectorCategorySelect = (category: string) => {
-    console.log(`TaxonomySelector: Selected category ${category}`);
+  const handleTaxonomySelectorCategorySelect = useCallback((category: string) => {
+    debugLog(`[TaxonomySelector] Selected category ${category}`);
+    logger.ui(LogLevel.INFO, `User selected category: ${category}`);
     
     // Create a CategoryOption for the original handler
     // Find the category in the categories returned by taxonomyService
@@ -829,7 +834,7 @@ const RegisterAssetPageNew: React.FC = () => {
     const categoryObj = availableCategories.find(cat => cat.code === category);
     
     if (!categoryObj) {
-      console.error(`Failed to find category ${category} for layer ${watchLayer}`);
+      logger.taxonomy(LogLevel.ERROR, `Failed to find category ${category} for layer ${watchLayer}`);
       return;
     }
     
@@ -844,11 +849,12 @@ const RegisterAssetPageNew: React.FC = () => {
       // Call the original handler with our formatted option
       handleCategorySelect(categoryOption);
     }
-  };
+  }, [taxonomyService, watchLayer, handleCategorySelect]);
   
   // Handle subcategory selection for the new TaxonomySelector component
-  const handleTaxonomySelectorSubcategorySelect = (subcategory: string, isDoubleClick?: boolean) => {
-    console.log(`TaxonomySelector: Selected subcategory ${subcategory}, doubleClick: ${isDoubleClick}`);
+  const handleTaxonomySelectorSubcategorySelect = useCallback((subcategory: string, isDoubleClick?: boolean) => {
+    debugLog(`[TaxonomySelector] Selected subcategory ${subcategory}, doubleClick: ${isDoubleClick}`);
+    logger.ui(LogLevel.INFO, `User selected subcategory: ${subcategory}`);
     
     // Create a SubcategoryOption for the original handler
     // Find the subcategory in the subcategories returned by taxonomyService
@@ -871,7 +877,7 @@ const RegisterAssetPageNew: React.FC = () => {
       // Call the original handler with our formatted option
       handleSubcategorySelect(subcategoryOption, isDoubleClick);
     }
-  };
+  }, [taxonomyService, watchLayer, watchCategoryCode, handleSubcategorySelect]);
 
   // Original handler methods (slightly modified to work with both interfaces)
   
@@ -1681,5 +1687,8 @@ const RegisterAssetPageNew: React.FC = () => {
     </TaxonomyDataProvider>
   );
 };
+
+// Add displayName for debugging
+RegisterAssetPageNew.displayName = 'RegisterAssetPageNew';
 
 export default RegisterAssetPageNew;
