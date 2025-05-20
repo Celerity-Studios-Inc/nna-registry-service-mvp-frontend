@@ -38,8 +38,7 @@ class ErrorBoundary extends Component<Props, State> {
     const componentName = this.props.componentName || 'UnnamedComponent';
     
     // Log the error to our structured logger
-    logger.general(
-      LogLevel.ERROR, 
+    logger.error(
       `Error caught by ErrorBoundary in ${componentName}:`, 
       { error, errorInfo }
     );

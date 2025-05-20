@@ -41,8 +41,9 @@ export function useFormUISync<T extends Record<string, any>>(
     const initialState = { ...defaultValues };
     
     Object.keys(defaultValues).forEach(key => {
+      const typedKey = key as keyof T;
       if (currentValues[key] !== undefined) {
-        initialState[key] = currentValues[key];
+        initialState[typedKey] = currentValues[key];
       }
     });
     
@@ -154,8 +155,9 @@ export function useFormUISync<T extends Record<string, any>>(
     let changed = false;
     
     Object.keys(uiState).forEach(key => {
-      if (currentValues[key] !== undefined && currentValues[key] !== uiState[key]) {
-        updatedState[key] = currentValues[key];
+      const typedKey = key as keyof T;
+      if (currentValues[key] !== undefined && currentValues[key] !== uiState[typedKey]) {
+        updatedState[typedKey] = currentValues[key];
         changed = true;
       }
     });

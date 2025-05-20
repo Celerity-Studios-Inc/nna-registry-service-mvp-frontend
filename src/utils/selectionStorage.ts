@@ -99,7 +99,7 @@ export const SelectionStorage = {
       
       // If no existing selection, create a new one with the updates
       if (!saved) {
-        this.save(updates as any, formId);
+        SelectionStorage.save(updates as any, formId);
         return true;
       }
       
@@ -135,7 +135,7 @@ export const SelectionStorage = {
         
         if (key && key.startsWith('taxonomySelection_')) {
           const formId = key.replace('taxonomySelection_', '');
-          const selection = this.retrieve(formId);
+          const selection = SelectionStorage.retrieve(formId);
           
           if (selection) {
             result[formId] = selection;
