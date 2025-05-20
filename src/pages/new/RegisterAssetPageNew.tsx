@@ -46,6 +46,9 @@ import { ComponentsForm } from '../../components/asset/ComponentsForm';
 import { TaxonomyDataProvider } from '../../providers/taxonomy/TaxonomyDataProvider';
 import { TaxonomySelector } from '../../components/taxonomy';
 
+// Import feedback component
+import StorageOperationFeedback from '../../components/feedback/StorageOperationFeedback';
+
 // Import the simplified taxonomy service and context
 import { taxonomyService } from '../../services/simpleTaxonomyService';
 import { taxonomyFormatter } from '../../utils/taxonomyFormatter';
@@ -58,7 +61,7 @@ import '../../styles/SimpleTaxonomySelection.css';
 import '../../styles/LayerSelector.css';
 
 // Import utilities
-import { SelectionStorage, TaxonomySelection } from '../../utils/selectionStorage';
+import { SelectionStorage, TaxonomySelection, StorageType } from '../../utils/selectionStorage';
 import { EventCoordinator } from '../../utils/eventCoordinator';
 
 // Types
@@ -830,6 +833,9 @@ const RegisterAssetPageNew: React.FC = () => {
   // Setup navigation warning for unsaved changes
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   
+  // Enable storage feedback (set to false to disable UI feedback)
+  const [showStorageFeedback, setShowStorageFeedback] = useState<boolean>(true);
+  
   // Effect to track form changes
   useEffect(() => {
     const subscription = methods.watch(() => {
@@ -838,6 +844,98 @@ const RegisterAssetPageNew: React.FC = () => {
     
     return () => subscription.unsubscribe();
   }, [methods]);
+  
+  // Register for cross-tab synchronization
+  useEffect(() => {
+    // Set up cross-tab sync for the asset registration form
+    SelectionStorage.registerForCrossTabSync(
+      'RegisterAssetPage',
+      (formId, selection) => {
+        if (formId === 'asset-registration') {
+          debugLog('[RegisterAssetPage] Received cross-tab update:', selection);
+          
+          // Only update if we're on the initial step (to avoid disrupting active editing)
+          if (activeStep === 0) {
+            // Use EventCoordinator to ensure orderly updates
+            EventCoordinator.clear();
+            
+            // First set the layer
+            if (selection.layer) {
+              EventCoordinator.enqueue('cross-tab-layer', () => {
+                setValue('layer', selection.layer, {
+                  shouldValidate: true,
+                  shouldDirty: true
+                });
+                
+                // Update flags
+                setIsTrainingLayer(selection.layer === 'T');
+                setIsCompositeLayer(selection.layer === 'C');
+                
+                // Update context
+                taxonomyContext.selectLayer(selection.layer);
+              });
+            }
+            
+            // Then set category if available
+            if (selection.layer && selection.categoryCode) {
+              EventCoordinator.enqueue('cross-tab-category', () => {
+                setValue('categoryCode', selection.categoryCode, {
+                  shouldValidate: true,
+                  shouldDirty: true
+                });
+                
+                // Try to get the category name
+                try {
+                  const categories = taxonomyService.getCategories(selection.layer);
+                  const categoryObj = categories.find(cat => cat.code === selection.categoryCode);
+                  
+                  if (categoryObj) {
+                    setValue('categoryName', categoryObj.name);
+                    taxonomyContext.selectCategory(categoryObj.code);
+                  }
+                } catch (e) {
+                  console.warn('Could not get category name for cross-tab sync');
+                }
+              }, 200);
+            }
+            
+            // Finally set subcategory if available
+            if (selection.layer && selection.categoryCode && selection.subcategoryCode) {
+              EventCoordinator.enqueue('cross-tab-subcategory', () => {
+                setValue('subcategoryCode', selection.subcategoryCode, {
+                  shouldValidate: true,
+                  shouldDirty: true
+                });
+                
+                // Try to get the subcategory name
+                try {
+                  const subcategories = taxonomyService.getSubcategories(
+                    selection.layer, 
+                    selection.categoryCode
+                  );
+                  const subcategoryObj = subcategories.find(
+                    sub => sub.code === selection.subcategoryCode
+                  );
+                  
+                  if (subcategoryObj) {
+                    setValue('subcategoryName', subcategoryObj.name);
+                    taxonomyContext.selectSubcategory(subcategoryObj.code);
+                  }
+                } catch (e) {
+                  console.warn('Could not get subcategory name for cross-tab sync');
+                }
+              }, 400);
+            }
+          }
+        }
+      }
+    );
+    
+    // Cleanup cross-tab sync on unmount
+    return () => {
+      SelectionStorage.unregisterFromCrossTabSync('RegisterAssetPage');
+    };
+  }, [setValue, activeStep, taxonomyContext]);
   
   // Show warning before page unload if there are unsaved changes
   useBeforeUnload(
@@ -1499,23 +1597,39 @@ const RegisterAssetPageNew: React.FC = () => {
           Register New Asset
         </Typography>
           
-          <FormControlLabel
-            control={
-              <Switch
-                checked={useNewInterface}
-                onChange={(e) => setUseNewInterface(e.target.checked)}
-                color="primary"
-              />
-            }
-            label="Use New Taxonomy Interface"
-            sx={{ mb: 2 }}
-          />
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={useNewInterface}
+                  onChange={(e) => setUseNewInterface(e.target.checked)}
+                  color="primary"
+                />
+              }
+              label="Use New Taxonomy Interface"
+            />
+            
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={showStorageFeedback}
+                  onChange={(e) => setShowStorageFeedback(e.target.checked)}
+                  color="secondary"
+                  size="small"
+                />
+              }
+              label="Show Storage Notifications"
+            />
+          </Box>
           
           {error && (
             <Alert severity="error" sx={{ mb: 2 }}>
               {error}
             </Alert>
           )}
+          
+          {/* Feedback component for storage operations */}
+          <StorageOperationFeedback enableFeedback={showStorageFeedback} />
           
           <Paper sx={{ p: 3, mb: 4 }}>
             <Stepper activeStep={activeStep} sx={{ mb: 4 }}>

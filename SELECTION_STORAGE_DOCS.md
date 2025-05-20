@@ -8,21 +8,43 @@ The SelectionStorage utility works with the existing RegisterAssetPage component
 
 ## Components
 
-### 1. SelectionStorage Utility
+### 1. Enhanced SelectionStorage Utility
 
 The `SelectionStorage` utility (in `src/utils/selectionStorage.ts`) provides methods for:
 
-- Saving taxonomy selections to sessionStorage
-- Retrieving saved selections
-- Updating existing selections
-- Clearing selections
-- Managing stale data
+- Saving taxonomy selections with automatic fallback between storage types
+- Retrieving saved selections with stale data detection
+- Updating existing selections with merge capabilities
+- Clearing selections (individual or all)
+- Managing stale data with customizable expiration times
+- Cross-tab synchronization via the Storage event API
+- Robust error handling with quota management
+- Event system for operation feedback
 
-### 2. EventCoordinator Integration
+### 2. Storage Class
+
+The `Storage` class provides a robust wrapper around browser storage:
+
+- Storage availability detection
+- Automatic fallback between sessionStorage and localStorage
+- Quota exceeded error handling with recovery
+- Cross-tab event propagation
+- Comprehensive error handling
+
+### 3. EventCoordinator Integration
 
 The EventCoordinator is used to ensure reliable sequencing of operations when restoring taxonomy selections. This helps address potential timing issues with asynchronous state updates.
 
-### 3. Navigation Warnings
+### 4. StorageOperationFeedback Component
+
+The `StorageOperationFeedback` component (in `src/components/feedback/StorageOperationFeedback.tsx`) provides user feedback for storage operations:
+
+- Visual notifications for save, retrieve, update, and clear operations
+- Appropriate severity levels for different operations
+- Customizable display duration
+- Optional enable/disable toggle
+
+### 5. Navigation Warnings
 
 When a user has made changes to the form and attempts to navigate away, a warning dialog is shown using the React Router's `useBeforeUnload` hook.
 
@@ -95,14 +117,56 @@ Comprehensive tests have been added to verify the integration between SelectionS
 - Stale data management
 - Form reset functionality
 
+## New Features Added in Version 2.0
+
+### 1. Cross-Tab Synchronization
+
+- Automatically synchronizes selections across multiple browser tabs
+- Uses the Storage API's `storage` event to detect changes from other tabs
+- Provides registration mechanism for components to listen for changes
+- Applies changes in a controlled sequence using EventCoordinator
+- Only updates if safe (e.g., not during active editing)
+
+### 2. Storage Fallback Mechanism
+
+- Primary storage (sessionStorage) with automatic fallback to localStorage
+- Detects storage availability before operations
+- Handles browser storage limitations gracefully
+- Implements quota exceeded error handling
+- Automatically cleans up old selections to free space when needed
+
+### 3. Visual Feedback for Storage Operations
+
+- User-visible notifications for storage events
+- Feedback is provided for save, retrieve, update, and clear operations
+- Color-coded by operation type (success, info, warning)
+- Can be toggled on/off by the user
+- Automatically fades after a configurable duration
+
+### 4. Comprehensive Error Recovery
+
+- Robust error handling for all storage operations
+- Graceful degradation when storage is unavailable
+- Automatic retry with fallback storage type
+- Detailed logging for troubleshooting
+- Events system to notify components of errors
+
+### 5. Enhanced Testing
+
+- Comprehensive unit tests for core functionality
+- Mock implementations for both sessionStorage and localStorage
+- Tests for cross-tab synchronization
+- Error condition testing
+- Quota exceeded handling tests
+
 ## Future Improvements
 
-1. **Cross-Tab Synchronization**: Consider using the Storage event to synchronize state across multiple tabs.
+1. **Compression**: For larger forms, implement compression for the stored data using libraries like LZString.
 
-2. **LocalStorage Option**: For longer persistence, consider adding an option to use localStorage instead of sessionStorage.
+2. **Full Form Persistence**: Expand beyond taxonomy selections to include file selections and other form data.
 
-3. **Backend Persistence**: For mission-critical forms, consider saving to backend (would require user authentication).
+3. **Backend Persistence**: For mission-critical forms, consider saving to backend (requires authentication).
 
-4. **Compression**: For larger forms, implement compression for the stored data.
+4. **Automatic Submission Recovery**: Implement ability to recover and retry submissions that fail due to network issues.
 
-5. **Extended Form Data**: Expand beyond taxonomy selections to include file selections and other form data.
+5. **Progressive Enhancement**: Add support for offline operation using IndexedDB and Service Workers.
