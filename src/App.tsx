@@ -18,7 +18,7 @@ import {
 import CssBaseline from '@mui/material/CssBaseline';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
-import RegisterAssetPageNew from './pages/new/RegisterAssetPageNew';
+// RegisterAssetPageNew is now used via RegisterAssetPageWrapper, so not imported directly
 import SearchAssetsPage from './pages/SearchAssetsPage';
 import AssetDetailPage from './pages/AssetDetailPage';
 import DashboardPage from './pages/DashboardPage';
@@ -41,7 +41,7 @@ import GlobalErrorHandler from './components/common/GlobalErrorHandler';
 import TestComponent from './components/common/TestComponent';
 import ApiRouteAlert from './components/common/ApiRouteAlert';
 import TaxonomyValidator from './components/TaxonomyValidator';
-import AssetRegistrationWrapper from './components/AssetRegistrationWrapper';
+// AssetRegistrationWrapper is not used directly in routes
 import RegisterAssetPageWrapper from './components/asset/RegisterAssetPageWrapper';
 import TaxonomyInitProvider from './components/providers/TaxonomyInitProvider';
 import TaxonomyExample from './components/examples/TaxonomyExample';
