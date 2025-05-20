@@ -4,12 +4,38 @@ Frontend application for the Naming, Numbering, and Addressing (NNA) Registry Se
 
 [![Deployed on Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-black?style=for-the-badge&logo=vercel)](https://nna-registry-service-mvp-frontend.vercel.app)
 
-## Latest Update (2025-05-17)
-- Implemented comprehensive taxonomy system improvements
-- Added enhanced error handling and fallback mechanisms
-- Created detailed documentation and user guides
-- Improved performance with flattened taxonomy lookups
-- Added comprehensive testing for taxonomy components
+## Latest Update (2025-05-24)
+- Completed comprehensive taxonomy system refactoring
+- Implemented performance optimizations with React.memo and hooks
+- Added structured logging and environment-aware debugging
+- Created detailed technical documentation
+- Enhanced error handling and fallback mechanisms
+
+## Project Overview
+
+The NNA Registry Service is a platform for managing digital assets within a Naming, Numbering, and Addressing (NNA) Framework. It implements a dual addressing system (Human-Friendly Names and NNA Addresses) for digital assets across various layers (Songs, Stars, Looks, Moves, Worlds, etc.).
+
+Key features include:
+- Asset registration with metadata and file uploads
+- Taxonomy-based categorization system
+- Dual addressing with HFN and MFA formats
+- Asset search and discovery
+- Responsive user interface
+
+## Technical Documentation
+
+Comprehensive technical documentation is available:
+
+- [**ARCHITECTURE.md**](./ARCHITECTURE.md) - System architecture, design patterns, and data flow
+- [**IMPLEMENTATION_DETAILS.md**](./IMPLEMENTATION_DETAILS.md) - Detailed implementation information and code examples
+- [**TESTING.md**](./TESTING.md) - Testing strategies, critical test cases, and troubleshooting guides
+
+### Component Documentation
+
+- [**Taxonomy System Overview**](docs/taxonomy/README.md) - Overview of the taxonomy classification system
+- [**Developer Guide**](docs/taxonomy/DEVELOPER_GUIDE.md) - Guide for developers working with the taxonomy system
+- [**UI Components Guide**](docs/taxonomy/UI_COMPONENTS.md) - Documentation for taxonomy UI components
+- [**Troubleshooting Guide**](docs/taxonomy/TROUBLESHOOTING.md) - Solutions for common taxonomy issues
 
 ## Production Deployment
 
@@ -34,6 +60,19 @@ npm install
 ```bash
 # Start the development server
 npm start
+```
+
+### Running Tests
+
+```bash
+# Run unit tests
+npm test
+
+# Run integration tests
+npm run test:integration
+
+# Run a specific test file
+npm test -- --testPathPattern="path/to/test"
 ```
 
 ## Testing API Integration
@@ -171,6 +210,18 @@ Authentication is handled through the `/api/auth/` endpoints, which are specific
 
 The app will fallback to mock authentication if the backend is unavailable.
 
+## Performance Optimizations
+
+The application implements several performance optimization techniques:
+
+1. **React.memo**: Components are memoized to prevent unnecessary re-renders
+2. **useMemo/useCallback**: Computations and handlers are memoized for stability
+3. **Custom comparison functions**: Components only re-render when relevant props change
+4. **Environment-aware logging**: Debug logs are disabled in production
+5. **Optimized data structures**: Using lookup tables instead of switch statements
+
+See [PHASE_8_STEP_3_OPTIMIZATION_SUMMARY.md](./PHASE_8_STEP_3_OPTIMIZATION_SUMMARY.md) for details.
+
 ## Testing Tools
 
 To help test and debug API interactions, we've provided these utility tools:
@@ -181,13 +232,16 @@ To help test and debug API interactions, we've provided these utility tools:
 
 These tools can be used to validate API connectivity, test asset registration, and debug FormData issues.
 
-## Documentation
+## Maintenance Guidelines
 
-Detailed documentation is available for various parts of the system:
+When maintaining this codebase:
 
-### Taxonomy System
+1. **Adhere to code style**: Follow TypeScript conventions and React best practices
+2. **Preserve performance optimizations**: Maintain React.memo, useMemo, and useCallback patterns
+3. **Keep documentation updated**: Update technical docs when making significant changes
+4. **Add tests for new features**: Maintain test coverage for critical functionality
+5. **Use structured logging**: Follow the established logging patterns for debugging
 
-- [Taxonomy System Overview](docs/taxonomy/README.md)
-- [Developer Guide](docs/taxonomy/DEVELOPER_GUIDE.md)
-- [UI Components Guide](docs/taxonomy/UI_COMPONENTS.md)
-- [Troubleshooting Guide](docs/taxonomy/TROUBLESHOOTING.md)
+## License
+
+Proprietary - All rights reserved. This code is intended for the specific use case of the NNA Registry Service.
