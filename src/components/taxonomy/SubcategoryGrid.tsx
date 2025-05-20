@@ -1,6 +1,7 @@
 import React from 'react';
 import TaxonomyItem from './TaxonomyItem';
 import { useTaxonomyData } from '../../providers/taxonomy/TaxonomyDataProvider';
+import { debugLog } from '../../utils/logger';
 
 interface SubcategoryGridProps {
   layer: string;
@@ -39,8 +40,9 @@ const SubcategoryGrid: React.FC<SubcategoryGridProps> = ({
   // Handle subcategory selection with check for Star+POP combination
   const handleSubcategorySelect = (subcategory: string, isDoubleClick?: boolean) => {
     // Special log for Star+POP selections for debugging
-    if (layer === 'S' && category === 'POP') {
-      console.log(
+    const isStarPop = layer === 'S' && category === 'POP';
+    if (isStarPop) {
+      debugLog(
         `[SUBCATEGORY SELECT] Selecting S.POP.${subcategory} (double-click: ${Boolean(isDoubleClick)})`
       );
     }

@@ -35,12 +35,19 @@ class Logger {
   private logLevel: LogLevel = LogLevel.INFO;
   private logs: LogEntry[] = [];
   private maxLogSize: number = 1000; // Maximum number of logs to keep in memory
-  private isEnabled: boolean = true;
-  private isConsoleEnabled: boolean = true;
+  private isEnabled: boolean = process.env.NODE_ENV !== 'production';
+  private isConsoleEnabled: boolean = process.env.NODE_ENV !== 'production';
   private isPersistenceEnabled: boolean = false;
 
   private constructor() {
     this.loadSettings();
+    
+    // Force disable all debugging in production unless explicitly enabled
+    if (process.env.NODE_ENV === 'production' && !localStorage.getItem('logger_force_enabled')) {
+      this.isEnabled = false;
+      this.isConsoleEnabled = false;
+      this.isPersistenceEnabled = false;
+    }
   }
 
   public static getInstance(): Logger {
@@ -295,3 +302,21 @@ class Logger {
 }
 
 export const logger = Logger.getInstance();
+
+/**
+ * Utility to quickly check if we're in debug mode (development environment)
+ * Use this to conditionally execute code only in development.
+ */
+export const isDebugMode = (): boolean => {
+  return process.env.NODE_ENV !== 'production';
+};
+
+/**
+ * Safe console logging helper that only logs in development mode
+ * Use this for temporary debugging that should be automatically disabled in production.
+ */
+export const debugLog = (message: string, ...args: any[]): void => {
+  if (isDebugMode()) {
+    console.log(message, ...args);
+  }
+};

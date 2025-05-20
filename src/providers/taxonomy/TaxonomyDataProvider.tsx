@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { taxonomyService } from '../../services/simpleTaxonomyService';
+import { logger, LogLevel } from '../../utils/logger';
 import { 
   FullTaxonomyData, 
   TaxonomyItem, 
@@ -67,7 +68,7 @@ export const TaxonomyDataProvider: React.FC<{children: React.ReactNode}> = ({ ch
   const loadTaxonomyData = useCallback(async (forceRefresh = false) => {
     try {
       setLoadingState('loading');
-      console.log('[TAXONOMY PROVIDER] Starting to load all taxonomy data');
+      logger.taxonomy(LogLevel.INFO, 'Starting to load all taxonomy data');
       
       // Check cache first if not forcing refresh
       if (!forceRefresh) {
@@ -82,17 +83,17 @@ export const TaxonomyDataProvider: React.FC<{children: React.ReactNode}> = ({ ch
           if (now - timestamp < CACHE_EXPIRATION) {
             try {
               const parsedData = JSON.parse(cachedData) as FullTaxonomyData;
-              console.log('[TAXONOMY PROVIDER] Using cached taxonomy data from session storage');
+              logger.taxonomy(LogLevel.INFO, 'Using cached taxonomy data from session storage');
               setTaxonomyData(parsedData);
               setLastUpdated(timestamp);
               setLoadingState('success');
               return;
             } catch (e) {
-              console.warn('[TAXONOMY PROVIDER] Failed to parse cached data:', e);
+              logger.taxonomy(LogLevel.WARN, 'Failed to parse cached data', e);
               // Continue to load from service if parsing failed
             }
           } else {
-            console.log('[TAXONOMY PROVIDER] Cached taxonomy data expired, loading fresh data');
+            logger.taxonomy(LogLevel.INFO, 'Cached taxonomy data expired, loading fresh data');
           }
         }
       }
@@ -105,7 +106,7 @@ export const TaxonomyDataProvider: React.FC<{children: React.ReactNode}> = ({ ch
       
       // Load data for each layer
       for (const layer of layers) {
-        console.log(`[TAXONOMY PROVIDER] Loading data for layer: ${layer}`);
+        logger.taxonomy(LogLevel.INFO, `Loading data for layer: ${layer}`);
         data.layers[layer] = { categories: {} };
         
         try {
@@ -133,27 +134,27 @@ export const TaxonomyDataProvider: React.FC<{children: React.ReactNode}> = ({ ch
                 };
               }
               
-              console.log(`[TAXONOMY PROVIDER] Loaded ${subcategories.length} subcategories for ${layer}.${category.code}`);
+              logger.taxonomy(LogLevel.INFO, `Loaded ${subcategories.length} subcategories for ${layer}.${category.code}`);
             } catch (subErr) {
-              console.error(`[TAXONOMY PROVIDER] Error loading subcategories for ${layer}.${category.code}:`, subErr);
+              logger.taxonomy(LogLevel.ERROR, `Error loading subcategories for ${layer}.${category.code}:`, subErr);
             }
           }
           
-          console.log(`[TAXONOMY PROVIDER] Loaded ${categories.length} categories for layer ${layer}`);
+          logger.taxonomy(LogLevel.INFO, `Loaded ${categories.length} categories for layer ${layer}`);
         } catch (layerErr) {
-          console.error(`[TAXONOMY PROVIDER] Error loading categories for layer ${layer}:`, layerErr);
+          logger.taxonomy(LogLevel.ERROR, `Error loading categories for layer ${layer}:`, layerErr);
         }
       }
       
       // Special pre-loading for known problematic combinations
-      console.log('[TAXONOMY PROVIDER] Ensuring Star+POP subcategories are loaded');
+      logger.taxonomy(LogLevel.INFO, 'Ensuring Star+POP subcategories are loaded');
       try {
         if (data.layers['S'] && data.layers['S'].categories['POP']) {
           const starPopSubcategories = taxonomyService.getSubcategories('S', 'POP');
-          console.log(`[TAXONOMY PROVIDER] Verified ${starPopSubcategories.length} S.POP subcategories`);
+          logger.taxonomy(LogLevel.INFO, `Verified ${starPopSubcategories.length} S.POP subcategories`);
         }
       } catch (e) {
-        console.error('[TAXONOMY PROVIDER] Error pre-loading S.POP subcategories:', e);
+        logger.taxonomy(LogLevel.ERROR, 'Error pre-loading S.POP subcategories:', e);
       }
       
       // Update state with fetched data
@@ -167,15 +168,15 @@ export const TaxonomyDataProvider: React.FC<{children: React.ReactNode}> = ({ ch
       try {
         sessionStorage.setItem(TAXONOMY_STORAGE_KEY, JSON.stringify(data));
         sessionStorage.setItem(TAXONOMY_TIMESTAMP_KEY, timestamp.toString());
-        console.log('[TAXONOMY PROVIDER] Taxonomy data cached in session storage');
+        logger.taxonomy(LogLevel.INFO, 'Taxonomy data cached in session storage');
       } catch (storageErr) {
-        console.warn('[TAXONOMY PROVIDER] Failed to cache taxonomy data:', storageErr);
+        logger.taxonomy(LogLevel.WARN, 'Failed to cache taxonomy data:', storageErr);
       }
       
       setLoadingState('success');
-      console.log('[TAXONOMY PROVIDER] Successfully loaded all taxonomy data');
+      logger.taxonomy(LogLevel.INFO, 'Successfully loaded all taxonomy data');
     } catch (err) {
-      console.error('[TAXONOMY PROVIDER] Critical error loading taxonomy data:', err);
+      logger.taxonomy(LogLevel.ERROR, 'Critical error loading taxonomy data:', err);
       setError(err instanceof Error ? err : new Error('Unknown error loading taxonomy data'));
       setLoadingState('error');
     }
@@ -300,13 +301,13 @@ export const TaxonomyDataProvider: React.FC<{children: React.ReactNode}> = ({ ch
         subcategory: parts[2]
       };
     } catch (err) {
-      console.error('[TAXONOMY PROVIDER] Error parsing HFN:', err);
+      logger.taxonomy(LogLevel.ERROR, 'Error parsing HFN:', err);
       return null;
     }
   }, []);
   
-  // Create the context value
-  const contextValue = {
+  // Create the context value with memoization to prevent unnecessary re-renders
+  const contextValue = React.useMemo(() => ({
     taxonomyData,
     loadingState,
     error,
@@ -321,7 +322,20 @@ export const TaxonomyDataProvider: React.FC<{children: React.ReactNode}> = ({ ch
     
     buildHFN,
     parseHFN
-  };
+  }), [
+    taxonomyData, 
+    loadingState, 
+    error, 
+    lastUpdated, 
+    getCategories,
+    getSubcategories,
+    convertHFNtoMFA,
+    convertMFAtoHFN,
+    validateHFN,
+    refreshTaxonomyData,
+    buildHFN,
+    parseHFN
+  ]);
   
   return (
     <TaxonomyContext.Provider value={contextValue}>

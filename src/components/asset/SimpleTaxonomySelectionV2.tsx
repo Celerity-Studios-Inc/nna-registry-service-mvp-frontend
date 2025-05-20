@@ -13,7 +13,7 @@ import React, {
   useCallback,
 } from 'react';
 import { useTaxonomyContext } from '../../contexts/TaxonomyContext';
-import { logger } from '../../utils/logger';
+import { logger, debugLog } from '../../utils/logger';
 import { taxonomyService } from '../../services/simpleTaxonomyService';
 import { TaxonomyItem } from '../../types/taxonomy.types';
 import '../../styles/SimpleTaxonomySelection.css';
@@ -161,7 +161,7 @@ const SubcategoriesGrid = React.memo(
     React.useEffect(() => {
       if (isMountedRef.current && subcategories.length > 0) {
         setLocalGridItems(subcategories);
-        console.log(`[GRID] Updated local grid items with ${subcategories.length} subcategories`);
+        debugLog(`[GRID] Updated local grid items with ${subcategories.length} subcategories`);
       }
     }, [subcategories]);
 
@@ -185,7 +185,7 @@ const SubcategoriesGrid = React.memo(
         try {
           // CRITICAL SAFETY: Prevent executing if component is unmounting
           if (!isMountedRef.current) {
-            console.log(`[GRID SAFETY] Prevented selection during unmount: ${code}`);
+            debugLog(`[GRID SAFETY] Prevented selection during unmount: ${code}`);
             return;
           }
           
@@ -196,8 +196,8 @@ const SubcategoriesGrid = React.memo(
                               [...subcategories] : [];
                               
           // Log what's happening                    
-          console.log(`[GRID] Safely handling subcategory selection: ${code}, double-click: ${isDoubleClick}`);
-          console.log(`[GRID] Current items: ${currentItems.length}, Local: ${localGridItems.length}, Props: ${subcategories.length}`);
+          debugLog(`[GRID] Safely handling subcategory selection: ${code}, double-click: ${isDoubleClick}`);
+          debugLog(`[GRID] Current items: ${currentItems.length}, Local: ${localGridItems.length}, Props: ${subcategories.length}`);
           
           // Call the handler from props within try/catch to prevent cascading errors
           handleSubcategorySelect(code, isDoubleClick);
@@ -214,7 +214,7 @@ const SubcategoriesGrid = React.memo(
                             subcategories : [];
                             
             if (postItems.length === 0 && currentItems.length > 0) {
-              console.log(`[GRID] RECOVERY: Items disappeared after selection, restoring ${currentItems.length} items`);
+              debugLog(`[GRID] RECOVERY: Items disappeared after selection, restoring ${currentItems.length} items`);
               setLocalGridItems(currentItems);
             }
           }, 50);
@@ -235,7 +235,7 @@ const SubcategoriesGrid = React.memo(
       
       // Then try our local backup
       if (localGridItems.length > 0) {
-        console.log(`[GRID] Using ${localGridItems.length} items from local grid backup`);
+        debugLog(`[GRID] Using ${localGridItems.length} items from local grid backup`);
         return localGridItems;
       }
       
@@ -248,7 +248,7 @@ const SubcategoriesGrid = React.memo(
     
     // Most important safety check: never attempt render if component is unmounting
     if (!isMountedRef.current) {
-      console.log(`[GRID SAFETY] Prevented render during unmount`);
+      debugLog(`[GRID SAFETY] Prevented render during unmount`);
       return null;
     }
     
@@ -302,7 +302,7 @@ const SubcategoriesGrid = React.memo(
       );
     } catch (error) {
       // Last resort error handler to prevent crashing the entire app
-      console.error('[SUBCATEGORIES GRID] Render error:', error);
+      logger.error('[SUBCATEGORIES GRID] Render error:', error);
       return (
         <div className="taxonomy-error-recovery">
           <div className="error-message">Error loading subcategories. Please try again.</div>
@@ -377,7 +377,7 @@ const AutoRetry = React.memo(
   ({ layer, onRetry }: { layer: string; onRetry: () => void }) => {
     // This is safer because the hook is now at the top level of this component
     React.useEffect(() => {
-      console.log(
+      debugLog(
         `[AUTO RETRY] Categories empty for layer ${layer}, auto-retrying...`
       );
       // Only auto-retry once to avoid infinite loops
@@ -456,14 +456,14 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
     // 1. Primary layer change event handler
     const handleLayerChangeEvent = (event: CustomEvent) => {
       const { layer: newLayer, timestamp, operationId } = event.detail;
-      console.log(
+      debugLog(
         `[EVENT ${
           operationId || 'unknown'
         }] Received layerChanged event for layer ${newLayer} (timestamp: ${timestamp})`
       );
 
       // Handle the event regardless of current layer value - immediate reset
-      console.log(
+      debugLog(
         `[EVENT ${
           operationId || 'unknown'
         }] Responding to layerChanged event for layer ${newLayer}`
@@ -493,7 +493,7 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
 
       // Tier 1: Immediate reload attempt (100ms)
       setTimeout(() => {
-        console.log(
+        debugLog(
           `[EVENT ${
             operationId || 'unknown'
           }] Tier 1 (100ms): Forcing category reload for layer ${newLayer}`
@@ -508,7 +508,7 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
           if (directCategoriesJson) {
             const directCategories = JSON.parse(directCategoriesJson);
             if (directCategories && directCategories.length > 0) {
-              console.log(
+              debugLog(
                 `[EVENT ${operationId || 'unknown'}] Found ${
                   directCategories.length
                 } categories in session storage for layer ${newLayer}`
@@ -537,14 +537,14 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
 
       // Tier 2: Secondary reload attempt (250ms)
       setTimeout(() => {
-        console.log(
+        debugLog(
           `[EVENT ${
             operationId || 'unknown'
           }] Tier 2 (250ms): Checking category load status for layer ${newLayer}`
         );
         // If categories still not loaded, try direct service call
         if (categories.length === 0) {
-          console.log(
+          debugLog(
             `[EVENT ${
               operationId || 'unknown'
             }] Tier 2: Categories still empty, trying direct service call`
@@ -585,7 +585,7 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
           // Also try context reload again
           reloadCategories();
         } else {
-          console.log(
+          debugLog(
             `[EVENT ${
               operationId || 'unknown'
             }] Tier 2: Categories already loaded: ${categories.length} items`
@@ -2137,7 +2137,7 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
             { code: 'HPF', name: 'Hip Female', numericCode: '003' }
           ];
           
-          console.log(`[DISPLAY ${displayId}] Created synthetic S.BAS subcategories`);          
+          debugLog(`[DISPLAY ${displayId}] Created synthetic S.BAS subcategories`);          
           
           // Update all backups
           subcategoriesRef.current = syntheticItems;
