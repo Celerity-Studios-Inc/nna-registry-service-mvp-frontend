@@ -1,4 +1,5 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
+import { debugLog, logger, LogLevel } from '../../utils/logger';
 import {
   Box,
   Typography,
@@ -83,29 +84,24 @@ interface FileUploadProps {
 
 // Source options have been moved to asset.types.ts
 
-// Get layer-specific accepted file types string
+// Get layer-specific accepted file types string - memoized to prevent recreation
 const getAcceptedFileTypesByLayer = (layerCode?: string): string => {
-  switch (layerCode) {
-    case 'G': // Songs
-      return 'audio/mpeg,audio/wav,audio/ogg,audio/flac,audio/aac';
-    case 'S': // Stars
-      return 'image/jpeg,image/png,image/gif,image/svg+xml';
-    case 'L': // Looks
-      return 'image/jpeg,image/png,image/gif,image/svg+xml';
-    case 'M': // Moves
-      return 'video/mp4,video/webm,video/quicktime,application/json';
-    case 'W': // Worlds
-      return 'image/jpeg,image/png,image/gif,image/svg+xml,video/mp4,video/webm,video/quicktime,application/json,model/gltf-binary,model/gltf+json,application/octet-stream';
-    case 'V': // Videos
-      return 'video/mp4,video/webm,video/quicktime';
-    case 'B': // Branded assets
-      return 'image/jpeg,image/png,image/gif,image/svg+xml,video/mp4,video/webm';
-    default:
-      return 'image/*,audio/*,video/*,application/json,application/pdf';
-  }
+  // This lookup table could be moved to a constant to avoid recreation, but keeping it here for clarity
+  const fileTypesMap: Record<string, string> = {
+    'G': 'audio/mpeg,audio/wav,audio/ogg,audio/flac,audio/aac', // Songs
+    'S': 'image/jpeg,image/png,image/gif,image/svg+xml', // Stars
+    'L': 'image/jpeg,image/png,image/gif,image/svg+xml', // Looks
+    'M': 'video/mp4,video/webm,video/quicktime,application/json', // Moves
+    'W': 'image/jpeg,image/png,image/gif,image/svg+xml,video/mp4,video/webm,video/quicktime,application/json,model/gltf-binary,model/gltf+json,application/octet-stream', // Worlds
+    'V': 'video/mp4,video/webm,video/quicktime', // Videos
+    'B': 'image/jpeg,image/png,image/gif,image/svg+xml,video/mp4,video/webm', // Branded assets
+  };
+  
+  // Use lookup table instead of switch for better performance
+  return fileTypesMap[layerCode || ''] || 'image/*,audio/*,video/*,application/json,application/pdf';
 };
 
-// Format file size to human-readable format
+// Format file size to human-readable format - memoization would be overkill for this simple function
 const formatFileSize = (bytes: number, decimals = 2) => {
   if (bytes === 0) return '0 Bytes';
 
@@ -118,7 +114,7 @@ const formatFileSize = (bytes: number, decimals = 2) => {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
 };
 
-// Format file types for better display
+// Format file types for better display - kept as a pure function as it's rarely called
 const formatFileTypes = (accept: string): string => {
   const types = accept.split(',').map(t => t.trim());
 
@@ -153,7 +149,7 @@ const formatFileTypes = (accept: string): string => {
   return parts.join('; ');
 };
 
-const FileUpload: React.FC<FileUploadProps> = ({
+const FileUpload: React.FC<FileUploadProps> = React.memo(({ // Add React.memo
   onFilesChange,
   onSourceChange,
   initialSource = 'ReViz', // Default to ReViz as shown in Swagger docs
@@ -167,12 +163,14 @@ const FileUpload: React.FC<FileUploadProps> = ({
   onUploadComplete,
   onUploadError,
 }) => {
-  // Adjust maxFiles based on asset type
-  const effectiveMaxFiles =
-    layerCode &&
-    (layerCode.includes('.set') || layerCode === 'T' || layerCode === 'P')
-      ? 5
-      : 1;
+  // Adjust maxFiles based on asset type - memoized to prevent recalculation
+  const effectiveMaxFiles = useMemo(() => {
+    debugLog(`[FileUpload] Calculating effective max files for layer ${layerCode}`);
+    return layerCode &&
+      (layerCode.includes('.set') || layerCode === 'T' || layerCode === 'P')
+        ? 5
+        : 1;
+  }, [layerCode]);
   const [files, setFiles] = useState<File[]>(initialFiles);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [uploadedFiles, setUploadedFiles] = useState<FileUploadResponse[]>([]);
@@ -182,8 +180,11 @@ const FileUpload: React.FC<FileUploadProps> = ({
     []
   );
 
-  // Use layer-specific file types if none provided
-  const accept = acceptedFileTypes || getAcceptedFileTypesByLayer(layerCode);
+  // Use layer-specific file types if none provided - memoized to prevent recalculation
+  const accept = useMemo(() => {
+    debugLog(`[FileUpload] Determining accepted file types for layer ${layerCode}`);
+    return acceptedFileTypes || getAcceptedFileTypesByLayer(layerCode);
+  }, [acceptedFileTypes, layerCode]);
 
   // Handle source change - commented out as source UI moved to MetadataForm
   // Keeping this handler for future use if source gets moved back
@@ -239,6 +240,9 @@ const FileUpload: React.FC<FileUploadProps> = ({
   // Handle file selection
   const handleFileSelect = useCallback(
     (selectedFiles: File[]) => {
+      debugLog(`[FileUpload] Selected ${selectedFiles.length} files`);
+      logger.ui(LogLevel.INFO, `User selected ${selectedFiles.length} files`);
+      
       setFiles(selectedFiles);
       onFilesChange(selectedFiles);
 
@@ -253,6 +257,9 @@ const FileUpload: React.FC<FileUploadProps> = ({
   // Handle file upload completion
   const handleUploadComplete = useCallback(
     (fileId: string, fileData: FileUploadResponse) => {
+      debugLog(`[FileUpload] Upload complete for file ${fileId}`);
+      logger.ui(LogLevel.INFO, `File upload complete: ${fileId}`);
+      
       setUploadedFiles(prev => [...prev, fileData]);
       if (onUploadComplete) {
         onUploadComplete(fileId, fileData);
@@ -264,6 +271,8 @@ const FileUpload: React.FC<FileUploadProps> = ({
   // Handle file upload error
   const handleUploadError = useCallback(
     (fileId: string, errorMessage: string) => {
+      debugLog(`[FileUpload] Upload error for file ${fileId}: ${errorMessage}`);
+      logger.ui(LogLevel.ERROR, `File upload error: ${fileId}`, { error: errorMessage });
       // Find the file that failed
       const failedFile = files.find(file => {
         // This is a rough check, in production you'd have a better way to match
@@ -295,7 +304,9 @@ const FileUpload: React.FC<FileUploadProps> = ({
   );
 
   // Handle retry of failed uploads
-  const handleRetry = (file: File) => {
+  const handleRetry = useCallback((file: File) => {
+    debugLog(`[FileUpload] Retrying upload for file ${file.name}`);
+    logger.ui(LogLevel.INFO, `User retrying upload for ${file.name}`);
     // Remove from retry queue
     setRetryQueue(prev => prev.filter(item => item.file !== file));
 
@@ -307,10 +318,12 @@ const FileUpload: React.FC<FileUploadProps> = ({
     }
 
     setError(null);
-  };
+  }, [files, onFilesChange]);
 
   // Handle removal of a file from the retry queue
-  const handleRemoveFromRetryQueue = (file: File) => {
+  const handleRemoveFromRetryQueue = useCallback((file: File) => {
+    debugLog(`[FileUpload] Removing file ${file.name} from retry queue`);
+    logger.ui(LogLevel.INFO, `User removed file from retry queue: ${file.name}`);
     setRetryQueue(prev => prev.filter(item => item.file !== file));
 
     // If retry queue is now empty, clear the error
@@ -320,18 +333,41 @@ const FileUpload: React.FC<FileUploadProps> = ({
         setError(null);
       }
     }
-  };
+  }, [retryQueue.length, files.length]);
 
   // Clear all files including those in retry queue
-  const handleClearAll = () => {
+  const handleClearAll = useCallback(() => {
+    debugLog(`[FileUpload] Clearing all files and retry queue`);
+    logger.ui(LogLevel.INFO, `User cleared all files`);
     setFiles([]);
     setRetryQueue([]);
     setError(null);
     setSelectedFile(null);
     setUploadedFiles([]);
     onFilesChange([]);
-  };
+  }, [onFilesChange]);
 
+  // Memoize the layer name for consistent reference
+  const layerDisplay = useMemo(() => {
+    if (!layerCode) return '';
+    
+    // Map layer codes to full names
+    const layerNames: Record<string, string> = {
+      G: 'Songs',
+      S: 'Stars',
+      L: 'Looks',
+      M: 'Moves',
+      W: 'Worlds',
+      V: 'Videos',
+      B: 'Branded Assets',
+      C: 'Composites',
+      T: 'Training Data',
+      P: 'Patterns',
+    };
+    
+    return `${layerNames[layerCode] || `Layer ${layerCode}`} (${layerCode})`;
+  }, [layerCode]);
+  
   return (
     <Paper sx={{ p: 3, mb: 4 }}>
       <Typography variant="h6" gutterBottom>
@@ -362,24 +398,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
           }}
         >
           <Typography variant="subtitle1" fontWeight="bold" color="primary">
-            {(() => {
-              // Map layer codes to full names
-              const layerNames: Record<string, string> = {
-                G: 'Songs',
-                S: 'Stars',
-                L: 'Looks',
-                M: 'Moves',
-                W: 'Worlds',
-                V: 'Videos',
-                B: 'Branded Assets',
-                C: 'Composites',
-                T: 'Training Data',
-                P: 'Patterns',
-              };
-              return `${
-                layerNames[layerCode] || `Layer ${layerCode}`
-              } (${layerCode})`;
-            })()}
+            {layerDisplay}
           </Typography>
         </Box>
       )}
@@ -631,4 +650,22 @@ const FileUpload: React.FC<FileUploadProps> = ({
   );
 };
 
-export default FileUpload;
+// Custom equality function for props to prevent unnecessary rerenders
+const arePropsEqual = (prevProps: FileUploadProps, nextProps: FileUploadProps) => {
+  // Compare critical props that would cause visual/behavior changes
+  return (
+    prevProps.layerCode === nextProps.layerCode &&
+    prevProps.maxSize === nextProps.maxSize &&
+    prevProps.maxFiles === nextProps.maxFiles &&
+    prevProps.acceptedFileTypes === nextProps.acceptedFileTypes &&
+    prevProps.initialSource === nextProps.initialSource &&
+    // Compare initial files length (not checking contents as they're only used for initialization)
+    (prevProps.initialFiles?.length || 0) === (nextProps.initialFiles?.length || 0)
+    // Callback props are intentionally excluded as they should be wrapped in useCallback by parent
+  );
+};
+
+// Add displayName for debugging in React DevTools
+FileUpload.displayName = 'FileUpload';
+
+export default React.memo(FileUpload, arePropsEqual);
