@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useForm, SubmitHandler, FormProvider } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
+import { useBeforeUnload } from 'react-router-dom';
 import {
   Box,
   Typography,
@@ -55,6 +56,10 @@ import { logger, LogLevel, debugLog } from '../../utils/logger';
 // Import styles
 import '../../styles/SimpleTaxonomySelection.css';
 import '../../styles/LayerSelector.css';
+
+// Import utilities
+import { SelectionStorage, TaxonomySelection } from '../../utils/selectionStorage';
+import { EventCoordinator } from '../../utils/eventCoordinator';
 
 // Types
 import {
@@ -326,15 +331,20 @@ const RegisterAssetPageNew: React.FC = () => {
     subcategory: 'None'
   });
 
+  // Check for any previously stored taxonomy selections
+  const storedTaxonomySelection = useMemo(() => {
+    return SelectionStorage.retrieve('asset-registration');
+  }, []);
+
   // React Hook Form setup with explicit type cast to resolve typescript issue
   const methods = useForm({
     resolver: yupResolver(schema) as any,
     defaultValues: {
-      layer: '',
+      layer: storedTaxonomySelection?.layer || '',
       layerName: '',
-      categoryCode: '',
+      categoryCode: storedTaxonomySelection?.categoryCode || '',
       categoryName: '',
-      subcategoryCode: '',
+      subcategoryCode: storedTaxonomySelection?.subcategoryCode || '',
       subcategoryName: '',
       subcategoryNumericCode: '',
       name: '',
@@ -771,6 +781,7 @@ const RegisterAssetPageNew: React.FC = () => {
     // Clear stored data
     localStorage.removeItem('lastCreatedAsset');
     sessionStorage.removeItem('showSuccessPage');
+    SelectionStorage.clear('asset-registration');
 
     // Reset all state
     reset();
@@ -780,19 +791,170 @@ const RegisterAssetPageNew: React.FC = () => {
     setShowSuccessPage(false);
     setCreatedAsset(null);
     setPotentialDuplicate(null);
+    setHasUnsavedChanges(false);
   };
+
+  // Save current taxonomy selection to session storage
+  const saveTaxonomySelection = useCallback(() => {
+    const layer = getValues('layer');
+    const categoryCode = getValues('categoryCode');
+    const subcategoryCode = getValues('subcategoryCode');
+    
+    // Only save if we have at least a layer selected
+    if (layer) {
+      SelectionStorage.save(
+        { layer, categoryCode, subcategoryCode },
+        'asset-registration'
+      );
+      debugLog('[RegisterAssetPageNew] Saved taxonomy selection to session storage');
+    }
+  }, [getValues]);
 
   // Handle navigation between steps
   const handleNext = useCallback(() => {
     setActiveStep(prevActiveStep => prevActiveStep + 1);
     debugLog('[RegisterAssetPageNew] Moving to next step');
-  }, []);
+    
+    // Save current state when navigating forward
+    saveTaxonomySelection();
+  }, [saveTaxonomySelection]);
 
   const handleBack = useCallback(() => {
     setActiveStep(prevActiveStep => prevActiveStep - 1);
     debugLog('[RegisterAssetPageNew] Moving to previous step');
-  }, []);
+    
+    // Save current state when navigating backward
+    saveTaxonomySelection();
+  }, [saveTaxonomySelection]);
 
+  // Setup navigation warning for unsaved changes
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  
+  // Effect to track form changes
+  useEffect(() => {
+    const subscription = methods.watch(() => {
+      setHasUnsavedChanges(true);
+    });
+    
+    return () => subscription.unsubscribe();
+  }, [methods]);
+  
+  // Show warning before page unload if there are unsaved changes
+  useBeforeUnload(
+    useCallback(
+      (event) => {
+        if (hasUnsavedChanges && !success) {
+          event.preventDefault();
+          // Save current selections before potential navigation
+          saveTaxonomySelection();
+          return 'You have unsaved changes that will be lost if you leave this page.';
+        }
+        return undefined;
+      },
+      [hasUnsavedChanges, success, saveTaxonomySelection]
+    )
+  );
+  
+  // Automatically restore selections on first load (if available)
+  useEffect(() => {
+    if (storedTaxonomySelection && activeStep === 0 && !watchLayer) {
+      // Delay to ensure component is fully mounted
+      setTimeout(() => {
+        console.log('[RegisterAssetPageNew] Restoring saved taxonomy selection:', storedTaxonomySelection);
+        
+        // Use EventCoordinator to ensure operations happen in sequence
+        EventCoordinator.clear();
+        
+        // First set the layer
+        if (storedTaxonomySelection.layer) {
+          EventCoordinator.enqueue('restore-layer', () => {
+            setValue('layer', storedTaxonomySelection.layer, {
+              shouldValidate: true,
+              shouldDirty: true
+            });
+            const layerOption: LayerOption = {
+              id: storedTaxonomySelection.layer,
+              code: storedTaxonomySelection.layer,
+              name: getLayerName(storedTaxonomySelection.layer),
+              numericCode: LAYER_NUMERIC_CODES[storedTaxonomySelection.layer] ? 
+                parseInt(LAYER_NUMERIC_CODES[storedTaxonomySelection.layer]) : undefined
+            };
+            taxonomyContext.selectLayer(storedTaxonomySelection.layer);
+            setDisplayedSelections(prev => ({ ...prev, layer: storedTaxonomySelection.layer }));
+            // Update special layer flags
+            setIsTrainingLayer(storedTaxonomySelection.layer === 'T');
+            setIsCompositeLayer(storedTaxonomySelection.layer === 'C');
+          });
+          
+          // Then set category if available
+          if (storedTaxonomySelection.categoryCode) {
+            EventCoordinator.enqueue('restore-category', () => {
+              // Allow time for categories to load
+              const availableCategories = taxonomyService.getCategories(storedTaxonomySelection.layer);
+              const categoryObj = availableCategories.find(cat => cat.code === storedTaxonomySelection.categoryCode);
+              
+              if (categoryObj) {
+                setValue('categoryCode', categoryObj.code, {
+                  shouldValidate: true,
+                  shouldDirty: true
+                });
+                setValue('categoryName', categoryObj.name, {
+                  shouldValidate: true,
+                  shouldDirty: true
+                });
+                taxonomyContext.selectCategory(categoryObj.code);
+                setDisplayedSelections(prev => ({ ...prev, category: categoryObj.code }));
+              }
+            }, 200);
+            
+            // Finally set subcategory if available
+            if (storedTaxonomySelection.subcategoryCode) {
+              EventCoordinator.enqueue('restore-subcategory', () => {
+                // Allow more time for subcategories to load
+                const availableSubcategories = taxonomyService.getSubcategories(
+                  storedTaxonomySelection.layer, 
+                  storedTaxonomySelection.categoryCode
+                );
+                const subcategoryObj = availableSubcategories.find(
+                  sub => sub.code === storedTaxonomySelection.subcategoryCode
+                );
+                
+                if (subcategoryObj) {
+                  setValue('subcategoryCode', subcategoryObj.code, {
+                    shouldValidate: true,
+                    shouldDirty: true
+                  });
+                  setValue('subcategoryName', subcategoryObj.name, {
+                    shouldValidate: true,
+                    shouldDirty: true
+                  });
+                  setValue(
+                    'subcategoryNumericCode',
+                    subcategoryObj.numericCode?.toString() || '',
+                    { shouldValidate: true }
+                  );
+                  taxonomyContext.selectSubcategory(subcategoryObj.code);
+                  setDisplayedSelections(prev => ({ ...prev, subcategory: subcategoryObj.code }));
+                }
+              }, 400);
+            }
+          }
+          
+          // Auto-advance to taxonomy selection if we have all values
+          if (storedTaxonomySelection.layer && 
+              storedTaxonomySelection.categoryCode && 
+              storedTaxonomySelection.subcategoryCode) {
+            EventCoordinator.enqueue('advance-to-taxonomy', () => {
+              // Option to auto-advance to the taxonomy step
+              // Uncomment the line below to enable auto-advancing
+              // setActiveStep(1);
+            }, 600);
+          }
+        }
+      }, 300);
+    }
+  }, [setValue, watchLayer, activeStep, storedTaxonomySelection, taxonomyContext]);
+  
   // Original handler methods (slightly modified to work with both interfaces)
   
   // Handle layer selection - ENHANCED FIX for layer switching issue
@@ -872,6 +1034,14 @@ const RegisterAssetPageNew: React.FC = () => {
       subcategory: 'None'
     });
 
+    // Save current selection to session storage (with cleared category/subcategory)
+    // Do this after form values are updated but before UI changes
+    SelectionStorage.save(
+      { layer: layer.code, categoryCode: '', subcategoryCode: '' },
+      'asset-registration'
+    );
+    debugLog('[RegisterAssetPageNew] Saved layer selection to session storage');
+
     // Update taxonomy context with new layer
     setTimeout(() => {
       taxonomyContext.selectLayer(layer.code);
@@ -920,8 +1090,19 @@ const RegisterAssetPageNew: React.FC = () => {
     // Update displayed selections immediately for UI feedback
     setDisplayedSelections(prev => ({
       ...prev,
-      category: category.code
+      category: category.code,
+      subcategory: 'None'
     }));
+
+    // Save current selection to session storage (with updated category but cleared subcategory)
+    const layer = getValues('layer');
+    if (layer && category.code) {
+      SelectionStorage.save(
+        { layer, categoryCode: category.code, subcategoryCode: '' },
+        'asset-registration'
+      );
+      debugLog('[RegisterAssetPageNew] Saved category selection to session storage');
+    }
 
     // Update taxonomy context
     taxonomyContext.selectCategory(category.code);
@@ -965,6 +1146,17 @@ const RegisterAssetPageNew: React.FC = () => {
       ...prev,
       subcategory: subcategory.code
     }));
+
+    // Save complete taxonomy selection to session storage
+    const layer = getValues('layer');
+    const categoryCode = getValues('categoryCode');
+    if (layer && categoryCode && subcategory.code) {
+      SelectionStorage.save(
+        { layer, categoryCode, subcategoryCode: subcategory.code },
+        'asset-registration'
+      );
+      debugLog('[RegisterAssetPageNew] Saved complete taxonomy selection to session storage');
+    }
 
     // Update taxonomy context
     taxonomyContext.selectSubcategory(subcategory.code);
@@ -1246,6 +1438,16 @@ const RegisterAssetPageNew: React.FC = () => {
   const handleConfirmDuplicate = () => {
     setPotentialDuplicate(null);
   };
+  
+  // Clear stored selections when form is submitted successfully
+  useEffect(() => {
+    if (success && createdAsset) {
+      // Clear the stored selection once we've successfully created an asset
+      SelectionStorage.clear('asset-registration');
+      console.log('[RegisterAssetPageNew] Cleared stored selections after successful submission');
+      setHasUnsavedChanges(false);
+    }
+  }, [success, createdAsset]);
 
   // Get the steps for the current asset type
   const steps = getSteps(isTrainingLayer, isCompositeLayer);

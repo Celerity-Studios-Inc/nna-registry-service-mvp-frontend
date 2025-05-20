@@ -464,9 +464,30 @@ We are implementing a comprehensive refactoring of the taxonomy selection system
   - Finalize technical documentation
 - Timeline and rollback plan included in the document
 
+### 17. State Persistence Implementation (May 23, 2025)
+- Problem: Users lose their taxonomy selections when navigating away or refreshing the page
+- Root Cause: 
+  - No mechanism to persist intermediate state during the asset registration workflow
+  - React's state management is ephemeral and lost on page refresh or navigation
+  - No warning for users when they attempt to leave with unsaved changes
+- Solution:
+  - Created SelectionStorage utility with sessionStorage persistence
+  - Implemented EventCoordinator integration for reliable state sequencing
+  - Added navigation warnings for unsaved changes
+  - Enhanced RegisterAssetPageNew with automatic state saving and restoration
+  - Added proper cleanup after successful asset registration
+- Key Components:
+  - `/src/utils/selectionStorage.ts`: Utility for persisting taxonomy selections
+  - Integration points in RegisterAssetPageNew.tsx:
+    - Auto-saving during layer/category/subcategory selection
+    - Auto-restoration when returning to the form
+    - Navigation warnings with React Router's useBeforeUnload
+    - Proper cleanup after form submission
+- Documentation in `SELECTION_STORAGE_DOCS.md`
+
 ## Current Status
 
-Currently working on Phase 8 (Final Cleanup and Rollout):
+Currently working on Phase 8 (Final Cleanup and Rollout) with additional usability enhancements:
 
 1. Completed Step 1: Remove Feature Toggle (May 24, 2025)
    - Removed UIVersionToggle component
