@@ -5,7 +5,7 @@
  */
 import React, { useState, useEffect, useCallback } from 'react';
 import { taxonomyService } from '../../services/simpleTaxonomyService';
-import { logger, LogLevel, LogCategory } from '../../utils/logger';
+import { logger, LogLevel, LogCategory, verboseLog } from '../../utils/logger';
 import {
   LAYER_LOOKUPS,
   LAYER_SUBCATEGORIES,
@@ -24,6 +24,9 @@ const TaxonomyDebugger: React.FC = () => {
   const [error, setError] = useState<string>('');
   const [outputLog, setOutputLog] = useState<string[]>([]);
   const [debugInfo, setDebugInfo] = useState<any>(null);
+  const [isVerboseLoggingEnabled, setIsVerboseLoggingEnabled] = useState<boolean>(
+    localStorage.getItem('verbose_taxonomy_logging') === 'true'
+  );
 
   const layers = ['G', 'S', 'L', 'M', 'W', 'B', 'P', 'T', 'C', 'R'];
 
@@ -659,6 +662,26 @@ const TaxonomyDebugger: React.FC = () => {
       </div>
 
       <div style={{ marginBottom: '15px' }}>
+        <div style={{ marginBottom: '10px' }}>
+          <span style={{ fontWeight: 'bold', marginRight: '10px' }}>
+            Verbose Logging Status: 
+          </span>
+          <span style={{ 
+            padding: '4px 8px', 
+            backgroundColor: isVerboseLoggingEnabled ? '#28a745' : '#dc3545',
+            color: 'white',
+            borderRadius: '4px',
+            fontSize: '12px'
+          }}>
+            {isVerboseLoggingEnabled ? 'ENABLED' : 'DISABLED'}
+          </span>
+          <span style={{ marginLeft: '10px', fontSize: '12px', color: '#666' }}>
+            {isVerboseLoggingEnabled 
+              ? 'Detailed logs are showing in console. Disable to reduce console noise.' 
+              : 'Minimal logs in console. Enable for debugging.'}
+          </span>
+        </div>
+        
         <button
           onClick={handleRunTests}
           style={{
@@ -682,9 +705,28 @@ const TaxonomyDebugger: React.FC = () => {
             border: 'none',
             borderRadius: '4px',
             cursor: 'pointer',
+            marginRight: '10px',
           }}
         >
           Clear Log
+        </button>
+        <button
+          onClick={() => {
+            const newValue = !isVerboseLoggingEnabled;
+            setIsVerboseLoggingEnabled(newValue);
+            localStorage.setItem('verbose_taxonomy_logging', newValue ? 'true' : 'false');
+            addToLog(`Verbose taxonomy logging ${newValue ? 'enabled' : 'disabled'}`);
+          }}
+          style={{
+            padding: '8px 15px',
+            backgroundColor: isVerboseLoggingEnabled ? '#dc3545' : '#28a745',
+            color: 'white',
+            border: 'none',
+            borderRadius: '4px',
+            cursor: 'pointer',
+          }}
+        >
+          {isVerboseLoggingEnabled ? 'Disable Verbose Logging' : 'Enable Verbose Logging'}
         </button>
       </div>
 

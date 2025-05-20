@@ -58,7 +58,10 @@
       "Bash(else echo \"File does not exist\")",
       "Bash(fi)",
       "Bash(rg:*)",
-      "Bash(bash:*)"
+      "Bash(bash:*)",
+      "Bash(git grep:*)",
+      "Bash(CI=true npm test -- --testPathPattern=\"AssetRegistrationWrapper\" --passWithNoTests)",
+      "Bash(CI=true npm run build)"
     ],
     "deny": []
   }

@@ -17,7 +17,13 @@ import { useState, useEffect, useCallback } from 'react';
 import { taxonomyService } from '../services/simpleTaxonomyService';
 import { waitForTaxonomyInit } from '../services/taxonomyInitializer';
 import { taxonomyErrorRecovery } from '../services/taxonomyErrorRecovery';
-import { logger, LogLevel, LogCategory } from '../utils/logger';
+import { 
+  logger, 
+  LogLevel, 
+  LogCategory,
+  STANDARD_LAYER_NAMES,
+  verboseLog
+} from '../utils/logger';
 import { useFeedback } from '../contexts/FeedbackContext';
 
 interface TaxonomyCategory {
@@ -145,9 +151,10 @@ export const useTaxonomy = (
 
       // Generate a unique load ID for tracking
       const loadId = `load_${Date.now().toString(36)}`;
-      console.log(
-        `[CONTEXT ${loadId}] Starting category load for layer: ${layer}`
-      );
+      // Only log in development with explicit logger flag enabled
+      if (process.env.NODE_ENV === 'development' && localStorage.getItem('verbose_taxonomy_logging') === 'true') {
+        console.log(`[CONTEXT ${loadId}] Starting category load for layer: ${layer}`);
+      }
 
       setIsLoadingCategories(true);
       setCategoryError(null);
@@ -164,18 +171,19 @@ export const useTaxonomy = (
           if (sessionData) {
             const storedCategories = JSON.parse(sessionData);
             if (storedCategories && storedCategories.length > 0) {
-              console.log(
-                `[CONTEXT ${loadId}] Found ${storedCategories.length} categories in session storage`
-              );
+              // Only log in development with explicit logger flag enabled
+              if (process.env.NODE_ENV === 'development' && localStorage.getItem('verbose_taxonomy_logging') === 'true') {
+                console.log(`[CONTEXT ${loadId}] Found ${storedCategories.length} categories in session storage`);
+              }
               layerCategories = storedCategories;
               dataSource = 'session';
             }
           }
         } catch (e) {
-          console.warn(
-            `[CONTEXT ${loadId}] Failed to check session storage:`,
-            e
-          );
+          // Only log critical errors even without flag
+          if (process.env.NODE_ENV === 'development') {
+            console.warn(`[CONTEXT ${loadId}] Failed to check session storage:`, e);
+          }
         }
 
         // If not found in session, proceed with regular load
@@ -186,9 +194,12 @@ export const useTaxonomy = (
           }
 
           layerCategories = taxonomyService.getCategories(layer);
-          console.log(
-            `[CONTEXT ${loadId}] Loaded ${layerCategories.length} categories from taxonomy service`
-          );
+          // Only log in development with explicit logger flag enabled
+          if (process.env.NODE_ENV === 'development' && localStorage.getItem('verbose_taxonomy_logging') === 'true') {
+            console.log(
+              `[CONTEXT ${loadId}] Loaded ${layerCategories.length} categories from taxonomy service`
+            );
+          }
           logger.taxonomy(
             LogLevel.INFO,
             `Loaded ${layerCategories.length} categories for layer ${layer}`
@@ -228,13 +239,19 @@ export const useTaxonomy = (
           }
         }
 
-        console.log(
-          `[CONTEXT ${loadId}] Category load successful: ${layerCategories.length} items from ${dataSource}`
-        );
+        // Only log in development with explicit logger flag enabled
+        if (process.env.NODE_ENV === 'development' && localStorage.getItem('verbose_taxonomy_logging') === 'true') {
+          console.log(
+            `[CONTEXT ${loadId}] Category load successful: ${layerCategories.length} items from ${dataSource}`
+          );
+        }
       } catch (error) {
         const errorMessage = `Failed to load categories for layer ${layer}`;
         logger.taxonomy(LogLevel.ERROR, errorMessage, error);
-        console.error(`[CONTEXT ${loadId}] ${errorMessage}:`, error);
+        // Critical errors should always be logged
+        if (process.env.NODE_ENV === 'development') {
+          console.error(`[CONTEXT ${loadId}] ${errorMessage}:`, error);
+        }
         setCategoryError(
           error instanceof Error ? error : new Error(String(error))
         );
@@ -246,9 +263,10 @@ export const useTaxonomy = (
         );
 
         // Multi-tiered fallback approach
-        console.log(
-          `[CONTEXT ${loadId}] Attempting multi-tiered fallback recovery`
-        );
+        // Only log in development with explicit logger flag enabled
+        if (process.env.NODE_ENV === 'development' && localStorage.getItem('verbose_taxonomy_logging') === 'true') {
+          console.log(`[CONTEXT ${loadId}] Attempting multi-tiered fallback recovery`);
+        }
 
         // Tier 1: Check session storage again (in case it failed earlier)
         try {
@@ -359,9 +377,12 @@ export const useTaxonomy = (
         setIsLoadingCategories(false);
 
         // Final verification log
-        console.log(
-          `[CONTEXT ${loadId}] Category load complete for ${layer}, final state: ${categories.length} items`
-        );
+        // Only log in development with explicit logger flag enabled
+        if (process.env.NODE_ENV === 'development' && localStorage.getItem('verbose_taxonomy_logging') === 'true') {
+          console.log(
+            `[CONTEXT ${loadId}] Category load complete for ${layer}, final state: ${categories.length} items`
+          );
+        }
       }
     },
     [showErrorFeedback, showSuccessFeedback, showFeedback, categories.length]
@@ -566,20 +587,8 @@ export const useTaxonomy = (
 
       // Optional feedback when layer is selected
       if (showFeedback) {
-        const layerNames: Record<string, string> = {
-          G: 'Song',
-          S: 'Star',
-          L: 'Look',
-          M: 'Move',
-          W: 'World',
-          B: 'Beat',
-          P: 'Performance',
-          T: 'Training Data',
-          C: 'Composite',
-          R: 'Rights',
-        };
-
-        const layerName = layerNames[layer] || layer;
+        // Use the standardized layer names for consistent feedback
+        const layerName = STANDARD_LAYER_NAMES[layer] || layer;
         showSuccessFeedback(`Selected ${layerName} layer`);
       }
 

@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState, useCallback, useMemo } from 'react';
 import { taxonomyService } from '../../services/simpleTaxonomyService';
-import { logger, LogLevel } from '../../utils/logger';
+import { logger, LogLevel, debugLog, verboseLog } from '../../utils/logger';
 import { 
   FullTaxonomyData, 
   TaxonomyItem, 
@@ -200,16 +200,63 @@ export const TaxonomyDataProvider: React.FC<{children: React.ReactNode}> = ({ ch
   const getCategories = useCallback((layer: string): TaxonomyItem[] => {
     // Try to use cached data first
     if (taxonomyData && taxonomyData.layers[layer]) {
-      return Object.values(taxonomyData.layers[layer].categories).map(category => ({
+      const categories = Object.values(taxonomyData.layers[layer].categories).map(category => ({
         code: category.code,
-        name: category.name,
+        name: category.name || category.code, // Fallback to code if name is missing
         numericCode: category.numericCode
       }));
+      
+      // Debug log for missing names
+      if (process.env.NODE_ENV === 'development') {
+        const missingNames = categories.filter(cat => !cat.name || cat.name === '').map(cat => cat.code);
+        if (missingNames.length > 0) {
+          debugLog(`[TaxonomyData] Missing names for ${missingNames.length} categories in layer ${layer}:`, missingNames);
+          
+          // Try to add human-readable names for common categories
+          categories.forEach(cat => {
+            if (!cat.name || cat.name === '') {
+              // Common category mappings
+              const commonCategories: Record<string, string> = {
+                'POP': 'Pop',
+                'ROCK': 'Rock',
+                'JAZZ': 'Jazz',
+                'BLUES': 'Blues',
+                'HIPHOP': 'Hip Hop',
+                'FOLK': 'Folk',
+                'CLASSICAL': 'Classical',
+                'ELECTRONIC': 'Electronic',
+                'COUNTRY': 'Country',
+                'REGGAE': 'Reggae',
+                'METAL': 'Metal',
+                'INDIE': 'Indie',
+                'RNB': 'R&B',
+                'INSTRUMENTAL': 'Instrumental'
+              };
+              
+              if (commonCategories[cat.code]) {
+                cat.name = commonCategories[cat.code];
+                debugLog(`[TaxonomyData] Added fallback name '${cat.name}' for category ${cat.code}`);
+              } else {
+                cat.name = cat.code;
+                debugLog(`[TaxonomyData] Using code as fallback name for category ${cat.code}`);
+              }
+            }
+          });
+        }
+      }
+      
+      return categories;
     }
     
     // Fall back to direct service call if cache not available
     try {
-      return taxonomyService.getCategories(layer);
+      const categories = taxonomyService.getCategories(layer);
+      
+      // Ensure all categories have names
+      return categories.map(category => ({
+        ...category,
+        name: category.name || category.code // Fallback to code if name is missing
+      }));
     } catch (err) {
       logger.taxonomy(LogLevel.ERROR, `Error getting categories for layer ${layer}:`, err);
       return [];
@@ -224,12 +271,61 @@ export const TaxonomyDataProvider: React.FC<{children: React.ReactNode}> = ({ ch
     if (taxonomyData && 
         taxonomyData.layers[layer] && 
         taxonomyData.layers[layer].categories[category]) {
-      return Object.values(taxonomyData.layers[layer].categories[category].subcategories);
+      const subcategories = Object.values(taxonomyData.layers[layer].categories[category].subcategories)
+        .map(subcategory => ({
+          ...subcategory,
+          name: subcategory.name || subcategory.code // Fallback to code if name is missing
+        }));
+      
+      // Debug log for missing names
+      if (process.env.NODE_ENV === 'development') {
+        const missingNames = subcategories.filter(subcat => !subcat.name || subcat.name === '').map(subcat => subcat.code);
+        if (missingNames.length > 0) {
+          debugLog(`[TaxonomyData] Missing names for ${missingNames.length} subcategories in ${layer}.${category}:`, missingNames);
+          
+          // Try to add human-readable names for common subcategories
+          subcategories.forEach(subcat => {
+            if (!subcat.name || subcat.name === '') {
+              // Special handling for S.POP layer - common subcategories
+              if (layer === 'S' && category === 'POP') {
+                const starPopSubcats: Record<string, string> = {
+                  'HPM': 'Hipster Pop Male',
+                  'HPF': 'Hipster Pop Female',
+                  'MPM': 'Modern Pop Male',
+                  'MPF': 'Modern Pop Female',
+                  'TPM': 'Traditional Pop Male',
+                  'TPF': 'Traditional Pop Female'
+                };
+                
+                if (starPopSubcats[subcat.code]) {
+                  subcat.name = starPopSubcats[subcat.code];
+                  debugLog(`[TaxonomyData] Added fallback name '${subcat.name}' for subcategory ${layer}.${category}.${subcat.code}`);
+                } else {
+                  subcat.name = subcat.code;
+                  debugLog(`[TaxonomyData] Using code as fallback name for subcategory ${layer}.${category}.${subcat.code}`);
+                }
+              } else {
+                // Generic fallback - use code as name
+                subcat.name = subcat.code;
+                debugLog(`[TaxonomyData] Using code as fallback name for subcategory ${layer}.${category}.${subcat.code}`);
+              }
+            }
+          });
+        }
+      }
+      
+      return subcategories;
     }
     
     // Fall back to direct service call if cache not available
     try {
-      return taxonomyService.getSubcategories(layer, category);
+      const subcategories = taxonomyService.getSubcategories(layer, category);
+      
+      // Ensure all subcategories have names
+      return subcategories.map(subcategory => ({
+        ...subcategory,
+        name: subcategory.name || subcategory.code // Fallback to code if name is missing
+      }));
     } catch (err) {
       logger.taxonomy(LogLevel.ERROR, `Error getting subcategories for ${layer}.${category}:`, err);
       return [];

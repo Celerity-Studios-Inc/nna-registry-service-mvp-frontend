@@ -1,7 +1,7 @@
 import React, { useMemo, useCallback } from 'react';
 import TaxonomyItem from './TaxonomyItem';
 import { useTaxonomyData } from '../../providers/taxonomy/TaxonomyDataProvider';
-import { logger, LogLevel, debugLog } from '../../utils/logger';
+import { logger, LogLevel, debugLog, STANDARD_LAYER_NAMES, getStandardLayerName } from '../../utils/logger';
 import { TaxonomyItem as TaxonomyItemType } from '../../providers/taxonomy/types';
 
 interface LayerGridProps {
@@ -20,21 +20,16 @@ const LayerGrid: React.FC<LayerGridProps> = ({
   // Get taxonomy data from context
   const { taxonomyData } = useTaxonomyData();
   
-  // Helper function to get layer name - memoized to prevent recalculation
+  // Use the standard layer name mapping from logger.ts
   const getLayerName = useMemo(() => {
-    const nameMap: Record<string, string> = {
-      'S': 'Star',
-      'W': 'World',
-      'G': 'GGC',
-      'L': 'Look',
-      'M': 'Move',
-      'B': 'Bio',
-      'P': 'Prop',
-      'T': 'Theme',
-      'C': 'Character',
-      'R': 'Rights'
+    return (layer: string): string => {
+      const name = STANDARD_LAYER_NAMES[layer];
+      if (!name) {
+        debugLog(`[LayerGrid] Missing name for layer ${layer}, using code as fallback`);
+        return layer;
+      }
+      return name;
     };
-    return (layer: string): string => nameMap[layer] || layer;
   }, []);
 
   // Helper function to get layer numeric code - memoized to prevent recalculation

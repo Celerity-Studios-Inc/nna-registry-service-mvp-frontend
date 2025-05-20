@@ -106,20 +106,24 @@ There are special case mappings that need special handling:
 
 - Root Causes:
   1. Direct loading approach for categories not working properly on initial load
-  2. CSS layout using flexbox column instead of grid for subcategories
-  3. Excessive re-renders and logging affecting performance
-  4. Case handling issues in format conversion between display and internal formats
-  5. Numeric code mapping incorrect (showing 000.000 instead of 001.001)
 
-- Implemented Fixes:
-  1. Added auto-retry mechanism for category loading with improved reliability
-  2. Updated CSS to use CSS Grid for subcategory layout with responsive columns
-  3. Optimized performance by reducing logging and implementing memoization
-  4. Fixed case normalization for consistent taxonomy codes (S.POP.BAS vs S.Pop.Base)
-  5. Enhanced format display with proper sequential numbering suffix
-  - Key changes documented in `UI_PERFORMANCE_AND_FORMAT_FIXES.md`
-  
-### 7. Layer Switching Issue Fix (May 18, 2025)
+### 7. Taxonomy Name Display and Logging Issues (May 19, 2025)
+- Problem: 
+  - Layer, category and subcategory cards were missing names in the UI
+  - Too much console logging was causing performance issues
+- Solution:
+  - Created centralized layer name definitions as a single source of truth
+  - Enhanced TaxonomyItem component with name fallback logic
+  - Added conditional logging that only triggers with explicit flag
+  - Added a toggle in TaxonomyDebugger to control verbose logging
+- Key changes:
+  - Added `STANDARD_LAYER_NAMES` and `STANDARD_LAYER_DESCRIPTIONS` in `logger.ts`
+  - Enhanced TaxonomyItem to display item code when name is missing
+  - Added specialized name mappings for common categories and subcategories
+  - Created verboseLog function for controllable logging
+  - Added detailed documentation in `TAXONOMY_NAME_DISPLAY_FIX.md`
+
+### 8. Layer Switching Issue Fix (May 18, 2025)
 - Problem: When switching between layers in Step 1, the UI continued to display category cards from the previously selected layer
 - Impact: Users would see incorrect categories, and when trying to use the Retry button for subcategories, it wouldn't work because the layer+category combination was invalid
 

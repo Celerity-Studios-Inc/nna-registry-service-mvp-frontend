@@ -320,3 +320,63 @@ export const debugLog = (message: string, ...args: any[]): void => {
     console.log(message, ...args);
   }
 };
+
+/**
+ * Verbose logging helper that only logs in development mode and when verbose_taxonomy_logging flag is set
+ * Use this for detailed taxonomy operation tracking that should be suppressed by default.
+ */
+export const verboseLog = (message: string, ...args: any[]): void => {
+  if (isDebugMode() && localStorage.getItem('verbose_taxonomy_logging') === 'true') {
+    console.log(message, ...args);
+  }
+};
+
+/**
+ * Debug error logging helper that only logs errors in development mode
+ * Always use this for error logging in development-only code.
+ */
+export const debugError = (message: string, ...args: any[]): void => {
+  if (isDebugMode()) {
+    console.error(message, ...args);
+  }
+};
+
+/**
+ * Standardized layer name mapping to ensure consistency across the application
+ * Use this whenever displaying layer names to ensure consistent naming
+ */
+export const STANDARD_LAYER_NAMES: Record<string, string> = {
+  'G': 'Song',
+  'S': 'Star',
+  'L': 'Look',
+  'M': 'Move',
+  'W': 'World',
+  'B': 'Beat',
+  'P': 'Prop',
+  'T': 'Training',
+  'C': 'Character',
+  'R': 'Rights'
+};
+
+/**
+ * Standardized layer descriptions
+ */
+export const STANDARD_LAYER_DESCRIPTIONS: Record<string, string> = {
+  'G': 'Music tracks and audio',
+  'S': 'Performance avatars',
+  'L': 'Costumes & styling',
+  'M': 'Choreography',
+  'W': 'Environments',
+  'B': 'Virtual beats and rhythms',
+  'P': 'Props and accessories',
+  'T': 'Training data and datasets',
+  'C': 'Character composites',
+  'R': 'Rights and ownership'
+};
+
+/**
+ * Get a standardized layer name with fallback to the code
+ */
+export const getStandardLayerName = (layer: string): string => {
+  return STANDARD_LAYER_NAMES[layer] || layer;
+};

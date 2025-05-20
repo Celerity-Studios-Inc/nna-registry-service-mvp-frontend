@@ -26,7 +26,15 @@ const SubcategoryGrid: React.FC<SubcategoryGridProps> = ({
   // Get subcategories for the selected layer and category - memoized to prevent recalculation
   const subcategories = useMemo(() => {
     debugLog(`[SubcategoryGrid] Getting subcategories for ${layer}.${category}`);
-    return getSubcategories(layer, category);
+    const subcats = getSubcategories(layer, category);
+    
+    // Enhanced logging to help debug missing names
+    if (process.env.NODE_ENV === 'development' && subcats.length > 0) {
+      const sampleSubcategory = subcats[0];
+      debugLog(`[SubcategoryGrid] Sample subcategory: code=${sampleSubcategory.code}, name=${sampleSubcategory.name}, numericCode=${sampleSubcategory.numericCode}`);
+    }
+    
+    return subcats;
   }, [layer, category, getSubcategories]);
 
   // Handle subcategory selection with check for Star+POP combination

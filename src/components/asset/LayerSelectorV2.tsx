@@ -6,7 +6,13 @@
  */
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import { useTaxonomy } from '../../hooks/useTaxonomy';
-import { logger, LogLevel, debugLog } from '../../utils/logger';
+import { 
+  logger, 
+  LogLevel, 
+  debugLog, 
+  STANDARD_LAYER_NAMES, 
+  STANDARD_LAYER_DESCRIPTIONS 
+} from '../../utils/logger';
 import LayerIcon from '../common/LayerIcon';
 import '../../styles/LayerSelector.css';
 
@@ -82,40 +88,14 @@ const LayerSelectorV2: React.FC<LayerSelectorV2Props> = React.memo(({
     [selectLayer, onLayerSelect, onLayerDoubleClick]
   );
 
-  // Get layer name - memoized since layer names are static
+  // Get layer name - use standardized layer names
   const getLayerName = useMemo(() => {
-    const layerNames: Record<string, string> = {
-      'G': 'Song',
-      'S': 'Star',
-      'L': 'Look',
-      'M': 'Moves',
-      'W': 'World',
-      'B': 'Branded',
-      'P': 'Personalize',
-      'T': 'Training Data',
-      'C': 'Composites',
-      'R': 'Rights'
-    };
-    
-    return (layer: string) => layerNames[layer] || layer;
+    return (layer: string) => STANDARD_LAYER_NAMES[layer] || layer;
   }, []);
 
-  // Get layer description - memoized since descriptions are static
+  // Get layer description - use standardized layer descriptions
   const getLayerDescription = useMemo(() => {
-    const layerDescriptions: Record<string, string> = {
-      'G': 'Music tracks and audio',
-      'S': 'Performance avatars',
-      'L': 'Costumes & styling',
-      'M': 'Choreography',
-      'W': 'Environments',
-      'B': 'Virtual product placement',
-      'P': 'User-uploaded customizations',
-      'T': 'Datasets for AI training',
-      'C': 'Aggregated multi-layer assets',
-      'R': 'Provenance and rights tracking'
-    };
-    
-    return (layer: string) => layerDescriptions[layer] || '';
+    return (layer: string) => STANDARD_LAYER_DESCRIPTIONS[layer] || '';
   }, []);
 
   // Get layer icon - memoized since icons are static

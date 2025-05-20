@@ -24,7 +24,15 @@ const CategoryGrid: React.FC<CategoryGridProps> = ({
   // Get categories for selected layer - memoized to prevent recalculation
   const categories = useMemo(() => {
     debugLog(`[CategoryGrid] Getting categories for layer ${layer}`);
-    return getCategories(layer);
+    const cats = getCategories(layer);
+    
+    // Enhanced logging to help debug missing names
+    if (process.env.NODE_ENV === 'development' && cats.length > 0) {
+      const sampleCategory = cats[0];
+      debugLog(`[CategoryGrid] Sample category: code=${sampleCategory.code}, name=${sampleCategory.name}, numericCode=${sampleCategory.numericCode}`);
+    }
+    
+    return cats;
   }, [layer, getCategories]);
 
   // Memoize the category selection handler to maintain reference stability

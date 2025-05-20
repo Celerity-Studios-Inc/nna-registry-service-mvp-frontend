@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { TaxonomyItem as TaxonomyItemType } from '../../providers/taxonomy/types';
 import { debugLog } from '../../utils/logger';
 
@@ -21,6 +21,16 @@ const TaxonomyItem: React.FC<TaxonomyItemProps> = ({
   onDoubleClick,
   dataTestId
 }) => {
+  // Ensure we have fallbacks for missing data
+  const displayName = useMemo(() => {
+    // If name is missing, use code as fallback
+    if (!item.name || item.name.trim() === '') {
+      debugLog(`[TaxonomyItem] Missing name for item code ${item.code}, using code as fallback`);
+      return item.code;
+    }
+    return item.name;
+  }, [item.name, item.code]);
+
   return (
     <div
       className={`taxonomy-item ${isActive ? 'active' : ''}`}
@@ -30,7 +40,7 @@ const TaxonomyItem: React.FC<TaxonomyItemProps> = ({
     >
       <div className="taxonomy-item-code">{item.code}</div>
       <div className="taxonomy-item-numeric">{item.numericCode}</div>
-      <div className="taxonomy-item-name">{item.name}</div>
+      <div className="taxonomy-item-name">{displayName}</div>
     </div>
   );
 };
