@@ -36,6 +36,8 @@ import {
   Logout as LogoutIcon,
   Login as LoginIcon,
   BugReport as BugReportIcon,
+  ErrorOutline as ErrorOutlineIcon,
+  Warning as WarningIcon,
 } from '@mui/icons-material';
 import { AuthContext } from '../../contexts/AuthContext';
 import ErrorTestComponent from '../common/ErrorTestComponent';
@@ -132,6 +134,23 @@ const MainLayout: React.FC = () => {
       </List>
       <Divider sx={{ mt: 'auto' }} />
       <List>
+        <ListItem disablePadding>
+          <ListItemButton 
+            onClick={() => navigate('/emergency-register')}
+            sx={{ 
+              backgroundColor: 'rgba(211, 47, 47, 0.1)'
+            }}
+          >
+            <ListItemIcon>
+              <WarningIcon color="error" />
+            </ListItemIcon>
+            <ListItemText
+              primary="Emergency Registration"
+              secondary="Use only when standard registration fails"
+              primaryTypographyProps={{ color: 'error' }}
+            />
+          </ListItemButton>
+        </ListItem>
         <ListItem disablePadding>
           <ListItemButton onClick={openErrorTestDialog}>
             <ListItemIcon>
