@@ -60,16 +60,24 @@ const LayerGrid: React.FC<LayerGridProps> = ({
     const orderedLayers = ['G', 'S', 'L', 'M', 'W', 'B', 'P', 'T', 'C', 'R'];
     
     // Filter to only include layers that exist in taxonomyData
-    return orderedLayers
+    const layerItems = orderedLayers
       .filter(layer => taxonomyData.layers[layer])
       .map(layer => {
         // Create a simple item representation for each layer
+        const layerName = getLayerName(layer);
+        
+        // Debug log to see what's happening
+        console.log(`[LayerGrid] Creating layer: code=${layer}, name=${layerName}, numericCode=${getLayerNumericCode(layer)}`);
+        
         return {
           code: layer,
-          name: getLayerName(layer),
+          name: layerName,
           numericCode: getLayerNumericCode(layer)
         };
       });
+      
+    console.log('[LayerGrid] Final layer items:', layerItems);
+    return layerItems;
   }, [taxonomyData, getLayerName, getLayerNumericCode]);
 
   // No taxonomy data available
@@ -82,7 +90,12 @@ const LayerGrid: React.FC<LayerGridProps> = ({
   }
 
   return (
-    <div className="taxonomy-grid">
+    <div className="taxonomy-grid" style={{ 
+      display: 'grid',
+      gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))',
+      gap: '12px',
+      padding: '15px'
+    }}>
       {layers.map((layer: TaxonomyItemType) => (
         <TaxonomyItem
           key={layer.code}

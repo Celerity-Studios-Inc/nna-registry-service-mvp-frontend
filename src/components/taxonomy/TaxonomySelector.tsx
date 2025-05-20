@@ -43,9 +43,17 @@ const TaxonomySelector: React.FC<TaxonomySelectorProps> = ({
   }, [onLayerSelect]);
   
   const handleCategorySelect = useCallback((category: string) => {
-    debugLog(`[TaxonomySelector] Category selected: ${selectedLayer}.${category}`);
+    // Log the selection clearly
+    console.log(`[TaxonomySelector] Category SELECTED: ${selectedLayer}.${category}`);
     logger.taxonomy(LogLevel.INFO, `Category selected: ${selectedLayer}.${category}`);
-    onCategorySelect(category);
+    
+    // Make sure we pass the category to the parent handler
+    try {
+      onCategorySelect(category);
+      console.log(`[TaxonomySelector] Category selection propagated to parent: ${category}`);
+    } catch (error) {
+      console.error(`[TaxonomySelector] Error in category selection handler:`, error);
+    }
   }, [selectedLayer, onCategorySelect]);
   
   const handleSubcategorySelect = useCallback((subcategory: string, isDoubleClick?: boolean) => {

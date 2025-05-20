@@ -23,13 +23,16 @@ const CategoryGrid: React.FC<CategoryGridProps> = ({
 
   // Get categories for selected layer - memoized to prevent recalculation
   const categories = useMemo(() => {
-    debugLog(`[CategoryGrid] Getting categories for layer ${layer}`);
+    console.log(`[CategoryGrid] Getting categories for layer ${layer}`);
     const cats = getCategories(layer);
     
     // Enhanced logging to help debug missing names
-    if (process.env.NODE_ENV === 'development' && cats.length > 0) {
-      const sampleCategory = cats[0];
-      debugLog(`[CategoryGrid] Sample category: code=${sampleCategory.code}, name=${sampleCategory.name}, numericCode=${sampleCategory.numericCode}`);
+    console.log(`[CategoryGrid] Retrieved ${cats.length} categories for layer ${layer}`, cats);
+    
+    if (cats.length > 0) {
+      for (const cat of cats) {
+        console.log(`[CategoryGrid] Category: code=${cat.code}, name=${JSON.stringify(cat.name)}, numericCode=${cat.numericCode}`);
+      }
     }
     
     return cats;
@@ -52,7 +55,12 @@ const CategoryGrid: React.FC<CategoryGridProps> = ({
   }
 
   return (
-    <div className="taxonomy-grid">
+    <div className="taxonomy-grid" style={{ 
+      display: 'grid',
+      gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))',
+      gap: '12px',
+      padding: '15px'
+    }}>
       {categories.map(category => (
         <TaxonomyItem
           key={category.code}

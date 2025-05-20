@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { TaxonomyItem as TaxonomyItemType } from '../../providers/taxonomy/types';
-import { debugLog } from '../../utils/logger';
+import { debugLog, STANDARD_LAYER_NAMES } from '../../utils/logger';
 
 interface TaxonomyItemProps {
   item: TaxonomyItemType;
@@ -23,24 +23,71 @@ const TaxonomyItem: React.FC<TaxonomyItemProps> = ({
 }) => {
   // Ensure we have fallbacks for missing data
   const displayName = useMemo(() => {
-    // If name is missing, use code as fallback
+    // Always log for debugging what's happening
+    console.log(`[TaxonomyItem] Rendering item: code=${item.code}, name=${JSON.stringify(item.name)}, numeric=${item.numericCode}`);
+    
+    // Special handling for layer codes (single character)
+    if (item.code.length === 1 && STANDARD_LAYER_NAMES[item.code]) {
+      return STANDARD_LAYER_NAMES[item.code];
+    }
+    
+    // If name is missing or empty, use code as fallback
     if (!item.name || item.name.trim() === '') {
       debugLog(`[TaxonomyItem] Missing name for item code ${item.code}, using code as fallback`);
+      
+      // Try to find category name patterns
+      if (item.code.length === 3) {
+        // Map some common category codes to names
+        const categoryNameMap: Record<string, string> = {
+          'POP': 'Pop',
+          'RCK': 'Rock',
+          'JZZ': 'Jazz',
+          'HIP': 'Hip Hop',
+          'BOL': 'Bollywood',
+          'DSF': 'Disco Funk',
+          'RNB': 'R&B',
+          'ALT': 'Alternative',
+          'WLD': 'World',
+          'KPO': 'K-Pop'
+        };
+        
+        return categoryNameMap[item.code] || item.code;
+      }
+      
       return item.code;
     }
     return item.name;
   }, [item.name, item.code]);
 
+  // Create a different layout for better visibility
   return (
     <div
       className={`taxonomy-item ${isActive ? 'active' : ''}`}
       onClick={onClick}
       onDoubleClick={onDoubleClick}
       data-testid={dataTestId}
+      style={{ 
+        display: 'flex', 
+        flexDirection: 'column',
+        alignItems: 'center',
+        textAlign: 'center', 
+        padding: '12px 8px',
+        height: 'auto', 
+        minHeight: '90px'
+      }}
     >
-      <div className="taxonomy-item-code">{item.code}</div>
-      <div className="taxonomy-item-numeric">{item.numericCode}</div>
-      <div className="taxonomy-item-name">{displayName}</div>
+      <div className="taxonomy-item-code" style={{ fontSize: '16px', fontWeight: 'bold' }}>{item.code}</div>
+      <div className="taxonomy-item-name" style={{ 
+        fontWeight: 'bold', 
+        color: '#000', 
+        fontSize: '15px',
+        margin: '8px 0',
+        maxWidth: '100%',
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+        whiteSpace: 'nowrap'
+      }}>{displayName}</div>
+      <div className="taxonomy-item-numeric" style={{ fontSize: '12px', color: '#666' }}>{item.numericCode}</div>
     </div>
   );
 };
