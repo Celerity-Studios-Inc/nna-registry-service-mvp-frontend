@@ -1,10 +1,11 @@
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo, useEffect } from 'react';
 import { useTaxonomyData } from '../../providers/taxonomy/TaxonomyDataProvider';
 import LayerGrid from './LayerGrid';
 import CategoryGrid from './CategoryGrid';
 import SubcategoryGrid from './SubcategoryGrid';
 import './TaxonomySelector.css';
 import { debugLog, logger, LogLevel } from '../../utils/logger';
+import { EventCoordinator } from '../../utils/eventCoordinator';
 
 export interface TaxonomySelectorProps {
   selectedLayer: string;
@@ -39,7 +40,26 @@ const TaxonomySelector: React.FC<TaxonomySelectorProps> = ({
   const handleLayerSelect = useCallback((layer: string) => {
     debugLog(`[TaxonomySelector] Layer selected: ${layer}`);
     logger.taxonomy(LogLevel.INFO, `Layer selected: ${layer}`);
-    onLayerSelect(layer);
+    
+    // Use EventCoordinator for layer selection
+    EventCoordinator.clear(); // Clear any pending events
+    
+    // Visual feedback event
+    EventCoordinator.enqueue('visual-feedback-layer', () => {
+      console.log(`[TaxonomySelector] Providing visual feedback for layer: ${layer}`);
+    });
+    
+    // Layer selection event
+    EventCoordinator.enqueue('select-layer', () => {
+      onLayerSelect(layer);
+      console.log(`[TaxonomySelector] Layer selection propagated to parent: ${layer}`);
+    }, 10);
+    
+    // Verification event
+    EventCoordinator.enqueue('verify-layer', () => {
+      console.log(`[TaxonomySelector] Verification - Selected layer should be: ${layer}`);
+    }, 100);
+    
   }, [onLayerSelect]);
   
   const handleCategorySelect = useCallback((category: string) => {
@@ -49,22 +69,39 @@ const TaxonomySelector: React.FC<TaxonomySelectorProps> = ({
     
     // Make sure we pass the category to the parent handler
     try {
-      // Force a setTimeout to avoid potential React state batching issues
-      setTimeout(() => {
-        // Verify selected layer is still valid before proceeding
+      // Step 1: Clear any pending events to prevent race conditions
+      EventCoordinator.clear();
+      
+      // Step 2: Schedule updates in correct sequence using EventCoordinator
+      // Visual feedback event (would normally update UI state)
+      EventCoordinator.enqueue('visual-feedback', () => {
+        console.log(`[TaxonomySelector] Providing visual feedback for category: ${category}`);
+        // In a stateful component, you'd update local state here for immediate visual feedback
+      });
+      
+      // Layer validation event
+      EventCoordinator.enqueue('validate-layer', () => {
+        if (!selectedLayer) {
+          console.warn(`[TaxonomySelector] Cannot select category: No layer selected`);
+          return;
+        }
+        console.log(`[TaxonomySelector] Layer validation passed: ${selectedLayer}`);
+      });
+      
+      // Category selection event
+      EventCoordinator.enqueue('select-category', () => {
+        // Only proceed if we have a valid layer
         if (selectedLayer) {
-          // Call the parent handler
           onCategorySelect(category);
           console.log(`[TaxonomySelector] Category selection propagated to parent: ${category}`);
-          
-          // Verify selection was processed
-          setTimeout(() => {
-            console.log(`[TaxonomySelector] Verification check - Selected category should be: ${category}`);
-          }, 50);
-        } else {
-          console.warn(`[TaxonomySelector] Cannot select category: No layer selected`);
         }
-      }, 0);
+      }, 10); // Small delay to ensure state updates have time to process
+      
+      // Verification event
+      EventCoordinator.enqueue('verify-selection', () => {
+        console.log(`[TaxonomySelector] Verification check - Selected category should be: ${category}`);
+      }, 100); // Longer delay for verification
+      
     } catch (error) {
       console.error(`[TaxonomySelector] Error in category selection handler:`, error);
     }
@@ -79,7 +116,36 @@ const TaxonomySelector: React.FC<TaxonomySelectorProps> = ({
       `Complete taxonomy selection: ${selectedLayer}.${selectedCategory}.${subcategory}`,
       { isDoubleClick }
     );
-    onSubcategorySelect(subcategory, isDoubleClick);
+    
+    // Use EventCoordinator for subcategory selection
+    EventCoordinator.clear(); // Clear any pending events
+    
+    // Visual feedback event
+    EventCoordinator.enqueue('visual-feedback-subcategory', () => {
+      console.log(`[TaxonomySelector] Providing visual feedback for subcategory: ${subcategory}`);
+    });
+    
+    // Validation event
+    EventCoordinator.enqueue('validate-category', () => {
+      if (!selectedLayer || !selectedCategory) {
+        console.warn('[TaxonomySelector] Cannot select subcategory: Layer or category not selected');
+        return;
+      }
+      console.log(`[TaxonomySelector] Category validation passed: ${selectedLayer}.${selectedCategory}`);
+    });
+    
+    // Subcategory selection event
+    EventCoordinator.enqueue('select-subcategory', () => {
+      if (selectedLayer && selectedCategory) {
+        onSubcategorySelect(subcategory, isDoubleClick);
+      }
+    }, 10);
+    
+    // Verification event
+    EventCoordinator.enqueue('verify-subcategory', () => {
+      console.log(`[TaxonomySelector] Verification - Full selection: ${selectedLayer}.${selectedCategory}.${subcategory}`);
+    }, 100);
+    
   }, [selectedLayer, selectedCategory, onSubcategorySelect]);
 
   // Handle loading state
@@ -186,4 +252,17 @@ const arePropsEqual = (prevProps: TaxonomySelectorProps, nextProps: TaxonomySele
 // Add displayName for debugging in React DevTools
 TaxonomySelector.displayName = 'TaxonomySelector';
 
-export default React.memo(TaxonomySelector, arePropsEqual);
+// Add cleanup for EventCoordinator when component unmounts
+const TaxonomySelectorWithCleanup: React.FC<TaxonomySelectorProps> = (props) => {
+  // Clear pending events when component unmounts
+  useEffect(() => {
+    return () => {
+      EventCoordinator.clear();
+      console.log('[TaxonomySelector] Cleared event queue on unmount');
+    };
+  }, []);
+
+  return <TaxonomySelector {...props} />;
+};
+
+export default React.memo(TaxonomySelectorWithCleanup, arePropsEqual);
