@@ -13,7 +13,7 @@ import React, {
   useCallback,
 } from 'react';
 import { useTaxonomyContext } from '../../contexts/TaxonomyContext';
-import { logger, debugLog } from '../../utils/logger';
+import { logger, debugLog, LogLevel } from '../../utils/logger';
 import { taxonomyService } from '../../services/simpleTaxonomyService';
 import { TaxonomyItem } from '../../types/taxonomy.types';
 import '../../styles/SimpleTaxonomySelection.css';
@@ -1085,7 +1085,7 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
     const mediumRetryTimer = setTimeout(() => {
       console.log(`[LAYER SWITCH ${layerChangeId}] Medium retry check (300ms)`);
       if (categories.length === 0) {
-        console.log(
+        debugLog(
           `[LAYER SWITCH ${layerChangeId}] Categories still empty, trying context reload`
         );
         // Try context reload
@@ -2366,4 +2366,15 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
   );
 };
 
-export default React.memo(SimpleTaxonomySelectionV2);
+// Add displayName for easier debugging
+SimpleTaxonomySelectionV2.displayName = 'SimpleTaxonomySelectionV2';
+
+// Export with memoization to prevent unnecessary rerenders
+export default React.memo(SimpleTaxonomySelectionV2, (prevProps, nextProps) => {
+  // Only rerender if these props actually changed
+  return (
+    prevProps.layer === nextProps.layer &&
+    prevProps.selectedCategory === nextProps.selectedCategory &&
+    prevProps.selectedSubcategory === nextProps.selectedSubcategory
+  );
+});

@@ -4,9 +4,9 @@
  * An improved version of the Layer Selector component
  * that uses the useTaxonomy hook for more reliable layer selection.
  */
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import { useTaxonomy } from '../../hooks/useTaxonomy';
-import { logger } from '../../utils/logger';
+import { logger, LogLevel, debugLog } from '../../utils/logger';
 import LayerIcon from '../common/LayerIcon';
 import '../../styles/LayerSelector.css';
 
@@ -16,7 +16,7 @@ interface LayerSelectorV2Props {
   selectedLayer: string;
 }
 
-const LayerSelectorV2: React.FC<LayerSelectorV2Props> = ({
+const LayerSelectorV2: React.FC<LayerSelectorV2Props> = React.memo(({
   onLayerSelect,
   onLayerDoubleClick,
   selectedLayer: initialLayer,
@@ -44,8 +44,8 @@ const LayerSelectorV2: React.FC<LayerSelectorV2Props> = ({
       selectLayer(layer);
 
       // Make sure to pass isDoubleClick=false explicitly
-      console.log(
-        `Sending layer selection to parent: ${layer}, isDoubleClick=false`
+      debugLog(
+        `[LayerSelectorV2] Sending layer selection to parent: ${layer}, isDoubleClick=false`
       );
       onLayerSelect(layer, false);
     },
@@ -61,8 +61,8 @@ const LayerSelectorV2: React.FC<LayerSelectorV2Props> = ({
 
       // IMPORTANT: Call the parent's onLayerSelect with isDoubleClick=true
       // This handles the selection but doesn't auto-advance steps
-      console.log(
-        `Sending layer double-click to parent: ${layer}, isDoubleClick=true`
+      debugLog(
+        `[LayerSelectorV2] Sending layer double-click to parent: ${layer}, isDoubleClick=true`
       );
       onLayerSelect(layer, true);
 
@@ -71,95 +71,75 @@ const LayerSelectorV2: React.FC<LayerSelectorV2Props> = ({
       setTimeout(() => {
         // Also call the optional onLayerDoubleClick callback if provided
         if (onLayerDoubleClick) {
-          console.log(`Calling onLayerDoubleClick for ${layer}`);
+          debugLog(`[LayerSelectorV2] Calling onLayerDoubleClick for ${layer}`);
           // Call the double-click handler which should now navigate to the next step
           onLayerDoubleClick(layer);
         } else {
-          console.log(`No onLayerDoubleClick provided for ${layer}`);
+          debugLog(`[LayerSelectorV2] No onLayerDoubleClick provided for ${layer}`);
         }
       }, 100);
     },
     [selectLayer, onLayerSelect, onLayerDoubleClick]
   );
 
-  // Get layer name
-  const getLayerName = useCallback((layer: string) => {
-    switch (layer) {
-      case 'G':
-        return 'Song';
-      case 'S':
-        return 'Star';
-      case 'L':
-        return 'Look';
-      case 'M':
-        return 'Moves';
-      case 'W':
-        return 'World';
-      case 'B':
-        return 'Branded';
-      case 'P':
-        return 'Personalize';
-      case 'T':
-        return 'Training Data';
-      case 'C':
-        return 'Composites';
-      case 'R':
-        return 'Rights';
-      default:
-        return layer;
-    }
-  }, []);
-
-  // Get layer description
-  const getLayerDescription = useCallback((layer: string) => {
-    switch (layer) {
-      case 'G':
-        return 'Music tracks and audio';
-      case 'S':
-        return 'Performance avatars';
-      case 'L':
-        return 'Costumes & styling';
-      case 'M':
-        return 'Choreography';
-      case 'W':
-        return 'Environments';
-      case 'B':
-        return 'Virtual product placement';
-      case 'P':
-        return 'User-uploaded customizations';
-      case 'T':
-        return 'Datasets for AI training';
-      case 'C':
-        return 'Aggregated multi-layer assets';
-      case 'R':
-        return 'Provenance and rights tracking';
-      default:
-        return '';
-    }
-  }, []);
-
-  // Get layer icon
-  const getLayerIcon = useCallback((layer: string) => {
-    // Emoji fallbacks if icons are not available
-    const layerEmojis: { [key: string]: string } = {
-      G: '🎵', // Song
-      S: '🌟', // Star
-      L: '👚', // Look
-      M: '💃', // Moves
-      W: '🌍', // World
-      B: '🏷️', // Branded
-      P: '🔧', // Personalize
-      T: '🧠', // Training Data
-      C: '🧩', // Composites
-      R: '📜', // Rights
+  // Get layer name - memoized since layer names are static
+  const getLayerName = useMemo(() => {
+    const layerNames: Record<string, string> = {
+      'G': 'Song',
+      'S': 'Star',
+      'L': 'Look',
+      'M': 'Moves',
+      'W': 'World',
+      'B': 'Branded',
+      'P': 'Personalize',
+      'T': 'Training Data',
+      'C': 'Composites',
+      'R': 'Rights'
     };
+    
+    return (layer: string) => layerNames[layer] || layer;
+  }, []);
 
-    return layerEmojis[layer] || '🎮';
+  // Get layer description - memoized since descriptions are static
+  const getLayerDescription = useMemo(() => {
+    const layerDescriptions: Record<string, string> = {
+      'G': 'Music tracks and audio',
+      'S': 'Performance avatars',
+      'L': 'Costumes & styling',
+      'M': 'Choreography',
+      'W': 'Environments',
+      'B': 'Virtual product placement',
+      'P': 'User-uploaded customizations',
+      'T': 'Datasets for AI training',
+      'C': 'Aggregated multi-layer assets',
+      'R': 'Provenance and rights tracking'
+    };
+    
+    return (layer: string) => layerDescriptions[layer] || '';
+  }, []);
+
+  // Get layer icon - memoized since icons are static
+  const getLayerIcon = useMemo(() => {
+    // Emoji fallbacks if icons are not available
+    const layerEmojis: Record<string, string> = {
+      'G': '🎵', // Song
+      'S': '🌟', // Star
+      'L': '👚', // Look
+      'M': '💃', // Moves
+      'W': '🌍', // World
+      'B': '🏷️', // Branded
+      'P': '🔧', // Personalize
+      'T': '🧠', // Training Data
+      'C': '🧩', // Composites
+      'R': '📜', // Rights
+    };
+    
+    return (layer: string) => layerEmojis[layer] || '🎮';
   }, []);
 
   // Log when layers changes
   useEffect(() => {
-    logger.info('Available layers for selection:', layers.join(', '));
+    logger.info(`Available layers for selection: ${layers.join(', ')}`);
   }, [layers]);
 
   return (
@@ -220,6 +200,9 @@ const LayerSelectorV2: React.FC<LayerSelectorV2Props> = ({
       )}
     </div>
   );
-};
+});
+
+// Use a displayName for easier debugging
+LayerSelectorV2.displayName = 'LayerSelectorV2';
 
 export default LayerSelectorV2;
