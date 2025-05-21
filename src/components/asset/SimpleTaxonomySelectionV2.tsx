@@ -431,6 +431,9 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
   const [localSubcategories, setLocalSubcategories] = useState<TaxonomyItem[]>(
     []
   );
+  
+  // State for tracking loading errors
+  const [loadingError, setLoadingError] = useState<string | null>(null);
   const subcategoriesRef = useRef<TaxonomyItem[]>([]);
 
   // Prevent duplicate data loads with a ref
@@ -1403,25 +1406,41 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
   const directSubcategories = useMemo(() => {
     if (!activeCategory) return [];
 
+    // Reset error state on new category selection
+    setLoadingError(null);
+
     // IMPORTANT: Track the fetch attempt and result for debugging
     console.log(
       `Direct subcategories fetch for ${layer}.${activeCategory} started`
     );
-    const results = getDirectSubcategories(layer, activeCategory);
-    console.log(`Direct subcategories fetch returned ${results.length} items`);
+    
+    try {
+      const results = getDirectSubcategories(layer, activeCategory);
+      console.log(`Direct subcategories fetch returned ${results.length} items`);
 
-    // If we got results, save them to the local state and ref as a backup
-    if (results.length > 0) {
-      // Update the ref immediately for synchronous access
-      subcategoriesRef.current = results;
+      // If we got results, save them to the local state and ref as a backup
+      if (results.length > 0) {
+        // Update the ref immediately for synchronous access
+        subcategoriesRef.current = results;
 
-      // Schedule a state update (which is asynchronous)
-      setTimeout(() => {
-        setLocalSubcategories(results);
-        console.log(
-          `Updated local subcategories backup with ${results.length} items`
-        );
-      }, 0);
+        // Schedule a state update (which is asynchronous)
+        setTimeout(() => {
+          setLocalSubcategories(results);
+        }, 0);
+      } else {
+        // No subcategories found, set an error
+        console.warn(`No subcategories found for ${layer}.${activeCategory}`);
+        setLoadingError(`No subcategories found for ${activeCategory}`);
+      }
+      
+      return results;
+    } catch (error) {
+      // Handle errors during subcategory fetching
+      console.error(`Error fetching subcategories for ${layer}.${activeCategory}:`, error);
+      setLoadingError(`Error loading subcategories: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      return [];
+    }
+  }, [activeCategory, layer, getDirectSubcategories]);
     } else if (localSubcategories.length > 0) {
       // If direct fetch fails but we have local backup, log it
       console.log(
@@ -1449,6 +1468,57 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
     getDirectSubcategories,
     localSubcategories.length,
   ]);
+
+  // Fallback recovery mechanism for problematic layer/category combinations
+  useEffect(() => {
+    // If we have an error and no subcategories, try the universal fallback
+    if (loadingError && activeCategory && directSubcategories.length === 0 && localSubcategories.length === 0) {
+      console.log(`[FALLBACK] Attempting recovery for ${layer}.${activeCategory}`);
+      
+      // Build fallback subcategories for known problematic combinations
+      let fallbackSubcategories: TaxonomyItem[] = [];
+      
+      // L.PRF fallback
+      if (layer === 'L' && activeCategory === 'PRF') {
+        console.info("[FALLBACK] Creating synthetic L.PRF subcategories");
+        fallbackSubcategories = [
+          { code: 'BAS', numericCode: '001', name: 'Base' },
+          { code: 'LEO', numericCode: '002', name: 'Leotard' },
+          { code: 'SEQ', numericCode: '003', name: 'Sequined' },
+          { code: 'LED', numericCode: '004', name: 'LED' },
+          { code: 'ATH', numericCode: '005', name: 'Athletic' },
+          { code: 'MIN', numericCode: '006', name: 'Minimalist' },
+          { code: 'SPK', numericCode: '007', name: 'Sparkly_Dress' }
+        ];
+      } 
+      // S.DNC fallback
+      else if (layer === 'S' && activeCategory === 'DNC') {
+        console.info("[FALLBACK] Creating synthetic S.DNC subcategories");
+        fallbackSubcategories = [
+          { code: 'BAS', numericCode: '001', name: 'Base' },
+          { code: 'PRD', numericCode: '002', name: 'Producer' },
+          { code: 'HSE', numericCode: '003', name: 'House' },
+          { code: 'TEC', numericCode: '004', name: 'Techno' },
+          { code: 'TRN', numericCode: '005', name: 'Trance' },
+          { code: 'DUB', numericCode: '006', name: 'Dubstep' },
+          { code: 'FUT', numericCode: '007', name: 'Future_Bass' },
+          { code: 'DNB', numericCode: '008', name: 'Drum_n_Bass' },
+          { code: 'AMB', numericCode: '009', name: 'Ambient' },
+          { code: 'LIV', numericCode: '010', name: 'Live_Electronic' },
+          { code: 'EXP', numericCode: '011', name: 'Experimental' }
+        ];
+      }
+      
+      if (fallbackSubcategories.length > 0) {
+        console.log(`[FALLBACK] Applied ${fallbackSubcategories.length} subcategories for ${layer}.${activeCategory}`);
+        // Update both ref and state for maximum reliability
+        subcategoriesRef.current = fallbackSubcategories;
+        setLocalSubcategories(fallbackSubcategories);
+        // Update error message to indicate we're using fallback data
+        setLoadingError(`Using fallback subcategories for ${activeCategory}`);
+      }
+    }
+  }, [loadingError, layer, activeCategory, directSubcategories.length, localSubcategories.length]);
 
   // When selectedSubcategory changes from props, update the active subcategory
   useEffect(() => {
@@ -2435,6 +2505,21 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
                 <div className="data-source-indicator">
                   Using {displaySubcategoriesData.dataSource} data source
                   (fallback mode)
+                </div>
+              )}
+              
+              {/* Display loading error message when using fallback data */}
+              {loadingError && (
+                <div className="taxonomy-error-message" style={{ 
+                  marginTop: '8px',
+                  padding: '8px 12px',
+                  backgroundColor: '#fff3cd',
+                  border: '1px solid #ffeeba',
+                  borderRadius: '4px',
+                  color: '#856404',
+                  fontSize: '14px'
+                }}>
+                  {loadingError}
                 </div>
               )}
             </div>
