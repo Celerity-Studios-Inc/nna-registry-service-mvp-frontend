@@ -1441,33 +1441,6 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
       return [];
     }
   }, [activeCategory, layer, getDirectSubcategories]);
-    } else if (localSubcategories.length > 0) {
-      // If direct fetch fails but we have local backup, log it
-      console.log(
-        `Using ${localSubcategories.length} items from local subcategories backup`
-      );
-    } else if (subcategoriesRef.current.length > 0) {
-      // If direct fetch fails but we have ref backup, log it
-      console.log(
-        `Using ${subcategoriesRef.current.length} items from subcategories ref backup`
-      );
-
-      // Also update the state with the ref data for consistency
-      setTimeout(() => {
-        setLocalSubcategories(subcategoriesRef.current);
-        console.log(
-          `Updated local subcategories from ref with ${subcategoriesRef.current.length} items`
-        );
-      }, 0);
-    }
-
-    return results;
-  }, [
-    layer,
-    activeCategory,
-    getDirectSubcategories,
-    localSubcategories.length,
-  ]);
 
   // Fallback recovery mechanism for problematic layer/category combinations
   useEffect(() => {

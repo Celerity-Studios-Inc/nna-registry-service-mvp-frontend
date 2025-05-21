@@ -152,8 +152,9 @@ const TaxonomySelection: React.FC<TaxonomySelectionProps> = ({
         // Run taxonomy data debugging for problematic combinations
         if ((layerCode === 'L' && selectedCategoryCode === 'PRF') || 
             (layerCode === 'S' && selectedCategoryCode === 'DNC')) {
-          console.log(`[DEBUG] Running taxonomy debug for ${layerCode}.${selectedCategoryCode}`);
-          taxonomyService.debugTaxonomyData(layerCode, selectedCategoryCode);
+          console.log(`[DEBUG] Known problematic combination detected: ${layerCode}.${selectedCategoryCode}`);
+          // Log detailed debug info instead of calling a method that doesn't exist
+          console.log(`[DEBUG] Layer: ${layerCode}, Category: ${selectedCategoryCode}`);
         }
         
         const subcategoryOptions = taxonomyService.getSubcategories(
