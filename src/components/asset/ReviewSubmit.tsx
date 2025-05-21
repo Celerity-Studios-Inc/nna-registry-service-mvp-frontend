@@ -15,6 +15,7 @@ import {
   Alert,
   Button,
   CircularProgress,
+  Tooltip,
 } from '@mui/material';
 import {
   Edit as EditIcon,
@@ -31,6 +32,7 @@ import {
   Check as SubmitIcon,
   ChevronLeft,
   Public as PublicIcon,
+  Info as InfoIcon,
 } from '@mui/icons-material';
 import { FileUploadResponse } from '../../types/asset.types';
 import { taxonomyService } from '../../services/simpleTaxonomyService';
@@ -685,8 +687,18 @@ const ReviewSubmit: React.FC<ReviewSubmitProps> = ({
               <Typography variant="caption" color="text.secondary">
                 Sequential Number
               </Typography>
-              <Typography variant="body1" fontWeight="bold">
-                {sequential || '001'}
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Typography variant="body1" fontWeight="bold">
+                  .000
+                </Typography>
+                <Tooltip title="The .000 will be replaced with an assigned sequential number after submission">
+                  <IconButton size="small" sx={{ ml: 0.5, p: 0 }}>
+                    <InfoIcon fontSize="small" color="info" />
+                  </IconButton>
+                </Tooltip>
+              </Box>
+              <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
+                Will be replaced after submission
               </Typography>
             </Box>
           </Paper>
@@ -863,109 +875,7 @@ const ReviewSubmit: React.FC<ReviewSubmitProps> = ({
             </Paper>
           )}
 
-          {/* Enhanced NNA Address Information */}
-          <Paper variant="outlined" sx={{ p: 2, mb: 3 }}>
-            <Box
-              sx={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                mb: 2,
-              }}
-            >
-              <Typography variant="subtitle1" fontWeight="bold">
-                NNA Address
-              </Typography>
-              <IconButton
-                size="small"
-                onClick={() => onEditStep(1)}
-                color="primary"
-              >
-                <EditIcon fontSize="small" />
-              </IconButton>
-            </Box>
-            <Divider sx={{ mb: 2 }} />
-
-            <Box
-              sx={{
-                mb: 3,
-                p: 2,
-                bgcolor: '#f0f7ff',
-                borderRadius: 1,
-                border: '1px solid #d6e4ff',
-              }}
-            >
-              <Typography variant="subtitle2" align="center" gutterBottom>
-                Human-Friendly Name (HFN)
-              </Typography>
-              <Typography
-                variant="h5"
-                align="center"
-                fontWeight="bold"
-                gutterBottom
-                sx={{ color: '#1976d2' }}
-              >
-                {displayHfn || 'Not generated yet'}
-              </Typography>
-
-              <Box sx={{ mt: 3 }}>
-                <Typography variant="subtitle2" align="center" gutterBottom>
-                  Machine-Friendly Address (MFA)
-                </Typography>
-                <Typography
-                  variant="h5"
-                  align="center"
-                  fontFamily="monospace"
-                  gutterBottom
-                  sx={{ color: '#4a148c' }}
-                >
-                  {displayMfa || 'Not generated yet'}
-                </Typography>
-              </Box>
-            </Box>
-
-            <Grid container spacing={2}>
-              <Grid item xs={4}>
-                <Paper variant="outlined" sx={{ p: 1, textAlign: 'center' }}>
-                  <Typography variant="caption" color="text.secondary">
-                    Layer
-                  </Typography>
-                  <Typography variant="body1" fontWeight="bold">
-                    {layer || '-'}
-                  </Typography>
-                </Paper>
-              </Grid>
-              <Grid item xs={4}>
-                <Paper variant="outlined" sx={{ p: 1, textAlign: 'center' }}>
-                  <Typography variant="caption" color="text.secondary">
-                    Category
-                  </Typography>
-                  <Typography variant="body1" fontWeight="bold">
-                    {categoryCode || '-'}
-                  </Typography>
-                </Paper>
-              </Grid>
-              <Grid item xs={4}>
-                <Paper variant="outlined" sx={{ p: 1, textAlign: 'center' }}>
-                  <Typography variant="caption" color="text.secondary">
-                    Subcategory
-                  </Typography>
-                  <Typography variant="body1" fontWeight="bold">
-                    {subcategoryCode || '-'}
-                  </Typography>
-                </Paper>
-              </Grid>
-            </Grid>
-
-            <Box sx={{ mt: 2, textAlign: 'center' }}>
-              <Typography variant="caption" color="text.secondary">
-                Sequential Number
-              </Typography>
-              <Typography variant="body1" fontWeight="bold">
-                {sequential || '001'}
-              </Typography>
-            </Box>
-          </Paper>
+          {/* Second NNA Address card removed to avoid duplication */}
         </Grid>
       </Grid>
 
