@@ -19,7 +19,7 @@ import { CategoryOption, SubcategoryOption } from '../../types/taxonomy.types';
 import taxonomyService from '../../api/taxonomyService';
 import NNAAddressPreview from './NNAAddressPreview';
 import { getAlphabeticCode, convertHFNToMFA } from '../../api/codeMapping';
-import taxonomyMapper from '../../api/taxonomyMapper';
+import taxonomyMapper from '../../api/taxonomyMapper.enhanced';
 // import api from '../../api/api'; // Commented out as we're using the mock implementation
 
 interface TaxonomySelectionProps {
@@ -380,7 +380,7 @@ const TaxonomySelection: React.FC<TaxonomySelectionProps> = ({
                   <Box sx={{ display: 'flex', alignItems: 'center' }}>
                     <Tooltip title="Human-Friendly Name (3-letter code)">
                       <Chip
-                        label={taxonomyMapper.getAlphabeticCode(category.code)}
+                        label={category.code}
                         size="small"
                         color="primary"
                         variant="outlined"
@@ -449,7 +449,7 @@ const TaxonomySelection: React.FC<TaxonomySelectionProps> = ({
                   <Box sx={{ display: 'flex', alignItems: 'center' }}>
                     <Tooltip title="Human-Friendly Name (3-letter code)">
                       <Chip
-                        label={taxonomyMapper.getAlphabeticCode(subcategory.code)}
+                        label={subcategory.code}
                         size="small"
                         color="secondary"
                         variant="outlined"

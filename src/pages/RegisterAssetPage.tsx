@@ -29,7 +29,7 @@ import {
 } from '@mui/icons-material';
 import assetService from '../api/assetService';
 import { formatNNAAddressForDisplay } from '../api/codeMapping.enhanced';
-import taxonomyMapper from '../api/taxonomyMapper';
+import taxonomyMapper from '../api/taxonomyMapper.enhanced';
 import LayerSelection from '../components/asset/LayerSelection';
 import DropdownBasedTaxonomySelector from '../components/taxonomy/DropdownBasedTaxonomySelector';
 import FileUpload from '../components/asset/FileUpload';

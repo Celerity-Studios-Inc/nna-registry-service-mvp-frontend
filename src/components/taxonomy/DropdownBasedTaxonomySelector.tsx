@@ -94,7 +94,15 @@ const DropdownBasedTaxonomySelector: React.FC<DropdownBasedTaxonomySelectorProps
         const categoryOptions = taxonomyService.getCategories(layerCode);
         logger.debug(`Loaded ${categoryOptions.length} categories for layer ${layerCode}`);
         
-        setCategories(categoryOptions);
+        // Map TaxonomyItem to CategoryOption
+        const mappedCategories = categoryOptions.map(item => ({
+          id: `${layerCode}.${item.code}`,
+          code: item.code,
+          name: item.name,
+          numericCode: item.numericCode ? parseInt(item.numericCode) : undefined
+        }));
+        
+        setCategories(mappedCategories);
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : 'Failed to load categories';
         logger.error(`Error loading categories for layer ${layerCode}: ${errorMessage}`);
@@ -123,7 +131,15 @@ const DropdownBasedTaxonomySelector: React.FC<DropdownBasedTaxonomySelectorProps
         const subcategoryOptions = taxonomyService.getSubcategories(layerCode, selectedCategoryCode);
         logger.debug(`Loaded ${subcategoryOptions.length} subcategories for ${layerCode}.${selectedCategoryCode}`);
         
-        setSubcategories(subcategoryOptions);
+        // Map TaxonomyItem to SubcategoryOption
+        const mappedSubcategories = subcategoryOptions.map(item => ({
+          id: `${layerCode}.${selectedCategoryCode}.${item.code}`,
+          code: item.code,
+          name: item.name,
+          numericCode: item.numericCode ? parseInt(item.numericCode) : undefined
+        }));
+        
+        setSubcategories(mappedSubcategories);
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : 'Failed to load subcategories';
         logger.error(`Error loading subcategories for ${layerCode}.${selectedCategoryCode}: ${errorMessage}`);
@@ -133,15 +149,15 @@ const DropdownBasedTaxonomySelector: React.FC<DropdownBasedTaxonomySelectorProps
         if (layerCode === 'S' && selectedCategoryCode === 'POP') {
           logger.info('Applying fallback for S.POP - using hardcoded subcategories');
           setSubcategories([
-            { code: 'BAS', name: 'Base Pop Stars', numericCode: '001' },
-            { code: 'KPO', name: 'K-Pop Stars', numericCode: '002' },
-            { code: 'HPM', name: 'Hipster Male Stars', numericCode: '003' }
+            { id: `${layerCode}.${selectedCategoryCode}.BAS`, code: 'BAS', name: 'Base Pop Stars', numericCode: 1 },
+            { id: `${layerCode}.${selectedCategoryCode}.KPO`, code: 'KPO', name: 'K-Pop Stars', numericCode: 2 },
+            { id: `${layerCode}.${selectedCategoryCode}.HPM`, code: 'HPM', name: 'Hipster Male Stars', numericCode: 7 }
           ]);
         } else if (layerCode === 'W' && selectedCategoryCode === 'BCH') {
           logger.info('Applying fallback for W.BCH - using hardcoded subcategories');
           setSubcategories([
-            { code: 'SUN', name: 'Sunny Beach', numericCode: '001' },
-            { code: 'TRP', name: 'Tropical Beach', numericCode: '002' }
+            { id: `${layerCode}.${selectedCategoryCode}.SUN`, code: 'SUN', name: 'Sunny Beach', numericCode: 3 },
+            { id: `${layerCode}.${selectedCategoryCode}.TRP`, code: 'TRP', name: 'Tropical Beach', numericCode: 2 }
           ]);
         }
       } finally {
