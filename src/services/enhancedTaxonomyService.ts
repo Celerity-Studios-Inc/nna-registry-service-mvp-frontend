@@ -14,7 +14,11 @@ import { TaxonomyItem } from '../types/taxonomy.types';
 // Import taxonomy data from JSON
 // Note: TypeScript doesn't provide direct import typing for JSON files
 // so we use a more generic approach
-import * as taxonomyData from '../assets/enriched_nna_layer_taxonomy_v1.3.json';
+// @ts-ignore - Ignore the lack of explicit typing for the JSON import
+import * as taxonomyDataImport from '../assets/enriched_nna_layer_taxonomy_v1.3.json';
+
+// Create a typed version of the taxonomy data
+const taxonomyData: Record<string, Record<string, any>> = taxonomyDataImport as any;
 
 // Import fallback data from taxonomy lookup tables
 import {
@@ -296,8 +300,8 @@ export function getSubcategories(layer: string, categoryCode: string): TaxonomyI
     source = 'taxonomy_json';
     
     // Find the category in the taxonomy data
-    let targetCategory = null;
-    let categoryNum = null;
+    let targetCategory: any = null;
+    let categoryNum: string | null = null;
     
     // Look through all categories to find the matching one by code
     if (taxonomyData[normalizedLayer]?.categories) {
@@ -551,7 +555,8 @@ export function convertMFAtoHFN(mfa: string): string {
  * Inspection utility for debugging taxonomy structure
  */
 export function inspectTaxonomyStructure(layer: string, categoryCode: string): Record<string, any> {
-  logger.group(`Taxonomy Structure Inspection: ${layer}.${categoryCode}`);
+  console.group(`Taxonomy Structure Inspection: ${layer}.${categoryCode}`);
+  logger.debug(`Taxonomy Structure Inspection: ${layer}.${categoryCode}`);
   
   try {
     // Normalize inputs
@@ -562,7 +567,7 @@ export function inspectTaxonomyStructure(layer: string, categoryCode: string): R
     logger.debug(`Checking layer: ${normalizedLayer}`);
     if (!taxonomyData[normalizedLayer]) {
       logger.debug(`Layer ${normalizedLayer} does not exist in taxonomy data`);
-      logger.groupEnd();
+      console.groupEnd();
       return { exists: false, reason: 'layer_not_found' };
     }
     
@@ -572,14 +577,14 @@ export function inspectTaxonomyStructure(layer: string, categoryCode: string): R
     logger.debug(`Checking categories for layer ${normalizedLayer}`);
     if (!taxonomyData[normalizedLayer].categories) {
       logger.debug(`No categories found for layer ${normalizedLayer}`);
-      logger.groupEnd();
+      console.groupEnd();
       return { exists: false, reason: 'no_categories' };
     }
     
     // 3. Find specific category
     logger.debug(`Looking for category ${normalizedCategoryCode}`);
-    let targetCategory = null;
-    let categoryNum = null;
+    let targetCategory: any = null;
+    let categoryNum: string | null = null;
     
     Object.keys(taxonomyData[normalizedLayer].categories).forEach(catNum => {
       const category = taxonomyData[normalizedLayer].categories[catNum];
@@ -591,7 +596,7 @@ export function inspectTaxonomyStructure(layer: string, categoryCode: string): R
     
     if (!targetCategory) {
       logger.debug(`Category ${normalizedCategoryCode} not found in layer ${normalizedLayer}`);
-      logger.groupEnd();
+      console.groupEnd();
       return { exists: false, reason: 'category_not_found' };
     }
     
@@ -600,12 +605,12 @@ export function inspectTaxonomyStructure(layer: string, categoryCode: string): R
     // 4. Check subcategories
     if (!targetCategory.subcategories) {
       logger.debug(`No subcategories found for category ${normalizedCategoryCode}`);
-      logger.groupEnd();
+      console.groupEnd();
       return { exists: false, reason: 'no_subcategories' };
     }
     
     // 5. List all subcategories
-    const subcategories = [];
+    const subcategories: {id: string, code: string, name: string}[] = [];
     Object.keys(targetCategory.subcategories).forEach(subNum => {
       const subcategory = targetCategory.subcategories[subNum];
       subcategories.push({
@@ -616,7 +621,7 @@ export function inspectTaxonomyStructure(layer: string, categoryCode: string): R
     });
     
     logger.debug(`Found ${subcategories.length} subcategories:`, subcategories);
-    logger.groupEnd();
+    console.groupEnd();
     
     return { 
       exists: true, 
@@ -627,8 +632,31 @@ export function inspectTaxonomyStructure(layer: string, categoryCode: string): R
     
   } catch (error) {
     logger.error(`Error inspecting taxonomy structure:`, error);
-    logger.groupEnd();
+    console.groupEnd();
     return { exists: false, reason: 'error', error: String(error) };
+  }
+}
+
+/**
+ * Debug utility for taxonomy data - useful for console debugging
+ */
+export function debugTaxonomyData(layer: string, categoryCode: string): void {
+  logger.debug('=== Enhanced Taxonomy Debugging ===');
+  logger.debug(`Layer: ${layer}`);
+  logger.debug(`Category Code: ${categoryCode}`);
+  
+  // Use the inspect method to get structured data
+  const inspectionResult = inspectTaxonomyStructure(layer, categoryCode);
+  logger.debug('Inspection result:', inspectionResult);
+  
+  // Output additional useful debugging info
+  if (layer && LAYER_LOOKUPS[layer]) {
+    logger.debug(`LAYER_LOOKUPS[${layer}] entries: ${Object.keys(LAYER_LOOKUPS[layer]).length}`);
+  }
+  
+  if (layer && categoryCode && LAYER_SUBCATEGORIES[layer] && LAYER_SUBCATEGORIES[layer][categoryCode]) {
+    logger.debug(`LAYER_SUBCATEGORIES[${layer}][${categoryCode}]:`, 
+      LAYER_SUBCATEGORIES[layer][categoryCode]);
   }
 }
 
@@ -639,7 +667,8 @@ export const enhancedTaxonomyService = {
   getSubcategories,
   convertHFNtoMFA,
   convertMFAtoHFN,
-  inspectTaxonomyStructure
+  inspectTaxonomyStructure,
+  debugTaxonomyData
 };
 
 export default enhancedTaxonomyService;
