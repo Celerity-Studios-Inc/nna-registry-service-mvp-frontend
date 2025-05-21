@@ -197,32 +197,17 @@ const TaxonomySelection: React.FC<TaxonomySelectionProps> = ({
           categoryAlpha = categoryAlpha.toUpperCase();
           subcategoryAlpha = subcategoryAlpha.toUpperCase();
 
-          // Special handling for S.001.HPM -> convert to S.POP.HPM
-          if (layerCode === 'S' && /^\d+$/.test(categoryAlpha)) {
-            if (categoryAlpha === '001') {
-              console.log(`Converting numeric code ${categoryAlpha} to POP for Stars layer`);
-              categoryAlpha = 'POP';
-            }
-          }
-
-          // Check if we're dealing with S.POP.HPM for additional debugging
-          if (layerCode === 'S' && categoryAlpha === 'POP' && subcategoryAlpha === 'HPM') {
-            console.log('IMPORTANT: Found S.POP.HPM combination, force generating correct HFN and MFA');
+          // If we have numeric codes, convert them to alphabetic for consistency
+          if (/^\d+$/.test(categoryAlpha)) {
+            categoryAlpha = getAlphabeticCode(layerCode, categoryAlpha, '');
+            console.log(`Converted numeric category code to alphabetic: ${categoryAlpha}`);
           }
 
           // Create the properly formatted HFN with the alphabetic codes
           const hfnAddress = `${layerCode}.${categoryAlpha}.${subcategoryAlpha}.${sequential}`;
 
-          // For S.POP.HPM, we need to handle the MFA correctly with the sequential number
-          let mfaAddress;
-          if (layerCode === 'S' && categoryAlpha === 'POP' && subcategoryAlpha === 'HPM') {
-            // Force the correct MFA for this specific case using the right sequential number
-            mfaAddress = `2.001.007.${sequential}`;
-            console.log(`FORCE MAPPING: Using hardcoded MFA for S.POP.HPM: ${mfaAddress}`);
-          } else {
-            // Generate the MFA using the standard conversion function for all other cases
-            mfaAddress = convertHFNToMFA(hfnAddress);
-          }
+          // Generate the MFA using the standard conversion function
+          const mfaAddress = convertHFNToMFA(hfnAddress);
 
           // IMPORTANT: For display in preview, we will show ".nnn" but we still need to pass
           // the real sequential number to the form for backend API to ensure correct registration
@@ -231,20 +216,7 @@ const TaxonomySelection: React.FC<TaxonomySelectionProps> = ({
           console.log(`Generated NNA addresses for form state: HFN=${hfnAddress}, MFA=${mfaAddress}, seq=${sequentialNum}`);
           console.log(`Note: Preview will display with '.000' instead of the actual sequential number`);
 
-          // Use the standard conversion for all cases
-          console.log(`Using standard MFA conversion for ${hfnAddress} -> ${mfaAddress}`);
-
-          // Verify the correct MFA generation for S.POP.HPM
-          if (layerCode === 'S' && categoryAlpha === 'POP' && subcategoryAlpha === 'HPM') {
-            console.log(`VERIFICATION: S.POP.HPM should map to MFA 2.001.007.${sequential}`);
-            // Apply a validation check - it should use the expected sequential number pattern
-            const expectedPattern = `2.001.007.${sequential}`;
-            if (mfaAddress !== expectedPattern) {
-              console.error(`WARNING: Expected MFA for S.POP.HPM to be ${expectedPattern} but got ${mfaAddress}`);
-              // Force the correct value if somehow it's still wrong
-              mfaAddress = expectedPattern;
-            }
-          }
+          console.log(`Generated MFA conversion for ${hfnAddress} -> ${mfaAddress}`);
 
           // Store the original subcategory code to preserve it after backend normalization
           // This will be used to display the correct subcategory in the success screen
@@ -472,18 +444,6 @@ const TaxonomySelection: React.FC<TaxonomySelectionProps> = ({
           </Select>
         </FormControl>
 
-        {/* Add warning for non-HPM subcategories that will be normalized */}
-        {layerCode === 'S' && 
-         selectedCategoryCode === 'POP' && 
-         selectedSubcategoryCode && 
-         selectedSubcategoryCode !== 'HPM' && 
-         selectedSubcategoryCode !== 'BAS' && (
-          <Alert severity="info" sx={{ mt: 2, mb: 2 }}>
-            <AlertTitle>Subcategory Compatibility Note</AlertTitle>
-            While you've selected <strong>{selectedSubcategoryCode}</strong>, the system will internally use <strong>BAS</strong> for storage.
-            Your selection will be preserved in the display. This is a temporary limitation that will be addressed in a future update.
-          </Alert>
-        )}
 
         {selectedCategoryCode && selectedSubcategoryCode && (
           <>

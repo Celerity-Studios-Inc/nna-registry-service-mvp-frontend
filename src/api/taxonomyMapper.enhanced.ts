@@ -76,30 +76,12 @@ class TaxonomyMapperEnhanced {
    * @returns The machine-friendly address (e.g., 2.001.007.001)
    */
   convertHFNToMFA(hfn: string): string {
-    // Check if we have a direct test case mapping
+    // Check if we have a direct test case mapping (only for test cases)
     if (this.cache.hfnToMfa.has(hfn)) {
       return this.cache.hfnToMfa.get(hfn)!;
     }
 
-    // Special case for S.POP.HPM
-    if (hfn.startsWith('S.POP.HPM.')) {
-      const sequential = hfn.split('.')[3];
-      const mfa = `2.001.007.${sequential}`;
-      this.cache.hfnToMfa.set(hfn, mfa);
-      return mfa;
-    }
-
-    // Special case for W.BCH.SUN
-    if (hfn.startsWith('W.BCH.SUN.')) {
-      const parts = hfn.split('.');
-      const sequential = parts[3];
-      const suffix = parts.length > 4 ? '.' + parts.slice(4).join('.') : '';
-      const mfa = `5.004.003.${sequential}${suffix}`;
-      this.cache.hfnToMfa.set(hfn, mfa);
-      return mfa;
-    }
-
-    // Use taxonomy service for other cases
+    // Use taxonomy service for all cases - no special case handling
     try {
       const mfa = taxonomyService.convertHFNtoMFA(hfn);
       this.cache.hfnToMfa.set(hfn, mfa);
@@ -116,30 +98,12 @@ class TaxonomyMapperEnhanced {
    * @returns The human-friendly address (e.g., S.POP.HPM.001)
    */
   convertMFAToHFN(mfa: string): string {
-    // Check cache first
+    // Check cache first (only for test cases)
     if (this.cache.mfaToHfn.has(mfa)) {
       return this.cache.mfaToHfn.get(mfa)!;
     }
 
-    // Special case for S.POP.HPM (2.001.007)
-    if (mfa.startsWith('2.001.007.')) {
-      const sequential = mfa.split('.')[3];
-      const hfn = `S.POP.HPM.${sequential}`;
-      this.cache.mfaToHfn.set(mfa, hfn);
-      return hfn;
-    }
-
-    // Special case for W.BCH.SUN (5.004.003)
-    if (mfa.startsWith('5.004.003.')) {
-      const parts = mfa.split('.');
-      const sequential = parts[3];
-      const suffix = parts.length > 4 ? '.' + parts.slice(4).join('.') : '';
-      const hfn = `W.BCH.SUN.${sequential}${suffix}`;
-      this.cache.mfaToHfn.set(mfa, hfn);
-      return hfn;
-    }
-
-    // Use taxonomy service for other cases
+    // Use taxonomy service for all cases - no special case handling
     try {
       const hfn = taxonomyService.convertMFAtoHFN(mfa);
       if (hfn) {
@@ -167,9 +131,9 @@ class TaxonomyMapperEnhanced {
     const subcategoryStr = String(subcategory);
     const sequentialStr = String(sequential).padStart(3, '0');
 
-    // Handle special cases for tests
+    // Handle special cases for tests only - these are not production cases
 
-    // Special case for invalid layer X (test case)
+    // Special case for invalid layer X (test case only)
     if (layerStr === 'X') {
       return {
         hfn: `X.POP.BAS.${sequentialStr}`,
@@ -177,7 +141,7 @@ class TaxonomyMapperEnhanced {
       };
     }
 
-    // Special case for S.INVALID (test case)
+    // Special case for S.INVALID (test case only)
     if (layerStr === 'S' && categoryStr === 'INVALID') {
       return {
         hfn: `S.INV.BAS.${sequentialStr}`,
@@ -185,7 +149,7 @@ class TaxonomyMapperEnhanced {
       };
     }
 
-    // Special case for S.POP.INVALID (test case)
+    // Special case for S.POP.INVALID (test case only)
     if (
       layerStr === 'S' &&
       categoryStr === 'POP' &&
@@ -194,56 +158,6 @@ class TaxonomyMapperEnhanced {
       return {
         hfn: `S.POP.INV.${sequentialStr}`,
         mfa: `2.001.001.${sequentialStr}`,
-      };
-    }
-
-    // Special case for Stars.Pop.HPM
-    if (
-      layerStr === 'S' &&
-      (categoryStr === 'POP' || categoryStr === '001') &&
-      (subcategoryStr === 'HPM' || subcategoryStr === '007')
-    ) {
-      return {
-        hfn: `S.POP.HPM.${sequentialStr}`,
-        mfa: `2.001.007.${sequentialStr}`,
-      };
-    }
-
-    // Special case for Worlds.Beach.Sunny
-    if (
-      layerStr === 'W' &&
-      (categoryStr === 'BCH' || categoryStr === '004') &&
-      (subcategoryStr === 'SUN' || subcategoryStr === '003')
-    ) {
-      return {
-        hfn: `W.BCH.SUN.${sequentialStr}`,
-        mfa: `5.004.003.${sequentialStr}`,
-      };
-    }
-
-    // Special case for Worlds.Stage.Festival
-    if (
-      layerStr === 'W' &&
-      (categoryStr === 'STG' || categoryStr === '002') &&
-      (subcategoryStr === 'FES' || subcategoryStr === '003')
-    ) {
-      return {
-        hfn: `W.STG.FES.${sequentialStr}`,
-        mfa: `5.002.003.${sequentialStr}`,
-      };
-    }
-
-    // Special case for Worlds.Urban/HipHop.Base
-    if (
-      layerStr === 'W' &&
-      (categoryStr === 'HIP' ||
-        categoryStr === 'URB' ||
-        categoryStr === '003') &&
-      (subcategoryStr === 'BAS' || subcategoryStr === '001')
-    ) {
-      return {
-        hfn: `W.HIP.BAS.${sequentialStr}`,
-        mfa: `5.003.001.${sequentialStr}`,
       };
     }
 
@@ -355,27 +269,28 @@ class TaxonomyMapperEnhanced {
    * @returns The numeric code
    */
   getCategoryNumericCode(layer: string, categoryCode: string | number): number {
-    // Special cases for tests
-    if (layer === 'W' && (categoryCode === 'HIP' || categoryCode === 'URB')) {
-      return 3; // Urban/HipHop in World layer is 003
+    // Handle numeric input directly
+    if (typeof categoryCode === 'number') {
+      return categoryCode;
     }
-
-    if (layer === 'W' && categoryCode === 'BCH') {
-      return 4; // Beach in World layer is 004
+    
+    // If it's already numeric in string form, parse it
+    if (/^\d+$/.test(String(categoryCode))) {
+      return parseInt(String(categoryCode), 10);
     }
-
-    if (layer === 'W' && categoryCode === 'STG') {
-      return 2; // Stage in World layer is 002
+    
+    // Look up the category in the layer's categories
+    try {
+      const categories = taxonomyService.getCategories(layer);
+      const category = categories.find(cat => cat.code === categoryCode);
+      
+      if (category && category.numericCode) {
+        return parseInt(category.numericCode, 10);
+      }
+    } catch (error) {
+      console.error('Error getting category numeric code:', error);
     }
-
-    if (layer === 'S' && categoryCode === 'POP') {
-      return 1; // Pop in Star layer is 001 for tests
-    }
-
-    if (layer === 'S' && categoryCode === 'RCK') {
-      return 5; // Rock in Star layer is 005 for tests
-    }
-
+    
     // Default to 1 if not found
     return 1;
   }
@@ -392,11 +307,23 @@ class TaxonomyMapperEnhanced {
     categoryCode: string,
     subcategoryCode: string
   ): number {
-    // Special case for S.POP.HPM - tests expect 7
-    if (layer === 'S' && categoryCode === 'POP' && subcategoryCode === 'HPM') {
-      return 7;
+    // If it's already numeric, parse it
+    if (/^\d+$/.test(subcategoryCode)) {
+      return parseInt(subcategoryCode, 10);
     }
-
+    
+    // Look up the subcategory in the layer's subcategories
+    try {
+      const subcategories = taxonomyService.getSubcategories(layer, categoryCode);
+      const subcategory = subcategories.find(sub => sub.code === subcategoryCode);
+      
+      if (subcategory && subcategory.numericCode) {
+        return parseInt(subcategory.numericCode, 10);
+      }
+    } catch (error) {
+      console.error('Error getting subcategory numeric code:', error);
+    }
+    
     // Default to 1 if not found
     return 1;
   }
@@ -411,31 +338,23 @@ class TaxonomyMapperEnhanced {
     layer: string,
     numericCode: number | string
   ): string {
-    const numCode =
-      typeof numericCode === 'string' ? parseInt(numericCode) : numericCode;
-
-    // Special cases for tests
-    if (layer === 'W' && numCode === 3) {
-      return 'HIP'; // 003 in World layer is HIP (Urban/HipHop)
+    const numericStr = String(numericCode).padStart(3, '0');
+    
+    // Look through the layer's categories for a matching numeric code
+    try {
+      const categories = taxonomyService.getCategories(layer);
+      
+      for (const category of categories) {
+        if (category.numericCode === numericStr) {
+          return category.code;
+        }
+      }
+    } catch (error) {
+      console.error('Error getting category alphabetic code:', error);
     }
-
-    if (layer === 'W' && numCode === 4) {
-      return 'BCH'; // 004 in World layer is BCH (Beach)
-    }
-
-    if (layer === 'W' && numCode === 2) {
-      return 'STG'; // 002 in World layer is STG (Stage)
-    }
-
-    if (layer === 'S' && numCode === 1) {
-      return 'POP'; // 001 in Star layer is POP
-    }
-
-    if (layer === 'S' && numCode === 5) {
-      return 'RCK'; // 005 in Star layer is RCK (Rock)
-    }
-
-    // Default fallback
+    
+    // Default fallback - POP for 001, otherwise the padded numeric code
+    const numCode = typeof numericCode === 'string' ? parseInt(numericCode) : numericCode;
     return numCode === 1 ? 'POP' : String(numCode).padStart(3, '0');
   }
 
@@ -451,31 +370,26 @@ class TaxonomyMapperEnhanced {
     categoryNumeric: number | string,
     subcategoryNumeric: number | string
   ): string {
-    const catNum =
-      typeof categoryNumeric === 'string'
-        ? parseInt(categoryNumeric)
-        : categoryNumeric;
-    const subNum =
-      typeof subcategoryNumeric === 'string'
-        ? parseInt(subcategoryNumeric)
-        : subcategoryNumeric;
-
-    // Special case for S.001.007 (S.POP.HPM)
-    if (layer === 'S' && catNum === 1 && subNum === 7) {
-      return 'HPM';
+    // Convert category numeric to alphabetic
+    const categoryAlpha = this.getCategoryAlphabeticCode(layer, categoryNumeric);
+    const subcategoryNumericStr = String(subcategoryNumeric).padStart(3, '0');
+    
+    // Look through all subcategories for a matching numeric code
+    try {
+      const subcategories = taxonomyService.getSubcategories(layer, categoryAlpha);
+      
+      for (const subcategory of subcategories) {
+        if (subcategory.numericCode === subcategoryNumericStr) {
+          return subcategory.code;
+        }
+      }
+    } catch (error) {
+      console.error('Error getting subcategory alphabetic code:', error);
     }
-
-    // Special case for W.004.003 (W.BCH.SUN)
-    if (layer === 'W' && catNum === 4 && subNum === 3) {
-      return 'SUN';
-    }
-
-    // Special case for W.002.003 (W.STG.FES)
-    if (layer === 'W' && catNum === 2 && subNum === 3) {
-      return 'FES';
-    }
-
-    // Default fallback - base is common
+    
+    // Default fallback - BAS for 001, otherwise SUB
+    const subNum = typeof subcategoryNumeric === 'string' ? 
+      parseInt(subcategoryNumeric) : subcategoryNumeric;
     return subNum === 1 ? 'BAS' : 'SUB';
   }
 }

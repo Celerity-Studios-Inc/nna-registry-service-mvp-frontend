@@ -31,7 +31,7 @@ import assetService from '../api/assetService';
 import { formatNNAAddressForDisplay } from '../api/codeMapping.enhanced';
 import taxonomyMapper from '../api/taxonomyMapper.enhanced';
 import LayerSelection from '../components/asset/LayerSelection';
-import DropdownBasedTaxonomySelector from '../components/taxonomy/DropdownBasedTaxonomySelector';
+import TaxonomySelection from '../components/asset/TaxonomySelection';
 import FileUpload from '../components/asset/FileUpload';
 import ReviewSubmit from '../components/asset/ReviewSubmit';
 import TrainingDataCollection from '../components/asset/TrainingDataCollection';
@@ -815,13 +815,16 @@ const RegisterAssetPage: React.FC = () => {
         );
       case 1:
         return (
-          <DropdownBasedTaxonomySelector
+          <TaxonomySelection
             layerCode={watchLayer}
             onCategorySelect={handleCategorySelect}
             onSubcategorySelect={handleSubcategorySelect}
             selectedCategoryCode={watchCategoryCode}
             selectedSubcategoryCode={watchSubcategoryCode}
             onNNAAddressChange={handleNNAAddressChange}
+            categoryName={getValues('categoryName')}
+            subcategoryName={getValues('subcategoryName')}
+            subcategoryNumericCode={getValues('subcategoryNumericCode')}
           />
         );
       case 2:
