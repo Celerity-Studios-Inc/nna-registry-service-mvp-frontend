@@ -7,24 +7,8 @@
 
 import { taxonomyServiceEnhanced as taxonomyService } from '../services/simpleTaxonomyService.enhanced';
 
-// Special case mappings for tests
-const TEST_CASE_MAPPINGS = {
-  // HFN to MFA
-  'W.BCH.SUN.001': '5.004.003.001',
-  'S.POP.HPM.001': '2.001.007.001',
-  'S.RCK.BAS.001': '2.005.001.001',
-  'W.BCH.TRO.001': '5.004.002.001',
-  'W.STG.FES.001': '5.002.003.001',
-  'G.CAT.SUB.001': '1.001.001.001',
-
-  // MFA to HFN
-  '5.004.003.001': 'W.BCH.SUN.001',
-  '2.001.007.001': 'S.POP.HPM.001',
-  '2.005.001.001': 'S.RCK.BAS.001',
-  '5.004.002.001': 'W.BCH.TRO.001',
-  '5.002.003.001': 'W.STG.FES.001',
-  '1.001.001.001': 'G.CAT.SUB.001',
-};
+// No special case mappings - using direct lookups from flattened taxonomy instead
+const TEST_CASE_MAPPINGS = {};
 
 // Cache for speeding up repeated mappings
 interface MappingCache {
@@ -44,20 +28,10 @@ class TaxonomyMapperEnhanced {
   }
 
   /**
-   * Initialize the cache with test case mappings
+   * Initialize the cache - no special cases anymore
    */
   private initializeCache(): void {
-    Object.entries(TEST_CASE_MAPPINGS).forEach(([key, value]) => {
-      if (key.includes('.')) {
-        if (key[0].match(/[A-Z]/)) {
-          // It's an HFN
-          this.cache.hfnToMfa.set(key, value);
-        } else {
-          // It's an MFA
-          this.cache.mfaToHfn.set(key, value);
-        }
-      }
-    });
+    // No special case mapping initialization - using direct lookups
   }
 
   /**
@@ -76,12 +50,7 @@ class TaxonomyMapperEnhanced {
    * @returns The machine-friendly address (e.g., 2.001.007.001)
    */
   convertHFNToMFA(hfn: string): string {
-    // Check if we have a direct test case mapping (only for test cases)
-    if (this.cache.hfnToMfa.has(hfn)) {
-      return this.cache.hfnToMfa.get(hfn)!;
-    }
-
-    // Use taxonomy service for all cases - no special case handling
+    // Use flattened taxonomy service directly with no special case handling
     try {
       const mfa = taxonomyService.convertHFNtoMFA(hfn);
       this.cache.hfnToMfa.set(hfn, mfa);
@@ -98,12 +67,7 @@ class TaxonomyMapperEnhanced {
    * @returns The human-friendly address (e.g., S.POP.HPM.001)
    */
   convertMFAToHFN(mfa: string): string {
-    // Check cache first (only for test cases)
-    if (this.cache.mfaToHfn.has(mfa)) {
-      return this.cache.mfaToHfn.get(mfa)!;
-    }
-
-    // Use taxonomy service for all cases - no special case handling
+    // Use flattened taxonomy service directly with no special case handling
     try {
       const hfn = taxonomyService.convertMFAtoHFN(mfa);
       if (hfn) {
@@ -123,12 +87,12 @@ class TaxonomyMapperEnhanced {
     layer: string,
     category: string | number,
     subcategory: string | number,
-    sequential: string | number = '001'
+    sequential: string | number = '000'
   ): { hfn: string; mfa: string } {
-    // Format inputs
+    // Format inputs - always use uppercase for consistent representation
     const layerStr = String(layer).toUpperCase();
-    const categoryStr = String(category);
-    const subcategoryStr = String(subcategory);
+    const categoryStr = String(category).toUpperCase();
+    const subcategoryStr = String(subcategory).toUpperCase();
     const sequentialStr = String(sequential).padStart(3, '0');
 
     // Handle special cases for tests only - these are not production cases

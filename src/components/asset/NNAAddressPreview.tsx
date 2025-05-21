@@ -46,10 +46,12 @@ const NNAAddressPreview: React.FC<NNAAddressPreviewProps> = ({
 
   // Use the taxonomyFormatter utility to ensure consistent display
   // This handles all special cases internally and returns properly formatted addresses
-  const hfn = `${layerCode}.${categoryCode}.${subcategoryCode}.001`;
+  // Always use .000 as the sequential number placeholder in the UI
+  const hfn = `${layerCode}.${categoryCode}.${subcategoryCode}.000`;
   
   // Get formatted addresses
   const hfnAddress = taxonomyFormatter.formatHFN(hfn);
+  // Use direct lookups from the flattened taxonomy instead of conversion
   const mfaAddress = taxonomyService.convertHFNtoMFA(hfn) || '';
   
   // If MFA conversion failed, provide a fallback

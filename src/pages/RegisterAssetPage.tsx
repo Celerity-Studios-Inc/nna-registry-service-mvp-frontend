@@ -321,17 +321,11 @@ const RegisterAssetPage: React.FC = () => {
         console.log('DETECTED S.POP.LGM COMBINATION - Will convert to proper codes for backend');
       }
 
-      // Add extended debug logging specifically for S.POP.HPM case
+      // Add extended debug logging for the current MFA/HFN without hardcoded expected values
       if (data.layer === 'S' && data.categoryCode === 'POP' && data.subcategoryCode === 'HPM') {
         console.log('IMPORTANT - Asset registration with S.POP.HPM:');
         console.log(`HFN: ${data.hfn}`);
         console.log(`MFA: ${data.mfa}`);
-        console.log('Verifying MFA is correct: expected 2.001.007.001');
-
-        // This should match the expected MFA for S.POP.HPM
-        if (data.mfa !== '2.001.007.001') {
-          console.error(`WARNING: MFA is incorrect! Expected 2.001.007.001 but got ${data.mfa}`);
-        }
       }
 
       // Create the asset
@@ -1470,7 +1464,16 @@ const RegisterAssetPage: React.FC = () => {
     // For display in the success screen, replace the sequential number with the actual one
     // (in case sequential was formatted differently)
     let displayHfn = hfn.replace(/\.000$/, `.${sequential}`);
-    const displayMfa = mfa.replace(/\.000$/, `.${sequential}`);
+    
+    // Make sure to get the correct MFA (either from backend or convert)
+    let displayMfa;
+    if (mfa) {
+      displayMfa = mfa.replace(/\.000$/, `.${sequential}`);
+    } else {
+      // If MFA is missing, try to generate it from the backend response or the HFN
+      displayMfa = createdAsset.nna_address || taxonomyMapper.convertHFNToMFA(displayHfn) || '';
+      console.log(`Setting display MFA to: ${displayMfa}`);
+    }
 
     // Normalize the HFN address to ensure it always uses alphabetic codes
     // This fixes the issue where some categories might show as numeric codes
@@ -1481,6 +1484,16 @@ const RegisterAssetPage: React.FC = () => {
     console.log(`Original backend Name: ${createdAsset.name}`);
     console.log(`Display HFN: ${displayHfn}`);
     console.log(`Display MFA: ${displayMfa}`);
+    
+    // Ensure we have the MFA from the backend response
+    if (!displayMfa && createdAsset) {
+      // Try to get it from various backend response formats
+      displayMfa = createdAsset.nna_address || 
+                  createdAsset.metadata?.machineFriendlyAddress || 
+                  createdAsset.metadata?.mfa || 
+                  '';
+      console.log(`Found MFA from backend response: ${displayMfa}`);
+    }
     console.log(`Original subcategory (for display): ${subcategory}`);
 
     // Add clear logging for debugging
