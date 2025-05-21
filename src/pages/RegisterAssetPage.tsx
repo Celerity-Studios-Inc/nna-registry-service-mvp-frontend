@@ -1471,7 +1471,7 @@ const RegisterAssetPage: React.FC = () => {
       displayMfa = mfa.replace(/\.000$/, `.${sequential}`);
     } else {
       // If MFA is missing, try to generate it from the backend response or the HFN
-      displayMfa = createdAsset.nna_address || taxonomyMapper.convertHFNToMFA(displayHfn) || '';
+      displayMfa = createdAsset.nnaAddress || taxonomyMapper.convertHFNToMFA(displayHfn) || '';
       console.log(`Setting display MFA to: ${displayMfa}`);
     }
 
@@ -1488,7 +1488,8 @@ const RegisterAssetPage: React.FC = () => {
     // Ensure we have the MFA from the backend response
     if (!displayMfa && createdAsset) {
       // Try to get it from various backend response formats
-      displayMfa = createdAsset.nna_address || 
+      displayMfa = createdAsset.nnaAddress || 
+                  (createdAsset as any).nna_address || 
                   createdAsset.metadata?.machineFriendlyAddress || 
                   createdAsset.metadata?.mfa || 
                   '';
@@ -1507,6 +1508,14 @@ const RegisterAssetPage: React.FC = () => {
     });
 
     console.log(`Success screen showing MFA: ${displayMfa} and HFN: ${displayHfn} from asset:`, createdAsset);
+    if (createdAsset && !displayMfa) {
+      console.warn('MFA display still empty, checking all possible properties:', {
+        nnaAddress: createdAsset.nnaAddress,
+        nna_address: (createdAsset as any).nna_address,
+        machineFriendlyAddress: createdAsset.metadata?.machineFriendlyAddress,
+        mfa: createdAsset.metadata?.mfa,
+      });
+    }
                 
     const layerName = createdAsset.metadata?.layerName || 
                       `Layer ${createdAsset.layer}`;
