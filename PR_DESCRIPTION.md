@@ -1,32 +1,37 @@
-## Fix W.BCH.SUN Taxonomy Mapping Issue
+# Implement Dropdown-Based Taxonomy Selector
 
-This PR implements a targeted fix for the W.BCH.SUN taxonomy mapping issue, ensuring it correctly maps to numeric code 003 instead of 77.
+This PR replaces the card-based taxonomy selector with a dropdown-based implementation to address persistent issues with subcategories disappearing during selection. The dropdown approach provides a more stable UI while maintaining full compatibility with existing code.
 
-### Changes
+## Changes
 
-1. **Special Case Handling**:
-   - Added explicit special case in `taxonomyMapper.getSubcategoryNumericCode` for W.BCH.SUN → 003
-   - No changes to the core taxonomy data structure, ensuring stability
+- Created new `DropdownBasedTaxonomySelector` component that uses dropdown menus instead of cards
+- Updated `RegisterAssetPage` to use the new dropdown selector
+- Created a test page to compare card vs. dropdown implementations
+- Added validation script to verify the implementation
+- Documented the changes in `DROPDOWN_TAXONOMY_IMPLEMENTATION.md`
 
-2. **UI Enhancement**:
-   - Added informational alert in TaxonomySelection component to indicate special case handling
-   - Alert only appears when the user selects W.BCH.SUN combination
+## Motivation
 
-3. **Testing & Documentation**:
-   - Created `test-wbchsun-fix.html` for easy in-browser verification
-   - Added documentation in `WBCHSUN_FIX.md` explaining the approach and implementation
-   - Updated README with fix information
+The card-based taxonomy selector in `SimpleTaxonomySelectionV2` has been experiencing issues where subcategories disappear after selection, causing disruption to the asset registration workflow. This implementation follows the advice to "work with dropdowns" as discussed with the team.
 
-### Why This Approach
+## Implementation Details
 
-This PR uses a minimal, targeted approach that:
-- Addresses the specific issue without introducing broader changes
-- Maintains compatibility with existing code
-- Is simple to verify, test, and roll back if needed
+The new dropdown-based selector:
 
-### Testing
+1. Uses Material UI's Select components for stable dropdown UI
+2. Maintains compatibility with existing taxonomy services
+3. Properly handles special cases like S.POP.HPM and W.BCH.SUN
+4. Uses enhanced address formatter for consistent HFN/MFA generation
+5. Provides clearer visual feedback during selection
 
-The fix has been tested with various combinations to verify:
-- W.BCH.SUN.001 now correctly maps to 5.004.003.001
-- Other mappings like S.POP.HPM.001 → 2.001.007.001 are unaffected
-- The UI correctly shows an informational alert for W.BCH.SUN
+## Testing
+
+The implementation includes:
+
+1. A validation script (`scripts/validate-dropdown-taxonomy.js`)
+2. A dedicated test page for comparing selectors side-by-side
+3. Integration with the existing asset registration workflow
+
+## References
+
+Based on working implementation from CI/CD #139 (Commit 3521e3f).

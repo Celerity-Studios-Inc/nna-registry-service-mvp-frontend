@@ -1,159 +1,318 @@
 import React, { useState } from 'react';
-import { TaxonomyDataProvider } from '../providers/taxonomy/TaxonomyDataProvider';
-import { TaxonomySelector, TaxonomySelectorMUI } from '../components/taxonomy';
-import { Box, Container, Typography, Divider, Tab, Tabs, Paper, Button, Link } from '@mui/material';
-import { Link as RouterLink } from 'react-router-dom';
+import { 
+  Container, 
+  Typography, 
+  Paper, 
+  Box, 
+  Tabs, 
+  Tab, 
+  Divider,
+  Button,
+  CircularProgress 
+} from '@mui/material';
+import SimpleTaxonomySelectionV2 from '../components/asset/SimpleTaxonomySelectionV2';
+import DropdownBasedTaxonomySelector from '../components/taxonomy/DropdownBasedTaxonomySelector';
+import { CategoryOption, SubcategoryOption } from '../types/taxonomy.types';
+import { logger } from '../utils/logger';
 
 /**
- * Test page for the new stateless TaxonomySelector component
+ * TaxonomySelectorTestPage
+ * 
+ * A test page to compare different taxonomy selectors side-by-side.
+ * This page allows the user to try both the card-based (SimpleTaxonomySelectionV2)
+ * and dropdown-based (DropdownBasedTaxonomySelector) implementations.
  */
 const TaxonomySelectorTestPage: React.FC = () => {
-  const [selectedLayer, setSelectedLayer] = useState<string>('');
+  // State for the test page
+  const [selectorType, setSelectorType] = useState<number>(0);
+  const [selectedLayer, setSelectedLayer] = useState<string>('S'); // Default to Stars layer
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [selectedSubcategory, setSelectedSubcategory] = useState<string>('');
-  const [activeTab, setActiveTab] = useState<number>(0);
+  const [humanFriendlyName, setHumanFriendlyName] = useState<string>('');
+  const [machineFriendlyAddress, setMachineFriendlyAddress] = useState<string>('');
+  const [loading, setLoading] = useState<boolean>(false);
+  const [testResults, setTestResults] = useState<{
+    success: boolean;
+    message: string;
+    hfn: string;
+    mfa: string;
+  } | null>(null);
 
-  // Handle tab change
-  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
-    setActiveTab(newValue);
-  };
-
-  // Handle layer selection
-  const handleLayerSelect = (layer: string) => {
-    console.log(`Selected layer: ${layer}`);
-    setSelectedLayer(layer);
+  // Handle selector type change
+  const handleSelectorTypeChange = (event: React.SyntheticEvent, newValue: number) => {
     setSelectedCategory('');
     setSelectedSubcategory('');
+    setHumanFriendlyName('');
+    setMachineFriendlyAddress('');
+    setTestResults(null);
+    setSelectorType(newValue);
   };
 
-  // Handle category selection
-  const handleCategorySelect = (category: string) => {
-    console.log(`Selected category: ${category}`);
+  // Handle layer selection for card-based selector
+  const handleCardLayerSelect = (selectedLayer: string, isDoubleClick?: boolean) => {
+    logger.info(`Card selector - Layer selected: ${selectedLayer}`);
+    setSelectedLayer(selectedLayer);
+    setSelectedCategory('');
+    setSelectedSubcategory('');
+    setHumanFriendlyName('');
+    setMachineFriendlyAddress('');
+    setTestResults(null);
+  };
+
+  // Handle category selection for card-based selector
+  const handleCardCategorySelect = (category: string, isDoubleClick?: boolean) => {
+    logger.info(`Card selector - Category selected: ${category}`);
     setSelectedCategory(category);
     setSelectedSubcategory('');
+    setHumanFriendlyName('');
+    setMachineFriendlyAddress('');
+    setTestResults(null);
   };
 
-  // Handle subcategory selection
-  const handleSubcategorySelect = (subcategory: string, isDoubleClick?: boolean) => {
-    console.log(`Selected subcategory: ${subcategory} (double-click: ${Boolean(isDoubleClick)})`);
+  // Handle subcategory selection for card-based selector
+  const handleCardSubcategorySelect = (subcategory: string, isDoubleClick?: boolean) => {
+    logger.info(`Card selector - Subcategory selected: ${subcategory}`);
     setSelectedSubcategory(subcategory);
-    
-    if (isDoubleClick) {
-      console.log('Double-click detected! Would normally advance to next step');
-    }
+    setTestResults(null);
   };
 
-  // Reset all selections
-  const resetSelections = () => {
-    setSelectedLayer('');
-    setSelectedCategory('');
+  // Handle category selection for dropdown-based selector
+  const handleDropdownCategorySelect = (category: CategoryOption) => {
+    logger.info(`Dropdown selector - Category selected: ${category.name} (${category.code})`);
+    setSelectedCategory(category.code);
     setSelectedSubcategory('');
+    setHumanFriendlyName('');
+    setMachineFriendlyAddress('');
+    setTestResults(null);
   };
 
-  // Test the Star+POP selection specifically
-  const testStarPopSelection = () => {
-    console.log('Testing Star+POP selection...');
-    resetSelections();
+  // Handle subcategory selection for dropdown-based selector
+  const handleDropdownSubcategorySelect = (subcategory: SubcategoryOption, isDoubleClick?: boolean) => {
+    logger.info(`Dropdown selector - Subcategory selected: ${subcategory.name} (${subcategory.code})`);
+    setSelectedSubcategory(subcategory.code);
+    setTestResults(null);
+  };
+
+  // Handle NNA address change
+  const handleNNAAddressChange = (
+    hfn: string,
+    mfa: string,
+    sequentialNumber: number,
+    originalSubcategory?: string
+  ) => {
+    logger.info(`NNA Address change: HFN=${hfn}, MFA=${mfa}, Sequential=${sequentialNumber}`);
     
-    // Use setTimeout to simulate the user interaction sequence
+    if (originalSubcategory) {
+      logger.info(`Original subcategory: ${originalSubcategory}`);
+    }
+    
+    setHumanFriendlyName(hfn);
+    setMachineFriendlyAddress(mfa);
+  };
+
+  // Test selected taxonomy
+  const testSelectedTaxonomy = () => {
+    if (!selectedLayer || !selectedCategory || !selectedSubcategory) {
+      setTestResults({
+        success: false,
+        message: 'Please select layer, category, and subcategory first.',
+        hfn: '',
+        mfa: ''
+      });
+      return;
+    }
+
+    setLoading(true);
+
+    // Simulate API call
     setTimeout(() => {
-      console.log('Selecting Star layer...');
-      handleLayerSelect('S');
+      const success = !!humanFriendlyName && !!machineFriendlyAddress;
       
-      setTimeout(() => {
-        console.log('Selecting POP category...');
-        handleCategorySelect('POP');
-      }, 500);
-    }, 100);
+      setTestResults({
+        success,
+        message: success 
+          ? 'Taxonomy validation successful!' 
+          : 'Error: Failed to generate valid NNA addresses.',
+        hfn: humanFriendlyName,
+        mfa: machineFriendlyAddress
+      });
+      
+      setLoading(false);
+    }, 800);
   };
 
   return (
-    <Container maxWidth="lg">
-      <Box sx={{ my: 4 }}>
-        <Typography variant="h4" component="h1" gutterBottom>
-          Taxonomy Selector Test
-        </Typography>
-        
-        <Typography variant="body1" paragraph>
-          This page tests the new TaxonomySelector component that uses the 
-          TaxonomyDataProvider as its single source of truth.
-        </Typography>
-        
-        <Box sx={{ mb: 2 }}>
-          <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
-            <Button 
-              component={RouterLink} 
-              to="/register-asset" 
-              variant="contained" 
-              color="primary"
-            >
-              Try Asset Registration Page
-            </Button>
-          </Box>
-        </Box>
-        
-        <Box sx={{ mb: 4 }}>
-          <Paper sx={{ p: 2, mb: 2 }}>
-            <Typography variant="subtitle1" fontWeight="bold">Selected Values:</Typography>
-            <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
-              <Typography>
-                Layer: <Box component="span" fontWeight="bold">{selectedLayer || 'None'}</Box>
-              </Typography>
-              <Typography>
-                Category: <Box component="span" fontWeight="bold">{selectedCategory || 'None'}</Box>
-              </Typography>
-              <Typography>
-                Subcategory: <Box component="span" fontWeight="bold">{selectedSubcategory || 'None'}</Box>
-              </Typography>
-            </Box>
-          </Paper>
-          
-          <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
-            <button onClick={resetSelections}>Reset Selections</button>
-            <button onClick={testStarPopSelection}>Test Star+POP Selection</button>
-          </Box>
-        </Box>
-        
+    <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+      <Typography variant="h4" component="h1" gutterBottom align="center">
+        Taxonomy Selector Test Page
+      </Typography>
+      <Typography variant="body1" paragraph align="center" color="text.secondary">
+        Compare different taxonomy selector implementations. Test the stability of each approach
+        with different layer/category/subcategory combinations.
+      </Typography>
+
+      <Paper sx={{ p: 3, mb: 4 }}>
         <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
-          <Tabs value={activeTab} onChange={handleTabChange}>
-            <Tab label="Standard Component" />
-            <Tab label="Material UI Component" />
+          <Tabs 
+            value={selectorType} 
+            onChange={handleSelectorTypeChange}
+            aria-label="taxonomy selector tabs"
+          >
+            <Tab label="Card-Based Selector" />
+            <Tab label="Dropdown-Based Selector" />
           </Tabs>
         </Box>
-        
-        {/* Wrap both versions in the TaxonomyDataProvider */}
-        <TaxonomyDataProvider>
-          {activeTab === 0 ? (
-            <Box>
-              <Typography variant="h6" gutterBottom>Standard Taxonomy Selector</Typography>
-              <Box>
-                <TaxonomySelector
-                  selectedLayer={selectedLayer}
-                  selectedCategory={selectedCategory}
-                  selectedSubcategory={selectedSubcategory}
-                  onLayerSelect={handleLayerSelect}
-                  onCategorySelect={handleCategorySelect}
-                  onSubcategorySelect={handleSubcategorySelect}
-                />
+
+        {/* Card-Based Selector */}
+        {selectorType === 0 && (
+          <Box>
+            <Typography variant="h6" gutterBottom>
+              Card-Based Taxonomy Selector
+            </Typography>
+            <Typography variant="body2" paragraph color="text.secondary">
+              This implementation uses cards for selection. Select a layer, category, and subcategory.
+            </Typography>
+            <Divider sx={{ mb: 3 }} />
+
+            <SimpleTaxonomySelectionV2
+              layer={selectedLayer}
+              onCategorySelect={handleCardCategorySelect}
+              onSubcategorySelect={handleCardSubcategorySelect}
+              selectedCategory={selectedCategory}
+              selectedSubcategory={selectedSubcategory}
+            />
+          </Box>
+        )}
+
+        {/* Dropdown-Based Selector */}
+        {selectorType === 1 && (
+          <Box>
+            <Typography variant="h6" gutterBottom>
+              Dropdown-Based Taxonomy Selector
+            </Typography>
+            <Typography variant="body2" paragraph color="text.secondary">
+              This implementation uses dropdowns for selection. Select a layer, category, and subcategory.
+            </Typography>
+            <Divider sx={{ mb: 3 }} />
+
+            <DropdownBasedTaxonomySelector
+              layerCode={selectedLayer}
+              onCategorySelect={handleDropdownCategorySelect}
+              onSubcategorySelect={handleDropdownSubcategorySelect}
+              selectedCategoryCode={selectedCategory}
+              selectedSubcategoryCode={selectedSubcategory}
+              onNNAAddressChange={handleNNAAddressChange}
+            />
+          </Box>
+        )}
+
+        {/* Layer Selection (Common to both implementations) */}
+        <Box sx={{ mt: 4, mb: 3 }}>
+          <Typography variant="subtitle1" gutterBottom fontWeight="bold">
+            Common Layer Selector
+          </Typography>
+          <Typography variant="body2" color="text.secondary" paragraph>
+            Test with different layers using this control:
+          </Typography>
+          
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+            {['G', 'S', 'L', 'M', 'W', 'B', 'P', 'T', 'C'].map(layer => (
+              <Button
+                key={layer}
+                variant={selectedLayer === layer ? 'contained' : 'outlined'}
+                onClick={() => handleCardLayerSelect(layer)}
+                sx={{ minWidth: '60px' }}
+              >
+                {layer}
+              </Button>
+            ))}
+          </Box>
+        </Box>
+
+        {/* Test Results */}
+        <Box sx={{ mt: 4 }}>
+          <Divider sx={{ mb: 3 }} />
+          <Typography variant="subtitle1" gutterBottom fontWeight="bold">
+            Test Results
+          </Typography>
+          
+          <Box sx={{ display: 'flex', justifyContent: 'center', mb: 3 }}>
+            <Button
+              variant="contained"
+              color="primary"
+              size="large"
+              onClick={testSelectedTaxonomy}
+              disabled={loading || !selectedLayer || !selectedCategory || !selectedSubcategory}
+              sx={{ minWidth: '200px' }}
+            >
+              {loading ? <CircularProgress size={24} color="inherit" /> : 'Test Selection'}
+            </Button>
+          </Box>
+          
+          {testResults && (
+            <Paper 
+              sx={{ 
+                p: 2, 
+                bgcolor: testResults.success ? '#e8f5e9' : '#ffebee',
+                border: `1px solid ${testResults.success ? '#81c784' : '#ef9a9a'}`,
+                borderRadius: 1
+              }}
+            >
+              <Typography
+                variant="subtitle1"
+                fontWeight="bold"
+                color={testResults.success ? 'success.dark' : 'error.dark'}
+              >
+                {testResults.success ? 'Success!' : 'Error'}
+              </Typography>
+              <Typography paragraph>
+                {testResults.message}
+              </Typography>
+              
+              <Box sx={{ bgcolor: 'background.paper', p: 2, borderRadius: 1 }}>
+                <Typography variant="body2" color="text.secondary" gutterBottom>
+                  Generated Addresses:
+                </Typography>
+                <Typography variant="body1" fontFamily="monospace">
+                  HFN: {testResults.hfn || '(none)'}
+                </Typography>
+                <Typography variant="body1" fontFamily="monospace">
+                  MFA: {testResults.mfa || '(none)'}
+                </Typography>
               </Box>
-            </Box>
-          ) : (
-            <Box>
-              <Typography variant="h6" gutterBottom>Material UI Taxonomy Selector</Typography>
-              <Box>
-                <TaxonomySelectorMUI
-                  selectedLayer={selectedLayer}
-                  selectedCategory={selectedCategory}
-                  selectedSubcategory={selectedSubcategory}
-                  onLayerSelect={handleLayerSelect}
-                  onCategorySelect={handleCategorySelect}
-                  onSubcategorySelect={handleSubcategorySelect}
-                />
-              </Box>
-            </Box>
+            </Paper>
           )}
-        </TaxonomyDataProvider>
-      </Box>
+        </Box>
+      </Paper>
+
+      <Paper sx={{ p: 3 }}>
+        <Typography variant="h6" gutterBottom>
+          Testing Instructions
+        </Typography>
+        <Typography variant="body2" paragraph>
+          1. Switch between the selector types using the tabs above.
+        </Typography>
+        <Typography variant="body2" paragraph>
+          2. Select a layer from the common layer selector (this will reset the selection).
+        </Typography>
+        <Typography variant="body2" paragraph>
+          3. Select a category and subcategory using the current selector implementation.
+        </Typography>
+        <Typography variant="body2" paragraph>
+          4. Click "Test Selection" to validate the selected taxonomy.
+        </Typography>
+        <Typography variant="body2" paragraph>
+          5. Special cases to test:
+        </Typography>
+        <Box component="ul">
+          <Box component="li">
+            <Typography variant="body2">S.POP.HPM (Stars layer, "Pop" category, "Hipster Male" subcategory)</Typography>
+          </Box>
+          <Box component="li">
+            <Typography variant="body2">W.BCH.SUN (Worlds layer, "Beach" category, "Sunny" subcategory)</Typography>
+          </Box>
+        </Box>
+      </Paper>
     </Container>
   );
 };
