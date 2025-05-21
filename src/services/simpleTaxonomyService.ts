@@ -87,6 +87,9 @@ class SimpleTaxonomyService {
    * @returns An array of taxonomy items representing subcategories
    */
   getSubcategories(layer: string, categoryCode: string): TaxonomyItem[] {
+    // Enhanced logging for debugging
+    logger.info(`getSubcategories called with: layer=${layer}, categoryCode=${categoryCode}`);
+
     // Input validation with detailed error messages
     if (!layer) {
       logger.error('Layer parameter is required but was not provided');
@@ -110,17 +113,48 @@ class SimpleTaxonomyService {
       return [];
     }
     
+    // Check case sensitivity issues
+    const normalizedCategoryCode = categoryCode.toUpperCase();
+    const originalKeysInSubcategories = LAYER_SUBCATEGORIES[layer][categoryCode];
+    const upperKeysInSubcategories = LAYER_SUBCATEGORIES[layer][normalizedCategoryCode];
+    
+    logger.debug(`Case sensitivity check: Original "${categoryCode}" exists: ${!!originalKeysInSubcategories}, Uppercase "${normalizedCategoryCode}" exists: ${!!upperKeysInSubcategories}`);
+    
     // IMPROVED APPROACH: First try to get subcategories from LAYER_SUBCATEGORIES
     // If not found, we'll use a more robust approach below
     let subcategoryCodes: string[] = [];
+    let sourceDescription = 'unknown';
     
     if (LAYER_SUBCATEGORIES[layer][categoryCode]) {
       // Standard approach: Get from the subcategories mapping
       const rawCodes = LAYER_SUBCATEGORIES[layer][categoryCode];
+      logger.debug(`Raw subcategory codes for ${layer}.${categoryCode}: ${JSON.stringify(rawCodes)}`);
+      
       subcategoryCodes = Array.isArray(rawCodes) ? 
         rawCodes.filter(code => !!code && typeof code === 'string') : [];
         
       logger.debug(`Found ${subcategoryCodes.length} subcategories from primary source for ${layer}.${categoryCode}`);
+      sourceDescription = 'primary source';
+      
+      // Debug the filter operation
+      if (Array.isArray(rawCodes) && rawCodes.length !== subcategoryCodes.length) {
+        logger.warn(`Filtered out ${rawCodes.length - subcategoryCodes.length} invalid entries in ${layer}.${categoryCode} subcategories`);
+        rawCodes.forEach((code, index) => {
+          if (!code || typeof code !== 'string') {
+            logger.warn(`Invalid entry at index ${index}: ${JSON.stringify(code)}`);
+          }
+        });
+      }
+    } else if (normalizedCategoryCode !== categoryCode && LAYER_SUBCATEGORIES[layer][normalizedCategoryCode]) {
+      // Try with normalized (uppercase) category code
+      logger.info(`Using normalized category code: ${normalizedCategoryCode} instead of ${categoryCode}`);
+      const rawCodes = LAYER_SUBCATEGORIES[layer][normalizedCategoryCode];
+      
+      subcategoryCodes = Array.isArray(rawCodes) ? 
+        rawCodes.filter(code => !!code && typeof code === 'string') : [];
+      
+      logger.debug(`Found ${subcategoryCodes.length} subcategories using normalized category code ${normalizedCategoryCode}`);
+      sourceDescription = 'normalized category code';
     }
     
     // UNIVERSAL FALLBACK: If no subcategories found in the mapping,
@@ -128,16 +162,26 @@ class SimpleTaxonomyService {
     if (subcategoryCodes.length === 0) {
       logger.info(`Using universal fallback to derive subcategories for ${layer}.${categoryCode}`);
       
-      // Look for any entry in LAYER_LOOKUPS that starts with the categoryCode
-      const derivedCodes = Object.keys(LAYER_LOOKUPS[layer])
+      // Try with original category code
+      let derivedCodes = Object.keys(LAYER_LOOKUPS[layer])
         .filter(key => {
           // Match entries like 'PRF.BAS', 'PRF.LEO', etc. for 'PRF' category
           return key.startsWith(`${categoryCode}.`) && key.split('.').length === 2;
         });
         
+      // If none found, try with normalized category code
+      if (derivedCodes.length === 0 && normalizedCategoryCode !== categoryCode) {
+        logger.debug(`Trying universal fallback with normalized code: ${normalizedCategoryCode}`);
+        derivedCodes = Object.keys(LAYER_LOOKUPS[layer])
+          .filter(key => {
+            return key.startsWith(`${normalizedCategoryCode}.`) && key.split('.').length === 2;
+          });
+      }
+      
       if (derivedCodes.length > 0) {
         logger.info(`Successfully derived ${derivedCodes.length} subcategories from lookups for ${layer}.${categoryCode}`);
         subcategoryCodes = derivedCodes;
+        sourceDescription = 'universal fallback';
       }
     }
     
@@ -145,6 +189,7 @@ class SimpleTaxonomyService {
     if (subcategoryCodes.length === 0) {
       // Look for all entries in the layer and extract ones that might match our category
       const allLayerKeys = Object.keys(LAYER_LOOKUPS[layer]);
+      logger.debug(`Trying pattern matching. All layer keys count: ${allLayerKeys.length}`);
       
       // Try to find category prefix pattern in the keys
       const keyPattern = new RegExp(`^${categoryCode}\.\w+$`, 'i');
@@ -152,7 +197,13 @@ class SimpleTaxonomyService {
       
       if (matchingKeys.length > 0) {
         logger.info(`Found ${matchingKeys.length} subcategory candidates using pattern matching for ${layer}.${categoryCode}`);
+        logger.debug(`Matching keys: ${JSON.stringify(matchingKeys)}`);
         subcategoryCodes = matchingKeys;
+        sourceDescription = 'pattern matching';
+      } else {
+        // Last resort: dump some sample keys to help debugging
+        logger.warn(`No keys matched regex pattern for ${layer}.${categoryCode}`);
+        logger.debug(`Sample keys from layer ${layer}: ${JSON.stringify(allLayerKeys.slice(0, 10))}`);
       }
     }
 
@@ -160,6 +211,10 @@ class SimpleTaxonomyService {
       logger.warn(`No subcategories found for ${layer}.${categoryCode} after all fallback attempts`);
       return [];
     }
+    
+    logger.info(`Using ${subcategoryCodes.length} subcategory codes from ${sourceDescription} for ${layer}.${categoryCode}`);
+    logger.debug(`Subcategory codes: ${JSON.stringify(subcategoryCodes)}`);
+    
 
     // Enhanced debugging for development environments only
     if (process.env.NODE_ENV !== 'production') {
@@ -626,6 +681,89 @@ class SimpleTaxonomyService {
    */
   getLayerNumericCode(layer: string): string {
     return LAYER_NUMERIC_CODES[layer] || '0';
+  }
+  
+  /**
+   * Debug function for taxonomy data
+   * @param layer - The layer code (e.g., 'L', 'S')
+   * @param categoryCode - The category code (e.g., 'PRF', 'DNC')
+   */
+  debugTaxonomyData(layer: string, categoryCode: string): void {
+    logger.debug('=== Debugging taxonomy data ===');
+    logger.debug(`Layer: ${layer}`);
+    logger.debug(`Category Code: ${categoryCode}`);
+    
+    // Check hardcoded data
+    let usingHardcodedData = false;
+    let hardcodedSubcategories: string[] = [];
+    
+    if (LAYER_SUBCATEGORIES[layer] && LAYER_SUBCATEGORIES[layer][categoryCode]) {
+      usingHardcodedData = true;
+      hardcodedSubcategories = LAYER_SUBCATEGORIES[layer][categoryCode];
+    }
+    
+    logger.debug(`Using hardcoded data: ${usingHardcodedData}`);
+    if (usingHardcodedData) {
+      logger.debug(`Hardcoded subcategories: ${JSON.stringify(hardcodedSubcategories)}`);
+      
+      // Check if subcategories have valid entries in LAYER_LOOKUPS
+      const validLookups = hardcodedSubcategories.filter(code => {
+        if (!code) return false;
+        const fullCode = code.includes('.') ? code : `${categoryCode}.${code}`;
+        return !!LAYER_LOOKUPS[layer][fullCode];
+      });
+      
+      logger.debug(`Valid subcategory lookups: ${validLookups.length}/${hardcodedSubcategories.length}`);
+      if (validLookups.length < hardcodedSubcategories.length) {
+        logger.warn(`Some subcategories don't have valid lookups for ${layer}.${categoryCode}`);
+        
+        // Detailed debug for each subcategory
+        hardcodedSubcategories.forEach(code => {
+          if (!code) {
+            logger.warn(`Empty subcategory code found in ${layer}.${categoryCode}`);
+            return;
+          }
+          
+          const fullCode = code.includes('.') ? code : `${categoryCode}.${code}`;
+          const lookup = LAYER_LOOKUPS[layer][fullCode];
+          
+          if (!lookup) {
+            logger.warn(`No lookup found for ${fullCode}`);
+          } else {
+            logger.debug(`Lookup for ${fullCode}: ${JSON.stringify(lookup)}`);
+          }
+        });
+      }
+    } else {
+      logger.warn(`No hardcoded subcategories found for ${layer}.${categoryCode}`);
+      
+      // Try to find alternates in LAYER_LOOKUPS
+      const alternateKeys = Object.keys(LAYER_LOOKUPS[layer])
+        .filter(key => key.startsWith(`${categoryCode}.`) || 
+                       key.startsWith(`${categoryCode.toUpperCase()}.`) || 
+                       key.startsWith(`${categoryCode.toLowerCase()}.`));
+      
+      if (alternateKeys.length > 0) {
+        logger.debug(`Found ${alternateKeys.length} potential alternate keys in LAYER_LOOKUPS:`);
+        alternateKeys.forEach(key => logger.debug(`  - ${key}`));
+      } else {
+        logger.warn(`No alternate keys found in LAYER_LOOKUPS for ${layer}.${categoryCode}`);
+      }
+    }
+    
+    // Check LAYER_LOOKUPS structure for this layer
+    logger.debug(`LAYER_LOOKUPS keys for ${layer}:`, Object.keys(LAYER_LOOKUPS[layer]).slice(0, 5));
+    
+    // Verify direct subcategory lookup
+    const subcategories = this.getSubcategories(layer, categoryCode);
+    logger.debug(`Direct getSubcategories call returned: ${subcategories.length} items`);
+    if (subcategories.length === 0) {
+      logger.warn(`getSubcategories returned empty array for ${layer}.${categoryCode}`);
+    } else {
+      logger.debug(`First few subcategories: ${JSON.stringify(subcategories.slice(0, 3))}`);
+    }
+    
+    logger.debug('=== End debugging taxonomy data ===');
   }
 }
 

@@ -148,15 +148,31 @@ const TaxonomySelection: React.FC<TaxonomySelectionProps> = ({
 
       try {
         setLoading(true);
+        
+        // Run taxonomy data debugging for problematic combinations
+        if ((layerCode === 'L' && selectedCategoryCode === 'PRF') || 
+            (layerCode === 'S' && selectedCategoryCode === 'DNC')) {
+          console.log(`[DEBUG] Running taxonomy debug for ${layerCode}.${selectedCategoryCode}`);
+          taxonomyService.debugTaxonomyData(layerCode, selectedCategoryCode);
+        }
+        
         const subcategoryOptions = taxonomyService.getSubcategories(
           layerCode,
           selectedCategoryCode
         );
         console.log(subcategoryOptions, 'subcategoryOptions');
+        
+        // Log comprehensive debug info
+        console.log(`[DEBUG] Subcategory fetch for ${layerCode}.${selectedCategoryCode}:`, {
+          success: Array.isArray(subcategoryOptions),
+          count: Array.isArray(subcategoryOptions) ? subcategoryOptions.length : 0,
+          isEmpty: Array.isArray(subcategoryOptions) && subcategoryOptions.length === 0
+        });
 
         setSubcategories(subcategoryOptions);
         setError(null);
       } catch (err) {
+        console.error(`[ERROR] Failed to fetch subcategories for ${layerCode}.${selectedCategoryCode}:`, err);
         setError(
           err instanceof Error ? err.message : 'Failed to load subcategories'
         );

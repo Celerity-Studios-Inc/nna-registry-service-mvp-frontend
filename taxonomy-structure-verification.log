@@ -1,0 +1,72 @@
+=== TAXONOMY DATA STRUCTURE VERIFICATION ===
+
+1. TOP-LEVEL STRUCTURE
+Top level keys: [
+  'scalability_features',
+  'G',
+  'S',
+  'L',
+  'M',
+  'W',
+  'B',
+  'P',
+  'T',
+  'R',
+  'C',
+  'future_layers'
+]
+
+2. LAYER STRUCTURE
+
+L layer exists
+L layer top-level keys: [ 'name', 'categories', 'naming_convention', 'metadata_fields' ]
+L categories keys: [
+  '001', '002', '003',
+  '004', '005', '006',
+  '007', '008', '009',
+  '010', '011', '012',
+  '013', '014'
+]
+
+PRF category found:
+  - code: PRF
+  - name: Modern_Performance
+  - numericCode: undefined
+  - subcategories: 7
+  - subcategory codes: [
+  'BAS', 'LEO',
+  'SEQ', 'LED',
+  'ATH', 'MIN',
+  'SPK'
+]
+
+S layer exists
+S layer top-level keys: [ 'name', 'categories', 'naming_convention', 'metadata_fields' ]
+S categories keys: [
+  '001', '002', '003',
+  '004', '005', '006',
+  '007', '008', '009',
+  '010', '011', '012',
+  '013', '014', '015',
+  '016'
+]
+
+DNC category found:
+  - code: DNC
+  - name: Dance_Electronic
+  - numericCode: undefined
+  - subcategories: 11
+  - subcategory codes: [
+  'BAS', 'PRD', 'HSE',
+  'TEC', 'TRN', 'DUB',
+  'FUT', 'DNB', 'AMB',
+  'LIV', 'EXP'
+]
+
+3. MAPPING BETWEEN JSON AND HARDCODED SUBCATEGORIES
+
+Note: This script cannot directly access the hardcoded subcategories in the TS files.
+You should compare these results with the contents of L_SUBCATEGORIES and S_SUBCATEGORIES
+in the L_layer.ts and S_layer.ts files respectively.
+
+=== VERIFICATION COMPLETE ===

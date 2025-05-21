@@ -1,0 +1,52 @@
+=== Testing Subcategory Loading for Problematic Combinations ===
+
+--- L.PRF Test ---
+PRF not found in L_SUBCATEGORIES!
+
+--- S.DNC Test ---
+DNC not found in S_SUBCATEGORIES!
+
+=== Simulating Universal Fallback Mechanism ===
+
+Testing getSubcategories for L.PRF
+Primary method: No subcategories found for L.PRF
+Using universal fallback...
+Universal fallback: Found 7 subcategories for L.PRF
+L.PRF subcategories: [
+  'PRF.BAS',
+  'PRF.LEO',
+  'PRF.SEQ',
+  'PRF.LED',
+  'PRF.ATH',
+  'PRF.MIN',
+  'PRF.SPK'
+]
+
+Testing getSubcategories for S.DNC
+Primary method: No subcategories found for S.DNC
+Using universal fallback...
+Universal fallback: Found 11 subcategories for S.DNC
+S.DNC subcategories: [
+  'DNC.BAS', 'DNC.PRD',
+  'DNC.HSE', 'DNC.TEC',
+  'DNC.TRN', 'DNC.DUB',
+  'DNC.FUT', 'DNC.DNB',
+  'DNC.AMB', 'DNC.LIV',
+  'DNC.EXP'
+]
+
+=== Testing Case Sensitivity ===
+
+Testing getSubcategories for L.prf
+Primary method: No subcategories found for L.prf
+Using universal fallback...
+Universal fallback: No subcategories found for L.prf
+L.prf (lowercase) subcategories count: 0
+
+Testing getSubcategories for S.dnc
+Primary method: No subcategories found for S.dnc
+Using universal fallback...
+Universal fallback: No subcategories found for S.dnc
+S.dnc (lowercase) subcategories count: 0
+
+Test complete!
