@@ -1,0 +1,41 @@
+Successfully read taxonomy file
+Taxonomy file size: 102481 bytes
+Successfully parsed taxonomy JSON
+
+=== TAXONOMY STRUCTURE ===
+
+Top-level keys: [
+  'scalability_features',
+  'G',
+  'S',
+  'L',
+  'M',
+  'W',
+  'B',
+  'P',
+  'T',
+  'R',
+  'C',
+  'future_layers'
+]
+ERROR: No "layers" key found in taxonomy data!
+
+=== CHECKING LAYER TS FILES ===
+
+L_layer.ts file exists
+L_layer.ts contains PRF category definition
+Could not extract PRF subcategories array
+
+S_layer.ts file exists
+S_layer.ts contains DNC category definition
+Could not extract DNC subcategories array
+
+=== CHECKING TAXONOMY SERVICE ===
+
+simpleTaxonomyService.ts file exists
+getSubcategories method found in simpleTaxonomyService.ts
+Universal fallback mechanism IS implemented in getSubcategories
+Error handling IS implemented in taxonomy service
+
+=== TAXONOMY CHECK COMPLETE ===
+
