@@ -30,6 +30,7 @@ import TaxonomyTestPage from './pages/TaxonomyTestPage';
 import TaxonomySelectorTestPage from './pages/TaxonomySelectorTestPage';
 import AssetRegistration from './pages/AssetRegistration';
 import EmergencyAssetRegistrationPage from './pages/EmergencyAssetRegistrationPage';
+import UltraSimpleAssetRegistrationPage from './pages/UltraSimpleAssetRegistrationPage';
 import TaxonomyDebugger from './components/debug/TaxonomyDebugger';
 import './styles/TaxonomyDebugger.css';
 import { AuthProvider } from './contexts/AuthContext';
@@ -214,6 +215,10 @@ const App: React.FC = () => {
                         <Route
                           path="/emergency-register"
                           element={<EmergencyAssetRegistrationPage />}
+                        />
+                        <Route
+                          path="/ultra-simple-register"
+                          element={<UltraSimpleAssetRegistrationPage />}
                         />
                         <Route element={<MainLayout />}>
                           <Route

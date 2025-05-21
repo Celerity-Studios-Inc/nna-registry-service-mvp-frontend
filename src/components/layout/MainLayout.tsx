@@ -136,6 +136,25 @@ const MainLayout: React.FC = () => {
       <List>
         <ListItem disablePadding>
           <ListItemButton 
+            onClick={() => navigate('/ultra-simple-register')}
+            sx={{ 
+              backgroundColor: 'rgba(76, 175, 80, 0.1)',
+              borderLeft: '4px solid #4caf50',
+              mb: 1
+            }}
+          >
+            <ListItemIcon>
+              <ErrorOutlineIcon color="success" />
+            </ListItemIcon>
+            <ListItemText
+              primary="Ultra Simple Registration"
+              secondary="Guaranteed to work - nuclear option"
+              primaryTypographyProps={{ color: 'success.main', fontWeight: 'bold' }}
+            />
+          </ListItemButton>
+        </ListItem>
+        <ListItem disablePadding>
+          <ListItemButton 
             onClick={() => navigate('/emergency-register')}
             sx={{ 
               backgroundColor: 'rgba(211, 47, 47, 0.1)'

@@ -1,0 +1,76 @@
+/**
+ * Ultra Simple Taxonomy Selector styles
+ * 
+ * Minimal styling with no animations or transitions to ensure
+ * maximum reliability and eliminate rendering issues.
+ */
+
+.ultra-simple-taxonomy {
+  font-family: sans-serif;
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 20px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background-color: #f9f9f9;
+}
+
+.selection-group {
+  margin-bottom: 20px;
+}
+
+.selection-group label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: bold;
+}
+
+.selection-dropdown {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 16px;
+  background-color: white;
+  height: 44px; /* Fixed height to prevent layout shifts */
+}
+
+.sequential-input {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 16px;
+  background-color: white;
+  height: 44px; /* Fixed height to prevent layout shifts */
+}
+
+.selection-dropdown:focus,
+.sequential-input:focus {
+  outline: none;
+  border-color: #0066cc;
+  box-shadow: 0 0 0 2px rgba(0, 102, 204, 0.2);
+}
+
+.preview-box {
+  margin-top: 20px;
+  padding: 15px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background-color: #f0f0f0;
+}
+
+.preview-item {
+  margin-bottom: 10px;
+}
+
+.preview-value {
+  display: inline-block;
+  margin-left: 10px;
+  font-family: monospace;
+  font-size: 16px;
+  background-color: white;
+  padding: 3px 6px;
+  border: 1px solid #ddd;
+  border-radius: 2px;
+}
