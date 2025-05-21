@@ -18,6 +18,7 @@ import {
   Tooltip,
   Button,
   Dialog,
+  useTheme,
 } from '@mui/material';
 import {
   Menu as MenuIcon,
@@ -44,27 +45,22 @@ import ErrorTestComponent from '../common/ErrorTestComponent';
 
 const drawerWidth = 240;
 
+// Define navigation items with improved organization and grouping
 const navigationItems = [
-  { text: 'Dashboard', icon: <DashboardIcon />, path: '/dashboard' },
-  { text: 'Browse Assets', icon: <SearchIcon />, path: '/search-assets' },
-  { text: 'Register Asset', icon: <AddIcon />, path: '/register-asset' },
-  { text: 'Batch Upload', icon: <UploadIcon />, path: '/batch-upload' },
-  { text: 'Organize Assets', icon: <ViewListIcon />, path: '/organize-assets' },
-  { text: 'Collections', icon: <CollectionsIcon />, path: '/collections' },
-  { text: 'Taxonomy Browser', icon: <CategoryIcon />, path: '/taxonomy' },
-  {
-    text: 'Taxonomy Validator',
-    icon: <CategoryIcon />,
-    path: '/taxonomy-validator',
-  },
-  {
-    text: 'Asset Analytics',
-    icon: <DataObjectIcon />,
-    path: '/asset-analytics',
-  },
+  // Core Features - Always visible
+  { text: 'Dashboard', icon: <DashboardIcon />, path: '/dashboard', group: 'core' },
+  { text: 'Browse Assets', icon: <SearchIcon />, path: '/search-assets', group: 'core' },
+  { text: 'Register Asset', icon: <AddIcon />, path: '/register-asset', group: 'core' },
+  
+  // Asset Management - Primary functions
+  { text: 'Collections', icon: <CollectionsIcon />, path: '/collections', group: 'management' },
+  
+  // Tools and Utilities - Secondary functions
+  { text: 'Taxonomy Browser', icon: <CategoryIcon />, path: '/taxonomy', group: 'tools' },
 ];
 
 const MainLayout: React.FC = () => {
+  const theme = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -116,82 +112,83 @@ const MainLayout: React.FC = () => {
         </IconButton>
       </Toolbar>
       <Divider />
+      {/* Primary navigation items */}
       <List>
-        {navigationItems.map(item => (
-          <ListItem key={item.text} disablePadding>
-            <ListItemButton
-              selected={location.pathname === item.path}
-              onClick={() => {
-                navigate(item.path);
-                if (mobileOpen) handleDrawerToggle();
-              }}
-            >
-              <ListItemIcon>{item.icon}</ListItemIcon>
-              <ListItemText primary={item.text} />
-            </ListItemButton>
-          </ListItem>
-        ))}
+        {navigationItems
+          .filter(item => item.group === 'core')
+          .map(item => (
+            <ListItem key={item.text} disablePadding>
+              <ListItemButton
+                selected={location.pathname === item.path}
+                onClick={() => {
+                  navigate(item.path);
+                  if (mobileOpen) handleDrawerToggle();
+                }}
+              >
+                <ListItemIcon>{item.icon}</ListItemIcon>
+                <ListItemText primary={item.text} />
+              </ListItemButton>
+            </ListItem>
+          ))}
       </List>
-      <Divider sx={{ mt: 'auto' }} />
+      
+      {/* Asset Management Section */}
+      <Divider textAlign="left" sx={{ mt: 1, mb: 1 }}>
+        <Typography variant="caption" color="text.secondary" sx={{ px: 1, fontSize: '0.7rem', fontWeight: 500 }}>
+          ASSET MANAGEMENT
+        </Typography>
+      </Divider>
       <List>
-        <ListItem disablePadding>
-          <ListItemButton 
-            onClick={() => navigate('/ultra-simple-register')}
-            sx={{ 
-              backgroundColor: 'rgba(76, 175, 80, 0.1)',
-              borderLeft: '4px solid #4caf50',
-              mb: 1
-            }}
-          >
-            <ListItemIcon>
-              <ErrorOutlineIcon color="success" />
-            </ListItemIcon>
-            <ListItemText
-              primary="Ultra Simple Registration"
-              secondary="Guaranteed to work - nuclear option"
-              primaryTypographyProps={{ color: 'success.main', fontWeight: 'bold' }}
-            />
-          </ListItemButton>
-        </ListItem>
-        <ListItem disablePadding>
-          <ListItemButton 
-            onClick={() => navigate('/emergency-register')}
-            sx={{ 
-              backgroundColor: 'rgba(211, 47, 47, 0.1)'
-            }}
-          >
-            <ListItemIcon>
-              <WarningIcon color="error" />
-            </ListItemIcon>
-            <ListItemText
-              primary="Emergency Registration"
-              secondary="Use only when standard registration fails"
-              primaryTypographyProps={{ color: 'error' }}
-            />
-          </ListItemButton>
-        </ListItem>
-        <ListItem disablePadding>
-          <ListItemButton onClick={openErrorTestDialog}>
-            <ListItemIcon>
-              <BugReportIcon />
-            </ListItemIcon>
-            <ListItemText
-              primary="Error Test"
-              secondary="Test error handling"
-            />
-          </ListItemButton>
-        </ListItem>
-        <ListItem disablePadding>
-          <ListItemButton>
-            <ListItemIcon>
-              <ApiIcon />
-            </ListItemIcon>
-            <ListItemText
-              primary="API Configuration"
-              secondary="Using Real API"
-            />
-          </ListItemButton>
-        </ListItem>
+        {navigationItems
+          .filter(item => item.group === 'management')
+          .map(item => (
+            <ListItem key={item.text} disablePadding>
+              <ListItemButton
+                selected={location.pathname === item.path}
+                onClick={() => {
+                  navigate(item.path);
+                  if (mobileOpen) handleDrawerToggle();
+                }}
+              >
+                <ListItemIcon>{item.icon}</ListItemIcon>
+                <ListItemText primary={item.text} />
+              </ListItemButton>
+            </ListItem>
+          ))}
+      </List>
+      
+      {/* Tools and Utilities Section */}
+      <Divider textAlign="left" sx={{ mt: 1, mb: 1 }}>
+        <Typography variant="caption" color="text.secondary" sx={{ px: 1, fontSize: '0.7rem', fontWeight: 500 }}>
+          TOOLS
+        </Typography>
+      </Divider>
+      <List>
+        {navigationItems
+          .filter(item => item.group === 'tools')
+          .map(item => (
+            <ListItem key={item.text} disablePadding>
+              <ListItemButton
+                selected={location.pathname === item.path}
+                onClick={() => {
+                  navigate(item.path);
+                  if (mobileOpen) handleDrawerToggle();
+                }}
+              >
+                <ListItemIcon>{item.icon}</ListItemIcon>
+                <ListItemText primary={item.text} />
+              </ListItemButton>
+            </ListItem>
+          ))}
+      </List>
+      
+      <Divider sx={{ mt: 'auto' }} />
+      <Divider textAlign="left" sx={{ mt: 1, mb: 1 }}>
+        <Typography variant="caption" color="text.secondary" sx={{ px: 1, fontSize: '0.7rem', fontWeight: 500 }}>
+          SYSTEM
+        </Typography>
+      </Divider>
+      <List>
         <ListItem disablePadding>
           <ListItemButton>
             <ListItemIcon>

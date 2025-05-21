@@ -1326,7 +1326,10 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
     (layer: string, category: string | null) => {
       if (!layer || !category) return [];
       try {
-        return taxonomyService.getSubcategories(layer, category);
+        // Universal approach that works for all layer/category combinations
+        const results = taxonomyService.getSubcategories(layer, category);
+        console.log(`Retrieved ${results.length} subcategories for ${layer}.${category}`);
+        return results;
       } catch (error) {
         console.error('Error getting direct subcategories:', error);
         return [];
@@ -1927,6 +1930,47 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
     console.log(
       `[DISPLAY ${displayId}] Available sources: ${subcategories.length} context, ${directSubcategories.length} direct, ${localSubcategories.length} local, ${subcategoriesRef.current.length} ref`
     );
+    
+    // UNIVERSAL FALLBACK: Try to recover subcategory data if all sources failed
+    if (subcategories.length === 0 && directSubcategories.length === 0 && 
+        localSubcategories.length === 0 && subcategoriesRef.current.length === 0 && 
+        layer && activeCategory) {
+      
+      console.log(`[DISPLAY ${displayId}] All subcategory sources are empty for ${layer}.${activeCategory}, trying recovery`);
+      
+      // Make a direct call to taxonomyService for immediate recovery
+      try {
+        // This will use all the robust fallback mechanisms in the service
+        const recoverySubcategories = taxonomyService.getSubcategories(layer, activeCategory);
+        
+        if (recoverySubcategories.length > 0) {
+          console.log(`[DISPLAY ${displayId}] Recovery successful: got ${recoverySubcategories.length} subcategories`);
+          
+          // Store in all backup mechanisms
+          subcategoriesRef.current = [...recoverySubcategories];
+          setLocalSubcategories([...recoverySubcategories]);
+          
+          // Store in session storage
+          try {
+            sessionStorage.setItem(
+              `subcategoriesList_${layer}_${activeCategory}`,
+              JSON.stringify(recoverySubcategories)
+            );
+          } catch (e) {
+            console.warn(`[DISPLAY ${displayId}] Failed to store in session storage:`, e);
+          }
+          
+          return {
+            displaySubcategories: recoverySubcategories,
+            dataSource: 'universal-recovery',
+            useDirectData: true,
+          };
+        }
+      } catch (error) {
+        console.error(`[DISPLAY ${displayId}] Universal recovery failed:`, error);
+        // Continue with normal flow if recovery fails
+      }
+    }
     
     // CRITICAL FIX: Check session storage for backup data first
     let sessionStorageData: TaxonomyItem[] = [];

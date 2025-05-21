@@ -109,19 +109,55 @@ class SimpleTaxonomyService {
       logger.error(`Layer subcategories not found for layer: ${layer}`);
       return [];
     }
-
-    if (!LAYER_SUBCATEGORIES[layer][categoryCode]) {
-      logger.error(
-        `Category not found in layer subcategories: ${layer}.${categoryCode}`
-      );
-      return [];
+    
+    // IMPROVED APPROACH: First try to get subcategories from LAYER_SUBCATEGORIES
+    // If not found, we'll use a more robust approach below
+    let subcategoryCodes: string[] = [];
+    
+    if (LAYER_SUBCATEGORIES[layer][categoryCode]) {
+      // Standard approach: Get from the subcategories mapping
+      const rawCodes = LAYER_SUBCATEGORIES[layer][categoryCode];
+      subcategoryCodes = Array.isArray(rawCodes) ? 
+        rawCodes.filter(code => !!code && typeof code === 'string') : [];
+        
+      logger.debug(`Found ${subcategoryCodes.length} subcategories from primary source for ${layer}.${categoryCode}`);
+    }
+    
+    // UNIVERSAL FALLBACK: If no subcategories found in the mapping,
+    // derive them directly from LAYER_LOOKUPS by finding entries with the proper prefix
+    if (subcategoryCodes.length === 0) {
+      logger.info(`Using universal fallback to derive subcategories for ${layer}.${categoryCode}`);
+      
+      // Look for any entry in LAYER_LOOKUPS that starts with the categoryCode
+      const derivedCodes = Object.keys(LAYER_LOOKUPS[layer])
+        .filter(key => {
+          // Match entries like 'PRF.BAS', 'PRF.LEO', etc. for 'PRF' category
+          return key.startsWith(`${categoryCode}.`) && key.split('.').length === 2;
+        });
+        
+      if (derivedCodes.length > 0) {
+        logger.info(`Successfully derived ${derivedCodes.length} subcategories from lookups for ${layer}.${categoryCode}`);
+        subcategoryCodes = derivedCodes;
+      }
+    }
+    
+    // If we still have no subcategories, try one more universal approach
+    if (subcategoryCodes.length === 0) {
+      // Look for all entries in the layer and extract ones that might match our category
+      const allLayerKeys = Object.keys(LAYER_LOOKUPS[layer]);
+      
+      // Try to find category prefix pattern in the keys
+      const keyPattern = new RegExp(`^${categoryCode}\.\w+$`, 'i');
+      const matchingKeys = allLayerKeys.filter(key => keyPattern.test(key));
+      
+      if (matchingKeys.length > 0) {
+        logger.info(`Found ${matchingKeys.length} subcategory candidates using pattern matching for ${layer}.${categoryCode}`);
+        subcategoryCodes = matchingKeys;
+      }
     }
 
-    // Get subcategory codes for this category
-    const subcategoryCodes = LAYER_SUBCATEGORIES[layer][categoryCode] || [];
-
     if (!subcategoryCodes.length) {
-      logger.warn(`No subcategories found for ${layer}.${categoryCode}`);
+      logger.warn(`No subcategories found for ${layer}.${categoryCode} after all fallback attempts`);
       return [];
     }
 
@@ -146,7 +182,7 @@ class SimpleTaxonomyService {
       // Create a results array with detailed error checking
       const results: TaxonomyItem[] = [];
       const errors: string[] = [];
-
+      
       for (const fullCode of subcategoryCodes) {
         try {
           // Handle case where fullCode might not be properly formatted
