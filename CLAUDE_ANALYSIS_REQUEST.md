@@ -26,11 +26,13 @@ Users must select all three levels to complete asset registration.
 The current implementation uses:
 
 1. A JSON file containing the full taxonomy data (`src/assets/enriched_nna_layer_taxonomy_v1.3.json`)
+   - IMPORTANT DISCOVERY: Our taxonomy structure check revealed that the JSON doesn't have a 'layers' key but instead has direct layer codes (G, S, L, etc.) as top-level keys
 2. Flattened lookup tables for each layer (e.g., `src/taxonomyLookup/L_layer.ts`)
+   - These contain both LAYER_LOOKUPS (key-value mappings) and LAYER_SUBCATEGORIES (arrays of subcategory codes)
 3. A service that provides subcategories based on layer and category (`src/services/simpleTaxonomyService.ts`)
 4. A component that renders the selection UI (`src/components/asset/SimpleTaxonomySelectionV2.tsx`)
 
-We've attempted a universal fallback mechanism (commit fd5f5f8) that tries to derive subcategories using multiple approaches, but it's not working for all combinations.
+We've attempted a universal fallback mechanism (commit fd5f5f8) that tries to derive subcategories using multiple approaches, but it's not working for all combinations. Our debugging revealed that the L_SUBCATEGORIES for the PRF category exists and contains valid entries, suggesting the issue might be elsewhere in the chain.
 
 ## Relevant Files and Commits
 
