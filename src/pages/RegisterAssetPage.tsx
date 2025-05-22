@@ -659,6 +659,12 @@ const RegisterAssetPage: React.FC = () => {
   const handleSubcategorySelectV3 = React.useCallback(async (subcategoryCode: string) => {
     console.log('[REGISTER PAGE] Subcategory selected:', subcategoryCode);
     
+    // Skip processing empty subcategory codes
+    if (!subcategoryCode) {
+      console.log('[REGISTER PAGE] Ignoring empty subcategory code');
+      return;
+    }
+    
     // Set loading state
     setLoading(true);
     

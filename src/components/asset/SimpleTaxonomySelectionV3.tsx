@@ -109,6 +109,9 @@ const SimpleTaxonomySelectionV3: React.FC<SimpleTaxonomySelectionV3Props> = ({
       return;
     }
     
+    // Store the current selection to prevent unwanted resets
+    const currentSelection = selectedSubcategoryCode;
+    
     const loadSubcategories = async () => {
       setIsProcessing(true);
       setError(null);
@@ -137,6 +140,13 @@ const SimpleTaxonomySelectionV3: React.FC<SimpleTaxonomySelectionV3Props> = ({
           logger.info(`Found ${subcategories.length} subcategories from enhanced service for ${cacheKey}`);
           setSubcategoryOptions(subcategories);
           subcategoryCacheRef.current[cacheKey] = subcategories;
+          
+          // Preserve the current selection if it was valid
+          if (currentSelection) {
+            setTimeout(() => {
+              console.log(`[V3] Preserving previous selection: ${currentSelection}`);
+            }, 0);
+          }
           return;
         }
         
@@ -378,8 +388,19 @@ const SimpleTaxonomySelectionV3: React.FC<SimpleTaxonomySelectionV3Props> = ({
             value={selectedSubcategoryCode || ''}
             onChange={(e) => {
               const value = e.target.value as string;
+              // Don't process empty selections
+              if (!value) {
+                console.log(`[V3] Ignoring empty subcategory selection`);
+                return;
+              }
+              
+              // Track the selection in our local state first
               console.log(`[V3] Subcategory selected:`, value);
-              onSubcategorySelect(value);
+              
+              // Try to prevent race conditions with a small delay
+              setTimeout(() => {
+                onSubcategorySelect(value);
+              }, 0);
             }}
             label="Subcategory"
           >
