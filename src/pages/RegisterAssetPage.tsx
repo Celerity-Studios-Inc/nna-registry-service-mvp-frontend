@@ -678,13 +678,58 @@ const RegisterAssetPage: React.FC = () => {
       const enhancedService = await import('../services/enhancedTaxonomyService');
       const subcategories = enhancedService.getSubcategories(watchLayer, watchCategory);
       
+      console.log(`[REGISTER PAGE] Searching subcategories for match:`, {
+        subcategoryCode,
+        displayCode,
+        watchCategory,
+        watchLayer,
+        subcategoriesCount: subcategories.length
+      });
+      
       // Find the matching subcategory to get its name
-      const subcategoryItem = subcategories.find((item: SubcategoryItem) => {
+      let subcategoryItem = subcategories.find((item: SubcategoryItem) => {
         const itemCode = item.code?.includes('.') ? 
           item.code : 
           `${watchCategory}.${item.code}`;
-        return itemCode === subcategoryCode || item.code === displayCode;
+        
+        const matches = itemCode === subcategoryCode || item.code === displayCode;
+        if (matches) {
+          console.log(`[REGISTER PAGE] Found matching subcategory:`, item);
+        }
+        return matches;
       });
+      
+      // If not found by direct match, try matching by the last part (e.g., BAS, HPM)
+      if (!subcategoryItem) {
+        console.log('[REGISTER PAGE] No direct match found, trying fallback match logic');
+        subcategoryItem = subcategories.find((item: SubcategoryItem) => {
+          // Try to match by the last part (e.g., BAS, HPM)
+          const itemShortCode = item.code?.includes('.') ? 
+            item.code.split('.').pop() : 
+            item.code;
+          
+          const displayCodeShort = displayCode?.includes('.') ? 
+            displayCode.split('.').pop() : 
+            displayCode;
+          
+          const matches = itemShortCode === displayCodeShort;
+          if (matches) {
+            console.log(`[REGISTER PAGE] Found matching subcategory using short code:`, item);
+          }
+          return matches;
+        });
+      }
+      
+      // Special handling for S.POP.HPM which is a common problematic case
+      if (!subcategoryItem && watchLayer === 'S' && watchCategory === 'POP' && 
+          (displayCode === 'HPM' || subcategoryCode === 'POP.HPM')) {
+        console.log('[REGISTER PAGE] Using special case handling for S.POP.HPM');
+        subcategoryItem = {
+          code: 'HPM',
+          name: 'Pop_Hipster_Male_Stars',
+          numericCode: '007'
+        };
+      }
       
       if (subcategoryItem) {
         setValue('subcategoryName', subcategoryItem.name || '');
