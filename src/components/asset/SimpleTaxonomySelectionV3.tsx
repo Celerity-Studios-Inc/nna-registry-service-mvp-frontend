@@ -78,6 +78,7 @@ const SimpleTaxonomySelectionV3: React.FC<SimpleTaxonomySelectionV3Props> = ({
     return `${layer}.${categoryCode}`;
   }, []);
 
+  // Clean up on unmount
   useEffect(() => {
     isMounted.current = true;
     return () => {
@@ -149,9 +150,6 @@ const SimpleTaxonomySelectionV3: React.FC<SimpleTaxonomySelectionV3Props> = ({
       
       // Track load attempts for this combination
       loadAttemptsRef.current[cacheKey] = (loadAttemptsRef.current[cacheKey] || 0) + 1;
-      const attempts = loadAttemptsRef.current[cacheKey];
-      
-      logger.info(`Loading subcategories for ${cacheKey} (attempt ${attempts})`);
       
       try {
         // 1. First check the cache
@@ -172,13 +170,6 @@ const SimpleTaxonomySelectionV3: React.FC<SimpleTaxonomySelectionV3Props> = ({
           if (isMounted.current) {
             setSubcategoryOptions(subcategories);
             subcategoryCacheRef.current[cacheKey] = subcategories;
-          }
-          
-          // Preserve the current selection if it was valid
-          if (currentSelection && isMounted.current) {
-            setTimeout(() => {
-              console.log(`[V3] Preserving previous selection: ${currentSelection}`);
-            }, 0);
           }
           return;
         }
@@ -216,7 +207,7 @@ const SimpleTaxonomySelectionV3: React.FC<SimpleTaxonomySelectionV3Props> = ({
         
         // Hardcoded emergency fallbacks for known problematic combinations
         if (selectedLayer === 'S' && selectedCategoryCode === 'DNC') {
-          logger.info(`[V3] Applying emergency fallback for S.DNC`);
+          logger.info(`Applying emergency fallback for S.DNC`);
           emergencyOptions = [
             { code: 'BAS', numericCode: '001', name: 'Base' },
             { code: 'PRD', numericCode: '002', name: 'Producer' },
@@ -228,7 +219,7 @@ const SimpleTaxonomySelectionV3: React.FC<SimpleTaxonomySelectionV3Props> = ({
             { code: 'DNB', numericCode: '008', name: 'Drum_n_Bass' }
           ];
         } else if (selectedLayer === 'L' && selectedCategoryCode === 'PRF') {
-          logger.info(`[V3] Applying emergency fallback for L.PRF`);
+          logger.info(`Applying emergency fallback for L.PRF`);
           emergencyOptions = [
             { code: 'BAS', numericCode: '001', name: 'Base' },
             { code: 'LEO', numericCode: '002', name: 'Leotard' },
@@ -243,7 +234,7 @@ const SimpleTaxonomySelectionV3: React.FC<SimpleTaxonomySelectionV3Props> = ({
           ];
         }
         
-        logger.info(`[V3] Applied emergency fallback with ${emergencyOptions.length} options`);
+        logger.info(`Applied emergency fallback with ${emergencyOptions.length} options`);
         if (isMounted.current) {
           setSubcategoryOptions(emergencyOptions);
           subcategoryCacheRef.current[cacheKey] = emergencyOptions;
@@ -305,7 +296,6 @@ const SimpleTaxonomySelectionV3: React.FC<SimpleTaxonomySelectionV3Props> = ({
       try {
         // Try to get subcategories from the enhanced service
         const subcategories = getSubcategories(selectedLayer, selectedCategoryCode);
-        logger.info(`Retry found ${subcategories.length} subcategories for ${cacheKey}`);
         
         if (subcategories && subcategories.length > 0 && isMounted.current) {
           setSubcategoryOptions(subcategories);
@@ -320,7 +310,7 @@ const SimpleTaxonomySelectionV3: React.FC<SimpleTaxonomySelectionV3Props> = ({
           let emergencyOptions: TaxonomyItem[] = [];
           
           if (selectedLayer === 'S' && selectedCategoryCode === 'DNC') {
-            logger.info(`[V3] Applying emergency fallback for S.DNC`);
+            logger.info(`Applying emergency fallback for S.DNC`);
             emergencyOptions = [
               { code: 'BAS', numericCode: '001', name: 'Base' },
               { code: 'PRD', numericCode: '002', name: 'Producer' },
@@ -329,7 +319,7 @@ const SimpleTaxonomySelectionV3: React.FC<SimpleTaxonomySelectionV3Props> = ({
               { code: 'TRN', numericCode: '005', name: 'Trance' }
             ];
           } else if (selectedLayer === 'L' && selectedCategoryCode === 'PRF') {
-            logger.info(`[V3] Applying emergency fallback for L.PRF`);
+            logger.info(`Applying emergency fallback for L.PRF`);
             emergencyOptions = [
               { code: 'BAS', numericCode: '001', name: 'Base' },
               { code: 'LEO', numericCode: '002', name: 'Leotard' },
@@ -367,7 +357,7 @@ const SimpleTaxonomySelectionV3: React.FC<SimpleTaxonomySelectionV3Props> = ({
     }, 100);
   };
 
-  // Toggle debug mode
+  // Toggle debug mode - only visible in development
   const toggleDebugMode = () => {
     setDebugMode(!debugMode);
   };
@@ -440,11 +430,18 @@ const SimpleTaxonomySelectionV3: React.FC<SimpleTaxonomySelectionV3Props> = ({
       >
         <CardActionArea>
           <CardContent>
-            <Typography variant="body1" component="div" fontWeight="bold">
+            <Typography variant="body1" component="div" fontWeight="bold" noWrap>
               {taxonomyItem.code}
             </Typography>
-            <Typography variant="body2" color="text.secondary">
-              {displayName}
+            <Typography variant="body2" color="text.secondary" sx={{ 
+              height: '40px', 
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              display: '-webkit-box',
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: 'vertical'
+            }}>
+              {displayName.replace(/_/g, ' ')}
             </Typography>
             <Typography variant="caption" color="text.secondary">
               {taxonomyItem.numericCode}
@@ -471,35 +468,7 @@ const SimpleTaxonomySelectionV3: React.FC<SimpleTaxonomySelectionV3Props> = ({
         </Alert>
       )}
 
-      <Box mb={3}>
-        <Typography variant="h6" gutterBottom>
-          Step 1: Select Layer
-        </Typography>
-        <div className="taxonomy-section">
-          <div className="taxonomy-section-title">
-            <span>Layer</span>
-            {selectedLayer && (
-              <span className="layer-indicator">{selectedLayer}</span>
-            )}
-          </div>
-          <div className="taxonomy-items fixed-grid">
-            {layers.length > 0 ? (
-              layers.map((layer) => (
-                <div key={layer} className="taxonomy-item-wrapper">
-                  {renderTaxonomyCard(
-                    layer,
-                    layer === selectedLayer,
-                    () => onLayerSelect(layer),
-                    'layer'
-                  )}
-                </div>
-              ))
-            ) : (
-              <div className="taxonomy-loading">Loading layers...</div>
-            )}
-          </div>
-        </div>
-      </Box>
+      {/* We're keeping the layer selection in RegisterAssetPage, so we no longer need it here */}
 
       <Box mb={3} sx={{ opacity: selectedLayer ? 1 : 0.5 }}>
         <Typography variant="h6" gutterBottom>
@@ -578,10 +547,6 @@ const SimpleTaxonomySelectionV3: React.FC<SimpleTaxonomySelectionV3Props> = ({
                       subcategory,
                       displayCode === selectedSubcategoryCode,
                       () => {
-                        // Track the selection in our local state first
-                        console.log(`[V3] Subcategory selected:`, displayCode);
-                        
-                        // Try to prevent race conditions with a small delay
                         setTimeout(() => {
                           onSubcategorySelect(displayCode);
                         }, 0);
@@ -633,19 +598,23 @@ const SimpleTaxonomySelectionV3: React.FC<SimpleTaxonomySelectionV3Props> = ({
             Retry Loading Subcategories
           </Button>
           
-          <Button 
-            size="small" 
-            variant="outlined" 
-            onClick={toggleDebugMode}
-          >
-            {debugMode ? 'Hide Debug Info' : 'Show Debug Info'}
-          </Button>
+          {/* Show debug toggle only in development */}
+          {process.env.NODE_ENV === 'development' && (
+            <Button 
+              size="small" 
+              variant="outlined" 
+              onClick={toggleDebugMode}
+            >
+              {debugMode ? 'Hide Debug Info' : 'Show Debug Info'}
+            </Button>
+          )}
           
           {isProcessing && <CircularProgress size={20} />}
         </Box>
       </Box>
       
-      {debugMode && (
+      {/* Show debug info only when enabled AND in development */}
+      {debugMode && process.env.NODE_ENV === 'development' && (
         <Alert severity="info" sx={{ mt: 2 }}>
           <Typography variant="subtitle2" gutterBottom>
             Debug Information
