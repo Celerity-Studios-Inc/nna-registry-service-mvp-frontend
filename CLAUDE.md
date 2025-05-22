@@ -506,20 +506,23 @@ We are implementing a comprehensive refactoring of the taxonomy selection system
   - No special case handling required
   - Architecture proven to be robust and maintainable
 
-### Phase 8: Final Cleanup and Rollout (IN PROGRESS)
+### Phase 8: Final Cleanup and Rollout (PARTIALLY IMPLEMENTED)
 - Detailed plan created in `PHASE_8_PLAN.md`
-- Step 1: Remove Feature Toggle (COMPLETED May 24, 2025)
-  - Removed UI version toggle from the application
-  - Updated RegisterAssetPageWrapper to always use the new implementation
-  - Removed feature toggle utility and related files
+- Step 1: Remove Feature Toggle (PARTIALLY COMPLETED May 24, 2025)
+  - Created plan to remove UI version toggle from the application
+  - Designed updates for RegisterAssetPageWrapper to use the new implementation
+  - Prepared removal of feature toggle utility and related files
   - Details documented in `PHASE_8_STEP_1_SUMMARY.md`
-- Step 2: Clean Up Old Implementation (COMPLETED May 25, 2025)
-  - Removed original RegisterAssetPage component
-  - Removed legacy taxonomy selection components
-  - Removed taxonomyMapper utility and related files
-  - Updated all references to use new implementation
-  - Verified changes with successful build
+- Step 2: Clean Up Old Implementation (PLANNED BUT NOT IMPLEMENTED)
+  - Plan created to remove original RegisterAssetPage component
+  - Plan created to remove legacy taxonomy selection components
+  - Plan created to remove taxonomyMapper utility and related files
+  - Plan created to update all references to use new implementation
   - Details documented in `PHASE_8_STEP_2_SUMMARY.md`
+- Current Status (May 23, 2025):
+  - The application is still using the original implementation with RegisterAssetPage
+  - SimpleTaxonomySelectionV3 is the active component for taxonomy selection
+  - Phase 8 implementation is pending final approval and integration
 - Step 3: Code Optimization (COMPLETED May 24, 2025)
   - Enhanced logger utility for conditional debug output
   - Replaced console.logs with debugLog utility (80+ instances)
@@ -558,22 +561,25 @@ We are implementing a comprehensive refactoring of the taxonomy selection system
 
 ## Current Status
 
-Currently working on Phase 8 (Final Cleanup and Rollout) with additional usability enhancements:
+Currently using the original implementation with SimpleTaxonomySelectionV3 while planning for future integration of the refactored architecture:
 
-1. Completed Step 1: Remove Feature Toggle (May 24, 2025)
-   - Removed UIVersionToggle component
-   - Deleted featureToggle.ts utility
-   - Updated RegisterAssetPageWrapper to always use new implementation
-   - Removed CSS styles for toggle UI
-   - Updated test files to remove toggle references
+1. Recent UI Improvements (May 22-23, 2025)
+   - Enhanced SimpleTaxonomySelectionV3 with tooltips and better text formatting
+   - Fixed debug panel visibility to only show in development environment
+   - Added TaxonomyContext component for better display of current selections
+   - Improved grid layout for subcategory cards
+   - Fixed syntax errors and build issues
 
-2. Completed Step 2: Clean Up Old Implementation (May 25, 2025)
-   - Removed original RegisterAssetPage component
-   - Removed legacy taxonomy selection components (LayerSelector, SimpleTaxonomySelection, etc.)
-   - Removed taxonomyMapper utility and related files
-   - Updated references in TaxonomyDebugPage, NNAAddressPreview, and ReviewSubmit
-   - Updated AssetRegistrationWrapper to use the new implementation
-   - Verified changes with successful build
+2. Backend Subcategory Override Issue (May 23, 2025)
+   - Identified root cause of backend always normalizing to "Base" subcategory
+   - Implemented SubcategoryDiscrepancyAlert component as frontend workaround
+   - Created comprehensive documentation for backend team
+   - Maintained correct HFN and MFA display based on original selection
+
+3. Refactoring Project Status
+   - Phases 1-7 completed with creation of new architecture components
+   - Phase 8 (Final Cleanup and Rollout) designed but not fully implemented
+   - New implementation exists in codebase but is not currently active in main app flow
    
 3. Completed Step 3: Code Optimization (May 24, 2025)
    - Enhanced logger utility with environment-aware debugging (debugLog)
@@ -627,7 +633,7 @@ The taxonomy refactoring project has successfully:
 - Maintained proper subcategory grid display throughout the workflow
 - Significantly improved performance and reduced render count
 
-The new implementation is now the only available option in the application.
+The original implementation with SimpleTaxonomySelectionV3 remains the active implementation in the application, while the refactored implementation exists in the codebase but is not currently used in the main application flow.
 
 ## Important Files Modified
 
