@@ -28,6 +28,7 @@ import ErrorTestPage from './pages/ErrorTestPage';
 import TaxonomyDebugPage from './pages/TaxonomyDebugPage';
 import TaxonomyTestPage from './pages/TaxonomyTestPage';
 import TaxonomySelectorTestPage from './pages/TaxonomySelectorTestPage';
+import TaxonomyComparisonTest from './pages/TaxonomyComparisonTest';
 import AssetRegistration from './pages/AssetRegistration';
 import EmergencyAssetRegistrationPage from './pages/EmergencyAssetRegistrationPage';
 import UltraSimpleAssetRegistrationPage from './pages/UltraSimpleAssetRegistrationPage';
@@ -48,6 +49,7 @@ import TaxonomyValidator from './components/TaxonomyValidator';
 import RegisterAssetPageWrapper from './components/asset/RegisterAssetPageWrapper';
 import TaxonomyInitProvider from './components/providers/TaxonomyInitProvider';
 import TaxonomyExample from './components/examples/TaxonomyExample';
+import TaxonomySelectorV3Test from './pages/TaxonomySelectorV3Test';
 
 // Force initialization of the flattened taxonomy service is now handled by TaxonomyInitProvider
 import { taxonomyService } from './services/simpleTaxonomyService';
@@ -207,6 +209,14 @@ const App: React.FC = () => {
                         <Route
                           path="/taxonomy-selector-test"
                           element={<TaxonomySelectorTestPage />}
+                        />
+                        <Route
+                          path="/taxonomy-comparison-test"
+                          element={<TaxonomyComparisonTest />}
+                        />
+                        <Route
+                          path="/taxonomy-selector-v3-test"
+                          element={<TaxonomySelectorV3Test />}
                         />
                         <Route
                           path="/register-asset-simple"

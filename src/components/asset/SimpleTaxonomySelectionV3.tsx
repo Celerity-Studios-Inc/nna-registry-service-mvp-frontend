@@ -3,17 +3,29 @@
  * 
  * A completely new implementation of the taxonomy selection component that uses
  * the enhanced taxonomy service for improved reliability and error handling.
+ * 
+ * Key features:
+ * - Multi-tiered fallback system for subcategory loading
+ * - Enhanced error handling and debug information
+ * - Improved UI with dropdown-based selection
+ * - Better state management for layer/category/subcategory selection
  */
-import React, { useState, useEffect } from 'react';
-import { FormControl, InputLabel, Select, MenuItem, Grid, Typography } from '@mui/material';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { 
+  FormControl, InputLabel, Select, MenuItem, Grid, Typography, 
+  Button, CircularProgress, Alert
+} from '@mui/material';
 import {
   getLayers,
   getCategories,
   getSubcategories,
-  inspectTaxonomyStructure
+  inspectTaxonomyStructure,
+  debugTaxonomyData
 } from '../../services/enhancedTaxonomyService';
+import { FALLBACK_SUBCATEGORIES } from '../../services/taxonomyFallbackData';
 import { taxonomyService } from '../../services/simpleTaxonomyService';
 import { TaxonomyItem } from '../../types/taxonomy.types';
+import { logger } from '../../utils/logger';
 
 interface SimpleTaxonomySelectionV3Props {
   selectedLayer: string;
@@ -32,20 +44,33 @@ const SimpleTaxonomySelectionV3: React.FC<SimpleTaxonomySelectionV3Props> = ({
   selectedSubcategoryCode,
   onSubcategorySelect
 }) => {
+  // State for taxonomy data
   const [layers, setLayers] = useState<string[]>([]);
   const [categoryOptions, setCategoryOptions] = useState<TaxonomyItem[]>([]);
   const [subcategoryOptions, setSubcategoryOptions] = useState<TaxonomyItem[]>([]);
+  
+  // State for UI control
   const [error, setError] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
+  const [debugMode, setDebugMode] = useState<boolean>(false);
+  
+  // References for tracking loading attempts
+  const loadAttemptsRef = useRef<Record<string, number>>({});
+  const subcategoryCacheRef = useRef<Record<string, TaxonomyItem[]>>({});
+
+  // Helper to get a cache key for subcategory lookups
+  const getSubcategoryCacheKey = useCallback((layer: string, categoryCode: string): string => {
+    return `${layer}.${categoryCode}`;
+  }, []);
 
   // Load layers on component mount
   useEffect(() => {
     try {
       const availableLayers = getLayers();
-      console.log('Available layers:', availableLayers);
+      logger.info('Available layers:', availableLayers);
       setLayers(availableLayers);
     } catch (err) {
-      console.error('Error loading layers:', err);
+      logger.error('Error loading layers:', err);
       setError('Failed to load layers');
     }
   }, []);
@@ -58,7 +83,7 @@ const SimpleTaxonomySelectionV3: React.FC<SimpleTaxonomySelectionV3Props> = ({
       
       try {
         const categories = getCategories(selectedLayer);
-        console.log(`Categories for layer ${selectedLayer}:`, categories);
+        logger.info(`Categories for layer ${selectedLayer}:`, categories);
         setCategoryOptions(categories);
         
         // Clear subcategory if layer changes
@@ -66,7 +91,7 @@ const SimpleTaxonomySelectionV3: React.FC<SimpleTaxonomySelectionV3Props> = ({
           onSubcategorySelect('');
         }
       } catch (err) {
-        console.error(`Error loading categories for ${selectedLayer}:`, err);
+        logger.error(`Error loading categories for ${selectedLayer}:`, err);
         setError(`Failed to load categories for ${selectedLayer}`);
         setCategoryOptions([]);
       } finally {
@@ -77,52 +102,140 @@ const SimpleTaxonomySelectionV3: React.FC<SimpleTaxonomySelectionV3Props> = ({
     }
   }, [selectedLayer, selectedSubcategoryCode, onSubcategorySelect]);
 
-  // Load subcategories when layer and category change
+  // Load subcategories when layer and category change with multi-tiered fallback
   useEffect(() => {
-    if (selectedLayer && selectedCategoryCode) {
+    if (!selectedLayer || !selectedCategoryCode) {
+      setSubcategoryOptions([]);
+      return;
+    }
+    
+    const loadSubcategories = async () => {
       setIsProcessing(true);
       setError(null);
       
+      const cacheKey = getSubcategoryCacheKey(selectedLayer, selectedCategoryCode);
+      
+      // Track load attempts for this combination
+      loadAttemptsRef.current[cacheKey] = (loadAttemptsRef.current[cacheKey] || 0) + 1;
+      const attempts = loadAttemptsRef.current[cacheKey];
+      
+      logger.info(`Loading subcategories for ${cacheKey} (attempt ${attempts})`);
+      
       try {
-        // Debug the taxonomy structure
-        const structureInfo = inspectTaxonomyStructure(selectedLayer, selectedCategoryCode);
-        console.log('Taxonomy structure:', structureInfo);
-        
-        // Get subcategories
-        const subcategories = getSubcategories(selectedLayer, selectedCategoryCode);
-        console.log(`Subcategories for ${selectedLayer}.${selectedCategoryCode}:`, subcategories);
-        
-        setSubcategoryOptions(subcategories);
-        
-        // Clear subcategory if category changes and current selection is no longer valid
-        if (selectedSubcategoryCode) {
-          const isValid = subcategories.some(s => s.code === getShortSubcategoryCode(selectedSubcategoryCode));
-          if (!isValid) {
-            onSubcategorySelect('');
-          }
+        // 1. First check the cache
+        if (subcategoryCacheRef.current[cacheKey] && subcategoryCacheRef.current[cacheKey].length > 0) {
+          logger.info(`Using cached subcategories for ${cacheKey}`);
+          setSubcategoryOptions(subcategoryCacheRef.current[cacheKey]);
+          return;
         }
+        
+        // 2. Try enhanced taxonomy service
+        logger.debug(`Trying enhanced taxonomy service for ${cacheKey}`);
+        const subcategories = getSubcategories(selectedLayer, selectedCategoryCode);
+        
+        if (subcategories && subcategories.length > 0) {
+          logger.info(`Found ${subcategories.length} subcategories from enhanced service for ${cacheKey}`);
+          setSubcategoryOptions(subcategories);
+          subcategoryCacheRef.current[cacheKey] = subcategories;
+          return;
+        }
+        
+        // 3. Try fallback data
+        logger.debug(`Checking fallback data for ${cacheKey}`);
+        if (FALLBACK_SUBCATEGORIES[selectedLayer]?.[selectedCategoryCode]) {
+          logger.info(`Using fallback data for ${cacheKey}`);
+          const fallbackData = FALLBACK_SUBCATEGORIES[selectedLayer][selectedCategoryCode];
+          setSubcategoryOptions(fallbackData);
+          subcategoryCacheRef.current[cacheKey] = fallbackData;
+          return;
+        }
+        
+        // 4. Try the original taxonomy service
+        logger.debug(`Trying original taxonomy service for ${cacheKey}`);
+        const originalSubcategories = taxonomyService.getSubcategories(selectedLayer, selectedCategoryCode);
+        
+        if (originalSubcategories && originalSubcategories.length > 0) {
+          logger.info(`Found ${originalSubcategories.length} subcategories from original service for ${cacheKey}`);
+          setSubcategoryOptions(originalSubcategories);
+          subcategoryCacheRef.current[cacheKey] = originalSubcategories;
+          return;
+        }
+        
+        // 5. Create synthetic subcategories as last resort
+        logger.warn(`No subcategories found for ${cacheKey}, creating synthetic entries`);
+        const syntheticSubcategories: TaxonomyItem[] = [
+          { code: 'BAS', numericCode: '001', name: 'Base' },
+        ];
+        
+        setSubcategoryOptions(syntheticSubcategories);
+        subcategoryCacheRef.current[cacheKey] = syntheticSubcategories;
+        
+        // Log detailed diagnostics
+        debugTaxonomyData(selectedLayer, selectedCategoryCode);
+        
       } catch (err) {
-        console.error(`Error loading subcategories for ${selectedLayer}.${selectedCategoryCode}:`, err);
+        logger.error(`Error loading subcategories for ${cacheKey}:`, err);
         setError(`Failed to load subcategories for ${selectedCategoryCode}`);
-        setSubcategoryOptions([]);
+        
+        // Try to recover with basic fallback
+        const basicFallback: TaxonomyItem[] = [
+          { code: 'BAS', numericCode: '001', name: 'Base' },
+        ];
+        
+        setSubcategoryOptions(basicFallback);
+        subcategoryCacheRef.current[cacheKey] = basicFallback;
+        
       } finally {
         setIsProcessing(false);
       }
-    } else {
-      setSubcategoryOptions([]);
-    }
-  }, [selectedLayer, selectedCategoryCode, selectedSubcategoryCode, onSubcategorySelect]);
+    };
+    
+    loadSubcategories();
+    
+  }, [selectedLayer, selectedCategoryCode, getSubcategoryCacheKey]);
 
   // Get subcategory code from full code (e.g., "POP.KPO" -> "KPO")
   const getShortSubcategoryCode = (fullCode: string): string => {
     return fullCode ? fullCode.split('.')[1] || fullCode : '';
   };
 
+  // Handle retry for subcategory loading
+  const handleRetrySubcategories = () => {
+    if (!selectedLayer || !selectedCategoryCode) return;
+    
+    const cacheKey = getSubcategoryCacheKey(selectedLayer, selectedCategoryCode);
+    delete subcategoryCacheRef.current[cacheKey];
+    setSubcategoryOptions([]);
+    
+    // Force re-loading
+    setIsProcessing(true);
+    setTimeout(() => {
+      const subcategories = getSubcategories(selectedLayer, selectedCategoryCode);
+      logger.info(`Retry found ${subcategories.length} subcategories for ${cacheKey}`);
+      setSubcategoryOptions(subcategories);
+      subcategoryCacheRef.current[cacheKey] = subcategories;
+      setIsProcessing(false);
+    }, 100);
+  };
+
+  // Toggle debug mode
+  const toggleDebugMode = () => {
+    setDebugMode(!debugMode);
+  };
+
   return (
     <Grid container spacing={2}>
       {error && (
         <Grid item xs={12}>
-          <Typography color="error">{error}</Typography>
+          <Alert severity="error" 
+            action={
+              <Button color="inherit" size="small" onClick={handleRetrySubcategories}>
+                Retry
+              </Button>
+            }
+          >
+            {error}
+          </Alert>
         </Grid>
       )}
       
@@ -198,7 +311,64 @@ const SimpleTaxonomySelectionV3: React.FC<SimpleTaxonomySelectionV3Props> = ({
             'Please select a layer, category, and subcategory'
           )}
         </Typography>
+        
+        <div style={{ marginTop: '10px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <Button 
+            size="small" 
+            variant="outlined" 
+            onClick={handleRetrySubcategories}
+            disabled={!selectedLayer || !selectedCategoryCode || isProcessing}
+          >
+            Retry Loading Subcategories
+          </Button>
+          
+          <Button 
+            size="small" 
+            variant="outlined" 
+            onClick={toggleDebugMode}
+          >
+            {debugMode ? 'Hide Debug Info' : 'Show Debug Info'}
+          </Button>
+          
+          {isProcessing && <CircularProgress size={20} />}
+        </div>
       </Grid>
+      
+      {debugMode && (
+        <Grid item xs={12}>
+          <Alert severity="info">
+            <Typography variant="subtitle2" gutterBottom>
+              Debug Information
+            </Typography>
+            
+            <Typography variant="body2">
+              <strong>Layer:</strong> {selectedLayer || 'None'}<br />
+              <strong>Category:</strong> {selectedCategoryCode || 'None'}<br />
+              <strong>Subcategory:</strong> {selectedSubcategoryCode || 'None'}<br />
+              <strong>Available Subcategories:</strong> {subcategoryOptions.length}<br />
+              <strong>Load Attempts:</strong> {selectedLayer && selectedCategoryCode ? 
+                loadAttemptsRef.current[getSubcategoryCacheKey(selectedLayer, selectedCategoryCode)] || 0 : 0}
+            </Typography>
+            
+            {selectedLayer && selectedCategoryCode && (
+              <div style={{ marginTop: '10px' }}>
+                <Typography variant="caption">
+                  Subcategory Codes:
+                </Typography>
+                <ul style={{ margin: '5px 0', paddingLeft: '20px' }}>
+                  {subcategoryOptions.map((item, index) => (
+                    <li key={index}>
+                      <Typography variant="caption">
+                        {item.code} ({item.numericCode}) - {item.name}
+                      </Typography>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </Alert>
+        </Grid>
+      )}
     </Grid>
   );
 };

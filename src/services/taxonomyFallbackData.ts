@@ -425,6 +425,14 @@ export const FALLBACK_SUBCATEGORIES: Record<string, Record<string, TaxonomyItem[
       { code: 'ATH', numericCode: '005', name: 'Athletic' },
       { code: 'MIN', numericCode: '006', name: 'Minimalist' },
       { code: 'SPK', numericCode: '007', name: 'Sparkly_Dress' }
+    ],
+    TRD: [
+      { code: 'BAS', numericCode: '001', name: 'Base' },
+      { code: 'KIM', numericCode: '002', name: 'Kimono' },
+      { code: 'SAR', numericCode: '003', name: 'Saree' },
+      { code: 'KLT', numericCode: '004', name: 'Kilt' },
+      { code: 'HAN', numericCode: '005', name: 'Hanbok' },
+      { code: 'CHG', numericCode: '006', name: 'Cheongsam' }
     ]
   },
   S: {
@@ -440,6 +448,47 @@ export const FALLBACK_SUBCATEGORIES: Record<string, Record<string, TaxonomyItem[
       { code: 'AMB', numericCode: '009', name: 'Ambient' },
       { code: 'LIV', numericCode: '010', name: 'Live_Electronic' },
       { code: 'EXP', numericCode: '011', name: 'Experimental' }
+    ],
+    POP: [
+      { code: 'BAS', numericCode: '001', name: 'Base' },
+      { code: 'DIV', numericCode: '002', name: 'Diva' },
+      { code: 'IDF', numericCode: '003', name: 'Indie Female' },
+      { code: 'LGF', numericCode: '004', name: 'LGBTQ+ Female' },
+      { code: 'LGM', numericCode: '005', name: 'LGBTQ+ Male' },
+      { code: 'ICM', numericCode: '006', name: 'Icon Male' },
+      { code: 'HPM', numericCode: '007', name: 'Hipster Male' },
+      { code: 'GLB', numericCode: '008', name: 'Global' },
+      { code: 'TEN', numericCode: '009', name: 'Teen' },
+      { code: 'DNC', numericCode: '010', name: 'Dance' },
+      { code: 'ELC', numericCode: '011', name: 'Electronic' }
+    ],
+    HIP: [
+      { code: 'BAS', numericCode: '001', name: 'Base' },
+      { code: 'HPF', numericCode: '002', name: 'Hip-Hop Female' },
+      { code: 'RAP', numericCode: '003', name: 'Rapper' },
+      { code: 'TRP', numericCode: '004', name: 'Trap' },
+      { code: 'MCS', numericCode: '005', name: 'MC Style' },
+      { code: 'DRL', numericCode: '006', name: 'Drill' },
+      { code: 'PRD', numericCode: '007', name: 'Producer' },
+      { code: 'MUM', numericCode: '008', name: 'Mumble' }
+    ]
+  },
+  W: {
+    BCH: [
+      { code: 'BAS', numericCode: '001', name: 'Base' },
+      { code: 'TRO', numericCode: '002', name: 'Tropical' },
+      { code: 'ISL', numericCode: '003', name: 'Island' },
+      { code: 'SUN', numericCode: '003', name: 'Sunset' },
+      { code: 'SRF', numericCode: '004', name: 'Surf' },
+      { code: 'MAR', numericCode: '005', name: 'Marine' }
+    ],
+    UTB: [
+      { code: 'BAS', numericCode: '001', name: 'Base' },
+      { code: 'CIT', numericCode: '002', name: 'City' },
+      { code: 'STR', numericCode: '003', name: 'Street' },
+      { code: 'NGT', numericCode: '004', name: 'Night' },
+      { code: 'SUB', numericCode: '005', name: 'Suburb' },
+      { code: 'IND', numericCode: '006', name: 'Industrial' }
     ]
   }
 };

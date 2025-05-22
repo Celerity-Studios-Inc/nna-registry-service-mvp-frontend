@@ -1,6 +1,11 @@
 /**
- * Utility functions for recovering from taxonomy-related errors
+ * Taxonomy Error Recovery Utilities
+ * 
+ * This file contains utility functions for recovering from taxonomy-related errors.
+ * It provides fallback mechanisms, cleanup functions, and global error handlers.
  */
+
+import { logger } from './logger';
 
 /**
  * Reset the taxonomy-related session storage to recover from corrupted state
@@ -245,6 +250,7 @@ export const setupGlobalTaxonomyErrorHandler = () => {
     if (event.error && event.error.message && 
         (event.error.message.includes('React error #301') || 
          event.error.stack?.includes('SimpleTaxonomySelectionV2') ||
+         event.error.stack?.includes('SimpleTaxonomySelectionV3') ||
          event.error.stack?.includes('TaxonomyContext'))) {
       
       console.error('[TAXONOMY RECOVERY] Detected React Error #301:', event.error);
@@ -260,4 +266,97 @@ export const setupGlobalTaxonomyErrorHandler = () => {
   });
   
   console.log('[TAXONOMY RECOVERY] Global taxonomy error handler initialized');
+};
+
+/**
+ * Specific recovery function for the enhanced SimpleTaxonomySelectionV3 component
+ * @param layerCode The layer code to recover
+ * @param categoryCode The category code to recover
+ * @returns Promise that resolves when recovery is complete
+ */
+export const recoverEnhancedTaxonomySelection = async (
+  layerCode: string,
+  categoryCode?: string
+): Promise<boolean> => {
+  logger.info(`[ENHANCED RECOVERY] Starting recovery for ${layerCode}${categoryCode ? `.${categoryCode}` : ''}`);
+  
+  try {
+    // Step 1: Clear any cached data for this combination
+    const subcategoryCacheKey = categoryCode ? `${layerCode}.${categoryCode}` : null;
+    
+    // Clear any subcategory cache entries
+    if (subcategoryCacheKey) {
+      try {
+        sessionStorage.removeItem(`subcategoriesCache_${subcategoryCacheKey}`);
+        sessionStorage.removeItem(`subcategoriesList_${subcategoryCacheKey}`);
+        
+        // Also check for direct caching in component refs
+        const taxonomyCacheStr = sessionStorage.getItem('taxonomyCache');
+        if (taxonomyCacheStr) {
+          try {
+            const taxonomyCache = JSON.parse(taxonomyCacheStr);
+            if (taxonomyCache[subcategoryCacheKey]) {
+              delete taxonomyCache[subcategoryCacheKey];
+              sessionStorage.setItem('taxonomyCache', JSON.stringify(taxonomyCache));
+            }
+          } catch (e) {
+            console.warn('Error parsing taxonomy cache:', e);
+          }
+        }
+      } catch (e) {
+        console.warn('Error clearing subcategory cache:', e);
+      }
+    }
+    
+    // Step 2: Force a data reload by dispatching a custom event
+    const recoveryEvent = new CustomEvent('enhanced-taxonomy-reload', {
+      detail: {
+        layerCode,
+        categoryCode,
+        timestamp: Date.now(),
+        source: 'recovery'
+      }
+    });
+    
+    window.dispatchEvent(recoveryEvent);
+    logger.info('[ENHANCED RECOVERY] Dispatched enhanced-taxonomy-reload event');
+    
+    // Step 3: Preload required data using the enhanced service
+    try {
+      const enhancedService = require('../services/enhancedTaxonomyService');
+      
+      // Preload categories for the layer
+      const categories = enhancedService.getCategories(layerCode);
+      logger.info(`[ENHANCED RECOVERY] Preloaded ${categories.length} categories for ${layerCode}`);
+      
+      // If category code provided, preload subcategories
+      if (categoryCode) {
+        const subcategories = enhancedService.getSubcategories(layerCode, categoryCode);
+        logger.info(`[ENHANCED RECOVERY] Preloaded ${subcategories.length} subcategories for ${layerCode}.${categoryCode}`);
+        
+        // Check if we got subcategories, if not try the fallback data
+        if (!subcategories || subcategories.length === 0) {
+          try {
+            const { FALLBACK_SUBCATEGORIES } = require('../services/taxonomyFallbackData');
+            if (FALLBACK_SUBCATEGORIES[layerCode]?.[categoryCode]) {
+              logger.info(`[ENHANCED RECOVERY] Using fallback data for ${layerCode}.${categoryCode}`);
+              
+              // Store fallback data in session storage
+              const fallbackData = FALLBACK_SUBCATEGORIES[layerCode][categoryCode];
+              sessionStorage.setItem(`subcategoriesList_${layerCode}_${categoryCode}`, JSON.stringify(fallbackData));
+            }
+          } catch (e) {
+            logger.error('[ENHANCED RECOVERY] Error using fallback data:', e);
+          }
+        }
+      }
+    } catch (e) {
+      logger.error('[ENHANCED RECOVERY] Error preloading data:', e);
+    }
+    
+    return true;
+  } catch (error) {
+    logger.error('[ENHANCED RECOVERY] Recovery failed:', error);
+    return false;
+  }
 };

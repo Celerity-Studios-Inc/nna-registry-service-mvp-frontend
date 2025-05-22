@@ -22,6 +22,15 @@ import { getAlphabeticCode, convertHFNToMFA } from '../../api/codeMapping';
 import taxonomyMapper from '../../api/taxonomyMapper.enhanced';
 // import api from '../../api/api'; // Commented out as we're using the mock implementation
 
+// Import enhanced taxonomy service
+import { 
+  getLayers, 
+  getCategories, 
+  getSubcategories,
+  inspectTaxonomyStructure, 
+  convertHFNtoMFA
+} from '../../services/enhancedTaxonomyService';
+
 interface TaxonomySelectionProps {
   layerCode: string;
   onCategorySelect: (category: CategoryOption) => void;
@@ -74,8 +83,26 @@ const TaxonomySelection: React.FC<TaxonomySelectionProps> = ({
 
       try {
         setLoading(true);
-        const categoryOptions = taxonomyService.getCategories(layerCode);
-
+        
+        // Debug logging
+        console.log(`=== TAXONOMY DEBUG: Fetching categories for layer ${layerCode} ===`);
+        
+        // Use enhanced service for category loading
+        const enhancedCategoryItems = getCategories(layerCode);
+        console.log('Enhanced service result:', enhancedCategoryItems);
+        
+        // Map TaxonomyItem[] to CategoryOption[]
+        const categoryOptions = enhancedCategoryItems.map(item => ({
+          id: item.code, // Add id field for compatibility
+          code: item.code,
+          name: item.name,
+          numericCode: item.numericCode
+        }));
+        
+        // Also get original categories for comparison
+        const originalCategoryOptions = taxonomyService.getCategories(layerCode);
+        console.log('Original service result:', originalCategoryOptions);
+        
         // Enhanced debugging for category display
         categoryOptions.forEach(category => {
           // For numeric category codes, we need to make sure we display the alphabetic version
@@ -85,9 +112,11 @@ const TaxonomySelection: React.FC<TaxonomySelectionProps> = ({
           }
         });
 
+        // Use the enhanced service results
         setCategories(categoryOptions);
         setError(null);
       } catch (err) {
+        console.error('Error fetching categories:', err);
         setError(
           err instanceof Error ? err.message : 'Failed to load categories'
         );
@@ -151,26 +180,50 @@ const TaxonomySelection: React.FC<TaxonomySelectionProps> = ({
         
         // Run taxonomy data debugging for problematic combinations
         if ((layerCode === 'L' && selectedCategoryCode === 'PRF') || 
-            (layerCode === 'S' && selectedCategoryCode === 'DNC')) {
+            (layerCode === 'S' && selectedCategoryCode === 'DNC') ||
+            (layerCode === 'S' && selectedCategoryCode === 'POP') ||
+            (layerCode === 'W' && selectedCategoryCode === 'BCH')) {
           console.log(`[DEBUG] Known problematic combination detected: ${layerCode}.${selectedCategoryCode}`);
-          // Log detailed debug info instead of calling a method that doesn't exist
-          console.log(`[DEBUG] Layer: ${layerCode}, Category: ${selectedCategoryCode}`);
+          // Use the inspection utility from enhanced service
+          const inspection = inspectTaxonomyStructure(layerCode, selectedCategoryCode);
+          console.log('Inspection result:', inspection);
         }
         
-        const subcategoryOptions = taxonomyService.getSubcategories(
+        // Use enhanced service to get subcategories
+        const enhancedSubcategoryItems = getSubcategories(layerCode, selectedCategoryCode);
+        console.log('Enhanced service subcategory result:', enhancedSubcategoryItems);
+        
+        // Map TaxonomyItem[] to SubcategoryOption[]
+        const enhancedSubcategoryOptions = enhancedSubcategoryItems.map(item => ({
+          id: item.code, // Add id field for compatibility
+          code: item.code,
+          name: item.name,
+          numericCode: item.numericCode
+        }));
+        
+        // Also get original subcategories for comparison
+        const originalSubcategoryOptions = taxonomyService.getSubcategories(
           layerCode,
           selectedCategoryCode
         );
-        console.log(subcategoryOptions, 'subcategoryOptions');
+        console.log('Original service subcategory result:', originalSubcategoryOptions);
         
         // Log comprehensive debug info
         console.log(`[DEBUG] Subcategory fetch for ${layerCode}.${selectedCategoryCode}:`, {
-          success: Array.isArray(subcategoryOptions),
-          count: Array.isArray(subcategoryOptions) ? subcategoryOptions.length : 0,
-          isEmpty: Array.isArray(subcategoryOptions) && subcategoryOptions.length === 0
+          enhancedResults: {
+            success: Array.isArray(enhancedSubcategoryItems),
+            count: enhancedSubcategoryItems.length,
+            isEmpty: enhancedSubcategoryItems.length === 0
+          },
+          originalResults: {
+            success: Array.isArray(originalSubcategoryOptions),
+            count: Array.isArray(originalSubcategoryOptions) ? originalSubcategoryOptions.length : 0,
+            isEmpty: Array.isArray(originalSubcategoryOptions) && originalSubcategoryOptions.length === 0
+          }
         });
 
-        setSubcategories(subcategoryOptions);
+        // Use the enhanced service results
+        setSubcategories(enhancedSubcategoryOptions);
         setError(null);
       } catch (err) {
         console.error(`[ERROR] Failed to fetch subcategories for ${layerCode}.${selectedCategoryCode}:`, err);
@@ -223,8 +276,19 @@ const TaxonomySelection: React.FC<TaxonomySelectionProps> = ({
           // Create the properly formatted HFN with the alphabetic codes
           const hfnAddress = `${layerCode}.${categoryAlpha}.${subcategoryAlpha}.${sequential}`;
 
-          // Generate the MFA using the standard conversion function
-          const mfaAddress = convertHFNToMFA(hfnAddress);
+          // Generate the MFA using both the original and enhanced services for comparison
+          const originalMfaAddress = convertHFNToMFA(hfnAddress);
+          const enhancedMfaAddress = convertHFNtoMFA(hfnAddress);
+          
+          console.log(`MFA conversion comparison:`, {
+            hfnAddress,
+            originalMfaAddress,
+            enhancedMfaAddress,
+            match: originalMfaAddress === enhancedMfaAddress ? "MATCH ✅" : "MISMATCH ❌"
+          });
+          
+          // Use the enhanced conversion for MFA
+          const mfaAddress = enhancedMfaAddress;
 
           // IMPORTANT: For display in preview, we will show ".nnn" but we still need to pass
           // the real sequential number to the form for backend API to ensure correct registration
