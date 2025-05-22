@@ -23,6 +23,9 @@ This document describes the cleanup and improvements made to the SimpleTaxonomyS
   ```
 - Added `noWrap` property to code labels to prevent wrapping
 - Improved readability by replacing underscores with spaces in display names
+- **Enhanced with tooltips** to display full text on hover
+- **Improved line height and font sizing** for better readability
+- **Fixed card height consistency** to maintain proper grid alignment
 
 ### 3. Reduced Console Logging
 - Removed excessive console.log statements
@@ -45,13 +48,23 @@ This document describes the cleanup and improvements made to the SimpleTaxonomyS
 - Debug information panel is now only visible when:
   - The application is running in development mode AND
   - Debug mode is explicitly enabled via the toggle button
+- **Added support for URL query parameter** (`?debug=true`) to enable debug mode in any environment
+- **Implemented session storage persistence** for debug mode preference
+- **Enhanced initialization** with more reliable environment detection
 
 ### 5. Improved Error Handling
 - Added proper cleanup on component unmount
 - Added isMounted reference to prevent state updates after unmounting
 - Enhanced error handling in asynchronous operations
 
-### 6. Code Organization
+### 6. Enhanced Visual Design
+- **Improved card styling** with better borders and elevation
+- **Enhanced active state styling** with more prominent borders and background
+- **Added consistent spacing** between card elements
+- **Improved typography hierarchy** with better font weights and colors
+- **Enhanced selection chip styling** for better visibility
+
+### 7. Code Organization
 - Added clear section comments
 - Organized imports for better readability
 - Improved function declarations and naming conventions
@@ -68,13 +81,26 @@ This document describes the cleanup and improvements made to the SimpleTaxonomyS
 - Better text formatting with proper overflow handling
 - Consistent card sizing and appearance
 - More intuitive information hierarchy
+- **Enhanced readability** with tooltips for long text
+- **Improved visual feedback** for selected items
+- **More consistent layout** regardless of content length
 
 ### Developer Experience
 - Clearer code organization
 - Better debugging tools in development mode
 - Improved error handling for easier troubleshooting
+- **More flexible debug options** across environments
+- **Persistent debug settings** across page reloads
 
 ## Future Considerations
 - Consider further performance optimizations with React.memo
 - Add more targeted error recovery mechanisms
 - Enhance accessibility for screen readers
+- **Consider theme integration** for more consistent styling
+- **Add animation refinements** for smoother transitions
+- **Enhance responsive design** for different screen sizes
+
+## Rollback Plan
+If needed, these changes can be rolled back by:
+1. Reverting the `src/components/asset/SimpleTaxonomySelectionV3.tsx` file to its previous state
+2. Updating this documentation to reflect the rollback

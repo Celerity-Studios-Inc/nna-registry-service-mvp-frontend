@@ -13,7 +13,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { 
   Grid, Typography, Button, CircularProgress, Alert, Box, Card,
-  CardContent, CardActionArea, Chip
+  CardContent, CardActionArea, Chip, Tooltip
 } from '@mui/material';
 import {
   getLayers,
@@ -357,10 +357,30 @@ const SimpleTaxonomySelectionV3: React.FC<SimpleTaxonomySelectionV3Props> = ({
     }, 100);
   };
 
-  // Toggle debug mode - only visible in development
+  // Toggle debug mode - only visible in development or with debug query param
   const toggleDebugMode = () => {
     setDebugMode(!debugMode);
+    // Store debug mode preference in sessionStorage
+    try {
+      sessionStorage.setItem('taxonomyDebugMode', (!debugMode).toString());
+    } catch (e) {
+      console.warn('Could not store debug mode preference in sessionStorage');
+    }
   };
+  
+  // Initialize debug mode from query params or sessionStorage
+  useEffect(() => {
+    const isDevEnvironment = process.env.NODE_ENV === 'development';
+    const hasDebugParam = typeof window !== 'undefined' && 
+      window.location.search.includes('debug=true');
+    const storedDebugMode = typeof window !== 'undefined' && 
+      sessionStorage.getItem('taxonomyDebugMode') === 'true';
+    
+    // Only enable debug mode in development or if explicitly requested
+    if (isDevEnvironment || hasDebugParam || storedDebugMode) {
+      setDebugMode(true);
+    }
+  }, []);
 
   // Format and display a TaxonomyItem
   const renderTaxonomyCard = (
@@ -384,6 +404,10 @@ const SimpleTaxonomySelectionV3: React.FC<SimpleTaxonomySelectionV3Props> = ({
             cursor: 'pointer',
             bgcolor: isActive ? '#e8f4ff' : '#fff',
             borderColor: isActive ? '#007bff' : '#ddd',
+            border: isActive ? '2px solid #007bff' : '1px solid #ddd',
+            height: '100%',
+            display: 'flex',
+            flexDirection: 'column',
             '&:hover': {
               transform: 'translateY(-2px)',
               boxShadow: 3,
@@ -394,10 +418,10 @@ const SimpleTaxonomySelectionV3: React.FC<SimpleTaxonomySelectionV3Props> = ({
         >
           <CardActionArea>
             <CardContent>
-              <Typography variant="h6" component="div" align="center">
+              <Typography variant="h6" component="div" align="center" sx={{ fontWeight: 'bold' }}>
                 {layerCode}
               </Typography>
-              <Typography variant="body2" color="text.secondary" align="center">
+              <Typography variant="body2" color="text.secondary" align="center" sx={{ mt: 0.5 }}>
                 {layerName}
               </Typography>
             </CardContent>
@@ -430,20 +454,24 @@ const SimpleTaxonomySelectionV3: React.FC<SimpleTaxonomySelectionV3Props> = ({
       >
         <CardActionArea>
           <CardContent>
-            <Typography variant="body1" component="div" fontWeight="bold" noWrap>
+            <Typography variant="body1" component="div" fontWeight="bold" noWrap sx={{ mb: 0.5 }}>
               {taxonomyItem.code}
             </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ 
-              height: '40px', 
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              display: '-webkit-box',
-              WebkitLineClamp: 2,
-              WebkitBoxOrient: 'vertical'
-            }}>
-              {displayName.replace(/_/g, ' ')}
-            </Typography>
-            <Typography variant="caption" color="text.secondary">
+            <Tooltip title={displayName.replace(/_/g, ' ')} placement="top" arrow>
+              <Typography variant="body2" color="text.secondary" sx={{ 
+                height: '40px', 
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                display: '-webkit-box',
+                WebkitLineClamp: 2,
+                WebkitBoxOrient: 'vertical',
+                lineHeight: 1.2,
+                fontSize: '0.875rem'
+              }}>
+                {displayName.replace(/_/g, ' ')}
+              </Typography>
+            </Tooltip>
+            <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
               {taxonomyItem.numericCode}
             </Typography>
           </CardContent>
@@ -471,7 +499,7 @@ const SimpleTaxonomySelectionV3: React.FC<SimpleTaxonomySelectionV3Props> = ({
       {/* We're keeping the layer selection in RegisterAssetPage, so we no longer need it here */}
 
       <Box mb={3} sx={{ opacity: selectedLayer ? 1 : 0.5 }}>
-        <Typography variant="h6" gutterBottom>
+        <Typography variant="h6" gutterBottom sx={{ fontWeight: 'bold', color: '#333' }}>
           Step 2: Select Category
         </Typography>
         <div className="taxonomy-section">
@@ -521,7 +549,7 @@ const SimpleTaxonomySelectionV3: React.FC<SimpleTaxonomySelectionV3Props> = ({
       </Box>
 
       <Box mb={3} sx={{ opacity: selectedCategoryCode ? 1 : 0.5 }}>
-        <Typography variant="h6" gutterBottom>
+        <Typography variant="h6" gutterBottom sx={{ fontWeight: 'bold', color: '#333' }}>
           Step 3: Select Subcategory
         </Typography>
         <div className="taxonomy-section">
@@ -582,6 +610,7 @@ const SimpleTaxonomySelectionV3: React.FC<SimpleTaxonomySelectionV3Props> = ({
               label={`Selected: ${selectedLayer}.${selectedCategoryCode}.${getShortSubcategoryCode(selectedSubcategoryCode)}`}
               color="primary"
               variant="outlined"
+              sx={{ fontWeight: 'medium', fontSize: '0.9rem' }}
             />
           ) : (
             'Please select a layer, category, and subcategory'
@@ -598,8 +627,8 @@ const SimpleTaxonomySelectionV3: React.FC<SimpleTaxonomySelectionV3Props> = ({
             Retry Loading Subcategories
           </Button>
           
-          {/* Show debug toggle only in development */}
-          {process.env.NODE_ENV === 'development' && (
+          {/* Show debug toggle only in development or with debug param */}
+          {(process.env.NODE_ENV === 'development' || window.location.search.includes('debug=true')) && (
             <Button 
               size="small" 
               variant="outlined" 
@@ -613,8 +642,8 @@ const SimpleTaxonomySelectionV3: React.FC<SimpleTaxonomySelectionV3Props> = ({
         </Box>
       </Box>
       
-      {/* Show debug info only when enabled AND in development */}
-      {debugMode && process.env.NODE_ENV === 'development' && (
+      {/* Show debug info only when enabled */}
+      {debugMode && (
         <Alert severity="info" sx={{ mt: 2 }}>
           <Typography variant="subtitle2" gutterBottom>
             Debug Information

@@ -33,6 +33,7 @@ import taxonomyMapper from '../api/taxonomyMapper.enhanced';
 import LayerSelection from '../components/asset/LayerSelection';
 import TaxonomySelection from '../components/asset/TaxonomySelection';
 import SimpleTaxonomySelectionV3 from '../components/asset/SimpleTaxonomySelectionV3';
+import TaxonomyContext from '../components/asset/TaxonomyContext';
 import FileUpload from '../components/asset/FileUpload';
 import ReviewSubmit from '../components/asset/ReviewSubmit';
 import TrainingDataCollection from '../components/asset/TrainingDataCollection';
@@ -41,6 +42,8 @@ import { TaxonomyConverter } from '../services/taxonomyConverter';
 import { runQuickTaxonomyTest } from '../utils/taxonomyQuickTest';
 import { validateTaxonomyFix } from '../utils/taxonomyFixValidator';
 import { taxonomyFormatter } from '../utils/taxonomyFormatter';
+import { SubcategoryPreserver } from '../utils/subcategoryPreserver';
+import SubcategoryDiscrepancyAlert from '../components/asset/SubcategoryDiscrepancyAlert';
 
 // Types
 import { LayerOption, CategoryOption, SubcategoryOption } from '../types/taxonomy.types';
@@ -591,6 +594,9 @@ const RegisterAssetPage: React.FC = () => {
     localStorage.removeItem('lastCreatedAsset');
     sessionStorage.removeItem('showSuccessPage');
     
+    // Clear subcategory selection
+    SubcategoryPreserver.clearSelection();
+    
     // Reset all state
     reset();
     setActiveStep(0);
@@ -679,6 +685,11 @@ const RegisterAssetPage: React.FC = () => {
       
       // Store the normalized subcategory code
       setValue('subcategoryCode', normalizedSubcategory);
+      
+      // Store selection for later reference
+      const layer = watch('layer');
+      const category = watch('categoryCode');
+      SubcategoryPreserver.storeSelection(layer, category, normalizedSubcategory);
       
       // Try to find the subcategory in the options to get the name
       const watchCategory = watch('categoryCode');
@@ -1128,6 +1139,17 @@ const RegisterAssetPage: React.FC = () => {
         // For other assets, display the file upload and asset details
         return (
           <Box>
+            {/* Display the taxonomy context for reference */}
+            <TaxonomyContext
+              layer={watchLayer}
+              layerName={getValues('layerName')}
+              categoryCode={watchCategoryCode}
+              categoryName={getValues('categoryName')}
+              subcategoryCode={watchSubcategoryCode}
+              subcategoryName={getValues('subcategoryName')}
+              hfn={getValues('hfn')}
+              mfa={getValues('mfa')}
+            />
             <FileUpload
               onFilesChange={handleFilesChange}
               layerCode={watchLayer}
@@ -2102,6 +2124,17 @@ const RegisterAssetPage: React.FC = () => {
                         </Tooltip>
                       </Box>
                     </Grid>
+                    
+                    {/* Add subcategory discrepancy alert if needed */}
+                    {createdAsset && createdAsset.subcategory === 'Base' && (
+                      <Grid item xs={12}>
+                        <SubcategoryDiscrepancyAlert
+                          backendSubcategory={createdAsset.subcategory}
+                          displayHfn={displayHfn}
+                          displayMfa={displayMfa}
+                        />
+                      </Grid>
+                    )}
                     
                     <Grid item xs={12}>
                       <Typography variant="subtitle2" color="text.secondary" align="center">
