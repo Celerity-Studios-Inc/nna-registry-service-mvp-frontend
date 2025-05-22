@@ -420,7 +420,7 @@ const SimpleTaxonomySelectionV3: React.FC<SimpleTaxonomySelectionV3Props> = ({
               return (
                 <MenuItem 
                   key={displayCode} 
-                  value={fullCode}
+                  value={displayCode}
                 >
                   {subcategory.name} ({displayCode})
                 </MenuItem>

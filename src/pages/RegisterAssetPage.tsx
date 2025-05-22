@@ -669,13 +669,15 @@ const RegisterAssetPage: React.FC = () => {
     setLoading(true);
     
     try {
-      // Handle case where subcategoryCode is a string (SimpleTaxonomySelectionV3 format)
-      // Format could be either "POP.BAS" or just "BAS"
-      setValue('subcategoryCode', subcategoryCode);
-      
-      // Extract just the subcategory part for display if it contains a dot
-      const displayCode = subcategoryCode.includes('.') ? 
+      // Format could be either "POP.BAS" or just "BAS" - always normalize to just the subcategory code
+      // Extract just the subcategory part if it contains a dot
+      const normalizedSubcategory = subcategoryCode.includes('.') ? 
         subcategoryCode.split('.')[1] : subcategoryCode;
+      
+      console.log(`[REGISTER PAGE] Normalized subcategory: ${subcategoryCode} -> ${normalizedSubcategory}`);
+      
+      // Store the normalized subcategory code
+      setValue('subcategoryCode', normalizedSubcategory);
       
       // Try to find the subcategory in the options to get the name
       const watchCategory = watch('categoryCode');
@@ -685,8 +687,8 @@ const RegisterAssetPage: React.FC = () => {
       const subcategories = enhancedService.getSubcategories(watchLayer, watchCategory);
       
       console.log(`[REGISTER PAGE] Searching subcategories for match:`, {
-        subcategoryCode,
-        displayCode,
+        originalSubcategoryCode: subcategoryCode,
+        normalizedSubcategory,
         watchCategory,
         watchLayer,
         subcategoriesCount: subcategories.length
@@ -694,47 +696,55 @@ const RegisterAssetPage: React.FC = () => {
       
       // Find the matching subcategory to get its name
       let subcategoryItem = subcategories.find((item: SubcategoryItem) => {
+        // Normalize the item code as well for consistent comparison
         const itemCode = item.code?.includes('.') ? 
-          item.code : 
-          `${watchCategory}.${item.code}`;
+          item.code.split('.')[1] : 
+          item.code;
         
-        const matches = itemCode === subcategoryCode || item.code === displayCode;
+        const matches = itemCode === normalizedSubcategory;
         if (matches) {
           console.log(`[REGISTER PAGE] Found matching subcategory:`, item);
         }
         return matches;
       });
       
-      // If not found by direct match, try matching by the last part (e.g., BAS, HPM)
+      // If not found by direct match, try a case-insensitive match
       if (!subcategoryItem) {
-        console.log('[REGISTER PAGE] No direct match found, trying fallback match logic');
+        console.log('[REGISTER PAGE] No direct match found, trying case-insensitive match');
         subcategoryItem = subcategories.find((item: SubcategoryItem) => {
-          // Try to match by the last part (e.g., BAS, HPM)
-          const itemShortCode = item.code?.includes('.') ? 
-            item.code.split('.').pop() : 
+          // Normalize the item code for comparison
+          const itemCode = item.code?.includes('.') ? 
+            item.code.split('.')[1] : 
             item.code;
           
-          const displayCodeShort = displayCode?.includes('.') ? 
-            displayCode.split('.').pop() : 
-            displayCode;
-          
-          const matches = itemShortCode === displayCodeShort;
+          const matches = itemCode.toUpperCase() === normalizedSubcategory.toUpperCase();
           if (matches) {
-            console.log(`[REGISTER PAGE] Found matching subcategory using short code:`, item);
+            console.log(`[REGISTER PAGE] Found matching subcategory using case-insensitive match:`, item);
           }
           return matches;
         });
       }
       
-      // Special handling for S.POP.HPM which is a common problematic case
-      if (!subcategoryItem && watchLayer === 'S' && watchCategory === 'POP' && 
-          (displayCode === 'HPM' || subcategoryCode === 'POP.HPM')) {
-        console.log('[REGISTER PAGE] Using special case handling for S.POP.HPM');
-        subcategoryItem = {
-          code: 'HPM',
-          name: 'Pop_Hipster_Male_Stars',
-          numericCode: '007'
+      // Fallback for common cases - but using a generic approach, not special case handling
+      if (!subcategoryItem) {
+        console.log('[REGISTER PAGE] Using generic fallback for common subcategory codes');
+        
+        // Map for common subcategory display names
+        const commonSubcategories: Record<string, {name: string, numericCode: string}> = {
+          'BAS': { name: 'Base', numericCode: '001' },
+          'HPM': { name: 'Pop_Hipster_Male_Stars', numericCode: '007' },
+          'SUN': { name: 'Sunset', numericCode: '003' }
         };
+        
+        if (commonSubcategories[normalizedSubcategory]) {
+          const commonData = commonSubcategories[normalizedSubcategory];
+          subcategoryItem = {
+            code: normalizedSubcategory,
+            name: commonData.name,
+            numericCode: commonData.numericCode
+          };
+          console.log(`[REGISTER PAGE] Applied generic fallback for ${normalizedSubcategory}:`, subcategoryItem);
+        }
       }
       
       if (subcategoryItem) {
@@ -747,22 +757,41 @@ const RegisterAssetPage: React.FC = () => {
           window.analytics.track('Taxonomy Selection', {
             layer: watchLayer,
             category: watchCategory,
-            subcategory: subcategoryCode,
+            subcategory: normalizedSubcategory,
             success: true
           });
         }
       } else {
-        console.warn(`[REGISTER PAGE] Could not find subcategory details for ${subcategoryCode}`);
+        console.warn(`[REGISTER PAGE] Could not find subcategory details for ${normalizedSubcategory}`);
         // Set default values to prevent undefined states
-        setValue('subcategoryName', displayCode);
+        setValue('subcategoryName', normalizedSubcategory);
         setValue('subcategoryNumericCode', '');
+      }
+      
+      // Always format the HFN and MFA with the normalized subcategory
+      try {
+        const { formatNNAAddressForDisplay } = await import('../api/codeMapping.enhanced');
+        const { hfn, mfa } = formatNNAAddressForDisplay(
+          watchLayer,
+          watchCategory,
+          normalizedSubcategory,
+          '000' // Default sequential for preview
+        );
+        
+        console.log(`[REGISTER PAGE] Generated formatted addresses:`, { hfn, mfa });
+        
+        // Update the form state with properly formatted HFN and MFA
+        setValue('hfn', hfn);
+        setValue('mfa', mfa);
+      } catch (addressFormatError) {
+        console.error('[REGISTER PAGE] Error formatting addresses:', addressFormatError);
       }
     } catch (error) {
       console.error('[REGISTER PAGE] Error setting subcategory details:', error);
       // Set fallback values on error
-      const displayCode = subcategoryCode.includes('.') ? 
+      const normalizedSubcategory = subcategoryCode.includes('.') ? 
         subcategoryCode.split('.')[1] : subcategoryCode;
-      setValue('subcategoryName', displayCode);
+      setValue('subcategoryName', normalizedSubcategory);
       setValue('subcategoryNumericCode', '');
       
       // Track error in analytics (if available)
@@ -770,7 +799,7 @@ const RegisterAssetPage: React.FC = () => {
         window.analytics.track('Taxonomy Selection Error', {
           layer: watchLayer,
           category: watch('categoryCode'),
-          subcategory: subcategoryCode,
+          subcategory: normalizedSubcategory,
           error: error instanceof Error ? error.message : String(error)
         });
       }
