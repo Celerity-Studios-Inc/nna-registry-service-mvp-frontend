@@ -44,6 +44,13 @@ import { runQuickTaxonomyTest } from '../utils/taxonomyQuickTest';
 import { LayerOption, CategoryOption, SubcategoryOption } from '../types/taxonomy.types';
 import { FileUploadResponse, Asset, SOURCE_OPTIONS } from '../types/asset.types';
 
+// Define interface for subcategory item for type safety
+interface SubcategoryItem {
+  code: string;
+  name: string;
+  numericCode?: number | string;
+}
+
 // Define the steps in the registration process
 const getSteps = (isTrainingLayer: boolean, isCompositeLayer: boolean) => {
   if (isTrainingLayer) {
@@ -878,7 +885,7 @@ const RegisterAssetPage: React.FC = () => {
                 setValue('subcategoryCode', '');
               }}
               selectedSubcategoryCode={watchSubcategoryCode}
-              onSubcategorySelect={(subcategoryCode) => {
+              onSubcategorySelect={async (subcategoryCode) => {
                 console.log('[REGISTER PAGE] Subcategory selected:', subcategoryCode);
                 // Handle case where subcategoryCode is a string (SimpleTaxonomySelectionV3 format)
                 // Format could be either "POP.BAS" or just "BAS"
@@ -891,27 +898,33 @@ const RegisterAssetPage: React.FC = () => {
                 // Try to find the subcategory in the options to get the name
                 const watchCategory = watch('categoryCode');
                 try {
-                  // Import directly to avoid circular dependencies
-                  const { getSubcategories } = require('../services/enhancedTaxonomyService');
-                  const subcategories = getSubcategories(watchLayer, watchCategory);
+                  // Use dynamic import with proper typing for better error handling
+                  const enhancedService = await import('../services/enhancedTaxonomyService');
+                  const subcategories = enhancedService.getSubcategories(watchLayer, watchCategory);
                   
                   // Find the matching subcategory to get its name
-                  const subcategoryItem = subcategories.find((item: { code: string; name: string; numericCode?: string | number }) => {
-                    const itemCode = item.code.includes('.') ? 
+                  const subcategoryItem = subcategories.find((item: SubcategoryItem) => {
+                    const itemCode = item.code?.includes('.') ? 
                       item.code : 
                       `${watchCategory}.${item.code}`;
                     return itemCode === subcategoryCode || item.code === displayCode;
                   });
                   
                   if (subcategoryItem) {
-                    setValue('subcategoryName', subcategoryItem.name);
+                    setValue('subcategoryName', subcategoryItem.name || '');
                     setValue('subcategoryNumericCode', subcategoryItem.numericCode?.toString() || '');
                     console.log(`[REGISTER PAGE] Found subcategory details:`, subcategoryItem);
                   } else {
                     console.warn(`[REGISTER PAGE] Could not find subcategory details for ${subcategoryCode}`);
+                    // Set default values to prevent undefined states
+                    setValue('subcategoryName', displayCode);
+                    setValue('subcategoryNumericCode', '');
                   }
                 } catch (error) {
                   console.error('[REGISTER PAGE] Error setting subcategory details:', error);
+                  // Set fallback values on error
+                  setValue('subcategoryName', displayCode);
+                  setValue('subcategoryNumericCode', '');
                 }
               }}
             />
