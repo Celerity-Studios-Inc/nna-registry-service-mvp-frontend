@@ -1,6 +1,5 @@
 import React from 'react';
 import { Alert, Box, Typography } from '@mui/material';
-import { SubcategoryPreserver } from '../../utils/subcategoryPreserver';
 
 interface SubcategoryDiscrepancyAlertProps {
   backendSubcategory: string;
