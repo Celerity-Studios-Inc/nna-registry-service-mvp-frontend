@@ -40,6 +40,7 @@ import { ComponentsForm } from '../components/asset/ComponentsForm';
 import { TaxonomyConverter } from '../services/taxonomyConverter';
 import { runQuickTaxonomyTest } from '../utils/taxonomyQuickTest';
 import { validateTaxonomyFix } from '../utils/taxonomyFixValidator';
+import { taxonomyFormatter } from '../utils/taxonomyFormatter';
 
 // Types
 import { LayerOption, CategoryOption, SubcategoryOption } from '../types/taxonomy.types';
@@ -1712,22 +1713,19 @@ const RegisterAssetPage: React.FC = () => {
     
     console.log(`[SUCCESS] Using original form values for formatting: layer=${layer}, category=${categoryCode}, subcategory=${subcategoryCode}, sequential=${sequential}`);
     
-    // Import the taxonomyFormatter for consistent formatting
-    const { taxonomyFormatter } = await import('../utils/taxonomyFormatter');
+    // We've already imported taxonomyFormatter at the top of the file
     
     // Create properly formatted HFN with the original codes
     const hfnToFormat = `${layer}.${categoryCode}.${subcategoryCode}.${sequential}`;
     const displayHfn = taxonomyFormatter.formatHFN(hfnToFormat);
     
     // Convert HFN to MFA using our formatter
-    const displayMfa = taxonomyFormatter.convertHFNtoMFA(displayHfn);
+    let displayMfa = taxonomyFormatter.convertHFNtoMFA(displayHfn);
     
     console.log(`[SUCCESS] Formatted addresses using taxonomyFormatter:`);
     console.log(`HFN: ${displayHfn}, MFA: ${displayMfa}`);
 
-    // No need to replace sequential as we've already set it correctly above
-    
-    // Our displayHfn and displayMfa variables are already set correctly by the taxonomyFormatter
+    // displayHfn and displayMfa variables are now set correctly by the taxonomyFormatter
 
     console.log('IMPORTANT: Created asset is using proper format:');
     console.log(`Original backend Name: ${createdAsset.name}`);
