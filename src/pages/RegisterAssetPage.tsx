@@ -896,7 +896,7 @@ const RegisterAssetPage: React.FC = () => {
                   const subcategories = getSubcategories(watchLayer, watchCategory);
                   
                   // Find the matching subcategory to get its name
-                  const subcategoryItem = subcategories.find(item => {
+                  const subcategoryItem = subcategories.find((item: { code: string; name: string; numericCode?: string | number }) => {
                     const itemCode = item.code.includes('.') ? 
                       item.code : 
                       `${watchCategory}.${item.code}`;
