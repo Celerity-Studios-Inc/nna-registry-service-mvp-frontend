@@ -879,7 +879,40 @@ const RegisterAssetPage: React.FC = () => {
               }}
               selectedSubcategoryCode={watchSubcategoryCode}
               onSubcategorySelect={(subcategoryCode) => {
+                console.log('[REGISTER PAGE] Subcategory selected:', subcategoryCode);
+                // Handle case where subcategoryCode is a string (SimpleTaxonomySelectionV3 format)
+                // Format could be either "POP.BAS" or just "BAS"
                 setValue('subcategoryCode', subcategoryCode);
+                
+                // Extract just the subcategory part for display if it contains a dot
+                const displayCode = subcategoryCode.includes('.') ? 
+                  subcategoryCode.split('.')[1] : subcategoryCode;
+                
+                // Try to find the subcategory in the options to get the name
+                const watchCategory = watch('categoryCode');
+                try {
+                  // Import directly to avoid circular dependencies
+                  const { getSubcategories } = require('../services/enhancedTaxonomyService');
+                  const subcategories = getSubcategories(watchLayer, watchCategory);
+                  
+                  // Find the matching subcategory to get its name
+                  const subcategoryItem = subcategories.find(item => {
+                    const itemCode = item.code.includes('.') ? 
+                      item.code : 
+                      `${watchCategory}.${item.code}`;
+                    return itemCode === subcategoryCode || item.code === displayCode;
+                  });
+                  
+                  if (subcategoryItem) {
+                    setValue('subcategoryName', subcategoryItem.name);
+                    setValue('subcategoryNumericCode', subcategoryItem.numericCode?.toString() || '');
+                    console.log(`[REGISTER PAGE] Found subcategory details:`, subcategoryItem);
+                  } else {
+                    console.warn(`[REGISTER PAGE] Could not find subcategory details for ${subcategoryCode}`);
+                  }
+                } catch (error) {
+                  console.error('[REGISTER PAGE] Error setting subcategory details:', error);
+                }
               }}
             />
             
