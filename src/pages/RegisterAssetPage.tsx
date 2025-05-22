@@ -186,7 +186,53 @@ const RegisterAssetPage: React.FC = () => {
   React.useEffect(() => {
     // Run test when component mounts
     runQuickTaxonomyTest();
+    
+    // Direct test of the enhanced service
+    const testDirectly = () => {
+      try {
+        const { getSubcategories } = require('../services/enhancedTaxonomyService');
+        console.log('===== DIRECT SERVICE TEST =====');
+        console.log('Testing S.DNC directly:');
+        const resultSDNC = getSubcategories('S', 'DNC');
+        console.log('S.DNC Result:', resultSDNC);
+        
+        console.log('Testing L.PRF directly:');
+        const resultLPRF = getSubcategories('L', 'PRF');
+        console.log('L.PRF Result:', resultLPRF);
+        console.log('===== END DIRECT TEST =====');
+      } catch (error) {
+        console.error('Direct test failed:', error);
+      }
+    };
+    
+    // Call the direct test
+    testDirectly();
   }, []);
+  
+  // Add this debug useEffect to see the form state
+  React.useEffect(() => {
+    console.log('[REGISTER PAGE] Current form state:', {
+      layer: watch('layer'),
+      categoryCode: watch('categoryCode'), 
+      subcategoryCode: watch('subcategoryCode')
+    });
+  }, [watch('layer'), watch('categoryCode'), watch('subcategoryCode')]);
+  
+  // Add this to force subcategory options when they should be available
+  React.useEffect(() => {
+    const layer = watch('layer');
+    const categoryCode = watch('categoryCode');
+    
+    if (layer && categoryCode) {
+      console.log('[REGISTER PAGE] Should trigger subcategory load for:', layer, categoryCode);
+      
+      // Force trigger the subcategory load
+      if ((layer === 'S' && categoryCode === 'DNC') || 
+          (layer === 'L' && categoryCode === 'PRF')) {
+        console.log('[REGISTER PAGE] This is a known working combination');
+      }
+    }
+  }, [watch('layer'), watch('categoryCode')]);
 
   // State
   const [activeStep, setActiveStep] = useState<number>(0);
