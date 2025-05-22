@@ -17,9 +17,6 @@ import { TaxonomyItem } from '../types/taxonomy.types';
 // @ts-ignore - Ignore the lack of explicit typing for the JSON import
 import * as taxonomyDataImport from '../assets/enriched_nna_layer_taxonomy_v1.3.json';
 
-// Create a typed version of the taxonomy data
-const taxonomyData: Record<string, Record<string, any>> = taxonomyDataImport as any;
-
 // Import fallback data from taxonomy lookup tables
 import {
   LAYER_LOOKUPS,
@@ -33,6 +30,9 @@ import {
   S_SUBCATEGORIES, 
   G_SUBCATEGORIES 
 } from './taxonomyFallbackData';
+
+// Create a typed version of the taxonomy data
+const taxonomyData: Record<string, Record<string, any>> = taxonomyDataImport as any;
 
 // Add this debug log at the top of the file to verify the data is loaded
 console.log('[ENHANCED SERVICE] Fallback data loaded:', {
