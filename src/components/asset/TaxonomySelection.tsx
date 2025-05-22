@@ -447,7 +447,7 @@ const TaxonomySelection: React.FC<TaxonomySelectionProps> = ({
                     </Tooltip>
                     <Tooltip title="Machine-Friendly Address (3-digit code)">
                       <Chip
-                        label={category.numericCode ? category.numericCode.toString().padStart(3, '0') : '000'}
+                        label={category.numericCode ? (typeof category.numericCode === 'string' ? category.numericCode.padStart(3, '0') : category.numericCode.toString().padStart(3, '0')) : '000'}
                         size="small"
                         color="default"
                         variant="outlined"
@@ -511,7 +511,7 @@ const TaxonomySelection: React.FC<TaxonomySelectionProps> = ({
                     </Tooltip>
                     <Tooltip title="Machine-Friendly Address (3-digit code)">
                       <Chip
-                        label={subcategory.numericCode ? subcategory.numericCode.toString().padStart(3, '0') : '000'}
+                        label={subcategory.numericCode ? (typeof subcategory.numericCode === 'string' ? subcategory.numericCode.padStart(3, '0') : subcategory.numericCode.toString().padStart(3, '0')) : '000'}
                         size="small"
                         color="default"
                         variant="outlined"

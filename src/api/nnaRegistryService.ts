@@ -81,7 +81,7 @@ class NNARegistryService {
           this.registerCategoryCode(
             layerCode,
             alphabeticCode,
-            category.numericCode || 0,
+            typeof category.numericCode === 'string' ? parseInt(category.numericCode) || 0 : category.numericCode || 0,
             category.name
           );
 
@@ -121,7 +121,7 @@ class NNARegistryService {
                 layerCode,
                 alphabeticCode,
                 subAlphabeticCode,
-                subcategory.numericCode || 0,
+                typeof subcategory.numericCode === 'string' ? parseInt(subcategory.numericCode) || 0 : subcategory.numericCode || 0,
                 subcategory.name
               );
             }

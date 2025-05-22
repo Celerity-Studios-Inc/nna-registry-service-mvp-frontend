@@ -209,30 +209,6 @@ const RegisterAssetPage: React.FC = () => {
     testDirectly();
   }, []);
   
-  // Add this debug useEffect to see the form state
-  React.useEffect(() => {
-    console.log('[REGISTER PAGE] Current form state:', {
-      layer: watch('layer'),
-      categoryCode: watch('categoryCode'), 
-      subcategoryCode: watch('subcategoryCode')
-    });
-  }, [watch('layer'), watch('categoryCode'), watch('subcategoryCode')]);
-  
-  // Add this to force subcategory options when they should be available
-  React.useEffect(() => {
-    const layer = watch('layer');
-    const categoryCode = watch('categoryCode');
-    
-    if (layer && categoryCode) {
-      console.log('[REGISTER PAGE] Should trigger subcategory load for:', layer, categoryCode);
-      
-      // Force trigger the subcategory load
-      if ((layer === 'S' && categoryCode === 'DNC') || 
-          (layer === 'L' && categoryCode === 'PRF')) {
-        console.log('[REGISTER PAGE] This is a known working combination');
-      }
-    }
-  }, [watch('layer'), watch('categoryCode')]);
 
   // State
   const [activeStep, setActiveStep] = useState<number>(0);
@@ -298,6 +274,31 @@ const RegisterAssetPage: React.FC = () => {
   const watchCategoryCode = watch('categoryCode');
   const watchSubcategoryCode = watch('subcategoryCode');
   const watchFiles = watch('files');
+  
+  // Add this debug useEffect to see the form state
+  React.useEffect(() => {
+    console.log('[REGISTER PAGE] Current form state:', {
+      layer: watch('layer'),
+      categoryCode: watch('categoryCode'), 
+      subcategoryCode: watch('subcategoryCode')
+    });
+  }, [watch]);
+  
+  // Add this to force subcategory options when they should be available
+  React.useEffect(() => {
+    const layer = watch('layer');
+    const categoryCode = watch('categoryCode');
+    
+    if (layer && categoryCode) {
+      console.log('[REGISTER PAGE] Should trigger subcategory load for:', layer, categoryCode);
+      
+      // Force trigger the subcategory load
+      if ((layer === 'S' && categoryCode === 'DNC') || 
+          (layer === 'L' && categoryCode === 'PRF')) {
+        console.log('[REGISTER PAGE] This is a known working combination');
+      }
+    }
+  }, [watch]);
 
   // Handle form submission
   const onSubmit: SubmitHandler<FormData> = async (data) => {

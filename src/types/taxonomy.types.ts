@@ -3,21 +3,21 @@ export interface LayerOption {
   id: string;
   name: string;
   code: string;
-  numericCode?: number;
+  numericCode?: string | number;
 }
 
 export interface CategoryOption {
   id: string;
   name: string;
   code: string;
-  numericCode?: number;
+  numericCode?: string | number;
 }
 
 export interface SubcategoryOption {
   id: string;
   name: string;
   code: string;
-  numericCode?: number;
+  numericCode?: string | number;
 }
 
 export interface Taxonomy {

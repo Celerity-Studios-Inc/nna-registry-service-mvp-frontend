@@ -902,6 +902,9 @@ class TaxonomyService {
       return -1;
     }
 
+    if (typeof category.numericCode === 'string') {
+      return parseInt(category.numericCode) || 0;
+    }
     return category.numericCode || 0;
   }
 
@@ -963,6 +966,9 @@ class TaxonomyService {
         console.log(
           `Found numeric code ${exactMatch.numericCode} for ${layerCode}.${normalizedCategoryCode}.${subcategoryCode}`
         );
+        if (typeof exactMatch.numericCode === 'string') {
+          return parseInt(exactMatch.numericCode) || 0;
+        }
         return exactMatch.numericCode || 0;
       }
 
@@ -974,6 +980,9 @@ class TaxonomyService {
         console.log(
           `Found numeric code ${caseInsensitiveMatch.numericCode} for ${layerCode}.${normalizedCategoryCode}.${subcategoryCode} using case-insensitive matching`
         );
+        if (typeof caseInsensitiveMatch.numericCode === 'string') {
+          return parseInt(caseInsensitiveMatch.numericCode) || 0;
+        }
         return caseInsensitiveMatch.numericCode || 0;
       }
 
@@ -988,6 +997,9 @@ class TaxonomyService {
         console.log(
           `Found numeric code ${nameMatch.numericCode} for ${layerCode}.${normalizedCategoryCode}.${subcategoryCode} by matching name`
         );
+        if (typeof nameMatch.numericCode === 'string') {
+          return parseInt(nameMatch.numericCode) || 0;
+        }
         return nameMatch.numericCode || 0;
       }
 
@@ -1001,6 +1013,9 @@ class TaxonomyService {
         console.log(
           `Found numeric code ${partialNameMatch.numericCode} for ${layerCode}.${normalizedCategoryCode}.${subcategoryCode} by partial name matching`
         );
+        if (typeof partialNameMatch.numericCode === 'string') {
+          return parseInt(partialNameMatch.numericCode) || 0;
+        }
         return partialNameMatch.numericCode || 0;
       }
 
