@@ -4,12 +4,12 @@ Frontend application for the Naming, Numbering, and Addressing (NNA) Registry Se
 
 [![Deployed on Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-black?style=for-the-badge&logo=vercel)](https://nna-registry-service-mvp-frontend.vercel.app)
 
-## Latest Update (2025-05-24)
-- Completed comprehensive taxonomy system refactoring
-- Implemented performance optimizations with React.memo and hooks
-- Added structured logging and environment-aware debugging
-- Created detailed technical documentation
-- Enhanced error handling and fallback mechanisms
+## Latest Update (2025-05-22)
+- Reset to stable version (cf1608d)
+- Fixed build errors in success page HFN/MFA display
+- Now ready for thorough testing of Asset registration
+- Using stable, working version of code
+- Future work will focus on Browse Assets functionality
 
 ## Project Overview
 
