@@ -227,7 +227,7 @@ class TaxonomyFormatter {
 
   /**
    * Formats a Machine-Friendly Address (MFA) with consistent formatting
-   * @param mfa - The MFA to format (e.g., '2.1.7.42', '5.004.003.1')
+   * @param mfa - The MFA to format (e.g., '2.1.7.42', '5.004.003.1', 'S.001.007.001')
    * @returns The formatted MFA (e.g., '2.001.007.042', '5.004.003.001')
    */
   formatMFA(mfa: string): string {
@@ -243,12 +243,19 @@ class TaxonomyFormatter {
       // Destructure parts with proper names to avoid ESLint warnings
       const [layer, categoryPart, subcategoryPart, sequential, ...rest] = parts;
 
-      // Always keep layer as-is (numeric already)
+      // First check if we need to convert a letter layer to a number
+      let formattedLayer = layer;
+      if (/^[A-Za-z]$/.test(layer)) {
+        // If it's a letter, convert to the numeric code
+        formattedLayer = this.getLayerCode(layer);
+        console.log(`[taxonomyFormatter] Converted layer: ${layer} → ${formattedLayer}`);
+      }
+
       const formattedCategory = categoryPart.padStart(3, '0');
       const formattedSubcategory = subcategoryPart.padStart(3, '0');
       const formattedSequential = this.formatSequential(sequential);
 
-      let formattedMFA = `${layer}.${formattedCategory}.${formattedSubcategory}.${formattedSequential}`;
+      let formattedMFA = `${formattedLayer}.${formattedCategory}.${formattedSubcategory}.${formattedSequential}`;
 
       // Add any remaining parts (like file extensions)
       if (rest.length > 0) {

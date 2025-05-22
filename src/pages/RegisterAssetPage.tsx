@@ -1702,84 +1702,54 @@ const RegisterAssetPage: React.FC = () => {
     const sequentialParts = rawMfa ? rawMfa.split('.') : [];
     const sequential = sequentialParts.length > 3 ? sequentialParts[3] : '001';
 
-    // Get category and subcategory from the asset response
-    const category = createdAsset.category || '001';
-
-    // Try to retrieve the original subcategory from sessionStorage if it exists
-    let subcategory = '';
-
-    // First check if we have originalSubcategoryCode from a prop
-    if (originalSubcategoryCode) {
-      subcategory = originalSubcategoryCode;
-      console.log(`Using originalSubcategoryCode prop: ${originalSubcategoryCode}`);
-    }
-    // Then try retrieving from sessionStorage
-    else {
-      try {
-        const storedSubcategory = sessionStorage.getItem(`originalSubcategory_${layer}_${category}`);
-        if (storedSubcategory) {
-          subcategory = storedSubcategory;
-          console.log(`Retrieved original subcategory from sessionStorage: ${subcategory}`);
-        }
-      } catch (e) {
-        console.warn('Error accessing sessionStorage:', e);
-      }
-    }
-
-    // If we don't have a subcategory from storage, use the one from the backend
-    if (!subcategory) {
-      subcategory = createdAsset.subcategory || 'BAS';
-    }
-
-    console.log(`Using layer=${layer}, category=${category}, subcategory=${subcategory}, sequential=${sequential}`);
-
-    // Use our enhanced taxonomy mapper to generate consistent display format
-    const { hfn, mfa } = taxonomyMapper.formatNNAAddress(
-      layer,
-      category,
-      subcategory,
-      sequential
-    );
-
-    console.log(`Successfully formatted addresses using enhanced taxonomy mapper:`);
-    console.log(`HFN: ${hfn}, MFA: ${mfa}`);
-
-    // For display in the success screen, replace the sequential number with the actual one
-    // (in case sequential was formatted differently)
-    let displayHfn = hfn.replace(/\.000$/, `.${sequential}`);
+    // IMPORTANT: We need to use the actual subcategory code, not the display name
+    // For HFN/MFA formatting, use the last saved subcategory code from the form
+    const savedSubcategoryCode = watch('subcategoryCode');
     
-    // Make sure to get the correct MFA (either from backend or convert)
-    let displayMfa;
-    if (mfa) {
-      displayMfa = mfa.replace(/\.000$/, `.${sequential}`);
-    } else {
-      // If MFA is missing, try to generate it from the backend response or the HFN
-      displayMfa = createdAsset.nnaAddress || taxonomyMapper.convertHFNToMFA(displayHfn) || '';
-      console.log(`Setting display MFA to: ${displayMfa}`);
-    }
+    // First try to get the original codes that were used to create the asset
+    const categoryCode = watch('categoryCode') || 'POP';
+    let subcategoryCode = savedSubcategoryCode || 'BAS';
+    
+    console.log(`[SUCCESS] Using original form values for formatting: layer=${layer}, category=${categoryCode}, subcategory=${subcategoryCode}, sequential=${sequential}`);
+    
+    // Import the taxonomyFormatter for consistent formatting
+    const { taxonomyFormatter } = await import('../utils/taxonomyFormatter');
+    
+    // Create properly formatted HFN with the original codes
+    const hfnToFormat = `${layer}.${categoryCode}.${subcategoryCode}.${sequential}`;
+    const displayHfn = taxonomyFormatter.formatHFN(hfnToFormat);
+    
+    // Convert HFN to MFA using our formatter
+    const displayMfa = taxonomyFormatter.convertHFNtoMFA(displayHfn);
+    
+    console.log(`[SUCCESS] Formatted addresses using taxonomyFormatter:`);
+    console.log(`HFN: ${displayHfn}, MFA: ${displayMfa}`);
 
-    // Normalize the HFN address to ensure it always uses alphabetic codes
-    // This fixes the issue where some categories might show as numeric codes
-    // (e.g., W.002.FES.001 should be W.STG.FES.001)
-    displayHfn = taxonomyMapper.normalizeAddressForDisplay(displayHfn, 'hfn');
+    // No need to replace sequential as we've already set it correctly above
+    
+    // Our displayHfn and displayMfa variables are already set correctly by the taxonomyFormatter
 
-    console.log('IMPORTANT: Created asset is using enhanced format:');
+    console.log('IMPORTANT: Created asset is using proper format:');
     console.log(`Original backend Name: ${createdAsset.name}`);
     console.log(`Display HFN: ${displayHfn}`);
     console.log(`Display MFA: ${displayMfa}`);
     
-    // Ensure we have the MFA from the backend response
+    // Fallback: If MFA is still empty, try to get it from the backend response
     if (!displayMfa && createdAsset) {
       // Try to get it from various backend response formats
-      displayMfa = createdAsset.nnaAddress || 
+      const backendMfa = createdAsset.nnaAddress || 
                   (createdAsset as any).nna_address || 
                   createdAsset.metadata?.machineFriendlyAddress || 
                   createdAsset.metadata?.mfa || 
                   '';
-      console.log(`Found MFA from backend response: ${displayMfa}`);
+                  
+      if (backendMfa) {
+        // Use our formatter to ensure proper format
+        displayMfa = taxonomyFormatter.formatMFA(backendMfa);
+        console.log(`Using formatted MFA from backend: ${backendMfa} → ${displayMfa}`);
+      }
     }
-    console.log(`Original subcategory (for display): ${subcategory}`);
-
+    
     // Add clear logging for debugging
     console.log('Asset structure:', {
       name: createdAsset.name,
@@ -1791,14 +1761,6 @@ const RegisterAssetPage: React.FC = () => {
     });
 
     console.log(`Success screen showing MFA: ${displayMfa} and HFN: ${displayHfn} from asset:`, createdAsset);
-    if (createdAsset && !displayMfa) {
-      console.warn('MFA display still empty, checking all possible properties:', {
-        nnaAddress: createdAsset.nnaAddress,
-        nna_address: (createdAsset as any).nna_address,
-        machineFriendlyAddress: createdAsset.metadata?.machineFriendlyAddress,
-        mfa: createdAsset.metadata?.mfa,
-      });
-    }
                 
     const layerName = createdAsset.metadata?.layerName || 
                       `Layer ${createdAsset.layer}`;
