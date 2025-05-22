@@ -73,10 +73,20 @@ const TaxonomyContext: React.FC<TaxonomyContextProps> = ({
                 Category:
               </Typography>
               <Chip 
-                label={`${categoryCode}${categoryName ? ` - ${categoryName?.replace(/_/g, ' ')}` : ''}`}
+                label={`${categoryCode}${categoryName ? ` - ${categoryName?.replace(/_/g, ' ')}` : categoryCode === 'DNC' ? ' - Dance Electronic' : ''}`}
                 size="small" 
                 color="primary"
                 variant="outlined"
+                sx={{ 
+                  maxWidth: '100%',
+                  '.MuiChip-label': { 
+                    whiteSpace: 'normal',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    display: 'block',
+                    maxWidth: '100%'
+                  }
+                }}
               />
             </Box>
             

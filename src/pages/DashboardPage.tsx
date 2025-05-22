@@ -113,20 +113,7 @@ const DashboardPage: React.FC = () => {
               Taxonomy
             </Button>
           </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <Button
-              component={RouterLink}
-              to="/register-asset-simple"
-              variant="contained"
-              color="secondary"
-              startIcon={<AddIcon />}
-              fullWidth
-              size="large"
-              sx={{ py: 1.5 }}
-            >
-              Simplified Asset Registration
-            </Button>
-          </Grid>
+          {/* Simplified Asset Registration button removed - incomplete functionality */}
         </Grid>
       </Paper>
 

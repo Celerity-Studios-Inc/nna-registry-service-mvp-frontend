@@ -153,6 +153,77 @@ There are special case mappings that need special handling:
 
 - Verification: All layer switches now correctly display the appropriate categories without requiring Retry
 
+### 9. UI Improvements for Taxonomy Selection (May 22, 2025)
+- Problem: Several UI issues were identified during testing:
+  1. Text overflow in taxonomy cards making some text unreadable
+  2. Debug panel showing in production environments
+  3. Inconsistent display of category names across different components
+  4. Redundant layer information in file upload section
+  5. Simplified Asset Registration button on dashboard with incomplete functionality
+
+- Solution:
+  1. Enhanced text formatting in taxonomy cards:
+     - Added tooltips to display full text on hover
+     - Improved typography with better line height and spacing
+     - Fixed card height consistency for better grid layout
+     - Enhanced visual hierarchy with proper font weights and colors
+
+  2. Fixed debug panel visibility:
+     - Made debug panel conditionally visible based on environment and URL parameters
+     - Added session storage persistence for debug mode preferences
+     - Enhanced environment detection for better production/development differentiation
+     - Added detailed logging for troubleshooting visibility issues
+
+  3. Improved taxonomy context display:
+     - Show full category names in taxonomy context component
+     - Kept consistent format across Layer, Category, and Subcategory display
+     - Enhanced chips with better text overflow handling
+     - Added fallbacks for missing category names
+
+  4. Removed redundant UI elements:
+     - Removed duplicate layer display from file upload section
+     - Removed Simplified Asset Registration button from dashboard
+     - Consolidated taxonomy information in a single location
+
+- Key changes:
+  - `/src/components/asset/SimpleTaxonomySelectionV3.tsx`: Enhanced card styling and text handling
+  - `/src/components/asset/TaxonomyContext.tsx`: Added full category name display
+  - `/src/components/asset/FileUpload.tsx`: Removed redundant layer display
+  - `/src/pages/DashboardPage.tsx`: Removed simplified registration button
+  - `/src/styles/SimpleTaxonomySelection.css`: Improved grid layout with better responsiveness
+
+### 10. Backend Subcategory Override Issue (May 22, 2025)
+- Problem: The backend API consistently overrides the selected subcategory with "Base" (BAS)
+- Impact: Users select a specific subcategory (e.g., "Experimental"), but the backend stores it as "Base"
+
+- Investigation:
+  - The frontend correctly sends the selected subcategory to the backend:
+    ```
+    Asset data provided: {name: 'BW.S1.L2', layer: 'S', category: 'DNC', subcategory: 'EXP', ...}
+    ```
+  - The backend returns with the subcategory changed:
+    ```
+    Asset created successfully: {layer: 'S', category: 'Dance_Electronic', subcategory: 'Base', name: 'S.DNC.BAS.004', ...}
+    ```
+
+- Root Cause Identified (May 23, 2025):
+  - The `subcategoryCodeMap` in `taxonomy.service.ts` only contains explicit mappings for special cases like HPM (Hipster Male)
+  - Other subcategories don't have entries and fall back to a default value 'Base'
+  - In `getHumanFriendlyCodes()`, when a subcategory is not found in the mappings, it defaults to 'Base'
+  - Special case handling exists for S.POP.HPM, which is why this combination works correctly
+  
+- Frontend Solution:
+  - Implemented SubcategoryDiscrepancyAlert component to inform users about the discrepancy
+  - Maintained correct HFN and MFA based on user's original selection
+  - Preserved user selection in session storage for future reference
+  - Ensured all displays use the correct subcategory as selected by the user
+
+- Documentation:
+  - Created and enhanced `BACKEND_SUBCATEGORY_OVERRIDE_ISSUE.md` with detailed code analysis
+  - Added logging to track discrepancies between user selection and backend response
+  - Documented recommended steps for backend team to implement a comprehensive fix
+  - Provided specific code examples for extending the subcategory mapping tables
+
 ## Recent Fixes (May 20, 2025)
 
 ### 8. Subcategory Disappearance Permanent Fix

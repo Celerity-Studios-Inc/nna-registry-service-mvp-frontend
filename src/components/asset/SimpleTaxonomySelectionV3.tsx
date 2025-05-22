@@ -370,15 +370,40 @@ const SimpleTaxonomySelectionV3: React.FC<SimpleTaxonomySelectionV3Props> = ({
   
   // Initialize debug mode from query params or sessionStorage
   useEffect(() => {
-    const isDevEnvironment = process.env.NODE_ENV === 'development';
-    const hasDebugParam = typeof window !== 'undefined' && 
-      window.location.search.includes('debug=true');
-    const storedDebugMode = typeof window !== 'undefined' && 
-      sessionStorage.getItem('taxonomyDebugMode') === 'true';
-    
-    // Only enable debug mode in development or if explicitly requested
-    if (isDevEnvironment || hasDebugParam || storedDebugMode) {
-      setDebugMode(true);
+    try {
+      // Check for development environment
+      const isDevEnvironment = process.env.NODE_ENV === 'development' || 
+                              process.env.REACT_APP_ENV === 'development';
+      
+      // Check for debug URL parameter
+      const hasDebugParam = typeof window !== 'undefined' && 
+        (window.location.search.includes('debug=true') || 
+         window.location.search.includes('debug_mode=true'));
+      
+      // Check for stored debug mode preference
+      const storedDebugMode = typeof window !== 'undefined' && 
+        sessionStorage.getItem('taxonomyDebugMode') === 'true';
+      
+      // Log the debug mode conditions for troubleshooting
+      console.log('[DEBUG PANEL] Environment checks:', {
+        isDevEnvironment,
+        hasDebugParam,
+        storedDebugMode,
+        'process.env.NODE_ENV': process.env.NODE_ENV,
+        'window.location.search': window.location.search
+      });
+      
+      // Only enable debug mode in development or if explicitly requested
+      if (isDevEnvironment || hasDebugParam || storedDebugMode) {
+        setDebugMode(true);
+        console.log('[DEBUG PANEL] Debug mode enabled');
+      } else {
+        setDebugMode(false);
+        console.log('[DEBUG PANEL] Debug mode disabled');
+      }
+    } catch (error) {
+      console.error('[DEBUG PANEL] Error initializing debug mode:', error);
+      setDebugMode(false);
     }
   }, []);
 
@@ -406,6 +431,8 @@ const SimpleTaxonomySelectionV3: React.FC<SimpleTaxonomySelectionV3Props> = ({
             borderColor: isActive ? '#007bff' : '#ddd',
             border: isActive ? '2px solid #007bff' : '1px solid #ddd',
             height: '100%',
+            minHeight: '110px',
+            maxHeight: '110px',
             display: 'flex',
             flexDirection: 'column',
             '&:hover': {
@@ -454,10 +481,10 @@ const SimpleTaxonomySelectionV3: React.FC<SimpleTaxonomySelectionV3Props> = ({
       >
         <CardActionArea>
           <CardContent>
-            <Typography variant="body1" component="div" fontWeight="bold" noWrap sx={{ mb: 0.5 }}>
+            <Typography variant="body1" component="div" fontWeight="bold" noWrap sx={{ mb: 0.5, fontSize: '0.95rem' }}>
               {taxonomyItem.code}
             </Typography>
-            <Tooltip title={displayName.replace(/_/g, ' ')} placement="top" arrow>
+            <Tooltip title={displayName.replace(/_/g, ' ')} placement="top" arrow enterDelay={300} enterNextDelay={300}>
               <Typography variant="body2" color="text.secondary" sx={{ 
                 height: '40px', 
                 overflow: 'hidden',
@@ -466,7 +493,11 @@ const SimpleTaxonomySelectionV3: React.FC<SimpleTaxonomySelectionV3Props> = ({
                 WebkitLineClamp: 2,
                 WebkitBoxOrient: 'vertical',
                 lineHeight: 1.2,
-                fontSize: '0.875rem'
+                fontSize: '0.875rem',
+                wordBreak: 'break-word',
+                whiteSpace: 'normal',
+                paddingLeft: '2px',
+                paddingRight: '2px'
               }}>
                 {displayName.replace(/_/g, ' ')}
               </Typography>
@@ -627,8 +658,8 @@ const SimpleTaxonomySelectionV3: React.FC<SimpleTaxonomySelectionV3Props> = ({
             Retry Loading Subcategories
           </Button>
           
-          {/* Show debug toggle only in development or with debug param */}
-          {(process.env.NODE_ENV === 'development' || window.location.search.includes('debug=true')) && (
+          {/* Debug toggle - visible in development mode or with debug parameter */}
+          {
             <Button 
               size="small" 
               variant="outlined" 
@@ -642,7 +673,7 @@ const SimpleTaxonomySelectionV3: React.FC<SimpleTaxonomySelectionV3Props> = ({
         </Box>
       </Box>
       
-      {/* Show debug info only when enabled */}
+      {/* Show debug info only when enabled (development mode or debug parameter) */}
       {debugMode && (
         <Alert severity="info" sx={{ mt: 2 }}>
           <Typography variant="subtitle2" gutterBottom>

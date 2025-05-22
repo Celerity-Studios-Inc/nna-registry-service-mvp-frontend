@@ -386,22 +386,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
             }`}
       </Typography>
 
-      {/* Add layer name display */}
-      {layerCode && (
-        <Box
-          sx={{
-            mb: 3,
-            p: 2,
-            bgcolor: 'background.default',
-            borderRadius: 1,
-            border: '1px solid rgba(0, 0, 0, 0.12)',
-          }}
-        >
-          <Typography variant="subtitle1" fontWeight="bold" color="primary">
-            {layerDisplay}
-          </Typography>
-        </Box>
-      )}
+      {/* Layer name display removed - now shown in TaxonomyContext */}
 
       <Divider sx={{ mb: 3 }} />
 

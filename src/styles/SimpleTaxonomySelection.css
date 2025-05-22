@@ -372,8 +372,8 @@ html body .simple-taxonomy-selection .taxonomy-section .taxonomy-items {
   display: grid !important;
   grid-template-columns: repeat(
     auto-fill,
-    minmax(150px, 1fr)
-  ) !important; /* Wider cards for more content */
+    minmax(130px, 1fr)
+  ) !important; /* Adjusted for better fit */
   grid-template-rows: auto !important;
   grid-auto-flow: row !important;
   grid-auto-rows: auto !important;
@@ -385,6 +385,8 @@ html body .simple-taxonomy-selection .taxonomy-section .taxonomy-items {
   background-color: #f9f9f9 !important; /* Light background to ensure visibility */
   border-radius: 4px !important;
   padding: 15px !important;
+  justify-items: stretch !important; /* Ensure items stretch to fill their grid cell */
+  align-items: stretch !important; /* Ensure items stretch to fill their grid cell */
 }
 
 /* Responsive adjustments */
