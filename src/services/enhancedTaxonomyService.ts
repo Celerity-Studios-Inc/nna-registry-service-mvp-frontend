@@ -15,7 +15,7 @@ import { TaxonomyItem } from '../types/taxonomy.types';
 import {
   LAYER_LOOKUPS,
   LAYER_SUBCATEGORIES
-} from '../flattened_taxonomy/constants';
+} from '../taxonomyLookup/constants';
 
 // Import fallback data from the centralized source - used only as last resort
 import { 
@@ -68,8 +68,8 @@ function normalizeCode(code: string): string {
  * Gets all available layers from the taxonomy
  */
 export function getLayers(): string[] {
-  // Filter out non-layer keys from taxonomy data
-  const layers = Object.keys(taxonomyData).filter(key => 
+  // Get layers from LAYER_LOOKUPS keys
+  const layers = Object.keys(LAYER_LOOKUPS).filter(key => 
     key.length === 1 && /[A-Z]/.test(key));
   
   logger.debug('Available layers:', layers);
@@ -86,50 +86,31 @@ export function getCategories(layer: string): TaxonomyItem[] {
     // Normalize the layer code
     const normalizedLayer = normalizeCode(layer);
     
-    // First check if the layer exists in the taxonomy data
-    if (!taxonomyData[normalizedLayer] || !taxonomyData[normalizedLayer].categories) {
-      logger.warn(`No categories found for layer ${normalizedLayer} in taxonomy data`);
+    // Use LAYER_LOOKUPS as the primary source
+    if (LAYER_LOOKUPS[normalizedLayer]) {
+      logger.info(`Getting categories from LAYER_LOOKUPS for layer ${normalizedLayer}`);
       
-      // Fallback to LAYER_LOOKUPS if available
-      if (LAYER_LOOKUPS[normalizedLayer]) {
-        logger.info(`Using fallback from LAYER_LOOKUPS for layer ${normalizedLayer}`);
-        
-        const categories: TaxonomyItem[] = [];
-        
-        // Get category entries from LAYER_LOOKUPS (keys without dots)
-        Object.keys(LAYER_LOOKUPS[normalizedLayer])
-          .filter(key => !key.includes('.'))
-          .forEach(categoryCode => {
-            const categoryEntry = LAYER_LOOKUPS[normalizedLayer][categoryCode];
-            categories.push({
-              code: categoryCode,
-              numericCode: categoryEntry.numericCode,
-              name: categoryEntry.name
-            });
+      const categories: TaxonomyItem[] = [];
+      
+      // Get category entries from LAYER_LOOKUPS (keys without dots)
+      Object.keys(LAYER_LOOKUPS[normalizedLayer])
+        .filter(key => !key.includes('.'))
+        .forEach(categoryCode => {
+          const categoryEntry = LAYER_LOOKUPS[normalizedLayer][categoryCode];
+          categories.push({
+            code: categoryCode,
+            numericCode: categoryEntry.numericCode,
+            name: categoryEntry.name
           });
-        
-        logger.debug(`Found ${categories.length} categories for layer ${normalizedLayer} from fallback`);
-        return categories;
-      }
+        });
       
-      return [];
+      logger.debug(`Found ${categories.length} categories for layer ${normalizedLayer} from flattened taxonomy`);
+      return categories;
     }
     
-    // Extract category information from taxonomy data
-    const categories: TaxonomyItem[] = [];
-    
-    // Loop through numeric keys in taxonomy
-    Object.keys(taxonomyData[normalizedLayer].categories).forEach(catNum => {
-      const category = taxonomyData[normalizedLayer].categories[catNum];
-      categories.push({
-        code: category.code,
-        numericCode: catNum,
-        name: category.name || category.code.replace(/_/g, ' ')
-      });
-    });
-    
-    logger.debug(`Found ${categories.length} categories for layer ${normalizedLayer} from JSON`);
-    return categories;
+    // If no categories found in LAYER_LOOKUPS, return empty array
+    logger.warn(`No categories found for layer ${normalizedLayer} in flattened taxonomy`);
+    return [];
   } catch (error) {
     logger.error(`Error getting categories for layer ${layer}:`, error);
     return [];

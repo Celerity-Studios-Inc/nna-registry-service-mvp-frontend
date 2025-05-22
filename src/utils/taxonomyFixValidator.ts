@@ -220,9 +220,9 @@ export const validateErrorRecovery = async (
     // Check if subcategory values are set
     setTimeout(() => {
       // These should be set to fallback values if error recovery is working
-      console.log('Subcategory Code:', setValue['__INTERNAL_MOCK__']?.('subcategoryCode'));
-      console.log('Subcategory Name:', setValue['__INTERNAL_MOCK__']?.('subcategoryName'));
-      console.log('Subcategory Numeric Code:', setValue['__INTERNAL_MOCK__']?.('subcategoryNumericCode'));
+      console.log('Subcategory Code: [Check values in form state]');
+      console.log('Subcategory Name: [Check values in form state]');
+      console.log('Subcategory Numeric Code: [Check values in form state]');
       
       console.log('✅ Error recovery validation completed');
     }, 500);

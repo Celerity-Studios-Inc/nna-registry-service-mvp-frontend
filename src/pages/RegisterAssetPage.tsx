@@ -228,7 +228,9 @@ const RegisterAssetPage: React.FC = () => {
     // Run the comprehensive taxonomy fix validation (with delay to ensure form is ready)
     setTimeout(() => {
       console.log('Running comprehensive taxonomy fix validation...');
-      validateTaxonomyFix(setValue);
+      // Cast setValue to the expected type
+      const setValueAny = (name: string, value: any) => setValue(name as any, value);
+      validateTaxonomyFix(setValueAny);
     }, 2000);
   }, []);
   
@@ -323,8 +325,10 @@ const RegisterAssetPage: React.FC = () => {
         
         // Run complete flow test
         import('../utils/taxonomyFixValidator').then(validator => {
+          // Cast setValue to the expected type
+          const setValueAny = (name: string, value: any) => setValue(name as any, value);
           validator.validateCompleteFlow(
-            setValue,
+            setValueAny,
             async () => await trigger(), 
             handleNext
           );
@@ -639,7 +643,7 @@ const RegisterAssetPage: React.FC = () => {
     setValue('sequential', '');
   };
 
-  // Handle subcategory selection
+  // Handle subcategory selection for TaxonomySelection component
   const handleSubcategorySelect = (subcategory: SubcategoryOption, isDoubleClick?: boolean) => {
     setValue('subcategoryCode', subcategory.code);
     setValue('subcategoryName', subcategory.name);
@@ -650,6 +654,80 @@ const RegisterAssetPage: React.FC = () => {
       handleNext();
     }
   };
+  
+  // Handle subcategory selection for SimpleTaxonomySelectionV3 component
+  const handleSubcategorySelectV3 = React.useCallback(async (subcategoryCode: string) => {
+    console.log('[REGISTER PAGE] Subcategory selected:', subcategoryCode);
+    
+    // Set loading state
+    setLoading(true);
+    
+    try {
+      // Handle case where subcategoryCode is a string (SimpleTaxonomySelectionV3 format)
+      // Format could be either "POP.BAS" or just "BAS"
+      setValue('subcategoryCode', subcategoryCode);
+      
+      // Extract just the subcategory part for display if it contains a dot
+      const displayCode = subcategoryCode.includes('.') ? 
+        subcategoryCode.split('.')[1] : subcategoryCode;
+      
+      // Try to find the subcategory in the options to get the name
+      const watchCategory = watch('categoryCode');
+      
+      // Use dynamic import with proper typing for better error handling
+      const enhancedService = await import('../services/enhancedTaxonomyService');
+      const subcategories = enhancedService.getSubcategories(watchLayer, watchCategory);
+      
+      // Find the matching subcategory to get its name
+      const subcategoryItem = subcategories.find((item: SubcategoryItem) => {
+        const itemCode = item.code?.includes('.') ? 
+          item.code : 
+          `${watchCategory}.${item.code}`;
+        return itemCode === subcategoryCode || item.code === displayCode;
+      });
+      
+      if (subcategoryItem) {
+        setValue('subcategoryName', subcategoryItem.name || '');
+        setValue('subcategoryNumericCode', subcategoryItem.numericCode?.toString() || '');
+        console.log(`[REGISTER PAGE] Found subcategory details:`, subcategoryItem);
+        
+        // Track successful selection in analytics (if available)
+        if (window.analytics) {
+          window.analytics.track('Taxonomy Selection', {
+            layer: watchLayer,
+            category: watchCategory,
+            subcategory: subcategoryCode,
+            success: true
+          });
+        }
+      } else {
+        console.warn(`[REGISTER PAGE] Could not find subcategory details for ${subcategoryCode}`);
+        // Set default values to prevent undefined states
+        setValue('subcategoryName', displayCode);
+        setValue('subcategoryNumericCode', '');
+      }
+    } catch (error) {
+      console.error('[REGISTER PAGE] Error setting subcategory details:', error);
+      // Set fallback values on error
+      const displayCode = subcategoryCode.includes('.') ? 
+        subcategoryCode.split('.')[1] : subcategoryCode;
+      setValue('subcategoryName', displayCode);
+      setValue('subcategoryNumericCode', '');
+      
+      // Track error in analytics (if available)
+      if (window.analytics) {
+        window.analytics.track('Taxonomy Selection Error', {
+          layer: watchLayer,
+          category: watch('categoryCode'),
+          subcategory: subcategoryCode,
+          error: error instanceof Error ? error.message : String(error)
+        });
+      }
+    } finally {
+      // Always clear loading state
+      setLoading(false);
+    }
+  }, [watchLayer, watch, setValue, setLoading]);
 
   // Track original subcategory for display override
   const [originalSubcategoryCode, setOriginalSubcategoryCode] = useState<string>('');
@@ -927,76 +1005,7 @@ const RegisterAssetPage: React.FC = () => {
                 setValue('subcategoryCode', '');
               }}
               selectedSubcategoryCode={watchSubcategoryCode}
-              onSubcategorySelect={React.useCallback(async (subcategoryCode) => {
-                console.log('[REGISTER PAGE] Subcategory selected:', subcategoryCode);
-                
-                // Set loading state
-                setLoading(true);
-                
-                try {
-                  // Handle case where subcategoryCode is a string (SimpleTaxonomySelectionV3 format)
-                  // Format could be either "POP.BAS" or just "BAS"
-                  setValue('subcategoryCode', subcategoryCode);
-                  
-                  // Extract just the subcategory part for display if it contains a dot
-                  const displayCode = subcategoryCode.includes('.') ? 
-                    subcategoryCode.split('.')[1] : subcategoryCode;
-                  
-                  // Try to find the subcategory in the options to get the name
-                  const watchCategory = watch('categoryCode');
-                  
-                  // Use dynamic import with proper typing for better error handling
-                  const enhancedService = await import('../services/enhancedTaxonomyService');
-                  const subcategories = enhancedService.getSubcategories(watchLayer, watchCategory);
-                  
-                  // Find the matching subcategory to get its name
-                  const subcategoryItem = subcategories.find((item: SubcategoryItem) => {
-                    const itemCode = item.code?.includes('.') ? 
-                      item.code : 
-                      `${watchCategory}.${item.code}`;
-                    return itemCode === subcategoryCode || item.code === displayCode;
-                  });
-                  
-                  if (subcategoryItem) {
-                    setValue('subcategoryName', subcategoryItem.name || '');
-                    setValue('subcategoryNumericCode', subcategoryItem.numericCode?.toString() || '');
-                    console.log(`[REGISTER PAGE] Found subcategory details:`, subcategoryItem);
-                    
-                    // Track successful selection in analytics (if available)
-                    if (window.analytics) {
-                      window.analytics.track('Taxonomy Selection', {
-                        layer: watchLayer,
-                        category: watchCategory,
-                        subcategory: subcategoryCode,
-                        success: true
-                      });
-                    }
-                  } else {
-                    console.warn(`[REGISTER PAGE] Could not find subcategory details for ${subcategoryCode}`);
-                    // Set default values to prevent undefined states
-                    setValue('subcategoryName', displayCode);
-                    setValue('subcategoryNumericCode', '');
-                  }
-                } catch (error) {
-                  console.error('[REGISTER PAGE] Error setting subcategory details:', error);
-                  // Set fallback values on error
-                  setValue('subcategoryName', displayCode);
-                  setValue('subcategoryNumericCode', '');
-                  
-                  // Track error in analytics (if available)
-                  if (window.analytics) {
-                    window.analytics.track('Taxonomy Selection Error', {
-                      layer: watchLayer,
-                      category: watch('categoryCode'),
-                      subcategory: subcategoryCode,
-                      error: error instanceof Error ? error.message : String(error)
-                    });
-                  }
-                } finally {
-                  // Always clear loading state
-                  setLoading(false);
-                }
-              }, [watchLayer, watch, setValue, setLoading])}
+              onSubcategorySelect={handleSubcategorySelectV3}
             />
             
             {/* Debug component - add this temporarily */}
