@@ -39,6 +39,7 @@ import TrainingDataCollection from '../components/asset/TrainingDataCollection';
 import { ComponentsForm } from '../components/asset/ComponentsForm';
 import { TaxonomyConverter } from '../services/taxonomyConverter';
 import { runQuickTaxonomyTest } from '../utils/taxonomyQuickTest';
+import { validateTaxonomyFix } from '../utils/taxonomyFixValidator';
 
 // Types
 import { LayerOption, CategoryOption, SubcategoryOption } from '../types/taxonomy.types';
@@ -49,6 +50,15 @@ interface SubcategoryItem {
   code: string;
   name: string;
   numericCode?: number | string;
+}
+
+// Add analytics interface for TypeScript
+declare global {
+  interface Window {
+    analytics?: {
+      track: (event: string, properties?: Record<string, any>) => void;
+    };
+  }
 }
 
 // Define the steps in the registration process
@@ -214,6 +224,12 @@ const RegisterAssetPage: React.FC = () => {
     
     // Call the direct test
     testDirectly();
+    
+    // Run the comprehensive taxonomy fix validation (with delay to ensure form is ready)
+    setTimeout(() => {
+      console.log('Running comprehensive taxonomy fix validation...');
+      validateTaxonomyFix(setValue);
+    }, 2000);
   }, []);
   
 
@@ -290,6 +306,32 @@ const RegisterAssetPage: React.FC = () => {
       subcategoryCode: watch('subcategoryCode')
     });
   }, [watch]);
+  
+  // Add validation for the complete flow
+  React.useEffect(() => {
+    // Only run this in development and when specifically enabled
+    const shouldRunCompleteFlowTest = process.env.NODE_ENV === 'development' && 
+                                      window.location.search.includes('test=complete');
+    
+    if (shouldRunCompleteFlowTest) {
+      // Wait until the form is fully initialized
+      setTimeout(() => {
+        console.log('Running complete flow validation test...');
+        
+        // Get the trigger method from React Hook Form
+        const trigger = methods.trigger;
+        
+        // Run complete flow test
+        import('../utils/taxonomyFixValidator').then(validator => {
+          validator.validateCompleteFlow(
+            setValue,
+            async () => await trigger(), 
+            handleNext
+          );
+        });
+      }, 3000);
+    }
+  }, []);
   
   // Add this to force subcategory options when they should be available
   React.useEffect(() => {
@@ -885,19 +927,24 @@ const RegisterAssetPage: React.FC = () => {
                 setValue('subcategoryCode', '');
               }}
               selectedSubcategoryCode={watchSubcategoryCode}
-              onSubcategorySelect={async (subcategoryCode) => {
+              onSubcategorySelect={React.useCallback(async (subcategoryCode) => {
                 console.log('[REGISTER PAGE] Subcategory selected:', subcategoryCode);
-                // Handle case where subcategoryCode is a string (SimpleTaxonomySelectionV3 format)
-                // Format could be either "POP.BAS" or just "BAS"
-                setValue('subcategoryCode', subcategoryCode);
                 
-                // Extract just the subcategory part for display if it contains a dot
-                const displayCode = subcategoryCode.includes('.') ? 
-                  subcategoryCode.split('.')[1] : subcategoryCode;
+                // Set loading state
+                setLoading(true);
                 
-                // Try to find the subcategory in the options to get the name
-                const watchCategory = watch('categoryCode');
                 try {
+                  // Handle case where subcategoryCode is a string (SimpleTaxonomySelectionV3 format)
+                  // Format could be either "POP.BAS" or just "BAS"
+                  setValue('subcategoryCode', subcategoryCode);
+                  
+                  // Extract just the subcategory part for display if it contains a dot
+                  const displayCode = subcategoryCode.includes('.') ? 
+                    subcategoryCode.split('.')[1] : subcategoryCode;
+                  
+                  // Try to find the subcategory in the options to get the name
+                  const watchCategory = watch('categoryCode');
+                  
                   // Use dynamic import with proper typing for better error handling
                   const enhancedService = await import('../services/enhancedTaxonomyService');
                   const subcategories = enhancedService.getSubcategories(watchLayer, watchCategory);
@@ -914,6 +961,16 @@ const RegisterAssetPage: React.FC = () => {
                     setValue('subcategoryName', subcategoryItem.name || '');
                     setValue('subcategoryNumericCode', subcategoryItem.numericCode?.toString() || '');
                     console.log(`[REGISTER PAGE] Found subcategory details:`, subcategoryItem);
+                    
+                    // Track successful selection in analytics (if available)
+                    if (window.analytics) {
+                      window.analytics.track('Taxonomy Selection', {
+                        layer: watchLayer,
+                        category: watchCategory,
+                        subcategory: subcategoryCode,
+                        success: true
+                      });
+                    }
                   } else {
                     console.warn(`[REGISTER PAGE] Could not find subcategory details for ${subcategoryCode}`);
                     // Set default values to prevent undefined states
@@ -925,8 +982,21 @@ const RegisterAssetPage: React.FC = () => {
                   // Set fallback values on error
                   setValue('subcategoryName', displayCode);
                   setValue('subcategoryNumericCode', '');
+                  
+                  // Track error in analytics (if available)
+                  if (window.analytics) {
+                    window.analytics.track('Taxonomy Selection Error', {
+                      layer: watchLayer,
+                      category: watch('categoryCode'),
+                      subcategory: subcategoryCode,
+                      error: error instanceof Error ? error.message : String(error)
+                    });
+                  }
+                } finally {
+                  // Always clear loading state
+                  setLoading(false);
                 }
-              }}
+              }, [watchLayer, watch, setValue, setLoading])}
             />
             
             {/* Debug component - add this temporarily */}
