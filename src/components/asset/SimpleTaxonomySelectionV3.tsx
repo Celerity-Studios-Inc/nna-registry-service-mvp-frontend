@@ -659,15 +659,13 @@ const SimpleTaxonomySelectionV3: React.FC<SimpleTaxonomySelectionV3Props> = ({
           </Button>
           
           {/* Debug toggle - visible in development mode or with debug parameter */}
-          {
-            <Button 
-              size="small" 
-              variant="outlined" 
-              onClick={toggleDebugMode}
-            >
-              {debugMode ? 'Hide Debug Info' : 'Show Debug Info'}
-            </Button>
-          )}
+          <Button 
+            size="small" 
+            variant="outlined" 
+            onClick={toggleDebugMode}
+          >
+            {debugMode ? 'Hide Debug Info' : 'Show Debug Info'}
+          </Button>
           
           {isProcessing && <CircularProgress size={20} />}
         </Box>
