@@ -163,12 +163,42 @@ const SimpleTaxonomySelectionV3: React.FC<SimpleTaxonomySelectionV3Props> = ({
         
         // 5. Create synthetic subcategories as last resort
         logger.warn(`No subcategories found for ${cacheKey}, creating synthetic entries`);
-        const syntheticSubcategories: TaxonomyItem[] = [
-          { code: 'BAS', numericCode: '001', name: 'Base' },
-        ];
         
-        setSubcategoryOptions(syntheticSubcategories);
-        subcategoryCacheRef.current[cacheKey] = syntheticSubcategories;
+        // Emergency hardcoded fallbacks
+        let emergencyOptions: TaxonomyItem[] = [];
+        
+        // Hardcoded emergency fallbacks for known problematic combinations
+        if (selectedLayer === 'S' && selectedCategoryCode === 'DNC') {
+          logger.info(`[V3] Applying emergency fallback for S.DNC`);
+          emergencyOptions = [
+            { code: 'BAS', numericCode: '001', name: 'Base' },
+            { code: 'PRD', numericCode: '002', name: 'Producer' },
+            { code: 'HSE', numericCode: '003', name: 'House' },
+            { code: 'TEC', numericCode: '004', name: 'Techno' },
+            { code: 'TRN', numericCode: '005', name: 'Trance' },
+            { code: 'DUB', numericCode: '006', name: 'Dubstep' },
+            { code: 'FUT', numericCode: '007', name: 'Future_Bass' },
+            { code: 'DNB', numericCode: '008', name: 'Drum_n_Bass' }
+          ];
+        } else if (selectedLayer === 'L' && selectedCategoryCode === 'PRF') {
+          logger.info(`[V3] Applying emergency fallback for L.PRF`);
+          emergencyOptions = [
+            { code: 'BAS', numericCode: '001', name: 'Base' },
+            { code: 'LEO', numericCode: '002', name: 'Leotard' },
+            { code: 'SEQ', numericCode: '003', name: 'Sequined' },
+            { code: 'LED', numericCode: '004', name: 'LED' },
+            { code: 'ATH', numericCode: '005', name: 'Athletic' }
+          ];
+        } else {
+          // Default synthetic entry if no specific emergency fallback is available
+          emergencyOptions = [
+            { code: 'BAS', numericCode: '001', name: 'Base' },
+          ];
+        }
+        
+        logger.info(`[V3] Applied emergency fallback with ${emergencyOptions.length} options`);
+        setSubcategoryOptions(emergencyOptions);
+        subcategoryCacheRef.current[cacheKey] = emergencyOptions;
         
         // Log detailed diagnostics
         debugTaxonomyData(selectedLayer, selectedCategoryCode);
@@ -196,7 +226,17 @@ const SimpleTaxonomySelectionV3: React.FC<SimpleTaxonomySelectionV3Props> = ({
 
   // Get subcategory code from full code (e.g., "POP.KPO" -> "KPO")
   const getShortSubcategoryCode = (fullCode: string): string => {
-    return fullCode ? fullCode.split('.')[1] || fullCode : '';
+    if (!fullCode) return '';
+    
+    // Handle both formats: "POP.KPO" and "KPO"
+    if (fullCode.includes('.')) {
+      const parts = fullCode.split('.');
+      // If we have format like "POP.KPO", return "KPO"
+      return parts.length > 1 ? parts[1] : parts[0];
+    }
+    
+    // If there's no dot, return the code as is
+    return fullCode;
   };
 
   // Handle retry for subcategory loading
@@ -291,14 +331,25 @@ const SimpleTaxonomySelectionV3: React.FC<SimpleTaxonomySelectionV3Props> = ({
             <MenuItem value="">
               <em>Select Subcategory</em>
             </MenuItem>
-            {subcategoryOptions.map((subcategory) => (
-              <MenuItem 
-                key={subcategory.code} 
-                value={`${selectedCategoryCode}.${subcategory.code}`}
-              >
-                {subcategory.name} ({subcategory.code})
-              </MenuItem>
-            ))}
+            {subcategoryOptions.map((subcategory) => {
+              // Handle both formats: "PRF.BAS" and "BAS"
+              const fullCode = subcategory.code.includes('.') ? 
+                subcategory.code : 
+                `${selectedCategoryCode}.${subcategory.code}`;
+              
+              const displayCode = subcategory.code.includes('.') ? 
+                subcategory.code.split('.')[1] : 
+                subcategory.code;
+                
+              return (
+                <MenuItem 
+                  key={displayCode} 
+                  value={fullCode}
+                >
+                  {subcategory.name} ({displayCode})
+                </MenuItem>
+              );
+            })}
           </Select>
         </FormControl>
       </Grid>

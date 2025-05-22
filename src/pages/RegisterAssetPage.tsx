@@ -32,11 +32,13 @@ import { formatNNAAddressForDisplay } from '../api/codeMapping.enhanced';
 import taxonomyMapper from '../api/taxonomyMapper.enhanced';
 import LayerSelection from '../components/asset/LayerSelection';
 import TaxonomySelection from '../components/asset/TaxonomySelection';
+import SimpleTaxonomySelectionV3 from '../components/asset/SimpleTaxonomySelectionV3';
 import FileUpload from '../components/asset/FileUpload';
 import ReviewSubmit from '../components/asset/ReviewSubmit';
 import TrainingDataCollection from '../components/asset/TrainingDataCollection';
 import { ComponentsForm } from '../components/asset/ComponentsForm';
 import { TaxonomyConverter } from '../services/taxonomyConverter';
+import { runQuickTaxonomyTest } from '../utils/taxonomyQuickTest';
 
 // Types
 import { LayerOption, CategoryOption, SubcategoryOption } from '../types/taxonomy.types';
@@ -178,6 +180,12 @@ const RegisterAssetPage: React.FC = () => {
     return () => {
       // Don't remove this setting as we want it to persist
     };
+  }, []);
+  
+  // Run quick taxonomy test when component mounts
+  React.useEffect(() => {
+    // Run test when component mounts
+    runQuickTaxonomyTest();
   }, []);
 
   // State
@@ -809,17 +817,40 @@ const RegisterAssetPage: React.FC = () => {
         );
       case 1:
         return (
-          <TaxonomySelection
-            layerCode={watchLayer}
-            onCategorySelect={handleCategorySelect}
-            onSubcategorySelect={handleSubcategorySelect}
-            selectedCategoryCode={watchCategoryCode}
-            selectedSubcategoryCode={watchSubcategoryCode}
-            onNNAAddressChange={handleNNAAddressChange}
-            categoryName={getValues('categoryName')}
-            subcategoryName={getValues('subcategoryName')}
-            subcategoryNumericCode={getValues('subcategoryNumericCode')}
-          />
+          <>
+            <SimpleTaxonomySelectionV3
+              selectedLayer={watchLayer}
+              onLayerSelect={(layer) => {
+                setValue('layer', layer);
+                setValue('categoryCode', '');
+                setValue('subcategoryCode', '');
+              }}
+              selectedCategoryCode={watchCategoryCode}
+              onCategorySelect={(categoryCode) => {
+                setValue('categoryCode', categoryCode);
+                setValue('subcategoryCode', '');
+              }}
+              selectedSubcategoryCode={watchSubcategoryCode}
+              onSubcategorySelect={(subcategoryCode) => {
+                setValue('subcategoryCode', subcategoryCode);
+              }}
+            />
+            
+            {/* Debug component - add this temporarily */}
+            <Box sx={{ mt: 2, p: 2, bgcolor: 'info.light', borderRadius: 1 }}>
+              <Typography variant="subtitle2">Debug Info:</Typography>
+              <Typography variant="body2">
+                Layer: {watchLayer || 'None'}<br />
+                Category: {watchCategoryCode || 'None'}<br />
+                Subcategory: {watchSubcategoryCode || 'None'}
+              </Typography>
+              {watchLayer && watchCategoryCode && (
+                <Typography variant="body2" color="primary">
+                  Expected subcategories should load for: {watchLayer}.{watchCategoryCode}
+                </Typography>
+              )}
+            </Box>
+          </>
         );
       case 2:
         // For composite assets, display the component selection form

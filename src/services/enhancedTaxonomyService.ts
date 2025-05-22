@@ -26,35 +26,20 @@ import {
   LAYER_SUBCATEGORIES
 } from '../taxonomyLookup/constants';
 
-// Fallback data for problematic layer/category combinations
-const FALLBACK_SUBCATEGORIES: Record<string, Record<string, TaxonomyItem[]>> = {
-  L: {
-    PRF: [
-      { code: 'BAS', numericCode: '001', name: 'Base' },
-      { code: 'LEO', numericCode: '002', name: 'Leotard' },
-      { code: 'SEQ', numericCode: '003', name: 'Sequined' },
-      { code: 'LED', numericCode: '004', name: 'LED' },
-      { code: 'ATH', numericCode: '005', name: 'Athletic' },
-      { code: 'MIN', numericCode: '006', name: 'Minimalist' },
-      { code: 'SPK', numericCode: '007', name: 'Sparkly_Dress' }
-    ]
-  },
-  S: {
-    DNC: [
-      { code: 'BAS', numericCode: '001', name: 'Base' },
-      { code: 'PRD', numericCode: '002', name: 'Producer' },
-      { code: 'HSE', numericCode: '003', name: 'House' },
-      { code: 'TEC', numericCode: '004', name: 'Techno' },
-      { code: 'TRN', numericCode: '005', name: 'Trance' },
-      { code: 'DUB', numericCode: '006', name: 'Dubstep' },
-      { code: 'FUT', numericCode: '007', name: 'Future_Bass' },
-      { code: 'DNB', numericCode: '008', name: 'Drum_n_Bass' },
-      { code: 'AMB', numericCode: '009', name: 'Ambient' },
-      { code: 'LIV', numericCode: '010', name: 'Live_Electronic' },
-      { code: 'EXP', numericCode: '011', name: 'Experimental' }
-    ]
-  }
-};
+// Import fallback data from the centralized source
+import { 
+  FALLBACK_SUBCATEGORIES,
+  L_SUBCATEGORIES, 
+  S_SUBCATEGORIES, 
+  G_SUBCATEGORIES 
+} from './taxonomyFallbackData';
+
+// Add this debug log at the top of the file to verify the data is loaded
+console.log('[ENHANCED SERVICE] Fallback data loaded:', {
+  L_keys: Object.keys(L_SUBCATEGORIES),
+  S_keys: Object.keys(S_SUBCATEGORIES),
+  G_keys: Object.keys(G_SUBCATEGORIES)
+});
 
 // Layer numeric codes mapping
 const LAYER_NUMERIC_CODES: Record<string, string> = {
@@ -413,7 +398,7 @@ export function convertHFNtoMFA(hfn: string): string {
       }
       return mfa;
     }
-
+    
     if (
       normalizedLayer === 'W' &&
       normalizedCategoryCode === 'BCH' &&
