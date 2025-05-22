@@ -11,34 +11,22 @@
 import { logger } from '../utils/logger';
 import { TaxonomyItem } from '../types/taxonomy.types';
 
-// Import taxonomy data from JSON
-// Note: TypeScript doesn't provide direct import typing for JSON files
-// so we use a more generic approach
-// @ts-ignore - Ignore the lack of explicit typing for the JSON import
-import * as taxonomyDataImport from '../assets/enriched_nna_layer_taxonomy_v1.3.json';
-
-// Import fallback data from taxonomy lookup tables
+// Import flattened taxonomy data - this should be the primary source of truth
 import {
   LAYER_LOOKUPS,
   LAYER_SUBCATEGORIES
-} from '../taxonomyLookup/constants';
+} from '../flattened_taxonomy/constants';
 
-// Import fallback data from the centralized source
+// Import fallback data from the centralized source - used only as last resort
 import { 
-  FALLBACK_SUBCATEGORIES,
-  L_SUBCATEGORIES, 
-  S_SUBCATEGORIES, 
-  G_SUBCATEGORIES 
+  FALLBACK_SUBCATEGORIES
 } from './taxonomyFallbackData';
 
-// Create a typed version of the taxonomy data
-const taxonomyData: Record<string, Record<string, any>> = taxonomyDataImport as any;
-
-// Add this debug log at the top of the file to verify the data is loaded
-console.log('[ENHANCED SERVICE] Fallback data loaded:', {
-  L_keys: Object.keys(L_SUBCATEGORIES),
-  S_keys: Object.keys(S_SUBCATEGORIES),
-  G_keys: Object.keys(G_SUBCATEGORIES)
+// Add this debug log at the top of the file to verify the flattened taxonomy is loaded
+console.log('[ENHANCED SERVICE] Flattened taxonomy loaded:', {
+  layers: Object.keys(LAYER_LOOKUPS),
+  S_categories: LAYER_SUBCATEGORIES['S'] ? Object.keys(LAYER_SUBCATEGORIES['S']) : [],
+  W_categories: LAYER_SUBCATEGORIES['W'] ? Object.keys(LAYER_SUBCATEGORIES['W']) : []
 });
 
 // Layer numeric codes mapping
@@ -187,16 +175,10 @@ export function getSubcategories(layer: string, categoryCode: string): TaxonomyI
       logger.debug(`Using normalized codes: ${normalizedLayer}.${normalizedCategoryCode}`);
     }
     
-    // 1. Check hardcoded fallbacks for known problematic combinations
-    if (FALLBACK_SUBCATEGORIES[normalizedLayer]?.[normalizedCategoryCode]) {
-      logger.info(`Using hardcoded fallback data for ${normalizedLayer}.${normalizedCategoryCode}`);
-      return FALLBACK_SUBCATEGORIES[normalizedLayer][normalizedCategoryCode];
-    }
-    
-    // 2. Check for subcategories in LAYER_SUBCATEGORIES
+    // 1. Use the flattened taxonomy as the primary source (this comes from the files in flattened_taxonomy folder)
     if (LAYER_SUBCATEGORIES[normalizedLayer]?.[normalizedCategoryCode]) {
-      logger.info(`Using LAYER_SUBCATEGORIES for ${normalizedLayer}.${normalizedCategoryCode}`);
-      source = 'layer_subcategories';
+      logger.info(`Using flattened taxonomy data for ${normalizedLayer}.${normalizedCategoryCode}`);
+      source = 'flattened_taxonomy';
       
       // Get the raw subcategory codes
       const rawCodes = LAYER_SUBCATEGORIES[normalizedLayer][normalizedCategoryCode];
@@ -206,11 +188,9 @@ export function getSubcategories(layer: string, categoryCode: string): TaxonomyI
         ? rawCodes.filter(code => !!code && typeof code === 'string')
         : [];
         
-      logger.debug(`Found ${validCodes.length} subcategory codes in LAYER_SUBCATEGORIES`);
+      logger.debug(`Found ${validCodes.length} subcategory codes in flattened taxonomy`);
       
-      if (validCodes.length === 0) {
-        logger.warn(`No valid subcategory codes found in LAYER_SUBCATEGORIES`);
-      } else {
+      if (validCodes.length > 0) {
         // Convert codes to TaxonomyItem objects
         const subcategories: TaxonomyItem[] = [];
         
@@ -219,7 +199,7 @@ export function getSubcategories(layer: string, categoryCode: string): TaxonomyI
           const subCode = code.includes('.') ? code.split('.')[1] : code;
           const fullCode = code.includes('.') ? code : `${normalizedCategoryCode}.${code}`;
           
-          // Try to get entry from LAYER_LOOKUPS
+          // Get entry from LAYER_LOOKUPS (which is the flattened taxonomy)
           const lookupEntry = LAYER_LOOKUPS[normalizedLayer][fullCode];
           
           if (lookupEntry) {
@@ -229,8 +209,8 @@ export function getSubcategories(layer: string, categoryCode: string): TaxonomyI
               name: lookupEntry.name
             });
           } else {
-            // Create synthetic entry if lookup doesn't exist
-            logger.warn(`No lookup found for ${fullCode}, creating synthetic entry`);
+            // This shouldn't happen with properly flattened taxonomy, but add as a failsafe
+            logger.warn(`Inconsistency in flattened taxonomy: No lookup entry for ${fullCode}`);
             subcategories.push({
               code: subCode,
               numericCode: String(subcategories.length + 1).padStart(3, '0'),
@@ -239,19 +219,22 @@ export function getSubcategories(layer: string, categoryCode: string): TaxonomyI
           }
         });
         
+        // Log the subcategory names to verify they're correct
+        logger.debug(`Subcategory names: ${subcategories.map(s => s.name).join(', ')}`);
+        
         logger.debug(`Returning ${subcategories.length} subcategories from ${source}`);
         return subcategories;
       }
     }
     
-    // 3. Try to derive subcategories from LAYER_LOOKUPS
-    logger.info(`Using universal fallback to derive subcategories for ${normalizedLayer}.${normalizedCategoryCode}`);
-    source = 'universal_fallback';
+    // 2. Derive subcategories directly from LAYER_LOOKUPS if not found in LAYER_SUBCATEGORIES
+    logger.info(`Trying to derive subcategories from LAYER_LOOKUPS for ${normalizedLayer}.${normalizedCategoryCode}`);
+    source = 'derived_from_lookups';
     
     // Look for entries in LAYER_LOOKUPS that match pattern: "CATEGORY.SUBCATEGORY"
-    const derivedCodes = Object.keys(LAYER_LOOKUPS[normalizedLayer])
+    const derivedCodes = Object.keys(LAYER_LOOKUPS[normalizedLayer] || {})
       .filter(key => {
-        // Match entries like 'PRF.BAS', 'PRF.LEO', etc.
+        // Match entries like 'POP.BAS', 'POP.DIV', etc.
         return key.startsWith(`${normalizedCategoryCode}.`) && key.split('.').length === 2;
       });
       
@@ -276,57 +259,89 @@ export function getSubcategories(layer: string, categoryCode: string): TaxonomyI
         }
       });
       
+      // Log the subcategory names to verify they're correct
+      logger.debug(`Subcategory names: ${subcategories.map(s => s.name).join(', ')}`);
+      
       logger.debug(`Returning ${subcategories.length} subcategories from ${source}`);
       return subcategories;
     }
     
-    // 4. Try to find the category in taxonomy JSON
-    logger.info(`Attempting to find subcategories in taxonomy JSON`);
-    source = 'taxonomy_json';
-    
-    // Find the category in the taxonomy data
-    let targetCategory: any = null;
-    let categoryNum: string | null = null;
-    
-    // Look through all categories to find the matching one by code
-    if (taxonomyData[normalizedLayer]?.categories) {
-      Object.keys(taxonomyData[normalizedLayer].categories).forEach(catNum => {
-        const category = taxonomyData[normalizedLayer].categories[catNum];
-        if (category.code === normalizedCategoryCode) {
-          targetCategory = category;
-          categoryNum = catNum;
-        }
-      });
-    }
-    
-    if (!targetCategory || !targetCategory.subcategories) {
-      logger.warn(`Category ${normalizedCategoryCode} not found in layer ${normalizedLayer} taxonomy JSON`);
-    } else {
-      logger.info(`Found category ${normalizedCategoryCode} with ID ${categoryNum} in taxonomy JSON`);
+    // 3. Special case handling for known problematic combinations
+    const isKnownSpecialCase = 
+      (normalizedLayer === 'S' && normalizedCategoryCode === 'POP') || 
+      (normalizedLayer === 'W' && normalizedCategoryCode === 'BCH');
       
-      // Extract subcategories
-      const subcategories: TaxonomyItem[] = [];
+    if (isKnownSpecialCase && FALLBACK_SUBCATEGORIES[normalizedLayer]?.[normalizedCategoryCode]) {
+      logger.info(`Using hardcoded fallback data for special case ${normalizedLayer}.${normalizedCategoryCode}`);
+      source = 'special_case_fallback';
       
-      Object.keys(targetCategory.subcategories).forEach(subNum => {
-        const subcategory = targetCategory.subcategories[subNum];
-        subcategories.push({
-          code: subcategory.code,
-          numericCode: subNum,
-          name: subcategory.name || subcategory.code.replace(/_/g, ' ')
+      // For these special cases, we'll use the fallback data but correct the names
+      // to match the proper naming convention from the flattened taxonomy
+      const fallbackItems = FALLBACK_SUBCATEGORIES[normalizedLayer][normalizedCategoryCode];
+      
+      // Correct specific names for S.POP subcategories using the flattened taxonomy names
+      if (normalizedLayer === 'S' && normalizedCategoryCode === 'POP') {
+        const correctedItems = fallbackItems.map(item => {
+          const fullCode = `POP.${item.code}`;
+          // Try to get the correct name from the flattened taxonomy
+          const correctEntry = LAYER_LOOKUPS['S'][fullCode];
+          if (correctEntry) {
+            return { ...item, name: correctEntry.name };
+          }
+          
+          // Fallback mappings if not found in lookup (shouldn't happen with proper flattened taxonomy)
+          switch(item.code) {
+            case 'DIV': return { ...item, name: "Pop_Diva_Female_Stars" };
+            case 'IDF': return { ...item, name: "Pop_Idol_Female_Stars" };
+            case 'LGF': return { ...item, name: "Pop_Legend_Female_Stars" };
+            case 'LGM': return { ...item, name: "Pop_Legend_Male_Stars" };
+            case 'ICM': return { ...item, name: "Pop_Icon_Male_Stars" };
+            case 'HPM': return { ...item, name: "Pop_Hipster_Male_Stars" };
+            default: return item;
+          }
         });
-      });
+        
+        // Log the corrected names
+        logger.debug(`Corrected S.POP subcategory names: ${correctedItems.map(s => s.name).join(', ')}`);
+        
+        return correctedItems;
+      }
       
-      logger.debug(`Returning ${subcategories.length} subcategories from ${source}`);
-      return subcategories;
+      // Correct specific names for W.BCH subcategories using the flattened taxonomy names
+      if (normalizedLayer === 'W' && normalizedCategoryCode === 'BCH') {
+        const correctedItems = fallbackItems.map(item => {
+          const fullCode = `BCH.${item.code}`;
+          // Try to get the correct name from the flattened taxonomy
+          const correctEntry = LAYER_LOOKUPS['W'][fullCode];
+          if (correctEntry) {
+            return { ...item, name: correctEntry.name };
+          }
+          
+          // Fallback mappings if not found in lookup (shouldn't happen with proper flattened taxonomy)
+          switch(item.code) {
+            case 'TRO': return { ...item, name: "Tropical" };
+            case 'ISL': return { ...item, name: "Island" };
+            case 'SUN': return { ...item, name: "Sunset" };
+            default: return item;
+          }
+        });
+        
+        // Log the corrected names
+        logger.debug(`Corrected W.BCH subcategory names: ${correctedItems.map(s => s.name).join(', ')}`);
+        
+        return correctedItems;
+      }
+      
+      return fallbackItems;
     }
     
-    // 5. Last resort: case insensitive pattern matching
+    // 4. Last resort: case insensitive pattern matching
     logger.info(`Using case-insensitive pattern matching as last resort`);
     source = 'pattern_matching';
     
     // Try a more flexible pattern matching approach
     const keyPattern = new RegExp(`^${normalizedCategoryCode}\\.\\w+$`, 'i');
-    const matchingKeys = Object.keys(LAYER_LOOKUPS[normalizedLayer])
+    const matchingKeys = Object.keys(LAYER_LOOKUPS[normalizedLayer] || {})
       .filter(key => keyPattern.test(key));
       
     if (matchingKeys.length > 0) {
@@ -352,6 +367,13 @@ export function getSubcategories(layer: string, categoryCode: string): TaxonomyI
       
       logger.debug(`Returning ${subcategories.length} subcategories from ${source}`);
       return subcategories;
+    }
+    
+    // 5. As a last resort, if all else fails, use generic hardcoded fallbacks
+    if (FALLBACK_SUBCATEGORIES[normalizedLayer]?.[normalizedCategoryCode]) {
+      logger.info(`All other methods failed. Using hardcoded fallback data for ${normalizedLayer}.${normalizedCategoryCode}`);
+      source = 'generic_fallback';
+      return FALLBACK_SUBCATEGORIES[normalizedLayer][normalizedCategoryCode];
     }
     
     // If all attempts failed, return empty array
@@ -537,7 +559,7 @@ export function convertMFAtoHFN(mfa: string): string {
 }
 
 /**
- * Inspection utility for debugging taxonomy structure
+ * Inspection utility for debugging taxonomy structure using flattened taxonomy
  */
 export function inspectTaxonomyStructure(layer: string, categoryCode: string): Record<string, any> {
   console.group(`Taxonomy Structure Inspection: ${layer}.${categoryCode}`);
@@ -548,61 +570,56 @@ export function inspectTaxonomyStructure(layer: string, categoryCode: string): R
     const normalizedLayer = normalizeCode(layer);
     const normalizedCategoryCode = normalizeCode(categoryCode);
     
-    // 1. Check layer existence
+    // 1. Check layer existence in LAYER_LOOKUPS
     logger.debug(`Checking layer: ${normalizedLayer}`);
-    if (!taxonomyData[normalizedLayer]) {
-      logger.debug(`Layer ${normalizedLayer} does not exist in taxonomy data`);
+    if (!LAYER_LOOKUPS[normalizedLayer]) {
+      logger.debug(`Layer ${normalizedLayer} does not exist in flattened taxonomy`);
       console.groupEnd();
       return { exists: false, reason: 'layer_not_found' };
     }
     
-    logger.debug(`Layer ${normalizedLayer} exists in taxonomy data`);
+    logger.debug(`Layer ${normalizedLayer} exists in flattened taxonomy`);
     
-    // 2. Check categories
-    logger.debug(`Checking categories for layer ${normalizedLayer}`);
-    if (!taxonomyData[normalizedLayer].categories) {
-      logger.debug(`No categories found for layer ${normalizedLayer}`);
-      console.groupEnd();
-      return { exists: false, reason: 'no_categories' };
-    }
+    // 2. Check if category exists
+    logger.debug(`Checking if category ${normalizedCategoryCode} exists`);
+    const categoryEntry = LAYER_LOOKUPS[normalizedLayer][normalizedCategoryCode];
     
-    // 3. Find specific category
-    logger.debug(`Looking for category ${normalizedCategoryCode}`);
-    let targetCategory: any = null;
-    let categoryNum: string | null = null;
-    
-    Object.keys(taxonomyData[normalizedLayer].categories).forEach(catNum => {
-      const category = taxonomyData[normalizedLayer].categories[catNum];
-      if (category.code === normalizedCategoryCode) {
-        targetCategory = category;
-        categoryNum = catNum;
-      }
-    });
-    
-    if (!targetCategory) {
+    if (!categoryEntry) {
       logger.debug(`Category ${normalizedCategoryCode} not found in layer ${normalizedLayer}`);
       console.groupEnd();
       return { exists: false, reason: 'category_not_found' };
     }
     
-    logger.debug(`Found category ${normalizedCategoryCode} with ID ${categoryNum}`);
+    logger.debug(`Found category ${normalizedCategoryCode} with numericCode ${categoryEntry.numericCode}`);
     
-    // 4. Check subcategories
-    if (!targetCategory.subcategories) {
+    // 3. Check if subcategories exist in LAYER_SUBCATEGORIES
+    logger.debug(`Checking subcategories for ${normalizedLayer}.${normalizedCategoryCode}`);
+    
+    if (!LAYER_SUBCATEGORIES[normalizedLayer] || 
+        !LAYER_SUBCATEGORIES[normalizedLayer][normalizedCategoryCode] || 
+        LAYER_SUBCATEGORIES[normalizedLayer][normalizedCategoryCode].length === 0) {
       logger.debug(`No subcategories found for category ${normalizedCategoryCode}`);
       console.groupEnd();
       return { exists: false, reason: 'no_subcategories' };
     }
     
-    // 5. List all subcategories
+    // 4. List all subcategories from flattened taxonomy
     const subcategories: {id: string, code: string, name: string}[] = [];
-    Object.keys(targetCategory.subcategories).forEach(subNum => {
-      const subcategory = targetCategory.subcategories[subNum];
-      subcategories.push({
-        id: subNum,
-        code: subcategory.code,
-        name: subcategory.name
-      });
+    
+    LAYER_SUBCATEGORIES[normalizedLayer][normalizedCategoryCode].forEach(subFullCode => {
+      // Parse to get just the subcategory code (after the dot)
+      const subCode = subFullCode.includes('.') ? subFullCode.split('.')[1] : subFullCode;
+      
+      // Get the lookup entry
+      const lookupEntry = LAYER_LOOKUPS[normalizedLayer][subFullCode];
+      
+      if (lookupEntry) {
+        subcategories.push({
+          id: lookupEntry.numericCode,
+          code: subCode,
+          name: lookupEntry.name
+        });
+      }
     });
     
     logger.debug(`Found ${subcategories.length} subcategories:`, subcategories);
@@ -610,8 +627,8 @@ export function inspectTaxonomyStructure(layer: string, categoryCode: string): R
     
     return { 
       exists: true, 
-      categoryId: categoryNum, 
-      categoryName: targetCategory.name,
+      categoryId: categoryEntry.numericCode, 
+      categoryName: categoryEntry.name,
       subcategories: subcategories
     };
     
@@ -637,11 +654,39 @@ export function debugTaxonomyData(layer: string, categoryCode: string): void {
   // Output additional useful debugging info
   if (layer && LAYER_LOOKUPS[layer]) {
     logger.debug(`LAYER_LOOKUPS[${layer}] entries: ${Object.keys(LAYER_LOOKUPS[layer]).length}`);
+    
+    // Show all entries for this layer+category (if provided)
+    if (categoryCode) {
+      const matchingKeys = Object.keys(LAYER_LOOKUPS[layer])
+        .filter(key => key.startsWith(`${categoryCode}.`));
+      
+      if (matchingKeys.length > 0) {
+        logger.debug(`Found ${matchingKeys.length} entries for ${layer}.${categoryCode} in LAYER_LOOKUPS:`);
+        
+        const entries = matchingKeys.map(key => {
+          const entry = LAYER_LOOKUPS[layer][key];
+          return `${key}: numericCode=${entry.numericCode}, name=${entry.name}`;
+        });
+        
+        logger.debug(entries.join('\n'));
+      }
+    }
   }
   
   if (layer && categoryCode && LAYER_SUBCATEGORIES[layer] && LAYER_SUBCATEGORIES[layer][categoryCode]) {
-    logger.debug(`LAYER_SUBCATEGORIES[${layer}][${categoryCode}]:`, 
-      LAYER_SUBCATEGORIES[layer][categoryCode]);
+    const subcategories = LAYER_SUBCATEGORIES[layer][categoryCode];
+    logger.debug(`LAYER_SUBCATEGORIES[${layer}][${categoryCode}] has ${subcategories.length} entries:`, 
+      subcategories);
+    
+    // Show names for each subcategory from LAYER_LOOKUPS
+    const subEntries = subcategories.map(code => {
+      const lookupEntry = LAYER_LOOKUPS[layer][code];
+      return lookupEntry ? 
+        `${code}: numericCode=${lookupEntry.numericCode}, name=${lookupEntry.name}` : 
+        `${code}: [No lookup entry found]`;
+    });
+    
+    logger.debug('Subcategory details:\n' + subEntries.join('\n'));
   }
 }
 
