@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { environmentSafeLog } from './utils/environment';
 import './App.css';
 import './styles/ErrorHandling.css';
 import './styles/TaxonomyExample.css';
@@ -157,7 +158,8 @@ const App: React.FC = () => {
     }
     
     // Initialize the global taxonomy error handler
-    console.log('[APP] Setting up global taxonomy error handler');
+    // Use the environment utility for consistent logging
+    environmentSafeLog('[APP] Setting up global taxonomy error handler');
     setupGlobalTaxonomyErrorHandler();
   }, []);
 

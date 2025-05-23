@@ -57,7 +57,9 @@
     "serve": "node server.js",
     "flatten-taxonomy": "node scripts/taxonomyFlattener.js",
     "test-taxonomy": "node scripts/test-taxonomy-mappings.js",
+    "detect-logs": "node scripts/detect-unguarded-logs.js",
     "generate-layer-icons": "node src/utils/createLayerIcons.js",
+    "detect-logs": "node scripts/detect-unguarded-logs.js",
     "postinstall": "echo 'Handling legacy peer dependencies'"
   },
   "eslintConfig": {

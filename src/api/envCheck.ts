@@ -1,11 +1,16 @@
-// Environment variables check
-console.log('Environment check at runtime:');
-console.log('REACT_APP_API_URL =', process.env.REACT_APP_API_URL);
-console.log('REACT_APP_USE_MOCK_API =', process.env.REACT_APP_USE_MOCK_API);
-console.log(
-  'useMock evaluated =',
-  process.env.REACT_APP_USE_MOCK_API === 'true'
-);
+// Import environment utility to ensure consistent detection
+import { isDevelopment, environmentSafeLog } from '../utils/environment';
+
+// Environment variables check - only log in development mode
+if (isDevelopment()) {
+  environmentSafeLog('Environment check at runtime:');
+  environmentSafeLog('REACT_APP_API_URL =', process.env.REACT_APP_API_URL);
+  environmentSafeLog('REACT_APP_USE_MOCK_API =', process.env.REACT_APP_USE_MOCK_API);
+  environmentSafeLog(
+    'useMock evaluated =',
+    process.env.REACT_APP_USE_MOCK_API === 'true'
+  );
+}
 
 export const checkEnv = () => {
   return {

@@ -5,6 +5,8 @@
  * log levels, persistence, and categorization.
  */
 
+import { isProduction, isDebuggingAllowed } from './environment';
+
 // Log levels in order of severity
 export enum LogLevel {
   DEBUG = 0,
@@ -35,18 +37,51 @@ class Logger {
   private logLevel: LogLevel = LogLevel.INFO;
   private logs: LogEntry[] = [];
   private maxLogSize: number = 1000; // Maximum number of logs to keep in memory
-  private isEnabled: boolean = process.env.NODE_ENV !== 'production';
-  private isConsoleEnabled: boolean = process.env.NODE_ENV !== 'production';
+  private isEnabled: boolean = !isProduction();
+  private isConsoleEnabled: boolean = !isProduction();
   private isPersistenceEnabled: boolean = false;
 
   private constructor() {
-    this.loadSettings();
+    // Use our centralized environment detection
+    const isProd = isProduction();
     
     // Force disable all debugging in production unless explicitly enabled
-    if (process.env.NODE_ENV === 'production' && !localStorage.getItem('logger_force_enabled')) {
+    if (isProd) {
       this.isEnabled = false;
       this.isConsoleEnabled = false;
       this.isPersistenceEnabled = false;
+      
+      // In production, we don't even try to load settings unless forced
+      try {
+        if (typeof localStorage !== 'undefined' && localStorage.getItem('logger_force_enabled') === 'true') {
+          this.loadSettings();
+        }
+      } catch (e) {
+        // Silently fail if localStorage is not available
+      }
+    } else {
+      // Only load settings in development
+      try {
+        this.loadSettings();
+      } catch (e) {
+        // Silently fail if localStorage is not available
+      }
+    }
+    
+    // Double-check production setting after loadSettings (in case it somehow enabled logging)
+    if (isProd) {
+      try {
+        if (!localStorage.getItem('logger_force_enabled')) {
+          this.isEnabled = false;
+          this.isConsoleEnabled = false;
+          this.isPersistenceEnabled = false;
+        }
+      } catch (e) {
+        // Silently fail if localStorage is not available
+        this.isEnabled = false;
+        this.isConsoleEnabled = false;
+        this.isPersistenceEnabled = false;
+      }
     }
   }
 
@@ -308,7 +343,16 @@ export const logger = Logger.getInstance();
  * Use this to conditionally execute code only in development.
  */
 export const isDebugMode = (): boolean => {
-  return process.env.NODE_ENV !== 'production';
+  // Use our centralized environment detection
+  return !isProduction();
+};
+
+/**
+ * Check if we're definitely in production mode
+ */
+export const isProductionMode = (): boolean => {
+  // Use our centralized environment detection
+  return isProduction();
 };
 
 /**
@@ -316,7 +360,8 @@ export const isDebugMode = (): boolean => {
  * Use this for temporary debugging that should be automatically disabled in production.
  */
 export const debugLog = (message: string, ...args: any[]): void => {
-  if (isDebugMode()) {
+  // Use isDebuggingAllowed to respect the global setting
+  if (isDebuggingAllowed()) {
     console.log(message, ...args);
   }
 };
@@ -326,8 +371,18 @@ export const debugLog = (message: string, ...args: any[]): void => {
  * Use this for detailed taxonomy operation tracking that should be suppressed by default.
  */
 export const verboseLog = (message: string, ...args: any[]): void => {
-  if (isDebugMode() && localStorage.getItem('verbose_taxonomy_logging') === 'true') {
-    console.log(message, ...args);
+  // First check if we're in production - if so, never log regardless of localStorage
+  if (isProduction()) {
+    return;
+  }
+  
+  // In development, check the verbose flag
+  try {
+    if (typeof localStorage !== 'undefined' && localStorage.getItem('verbose_taxonomy_logging') === 'true') {
+      console.log(message, ...args);
+    }
+  } catch (e) {
+    // Silently fail if localStorage is not available
   }
 };
 
@@ -336,7 +391,8 @@ export const verboseLog = (message: string, ...args: any[]): void => {
  * Always use this for error logging in development-only code.
  */
 export const debugError = (message: string, ...args: any[]): void => {
-  if (isDebugMode()) {
+  // Use isDebuggingAllowed to respect the global setting
+  if (isDebuggingAllowed()) {
     console.error(message, ...args);
   }
 };
