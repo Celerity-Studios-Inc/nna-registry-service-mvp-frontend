@@ -243,12 +243,20 @@ const FileUpload: React.FC<FileUploadProps> = ({
       debugLog(`[FileUpload] Selected ${selectedFiles.length} files`);
       logger.ui(LogLevel.INFO, `User selected ${selectedFiles.length} files`);
       
+      // Clear uploadedFiles if selectedFiles is empty
+      if (selectedFiles.length === 0) {
+        setUploadedFiles([]);
+      }
+      
       setFiles(selectedFiles);
       onFilesChange(selectedFiles);
 
       // Auto-select the first file for preview if available
       if (selectedFiles.length > 0 && !selectedFile) {
         setSelectedFile(selectedFiles[0]);
+      } else if (selectedFiles.length === 0) {
+        // Clear selected file if no files
+        setSelectedFile(null);
       }
     },
     [onFilesChange, selectedFile]
@@ -345,7 +353,18 @@ const FileUpload: React.FC<FileUploadProps> = ({
     setSelectedFile(null);
     setUploadedFiles([]);
     onFilesChange([]);
-  }, [onFilesChange]);
+    
+    // This delay ensures the UI updates completely before any potential re-renders
+    setTimeout(() => {
+      debugLog('[FileUpload] Verifying cleared state');
+      // Verify state is cleared
+      if (files.length > 0) {
+        debugLog('[FileUpload] State not properly cleared, forcing update');
+        setFiles([]);
+        onFilesChange([]);
+      }
+    }, 50);
+  }, [onFilesChange, files.length]);
 
   // Memoize the layer name for consistent reference
   const layerDisplay = useMemo(() => {

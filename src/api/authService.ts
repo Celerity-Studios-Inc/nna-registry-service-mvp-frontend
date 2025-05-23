@@ -1,6 +1,7 @@
 import api, { isBackendAvailable } from './api';
 import { User } from '../contexts/AuthContext';
 import { ApiResponse } from '../types/api.types';
+import { debugLog } from '../utils/logger';
 
 interface AuthResponse {
   user: User;
@@ -29,20 +30,20 @@ class AuthService {
     try {
       // Check if backend is available before attempting real API call
       if (!isBackendAvailable) {
-        console.log('Backend unavailable, using mock login immediately');
+        debugLog('Backend unavailable, using mock login immediately');
         return this.mockLogin(email, password);
       }
 
       // Attempt to use real API first, fall back to mock if it fails
       try {
-        console.log(
+        debugLog(
           'Attempting to login with real API at endpoint: /auth/login'
         );
-        console.log('Login credentials (email only for security):', { email });
+        debugLog('Login credentials (email only for security):', { email });
 
         // Log URL construction for debugging
         const fullUrl = window.location.origin + '/api/auth/login';
-        console.log('Expected full URL after base concatenation:', fullUrl);
+        debugLog('Expected full URL after base concatenation:', fullUrl);
 
         const response = await api.post<ApiResponse<AuthResponse>>(
           '/auth/login',
@@ -53,7 +54,7 @@ class AuthService {
         );
 
         // If we get here, the API call was successful
-        console.log('Login successful with real API');
+        debugLog('Login successful with real API');
 
         // Check if we actually got a proper API response or HTML
         // Add CI=false to npm run build to skip TypeScript errors in build
@@ -75,7 +76,7 @@ class AuthService {
           console.warn('HTML detection failed, but continuing:', err);
         }
 
-        console.log(
+        debugLog(
           'Response preview:',
           JSON.stringify(response.data).substring(0, 100) + '...'
         );
@@ -119,7 +120,7 @@ class AuthService {
     email: string,
     password: string
   ): Promise<AuthResponse> {
-    console.log('Using mock login implementation');
+    debugLog('Using mock login implementation');
 
     // Simulate network delay
     await new Promise(resolve => setTimeout(resolve, 300));
@@ -190,23 +191,23 @@ class AuthService {
     try {
       // Check if backend is available before attempting real API call
       if (!isBackendAvailable) {
-        console.log('Backend unavailable, using mock register immediately');
+        debugLog('Backend unavailable, using mock register immediately');
         return this.mockRegister(username, email, password);
       }
 
       // Try the real API first, fall back to mock if it fails
       try {
-        console.log(
+        debugLog(
           'Attempting to register with real API at endpoint: /auth/register'
         );
-        console.log(
+        debugLog(
           'Registration credentials (email/username only for security):',
           { email, username }
         );
 
         // Log URL construction for debugging
         const fullUrl = window.location.origin + '/api/auth/register';
-        console.log('Expected full URL after base concatenation:', fullUrl);
+        debugLog('Expected full URL after base concatenation:', fullUrl);
 
         const response = await api.post<ApiResponse<AuthResponse>>(
           '/auth/register',
@@ -218,7 +219,7 @@ class AuthService {
         );
 
         // If we get here, the API call was successful
-        console.log('Registration successful with real API');
+        debugLog('Registration successful with real API');
 
         // Check if we actually got a proper API response or HTML
         // Add CI=false to npm run build to skip TypeScript errors in build
@@ -240,7 +241,7 @@ class AuthService {
           console.warn('HTML detection failed, but continuing:', err);
         }
 
-        console.log(
+        debugLog(
           'Response preview:',
           JSON.stringify(response.data).substring(0, 100) + '...'
         );
@@ -290,7 +291,7 @@ class AuthService {
     email: string,
     password: string
   ): Promise<AuthResponse> {
-    console.log('Using mock register implementation');
+    debugLog('Using mock register implementation');
 
     // Simulate network delay
     await new Promise(resolve => setTimeout(resolve, 500));
@@ -342,11 +343,11 @@ class AuthService {
       // If it's a mock token or backend is unavailable, use mock implementation
       if (token.startsWith('MOCK-') || !isBackendAvailable) {
         if (token.startsWith('MOCK-')) {
-          console.log(
+          debugLog(
             'Mock token detected, using mock getCurrentUser implementation'
           );
         } else {
-          console.log(
+          debugLog(
             'Backend unavailable, using mock getCurrentUser implementation'
           );
         }
@@ -356,9 +357,9 @@ class AuthService {
 
       // If it appears to be a real token, try the real API
       try {
-        console.log('Attempting to get user profile from real API');
+        debugLog('Attempting to get user profile from real API');
         const response = await api.get<ApiResponse<User>>('/auth/profile');
-        console.log('Successfully retrieved user profile from API');
+        debugLog('Successfully retrieved user profile from API');
         return response.data.data as User;
       } catch (apiError) {
         console.warn(
@@ -396,7 +397,7 @@ class AuthService {
           userName = userEmail.split('@')[0];
         }
       } catch (e) {
-        console.log('Could not decode mock token, using default mock user');
+        debugLog('Could not decode mock token, using default mock user');
       }
     }
 

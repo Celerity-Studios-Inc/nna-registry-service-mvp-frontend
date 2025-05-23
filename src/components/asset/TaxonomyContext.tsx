@@ -87,6 +87,7 @@ const TaxonomyContext: React.FC<TaxonomyContextProps> = ({
                     maxWidth: '100%'
                   }
                 }}
+                title={categoryName || categoryCode} // Add title for tooltip on hover
               />
             </Box>
             
@@ -99,6 +100,17 @@ const TaxonomyContext: React.FC<TaxonomyContextProps> = ({
                 size="small"
                 color="primary" 
                 variant="outlined"
+                title={subcategoryName || subcategoryCode} // Add title for tooltip on hover
+                sx={{ 
+                  maxWidth: '100%',
+                  '.MuiChip-label': { 
+                    whiteSpace: 'normal',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    display: 'block',
+                    maxWidth: '100%'
+                  }
+                }}
               />
             </Box>
           </Box>

@@ -167,7 +167,7 @@ const RegisterAssetPage: React.FC = () => {
         // Clear any previously stored data to ensure a fresh form
         window.sessionStorage.removeItem('showSuccessPage');
         localStorage.removeItem('lastCreatedAsset');
-        debugLog('Direct navigation to Register Asset - clearing stored data');
+        environmentSafeLog('Direct navigation to Register Asset - clearing stored data');
         window.sessionStorage.setItem('directNavigation', 'true');
         return { showSuccessPage: false, asset: null };
       }
@@ -196,7 +196,7 @@ const RegisterAssetPage: React.FC = () => {
   React.useEffect(() => {
     // Set forceMockApi to false to ensure we use the real backend
     localStorage.setItem('forceMockApi', 'false');
-    debugLog('FORCING REAL API MODE for asset creation');
+    environmentSafeLog('FORCING REAL API MODE for asset creation');
 
     // Clean up on unmount
     return () => {
@@ -213,15 +213,15 @@ const RegisterAssetPage: React.FC = () => {
     const testDirectly = () => {
       try {
         const { getSubcategories } = require('../services/enhancedTaxonomyService');
-        debugLog('===== DIRECT SERVICE TEST =====');
-        debugLog('Testing S.DNC directly:');
+        environmentSafeLog('===== DIRECT SERVICE TEST =====');
+        environmentSafeLog('Testing S.DNC directly:');
         const resultSDNC = getSubcategories('S', 'DNC');
-        debugLog('S.DNC Result:', resultSDNC);
+        environmentSafeLog('S.DNC Result:', resultSDNC);
         
-        debugLog('Testing L.PRF directly:');
+        environmentSafeLog('Testing L.PRF directly:');
         const resultLPRF = getSubcategories('L', 'PRF');
-        debugLog('L.PRF Result:', resultLPRF);
-        debugLog('===== END DIRECT TEST =====');
+        environmentSafeLog('L.PRF Result:', resultLPRF);
+        environmentSafeLog('===== END DIRECT TEST =====');
       } catch (error) {
         console.error('Direct test failed:', error);
       }
@@ -232,7 +232,7 @@ const RegisterAssetPage: React.FC = () => {
     
     // Run the comprehensive taxonomy fix validation (with delay to ensure form is ready)
     setTimeout(() => {
-      debugLog('Running comprehensive taxonomy fix validation...');
+      environmentSafeLog('Running comprehensive taxonomy fix validation...');
       // Cast setValue to the expected type
       const setValueAny = (name: string, value: any) => setValue(name as any, value);
       validateTaxonomyFix(setValueAny);
@@ -307,7 +307,7 @@ const RegisterAssetPage: React.FC = () => {
   
   // Add this debug useEffect to see the form state
   React.useEffect(() => {
-    debugLog('[REGISTER PAGE] Current form state:', {
+    environmentSafeLog('[REGISTER PAGE] Current form state:', {
       layer: watch('layer'),
       categoryCode: watch('categoryCode'), 
       subcategoryCode: watch('subcategoryCode')
@@ -323,7 +323,7 @@ const RegisterAssetPage: React.FC = () => {
     if (shouldRunCompleteFlowTest) {
       // Wait until the form is fully initialized
       setTimeout(() => {
-        debugLog('Running complete flow validation test...');
+        environmentSafeLog('Running complete flow validation test...');
         
         // Get the trigger method from React Hook Form
         const trigger = methods.trigger;
@@ -348,12 +348,12 @@ const RegisterAssetPage: React.FC = () => {
     const categoryCode = watch('categoryCode');
     
     if (layer && categoryCode) {
-      debugLog('[REGISTER PAGE] Should trigger subcategory load for:', layer, categoryCode);
+      environmentSafeLog('[REGISTER PAGE] Should trigger subcategory load for:', layer, categoryCode);
       
       // Force trigger the subcategory load
       if ((layer === 'S' && categoryCode === 'DNC') || 
           (layer === 'L' && categoryCode === 'PRF')) {
-        debugLog('[REGISTER PAGE] This is a known working combination');
+        environmentSafeLog('[REGISTER PAGE] This is a known working combination');
       }
     }
   }, [watch]);
@@ -413,7 +413,7 @@ const RegisterAssetPage: React.FC = () => {
       }
 
       // Log form data for debugging
-      debugLog('Form data for asset creation:', {
+      environmentSafeLog('Form data for asset creation:', {
         layer: data.layer,
         categoryCode: data.categoryCode,  // This could be numeric "001" or alphabetic "POP"
         subcategoryCode: data.subcategoryCode, // This could be numeric "005"/"007" or alphabetic "LGM"/"HPM"
@@ -424,21 +424,21 @@ const RegisterAssetPage: React.FC = () => {
       });
 
       // Add special logging for the category/subcategory format to debug backend issues
-      debugLog('IMPORTANT: Category/Subcategory Format Check:');
-      debugLog(`Category: ${data.categoryCode} (${/^\d+$/.test(data.categoryCode) ? 'NUMERIC - needs conversion' : 'ALPHABETIC - OK'})`);
-      debugLog(`Subcategory: ${data.subcategoryCode} (${/^\d+$/.test(data.subcategoryCode) ? 'NUMERIC - needs conversion' : 'ALPHABETIC - OK'})`);
+      environmentSafeLog('IMPORTANT: Category/Subcategory Format Check:');
+      environmentSafeLog(`Category: ${data.categoryCode} (${/^\d+$/.test(data.categoryCode) ? 'NUMERIC - needs conversion' : 'ALPHABETIC - OK'})`);
+      environmentSafeLog(`Subcategory: ${data.subcategoryCode} (${/^\d+$/.test(data.subcategoryCode) ? 'NUMERIC - needs conversion' : 'ALPHABETIC - OK'})`);
 
       // For S.POP.LGM, log the specific mapping that will be used
       if (data.layer === 'S' && (data.categoryCode === 'POP' || data.categoryCode === '001') &&
           (data.subcategoryCode === 'LGM' || data.subcategoryCode === '005')) {
-        debugLog('DETECTED S.POP.LGM COMBINATION - Will convert to proper codes for backend');
+        environmentSafeLog('DETECTED S.POP.LGM COMBINATION - Will convert to proper codes for backend');
       }
 
       // Add extended debug logging for the current MFA/HFN without hardcoded expected values
       if (data.layer === 'S' && data.categoryCode === 'POP' && data.subcategoryCode === 'HPM') {
-        debugLog('IMPORTANT - Asset registration with S.POP.HPM:');
-        debugLog(`HFN: ${data.hfn}`);
-        debugLog(`MFA: ${data.mfa}`);
+        environmentSafeLog('IMPORTANT - Asset registration with S.POP.HPM:');
+        environmentSafeLog(`HFN: ${data.hfn}`);
+        environmentSafeLog(`MFA: ${data.mfa}`);
       }
 
       // Create the asset
@@ -447,13 +447,13 @@ const RegisterAssetPage: React.FC = () => {
       // This is critical as the backend expects alphabetic codes like "POP", not numeric ones like "001"
 
       // Use the new TaxonomyConverter utility for reliable code conversion
-      debugLog(`Converting taxonomy codes for layer: ${data.layer}`);
+      environmentSafeLog(`Converting taxonomy codes for layer: ${data.layer}`);
 
       // Convert category code to alphabetic form if needed
       let convertedCategory = data.categoryCode;
       if (data.layer === 'S' && (data.categoryCode === '001' || /^\d+$/.test(data.categoryCode))) {
         convertedCategory = 'POP';
-        debugLog(`CRITICAL PATH: Force mapped category code ${data.categoryCode} → POP for Stars layer`);
+        environmentSafeLog(`CRITICAL PATH: Force mapped category code ${data.categoryCode} → POP for Stars layer`);
       } else {
         // Normal conversion path
         convertedCategory = TaxonomyConverter.getAlphabeticCode(
@@ -468,7 +468,7 @@ const RegisterAssetPage: React.FC = () => {
       if (data.layer === 'S' && (data.categoryCode === 'POP' || data.categoryCode === '001') &&
           (data.subcategoryCode === '007' || (/^\d+$/.test(data.subcategoryCode) && data.subcategoryCode === '007'))) {
         convertedSubcategory = 'HPM';
-        debugLog(`CRITICAL PATH: Force mapped subcategory code ${data.subcategoryCode} → HPM for S.POP layer`);
+        environmentSafeLog(`CRITICAL PATH: Force mapped subcategory code ${data.subcategoryCode} → HPM for S.POP layer`);
       } else {
         // Normal conversion path
         convertedSubcategory = TaxonomyConverter.getAlphabeticCode(
@@ -480,23 +480,23 @@ const RegisterAssetPage: React.FC = () => {
       }
 
       // Log the conversion results for debugging
-      debugLog('Code conversion results:');
-      debugLog(`Category: ${data.categoryCode} → ${convertedCategory}`);
-      debugLog(`Subcategory: ${data.subcategoryCode} → ${convertedSubcategory}`);
+      environmentSafeLog('Code conversion results:');
+      environmentSafeLog(`Category: ${data.categoryCode} → ${convertedCategory}`);
+      environmentSafeLog(`Subcategory: ${data.subcategoryCode} → ${convertedSubcategory}`);
 
       // Add extra validation for the critical S.POP.HPM case
       if (data.layer === 'S' && (data.categoryCode === 'POP' || data.categoryCode === '001') &&
           (data.subcategoryCode === 'HPM' || data.subcategoryCode === '007')) {
-        debugLog('IMPORTANT - Final validation for S.POP.HPM case:');
-        debugLog(`Original values: layer=${data.layer}, category=${data.categoryCode}, subcategory=${data.subcategoryCode}`);
-        debugLog(`Converted values: layer=${data.layer}, category=${convertedCategory}, subcategory=${convertedSubcategory}`);
-        debugLog(`These should be sending: layer=S, category=POP, subcategory=HPM to the backend`);
+        environmentSafeLog('IMPORTANT - Final validation for S.POP.HPM case:');
+        environmentSafeLog(`Original values: layer=${data.layer}, category=${data.categoryCode}, subcategory=${data.subcategoryCode}`);
+        environmentSafeLog(`Converted values: layer=${data.layer}, category=${convertedCategory}, subcategory=${convertedSubcategory}`);
+        environmentSafeLog(`These should be sending: layer=S, category=POP, subcategory=HPM to the backend`);
 
         // Check if the conversion is correct
         if (convertedCategory !== 'POP' || convertedSubcategory !== 'HPM') {
-          console.error('WARNING: S.POP.HPM conversion failed! Backend will likely reject this request.');
+          environmentSafeError('WARNING: S.POP.HPM conversion failed! Backend will likely reject this request.');
         } else {
-          debugLog('✅ S.POP.HPM conversion successful - should work with backend API');
+          environmentSafeLog('✅ S.POP.HPM conversion successful - should work with backend API');
         }
       }
 
@@ -539,7 +539,7 @@ const RegisterAssetPage: React.FC = () => {
               data.subcategoryCode,
               '001'
             );
-            debugLog(`Enhanced formatter generated HFN=${hfn}, MFA=${mfa}`);
+            environmentSafeLog(`Enhanced formatter generated HFN=${hfn}, MFA=${mfa}`);
             return {
               // Include both consistently formatted addresses
               mfa: mfa,
@@ -559,7 +559,7 @@ const RegisterAssetPage: React.FC = () => {
       await new Promise(resolve => setTimeout(resolve, 800));
 
       const createdAsset = await assetService.createAsset(assetData);
-      debugLog("Asset created successfully:", createdAsset);
+      environmentSafeLog("Asset created successfully:", createdAsset);
       
       if (!createdAsset) {
         throw new Error("Asset creation failed - no asset returned from API");
@@ -665,11 +665,11 @@ const RegisterAssetPage: React.FC = () => {
   
   // Handle subcategory selection for SimpleTaxonomySelectionV3 component
   const handleSubcategorySelectV3 = React.useCallback(async (subcategoryCode: string) => {
-    debugLog('[REGISTER PAGE] Subcategory selected:', subcategoryCode);
+    environmentSafeLog('[REGISTER PAGE] Subcategory selected:', subcategoryCode);
     
     // Skip processing empty subcategory codes
     if (!subcategoryCode) {
-      debugLog('[REGISTER PAGE] Ignoring empty subcategory code');
+      environmentSafeLog('[REGISTER PAGE] Ignoring empty subcategory code');
       return;
     }
     
@@ -682,7 +682,7 @@ const RegisterAssetPage: React.FC = () => {
       const normalizedSubcategory = subcategoryCode.includes('.') ? 
         subcategoryCode.split('.')[1] : subcategoryCode;
       
-      debugLog(`[REGISTER PAGE] Normalized subcategory: ${subcategoryCode} -> ${normalizedSubcategory}`);
+      environmentSafeLog(`[REGISTER PAGE] Normalized subcategory: ${subcategoryCode} -> ${normalizedSubcategory}`);
       
       // Store the normalized subcategory code
       setValue('subcategoryCode', normalizedSubcategory);
@@ -699,7 +699,7 @@ const RegisterAssetPage: React.FC = () => {
       const enhancedService = await import('../services/enhancedTaxonomyService');
       const subcategories = enhancedService.getSubcategories(watchLayer, watchCategory);
       
-      debugLog(`[REGISTER PAGE] Searching subcategories for match:`, {
+      environmentSafeLog(`[REGISTER PAGE] Searching subcategories for match:`, {
         originalSubcategoryCode: subcategoryCode,
         normalizedSubcategory,
         watchCategory,
@@ -716,14 +716,14 @@ const RegisterAssetPage: React.FC = () => {
         
         const matches = itemCode === normalizedSubcategory;
         if (matches) {
-          debugLog(`[REGISTER PAGE] Found matching subcategory:`, item);
+          environmentSafeLog(`[REGISTER PAGE] Found matching subcategory:`, item);
         }
         return matches;
       });
       
       // If not found by direct match, try a case-insensitive match
       if (!subcategoryItem) {
-        debugLog('[REGISTER PAGE] No direct match found, trying case-insensitive match');
+        environmentSafeLog('[REGISTER PAGE] No direct match found, trying case-insensitive match');
         subcategoryItem = subcategories.find((item: SubcategoryItem) => {
           // Normalize the item code for comparison
           const itemCode = item.code?.includes('.') ? 
@@ -732,7 +732,7 @@ const RegisterAssetPage: React.FC = () => {
           
           const matches = itemCode.toUpperCase() === normalizedSubcategory.toUpperCase();
           if (matches) {
-            debugLog(`[REGISTER PAGE] Found matching subcategory using case-insensitive match:`, item);
+            environmentSafeLog(`[REGISTER PAGE] Found matching subcategory using case-insensitive match:`, item);
           }
           return matches;
         });
@@ -740,7 +740,7 @@ const RegisterAssetPage: React.FC = () => {
       
       // Fallback for common cases - but using a generic approach, not special case handling
       if (!subcategoryItem) {
-        debugLog('[REGISTER PAGE] Using generic fallback for common subcategory codes');
+        environmentSafeLog('[REGISTER PAGE] Using generic fallback for common subcategory codes');
         
         // Map for common subcategory display names
         const commonSubcategories: Record<string, {name: string, numericCode: string}> = {
@@ -756,14 +756,14 @@ const RegisterAssetPage: React.FC = () => {
             name: commonData.name,
             numericCode: commonData.numericCode
           };
-          debugLog(`[REGISTER PAGE] Applied generic fallback for ${normalizedSubcategory}:`, subcategoryItem);
+          environmentSafeLog(`[REGISTER PAGE] Applied generic fallback for ${normalizedSubcategory}:`, subcategoryItem);
         }
       }
       
       if (subcategoryItem) {
         setValue('subcategoryName', subcategoryItem.name || '');
         setValue('subcategoryNumericCode', subcategoryItem.numericCode?.toString() || '');
-        debugLog(`[REGISTER PAGE] Found subcategory details:`, subcategoryItem);
+        environmentSafeLog(`[REGISTER PAGE] Found subcategory details:`, subcategoryItem);
         
         // Track successful selection in analytics (if available)
         if (window.analytics) {
@@ -791,7 +791,7 @@ const RegisterAssetPage: React.FC = () => {
           '000' // Default sequential for preview
         );
         
-        debugLog(`[REGISTER PAGE] Generated formatted addresses:`, { hfn, mfa });
+        environmentSafeLog(`[REGISTER PAGE] Generated formatted addresses:`, { hfn, mfa });
         
         // Update the form state with properly formatted HFN and MFA
         setValue('hfn', hfn);
@@ -839,7 +839,7 @@ const RegisterAssetPage: React.FC = () => {
     // Store the original subcategory for display override in success screen
     if (originalSubcategory) {
       setOriginalSubcategoryCode(originalSubcategory);
-      debugLog(`Stored original subcategory code: ${originalSubcategory} for display override`);
+      environmentSafeLog(`Stored original subcategory code: ${originalSubcategory} for display override`);
     }
   };
 
@@ -897,7 +897,7 @@ const RegisterAssetPage: React.FC = () => {
         });
       } else {
         // Low confidence - just log but don't show warning
-        debugLog(`File name matches existing asset "${asset.name}" with NNA address ${mfa}.`);
+        environmentSafeLog(`File name matches existing asset "${asset.name}" with NNA address ${mfa}.`);
       }
     }
   };
@@ -906,6 +906,16 @@ const RegisterAssetPage: React.FC = () => {
   const handleFilesChange = async (files: File[]) => {
     // Clear any previous duplicate detection
     setPotentialDuplicate(null);
+    
+    // Special case: If files array is empty, this is likely a deletion
+    if (files.length === 0) {
+      environmentSafeLog('All files removed, clearing state');
+      setValue('files', []);
+      setUploadedFiles([]);
+      // Clear fileHashes to ensure clean state for future uploads
+      setFileHashes(null);
+      return;
+    }
     
     // Check for duplicate files
     const existingFiles = getValues('files') || [];
@@ -925,11 +935,32 @@ const RegisterAssetPage: React.FC = () => {
       }
     }
     
+    // Check if we're replacing existing files
+    if (existingFiles.length > 0 && files.length !== existingFiles.length) {
+      const existingFileSet = new Set(existingFiles.map(f => f.name));
+      const newFileSet = new Set(files.map(f => f.name));
+      
+      // If there's a difference, treat this as a replacement operation
+      const hasRemovedFiles = existingFiles.some(f => !newFileSet.has(f.name));
+      
+      if (hasRemovedFiles) {
+        environmentSafeLog('Detected file replacement - resetting upload state');
+        // Reset uploaded files to be consistent with the new file selection
+        setUploadedFiles([]);
+      }
+    }
+    
     // Detect and filter duplicates
     const newFiles: File[] = [];
     const duplicateFiles: string[] = [];
     
     for (const file of files) {
+      // Skip files that are already in the existing files (by reference)
+      if (existingFiles.includes(file)) {
+        newFiles.push(file);
+        continue;
+      }
+      
       // Check by name first (fast)
       if (existingFileNames.includes(file.name)) {
         // Potential duplicate, check by content
@@ -939,7 +970,7 @@ const RegisterAssetPage: React.FC = () => {
         if (newFileHash === existingFileHash) {
           // Confirmed duplicate by content
           duplicateFiles.push(file.name);
-          debugLog(`File "${file.name}" is a duplicate (same content). Skipping.`);
+          environmentSafeLog(`File "${file.name}" is a duplicate (same content). Skipping.`);
           continue;
         }
       }
@@ -953,19 +984,21 @@ const RegisterAssetPage: React.FC = () => {
       checkForPreviouslyRegisteredAssets(file);
     }
     
-    if (newFiles.length === 0) {
-      setError('Duplicate file(s) detected. No new files were added.');
+    // Update files in form state
+    // If we're trying to add new files but there are only duplicates, preserve existing files
+    if (newFiles.length === 0 && existingFiles.length > 0 && duplicateFiles.length > 0) {
+      setError(`Duplicate file(s) detected: ${duplicateFiles.join(', ')}. No new files were added.`);
       return;
     }
     
-    // Combine with existing files, avoiding duplicates
-    const combinedFiles = [...existingFiles, ...newFiles];
-    setValue('files', combinedFiles);
+    // Update the files state with the new selection
+    // This handles both adding new files and removing existing ones
+    setValue('files', files);
     
     // Auto-populate asset name with file name if there's one file
-    if (combinedFiles.length === 1 && !getValues('name')) {
+    if (files.length === 1 && !getValues('name')) {
       // Remove file extension from name
-      const fileName = combinedFiles[0].name.split('.').slice(0, -1).join('.');
+      const fileName = files[0].name.split('.').slice(0, -1).join('.');
       setValue('name', fileName);
     }
     
@@ -981,7 +1014,7 @@ const RegisterAssetPage: React.FC = () => {
   // Handle file upload progress
   const handleUploadProgress = (fileId: string, progress: number) => {
     // Track progress for future UI improvements
-    debugLog(`File ${fileId} upload progress: ${progress}%`);
+    environmentSafeLog(`File ${fileId} upload progress: ${progress}%`);
   };
 
   // Handle file upload completion
@@ -1709,7 +1742,7 @@ const RegisterAssetPage: React.FC = () => {
       );
     }
 
-    debugLog("Rendering success screen with asset:", createdAsset);
+    environmentSafeLog("Rendering success screen with asset:", createdAsset);
 
     // ENHANCED DISPLAY FIX: Use the unified formatter for consistent display
 
@@ -1734,7 +1767,7 @@ const RegisterAssetPage: React.FC = () => {
     const categoryCode = watch('categoryCode') || 'POP';
     let subcategoryCode = savedSubcategoryCode || 'BAS';
     
-    debugLog(`[SUCCESS] Using original form values for formatting: layer=${layer}, category=${categoryCode}, subcategory=${subcategoryCode}, sequential=${sequential}`);
+    environmentSafeLog(`[SUCCESS] Using original form values for formatting: layer=${layer}, category=${categoryCode}, subcategory=${subcategoryCode}, sequential=${sequential}`);
     
     // We've already imported taxonomyFormatter at the top of the file
     
@@ -1745,15 +1778,15 @@ const RegisterAssetPage: React.FC = () => {
     // Convert HFN to MFA using our formatter
     let displayMfa = taxonomyFormatter.convertHFNtoMFA(displayHfn);
     
-    debugLog(`[SUCCESS] Formatted addresses using taxonomyFormatter:`);
-    debugLog(`HFN: ${displayHfn}, MFA: ${displayMfa}`);
+    environmentSafeLog(`[SUCCESS] Formatted addresses using taxonomyFormatter:`);
+    environmentSafeLog(`HFN: ${displayHfn}, MFA: ${displayMfa}`);
 
     // displayHfn and displayMfa variables are now set correctly by the taxonomyFormatter
 
-    debugLog('IMPORTANT: Created asset is using proper format:');
-    debugLog(`Original backend Name: ${createdAsset.name}`);
-    debugLog(`Display HFN: ${displayHfn}`);
-    debugLog(`Display MFA: ${displayMfa}`);
+    environmentSafeLog('IMPORTANT: Created asset is using proper format:');
+    environmentSafeLog(`Original backend Name: ${createdAsset.name}`);
+    environmentSafeLog(`Display HFN: ${displayHfn}`);
+    environmentSafeLog(`Display MFA: ${displayMfa}`);
     
     // Fallback: If MFA is still empty, try to get it from the backend response
     if (!displayMfa && createdAsset) {
@@ -1767,12 +1800,12 @@ const RegisterAssetPage: React.FC = () => {
       if (backendMfa) {
         // Use our formatter to ensure proper format
         displayMfa = taxonomyFormatter.formatMFA(backendMfa);
-        debugLog(`Using formatted MFA from backend: ${backendMfa} → ${displayMfa}`);
+        environmentSafeLog(`Using formatted MFA from backend: ${backendMfa} → ${displayMfa}`);
       }
     }
     
     // Add clear logging for debugging
-    debugLog('Asset structure:', {
+    environmentSafeLog('Asset structure:', {
       name: createdAsset.name,
       nnaAddress: createdAsset.nnaAddress,
       layer: createdAsset.layer,
@@ -1781,7 +1814,7 @@ const RegisterAssetPage: React.FC = () => {
       metadata: createdAsset.metadata
     });
 
-    debugLog(`Success screen showing MFA: ${displayMfa} and HFN: ${displayHfn} from asset:`, createdAsset);
+    environmentSafeLog(`Success screen showing MFA: ${displayMfa} and HFN: ${displayHfn} from asset:`, createdAsset);
                 
     const layerName = createdAsset.metadata?.layerName || 
                       `Layer ${createdAsset.layer}`;
@@ -1792,17 +1825,17 @@ const RegisterAssetPage: React.FC = () => {
     const hasFormFiles = formFiles && formFiles.length > 0;
 
     // Enhanced logging to debug file display issues
-    debugLog('File debugging:');
-    debugLog('- Form files:', formFiles);
-    debugLog('- Uploaded files:', uploadedFiles);
-    debugLog('- Asset files from backend:', createdAsset.files);
+    environmentSafeLog('File debugging:');
+    environmentSafeLog('- Form files:', formFiles);
+    environmentSafeLog('- Uploaded files:', uploadedFiles);
+    environmentSafeLog('- Asset files from backend:', createdAsset.files);
 
     if (createdAsset.files && createdAsset.files.length > 0) {
-      debugLog('- First backend file:', createdAsset.files[0]);
+      environmentSafeLog('- First backend file:', createdAsset.files[0]);
     }
 
     if (uploadedFiles.length > 0) {
-      debugLog('- First uploaded file URL:', uploadedFiles[0].url);
+      environmentSafeLog('- First uploaded file URL:', uploadedFiles[0].url);
     }
 
     // Try to get files from API response first, then fallback to form/uploaded files
@@ -1829,7 +1862,7 @@ const RegisterAssetPage: React.FC = () => {
         filename: uploadedFiles[0].originalName || uploadedFiles[0].filename,
         size: uploadedFiles[0].size || 0
       };
-      debugLog('Using uploaded file for preview:', fallbackFile);
+      environmentSafeLog('Using uploaded file for preview:', fallbackFile);
     }
     // If no uploaded files, try to use form files with createObjectURL
     else if (hasFormFiles) {
@@ -1839,12 +1872,12 @@ const RegisterAssetPage: React.FC = () => {
         filename: formFiles[0].name,
         size: formFiles[0].size
       };
-      debugLog('Using form file for preview with object URL:', fallbackFile);
+      environmentSafeLog('Using form file for preview with object URL:', fallbackFile);
     }
 
     // Use backend file or fallback to form file
     const displayFile = mainFile || fallbackFile;
-    debugLog('Final display file:', displayFile);
+    environmentSafeLog('Final display file:', displayFile);
 
     // Define a type guard to check if an object has mimeType property
     const hasMimeType = (obj: any): obj is { mimeType: string } => {

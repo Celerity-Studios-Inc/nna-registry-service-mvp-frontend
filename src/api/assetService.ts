@@ -13,6 +13,8 @@ import assetRegistryService from './assetRegistryService';
 // Import checkEnv only when needed - currently commented out in the code
 // import { checkEnv } from './envCheck';
 import { TaxonomyConverter } from '../services/taxonomyConverter';
+import { debugLog } from '../utils/logger';
+import { environmentSafeLog } from '../utils/environment';
 
 // Determine whether real backend is available and connected
 // Use the API module's backend status tracking
@@ -33,7 +35,7 @@ const checkBackendAvailability = async () => {
       now - lastBackendCheck < BACKEND_CHECK_INTERVAL &&
       lastBackendCheck > 0
     ) {
-      console.log(
+      environmentSafeLog(
         'Using cached backend availability result:',
         isBackendAvailable
       );
@@ -42,13 +44,13 @@ const checkBackendAvailability = async () => {
 
     // Try to hit our own health endpoint first - this just tells us if *our* API is working,
     // not the real backend
-    console.log('Checking local API health using /api/health...');
+    environmentSafeLog('Checking local API health using /api/health...');
     try {
       const healthResponse = await fetch('/api/health');
 
       // If health endpoint works, log success but continue checking
       if (healthResponse.ok) {
-        console.log(
+        environmentSafeLog(
           'Local health endpoint available with status:',
           healthResponse.status
         );
@@ -62,15 +64,15 @@ const checkBackendAvailability = async () => {
             responseText.trim().startsWith('<!doctype html>') ||
             responseText.includes('<html')
           ) {
-            console.log(
+            environmentSafeLog(
               '%c Health endpoint returned HTML instead of JSON. This is likely a routing issue.',
               'color: red; font-weight: bold'
             );
-            console.log(
+            environmentSafeLog(
               'HTML preview:',
               responseText.substring(0, 150) + '...'
             );
-            console.log(
+            environmentSafeLog(
               '%c SOLUTION: When using serve -s build, include the --config serve.json parameter',
               'color: green; font-weight: bold'
             );
@@ -106,7 +108,7 @@ The serve.json file contains special routing rules to handle API requests proper
             // Try to parse as JSON
             try {
               const healthBody = JSON.parse(responseText);
-              console.log('Health endpoint response:', healthBody);
+              environmentSafeLog('Health endpoint response:', healthBody);
 
               // Check for our special marker
               if (
@@ -114,7 +116,7 @@ The serve.json file contains special routing rules to handle API requests proper
                 healthBody.diagnostics &&
                 healthBody.diagnostics.responseMarker === 'JSON_RESPONSE_MARKER'
               ) {
-                console.log(
+                environmentSafeLog(
                   '%c API routing is configured correctly!',
                   'color: green; font-weight: bold'
                 );
@@ -126,25 +128,25 @@ The serve.json file contains special routing rules to handle API requests proper
                 }
               }
             } catch (jsonError) {
-              console.log('Could not parse health response as JSON');
-              console.log('Raw response:', responseText.substring(0, 200));
+              environmentSafeLog('Could not parse health response as JSON');
+              environmentSafeLog('Raw response:', responseText.substring(0, 200));
             }
           }
         } catch (parseError) {
-          console.log('Could not parse health response:', parseError);
+          environmentSafeLog('Could not parse health response:', parseError);
         }
       } else {
-        console.log(
+        environmentSafeLog(
           'Health endpoint returned non-OK status:',
           healthResponse.status
         );
       }
     } catch (healthError) {
-      console.log('Health endpoint request failed:', healthError);
+      environmentSafeLog('Health endpoint request failed:', healthError);
     }
 
     // Use our dedicated endpoint to test the real backend directly
-    console.log(
+    environmentSafeLog(
       'Checking REAL backend availability with /api/test-real-backend...'
     );
     try {
@@ -155,10 +157,10 @@ The serve.json file contains special routing rules to handle API requests proper
           // First check if it's HTML
           const responseText = await response.text();
           if (responseText.trim().startsWith('<!doctype html>')) {
-            console.log(
+            environmentSafeLog(
               'test-real-backend endpoint returned HTML instead of JSON. This is likely a routing issue.'
             );
-            console.log(
+            environmentSafeLog(
               'HTML preview:',
               responseText.substring(0, 100) + '...'
             );
@@ -168,46 +170,46 @@ The serve.json file contains special routing rules to handle API requests proper
             // Try to parse as JSON
             try {
               const testResult = JSON.parse(responseText);
-              console.log('Real backend test results:', testResult);
+              environmentSafeLog('Real backend test results:', testResult);
 
               // Get the actual backend status from the dedicated test
               realBackendWorking = testResult.realBackendAvailable === true;
 
               if (realBackendWorking) {
-                console.log('✅ Real backend API is available and responding!');
+                environmentSafeLog('✅ Real backend API is available and responding!');
               } else {
-                console.log(
+                environmentSafeLog(
                   '❌ Real backend API is NOT available. Will use mock data.'
                 );
-                console.log(
+                environmentSafeLog(
                   'Reason:',
                   testResult.diagnostics?.realBackend?.error || 'Unknown error'
                 );
               }
             } catch (jsonError) {
-              console.log(
+              environmentSafeLog(
                 'Could not parse test-real-backend response as JSON:',
                 jsonError
               );
-              console.log('Raw response:', responseText.substring(0, 200));
+              environmentSafeLog('Raw response:', responseText.substring(0, 200));
               realBackendWorking = false;
             }
           }
         } catch (parseError) {
-          console.log(
+          environmentSafeLog(
             'Could not process test-real-backend response:',
             parseError
           );
           realBackendWorking = false;
         }
       } else {
-        console.log(
+        environmentSafeLog(
           'test-real-backend endpoint returned non-OK status:',
           response.status
         );
       }
     } catch (testError) {
-      console.log('test-real-backend endpoint request failed:', testError);
+      environmentSafeLog('test-real-backend endpoint request failed:', testError);
     }
 
     // Check if user has forced mock mode via localStorage
@@ -215,7 +217,7 @@ The serve.json file contains special routing rules to handle API requests proper
     try {
       forceMockMode = localStorage.getItem('forceMockApi') === 'true';
       if (forceMockMode) {
-        console.log('⚠️ Mock API mode forced via localStorage setting');
+        environmentSafeLog('⚠️ Mock API mode forced via localStorage setting');
       }
     } catch (e) {
       // Ignore localStorage errors
@@ -227,20 +229,20 @@ The serve.json file contains special routing rules to handle API requests proper
     // Update cache timestamp
     lastBackendCheck = now;
 
-    console.log(
+    environmentSafeLog(
       `Backend availability final result: ${
         isBackendAvailable ? 'Available' : 'Unavailable'
       }`
     );
-    console.log(
+    environmentSafeLog(
       `Local API health: ${
         localHealthEndpointWorking ? 'Working' : 'Not working'
       }`
     );
-    console.log(
+    environmentSafeLog(
       `Real backend API: ${realBackendWorking ? 'Working' : 'Not working'}`
     );
-    console.log(`Force mock mode: ${forceMockMode ? 'Enabled' : 'Disabled'}`);
+    environmentSafeLog(`Force mock mode: ${forceMockMode ? 'Enabled' : 'Disabled'}`);
 
     // Also update the API module's status for consistency
     if (isBackendAvailable !== apiBackendStatus) {
@@ -279,7 +281,7 @@ class AssetService {
     params: AssetSearchParams = {}
   ): Promise<PaginatedResponse<Asset>> {
     try {
-      console.log('Fetching assets with params:', params);
+      environmentSafeLog('Fetching assets with params:', params);
 
       // Create query parameters
       const queryParams = new URLSearchParams();
@@ -318,7 +320,7 @@ class AssetService {
         });
       }
 
-      console.log('Query params:', queryParams.toString());
+      environmentSafeLog('Query params:', queryParams.toString());
 
       // Get auth token
       const authToken = localStorage.getItem('accessToken') || '';
@@ -337,7 +339,7 @@ class AssetService {
 
       // Parse the response
       const responseData = await response.json();
-      console.log('Asset search response:', responseData);
+      environmentSafeLog('Asset search response:', responseData);
 
       let assets: Asset[] = [];
       let pagination = {
@@ -401,7 +403,7 @@ class AssetService {
         return asset;
       });
 
-      console.log(`Retrieved ${assets.length} assets`);
+      environmentSafeLog(`Retrieved ${assets.length} assets`);
 
       return {
         data: assets,
@@ -452,7 +454,7 @@ class AssetService {
    */
   async getAssetById(id: string): Promise<Asset> {
     try {
-      console.log(`Fetching asset with ID: ${id}`);
+      environmentSafeLog(`Fetching asset with ID: ${id}`);
 
       // Check for invalid or empty IDs
       if (!id || id.trim() === '') {
@@ -472,7 +474,7 @@ class AssetService {
 
       if (!response.ok) {
         // If the first attempt fails, try the alternative endpoint format
-        console.log(
+        environmentSafeLog(
           `Primary endpoint /api/asset/${id} failed, trying alternative endpoint`
         );
 
@@ -490,7 +492,7 @@ class AssetService {
         }
 
         const responseData = await alternativeResponse.json();
-        console.log(
+        environmentSafeLog(
           'Asset fetch response from alternative endpoint:',
           responseData
         );
@@ -512,7 +514,7 @@ class AssetService {
 
       // Parse the response from primary endpoint
       const responseData = await response.json();
-      console.log('Asset fetch response:', responseData);
+      environmentSafeLog('Asset fetch response:', responseData);
 
       if (!responseData.data && !responseData.success) {
         throw new Error('Invalid API response format');
@@ -735,7 +737,7 @@ class AssetService {
    * @returns Created asset from backend or mock asset on error
    */
   async directCreateAsset(assetData: AssetCreateRequest): Promise<Asset> {
-    console.log(
+    environmentSafeLog(
       '⚡ Using DIRECT asset creation implementation (bypassing proxy)'
     );
 
@@ -747,7 +749,7 @@ class AssetService {
       const file = assetData.files[0];
       if (file) {
         formData.append('file', file);
-        console.log('Added file to FormData:', file.name);
+        environmentSafeLog('Added file to FormData:', file.name);
       }
     }
 
@@ -786,11 +788,11 @@ class AssetService {
       // Convert array to JSON string
       const tagsString = JSON.stringify(assetData.tags);
       formData.append('tags', tagsString);
-      console.log('Added tags to FormData as JSON string:', tagsString);
+      environmentSafeLog('Added tags to FormData as JSON string:', tagsString);
     } else {
       // Make sure we at least have one tag
       formData.append('tags', JSON.stringify(['general']));
-      console.log("No tags provided, added default tag array: ['general']");
+      environmentSafeLog("No tags provided, added default tag array: ['general']");
     }
 
     // Add empty trainingData and rights objects
@@ -817,29 +819,29 @@ class AssetService {
     formData.append('components[]', '');
 
     // Debug: List all keys in the FormData
-    console.log('FormData keys:');
+    environmentSafeLog('FormData keys:');
     // Simply log standard keys to avoid TypeScript iterator issues
-    console.log(' - file (if provided)');
-    // console.log(" - name"); // Removed since API rejects this field
-    console.log(' - layer');
-    console.log(' - category');
-    console.log(' - subcategory');
-    console.log(' - description');
-    console.log(' - source');
-    console.log(' - tags');
-    console.log(' - trainingData');
-    console.log(' - rights');
-    console.log(' - components[]');
+    environmentSafeLog(' - file (if provided)');
+    // debugLog(" - name"); // Removed since API rejects this field
+    environmentSafeLog(' - layer');
+    environmentSafeLog(' - category');
+    environmentSafeLog(' - subcategory');
+    environmentSafeLog(' - description');
+    environmentSafeLog(' - source');
+    environmentSafeLog(' - tags');
+    environmentSafeLog(' - trainingData');
+    environmentSafeLog(' - rights');
+    environmentSafeLog(' - components[]');
 
     // Get auth token
     const token = localStorage.getItem('accessToken') || '';
-    console.log('Using auth token:', token.substring(0, 15) + '...');
+    environmentSafeLog('Using auth token:', token.substring(0, 15) + '...');
 
     try {
-      console.log('Using proxy endpoint to avoid CORS issues');
+      environmentSafeLog('Using proxy endpoint to avoid CORS issues');
       // Use the proxy endpoint which handles CORS correctly
       const proxyEndpoint = '/api/assets';
-      console.log(`Making fetch request through proxy: ${proxyEndpoint}`);
+      environmentSafeLog(`Making fetch request through proxy: ${proxyEndpoint}`);
 
       // Make a fetch call through our proxy (which handles CORS)
       const response = await fetch(proxyEndpoint, {
@@ -851,11 +853,11 @@ class AssetService {
         body: formData,
       });
 
-      console.log('Direct API response status:', response.status);
+      environmentSafeLog('Direct API response status:', response.status);
 
       // Get the response content
       const responseText = await response.text();
-      console.log(
+      environmentSafeLog(
         'Direct API response text:',
         responseText.substring(0, 200) +
           (responseText.length > 200 ? '...' : '')
@@ -864,7 +866,7 @@ class AssetService {
       // Try different formats for JSON parsing
       try {
         const responseData = JSON.parse(responseText);
-        console.log('Parsed response data:', responseData);
+        environmentSafeLog('Parsed response data:', responseData);
 
         // Check for success flag or data property and handle various response formats
         if (responseData.success && responseData.data) {
@@ -894,14 +896,14 @@ class AssetService {
         console.error('Failed to parse response as JSON:', e);
 
         // Fall back to mock implementation for UI testing
-        console.log('Falling back to mock implementation due to parsing error');
+        environmentSafeLog('Falling back to mock implementation due to parsing error');
         return this.mockCreateAsset(assetData);
       }
     } catch (error) {
       console.error('Direct API call failed:', error);
 
       // Fall back to mock implementation for UI testing
-      console.log('Falling back to mock implementation due to fetch error');
+      environmentSafeLog('Falling back to mock implementation due to fetch error');
       return this.mockCreateAsset(assetData);
     }
   }
@@ -916,8 +918,8 @@ class AssetService {
    * @returns The created asset or a mock asset if in mock mode
    */
   async createAsset(assetData: AssetCreateRequest): Promise<Asset> {
-    console.log('Creating asset...');
-    console.log('Asset data provided:', {
+    environmentSafeLog('Creating asset...');
+    environmentSafeLog('Asset data provided:', {
       name: assetData.name,
       layer: assetData.layer,
       category: assetData.category,
@@ -939,17 +941,17 @@ class AssetService {
         ? false
         : apiConfig.useMockApi || isMockToken || !isBackendAvailable;
 
-      console.log('Asset creation mode:', useMock ? 'Mock' : 'Real API');
-      console.log('Force real mode:', forceRealMode);
+      environmentSafeLog('Asset creation mode:', useMock ? 'Mock' : 'Real API');
+      environmentSafeLog('Force real mode:', forceRealMode);
 
       // Use mock implementation if needed
       if (useMock) {
-        console.log('Using mock implementation for createAsset');
+        environmentSafeLog('Using mock implementation for createAsset');
         return this.mockCreateAsset(assetData);
       }
 
       // Real API implementation
-      console.log('Using real API implementation for createAsset');
+      environmentSafeLog('Using real API implementation for createAsset');
 
       // Create FormData object with the EXACT fields expected by backend
       const formData = new FormData();
@@ -986,7 +988,7 @@ class AssetService {
         assetData.subcategory
       );
 
-      console.log(
+      environmentSafeLog(
         `Converting to names: category=${assetData.category} → ${categoryName}, subcategory=${assetData.subcategory} → ${subcategoryName}`
       );
 
@@ -1032,7 +1034,7 @@ class AssetService {
       formData.append('components[]', '');
 
       // Make the API request using fetch for better FormData handling
-      console.log('Sending asset creation request to API...');
+      environmentSafeLog('Sending asset creation request to API...');
 
       // IMPORTANT: Use the direct assets endpoint which is optimized for FormData
       // The assets.ts serverless function is specifically designed to handle
@@ -1041,7 +1043,7 @@ class AssetService {
       // Using the proxy endpoint causes FormData handling issues, preventing asset creation
       const assetEndpoint = '/api/assets'; // Direct endpoint - do not change this
 
-      console.log('Using direct asset endpoint:', assetEndpoint);
+      environmentSafeLog('Using direct asset endpoint:', assetEndpoint);
 
       const response = await fetch(assetEndpoint, {
         method: 'POST',
@@ -1051,7 +1053,7 @@ class AssetService {
         body: formData,
       });
 
-      console.log('API response status:', response.status);
+      environmentSafeLog('API response status:', response.status);
 
       if (!response.ok) {
         const errorText = await response.text();
@@ -1076,16 +1078,16 @@ class AssetService {
       const responseText = await response.text();
       try {
         const responseData = JSON.parse(responseText);
-        console.log('Asset created successfully:', responseData.data);
+        environmentSafeLog('Asset created successfully:', responseData.data);
         return responseData.data;
       } catch (e) {
         console.error('Failed to parse successful response', e);
-        console.log('Falling back to mock implementation');
+        environmentSafeLog('Falling back to mock implementation');
         return this.mockCreateAsset(assetData);
       }
     } catch (error) {
       console.error('Error in asset creation:', error);
-      console.log('Falling back to mock implementation');
+      environmentSafeLog('Falling back to mock implementation');
       return this.mockCreateAsset(assetData);
     }
   }
@@ -1100,7 +1102,7 @@ class AssetService {
     assetData: AssetCreateRequest,
     apiAssetData?: any
   ): Asset {
-    console.log('Using mock createAsset implementation');
+    environmentSafeLog('Using mock createAsset implementation');
 
     // Extract metadata from the custom assetData structure
     const customMetadata = (assetData as any).metadata || {};
@@ -1134,7 +1136,7 @@ class AssetService {
       );
     }
 
-    console.log(`Mock asset using MFA: ${mfa} and HFN: ${hfn}`);
+    environmentSafeLog(`Mock asset using MFA: ${mfa} and HFN: ${hfn}`);
 
     const layerName = customMetadata.layerName || 'Unknown Layer';
 
@@ -1186,7 +1188,7 @@ class AssetService {
       }
     }
 
-    console.log('Created mock asset:', mockAsset.id);
+    environmentSafeLog('Created mock asset:', mockAsset.id);
     return mockAsset;
   }
 

@@ -10,6 +10,7 @@ import {
 } from '../types/asset.types';
 import { ApiResponse, PaginatedResponse } from '../types/api.types';
 import assetRegistryService from './assetRegistryService';
+import { debugLog } from '../utils/logger';
 
 /**
  * Dedicated function for creating assets with FormData
@@ -18,8 +19,8 @@ import assetRegistryService from './assetRegistryService';
 async function createAssetWithFormData(
   assetData: AssetCreateRequest
 ): Promise<Asset> {
-  console.log('Creating asset with FormData...');
-  console.log('Asset data provided:', {
+  debugLog('Creating asset with FormData...');
+  debugLog('Asset data provided:', {
     name: assetData.name,
     layer: assetData.layer,
     category: assetData.category,
@@ -37,7 +38,7 @@ async function createAssetWithFormData(
   if (assetData.files && assetData.files.length > 0) {
     const file = assetData.files[0];
     formData.append('file', file);
-    console.log('Added file to FormData:', {
+    debugLog('Added file to FormData:', {
       name: file.name,
       type: file.type,
       size: file.size,
@@ -84,13 +85,13 @@ async function createAssetWithFormData(
   formData.append('components', JSON.stringify([]));
 
   // Log FormData fields for debugging
-  console.log('FormData created with fields:');
-  console.log(' - file');
-  console.log(` - layer: ${assetData.layer}`);
-  console.log(` - category: ${assetData.category}`);
-  console.log(` - subcategory: ${assetData.subcategory}`);
-  console.log(` - source: ${(assetData as any).source || 'ReViz'}`);
-  console.log(
+  debugLog('FormData created with fields:');
+  debugLog(' - file');
+  debugLog(` - layer: ${assetData.layer}`);
+  debugLog(` - category: ${assetData.category}`);
+  debugLog(` - subcategory: ${assetData.subcategory}`);
+  debugLog(` - source: ${(assetData as any).source || 'ReViz'}`);
+  debugLog(
     ` - description: ${
       assetData.description
         ? assetData.description.substring(0, 30) +
@@ -98,10 +99,10 @@ async function createAssetWithFormData(
         : ''
     }`
   );
-  console.log(` - tags: ${JSON.stringify(assetData.tags)}`);
-  console.log(' - trainingData: {}');
-  console.log(' - rights: {}');
-  console.log(' - components: []');
+  debugLog(` - tags: ${JSON.stringify(assetData.tags)}`);
+  debugLog(' - trainingData: {}');
+  debugLog(' - rights: {}');
+  debugLog(' - components: []');
 
   // Get authentication token
   const authToken = localStorage.getItem('accessToken');
@@ -111,7 +112,7 @@ async function createAssetWithFormData(
 
   // Make the API request using fetch for better FormData handling
   try {
-    console.log('Sending asset creation request to API...');
+    debugLog('Sending asset creation request to API...');
     const response = await fetch('/api/assets', {
       method: 'POST',
       headers: {
@@ -120,7 +121,7 @@ async function createAssetWithFormData(
       body: formData,
     });
 
-    console.log('API response status:', response.status);
+    debugLog('API response status:', response.status);
 
     if (!response.ok) {
       const errorText = await response.text();
@@ -141,7 +142,7 @@ async function createAssetWithFormData(
     const responseText = await response.text();
     try {
       const responseData = JSON.parse(responseText);
-      console.log('Asset created successfully:', responseData.data);
+      debugLog('Asset created successfully:', responseData.data);
       return responseData.data;
     } catch (e) {
       console.error('Failed to parse successful response', e);
@@ -157,7 +158,7 @@ async function createAssetWithFormData(
  * Create a mock asset for testing
  */
 function createMockAsset(assetData: AssetCreateRequest): Asset {
-  console.log('Creating mock asset...');
+  debugLog('Creating mock asset...');
 
   // Extract metadata from the custom assetData structure
   const customMetadata = (assetData as any).metadata || {};
@@ -284,16 +285,16 @@ class AssetService {
       const useMock = isMockToken || !apiBackendStatus;
 
       if (useMock) {
-        console.log('Using mock implementation for createAsset');
+        debugLog('Using mock implementation for createAsset');
         return createMockAsset(assetData);
       } else {
-        console.log('Using real API implementation for createAsset');
+        debugLog('Using real API implementation for createAsset');
         try {
           // Use the dedicated FormData function
           return await createAssetWithFormData(assetData);
         } catch (error) {
           console.error('Real API asset creation failed:', error);
-          console.log('Falling back to mock implementation');
+          debugLog('Falling back to mock implementation');
           return createMockAsset(assetData);
         }
       }

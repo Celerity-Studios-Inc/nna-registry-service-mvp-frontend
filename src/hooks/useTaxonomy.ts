@@ -17,6 +17,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { taxonomyService } from '../services/simpleTaxonomyService';
 import { waitForTaxonomyInit } from '../services/taxonomyInitializer';
 import { taxonomyErrorRecovery } from '../services/taxonomyErrorRecovery';
+import { debugLog } from '../utils/logger';
 import { 
   logger, 
   LogLevel, 
@@ -178,7 +179,7 @@ export const useTaxonomy = (
       const loadId = `load_${Date.now().toString(36)}`;
       // Only log in development with explicit logger flag enabled
       if (process.env.NODE_ENV === 'development' && localStorage.getItem('verbose_taxonomy_logging') === 'true') {
-        console.log(`[CONTEXT ${loadId}] Starting category load for layer: ${layer}`);
+        debugLog(`[CONTEXT ${loadId}] Starting category load for layer: ${layer}`);
       }
 
       setIsLoadingCategories(true);
@@ -198,7 +199,7 @@ export const useTaxonomy = (
             if (storedCategories && storedCategories.length > 0) {
               // Only log in development with explicit logger flag enabled
               if (process.env.NODE_ENV === 'development' && localStorage.getItem('verbose_taxonomy_logging') === 'true') {
-                console.log(`[CONTEXT ${loadId}] Found ${storedCategories.length} categories in session storage`);
+                debugLog(`[CONTEXT ${loadId}] Found ${storedCategories.length} categories in session storage`);
               }
               layerCategories = storedCategories;
               dataSource = 'session';
@@ -221,7 +222,7 @@ export const useTaxonomy = (
           layerCategories = taxonomyService.getCategories(layer);
           // Only log in development with explicit logger flag enabled
           if (process.env.NODE_ENV === 'development' && localStorage.getItem('verbose_taxonomy_logging') === 'true') {
-            console.log(
+            debugLog(
               `[CONTEXT ${loadId}] Loaded ${layerCategories.length} categories from taxonomy service`
             );
           }
@@ -266,7 +267,7 @@ export const useTaxonomy = (
 
         // Only log in development with explicit logger flag enabled
         if (process.env.NODE_ENV === 'development' && localStorage.getItem('verbose_taxonomy_logging') === 'true') {
-          console.log(
+          debugLog(
             `[CONTEXT ${loadId}] Category load successful: ${layerCategories.length} items from ${dataSource}`
           );
         }
@@ -290,7 +291,7 @@ export const useTaxonomy = (
         // Multi-tiered fallback approach
         // Only log in development with explicit logger flag enabled
         if (process.env.NODE_ENV === 'development' && localStorage.getItem('verbose_taxonomy_logging') === 'true') {
-          console.log(`[CONTEXT ${loadId}] Attempting multi-tiered fallback recovery`);
+          debugLog(`[CONTEXT ${loadId}] Attempting multi-tiered fallback recovery`);
         }
 
         // Tier 1: Check session storage again (in case it failed earlier)
@@ -301,7 +302,7 @@ export const useTaxonomy = (
           if (sessionData) {
             const storedCategories = JSON.parse(sessionData);
             if (storedCategories && storedCategories.length > 0) {
-              console.log(
+              debugLog(
                 `[CONTEXT ${loadId}] Fallback Tier 1: Found ${storedCategories.length} categories in session`
               );
               setCategories(storedCategories);
@@ -319,7 +320,7 @@ export const useTaxonomy = (
         const fallbackCategories =
           taxonomyErrorRecovery.getFallbackCategories(layer);
         if (fallbackCategories.length > 0) {
-          console.log(
+          debugLog(
             `[CONTEXT ${loadId}] Fallback Tier 2: Using ${fallbackCategories.length} categories from error recovery service`
           );
           setCategories(fallbackCategories);
@@ -330,7 +331,7 @@ export const useTaxonomy = (
         }
 
         // Tier 3: Last resort - create synthetic categories based on layer
-        console.log(
+        debugLog(
           `[CONTEXT ${loadId}] Fallback Tier 3: Creating synthetic categories for ${layer}`
         );
         const syntheticCategories: TaxonomyCategory[] = [];
@@ -390,7 +391,7 @@ export const useTaxonomy = (
         }
 
         if (syntheticCategories.length > 0) {
-          console.log(
+          debugLog(
             `[CONTEXT ${loadId}] Using ${syntheticCategories.length} synthetic categories`
           );
           setCategories(syntheticCategories);
@@ -404,7 +405,7 @@ export const useTaxonomy = (
         // Final verification log
         // Only log in development with explicit logger flag enabled
         if (process.env.NODE_ENV === 'development' && localStorage.getItem('verbose_taxonomy_logging') === 'true') {
-          console.log(
+          debugLog(
             `[CONTEXT ${loadId}] Category load complete for ${layer}, final state: ${categories.length} items`
           );
         }
@@ -570,22 +571,22 @@ export const useTaxonomy = (
       const operationId = `ctx_${Date.now().toString(36)}_${Math.random()
         .toString(36)
         .substr(2, 5)}`;
-      console.log(`[CONTEXT ${contextId}:${operationId}] Selecting layer: ${layer}`);
+      debugLog(`[CONTEXT ${contextId}:${operationId}] Selecting layer: ${layer}`);
 
       // CRITICAL FIX: If we're changing from one layer to another, first clear all existing data
       if (selectedLayerRef.current !== layer) {
-        console.log(
+        debugLog(
           `[CONTEXT ${contextId}:${operationId}] Layer change detected from ${
             selectedLayerRef.current || 'null'
           } to ${layer}`
         );
 
         // Log the current taxonomy state before changes
-        console.log(
+        debugLog(
           `[CONTEXT ${contextId}:${operationId}] Before reset - categories: ${categoriesRef.current.length} items`
         );
         if (categoriesRef.current.length > 0) {
-          console.log(
+          debugLog(
             `[CONTEXT ${contextId}:${operationId}] Category codes: ${JSON.stringify(
               categoriesRef.current.map(c => c.code)
             )}`
@@ -604,7 +605,7 @@ export const useTaxonomy = (
         setHfn('');
         setMfa('');
 
-        console.log(`[CONTEXT ${contextId}:${operationId}] State cleared for layer change`);
+        debugLog(`[CONTEXT ${contextId}:${operationId}] State cleared for layer change`);
       }
 
       // Update the ref immediately for synchronous operations
@@ -616,7 +617,7 @@ export const useTaxonomy = (
       // Immediately invoke useEffect behavior to load categories
       // This ensures categories start loading right away, avoiding state batch update delays
       if (autoLoad) {
-        console.log(`[CONTEXT ${contextId}:${operationId}] Proactively loading categories for ${layer}`);
+        debugLog(`[CONTEXT ${contextId}:${operationId}] Proactively loading categories for ${layer}`);
         // Use setTimeout with 0ms to ensure this runs after the current synchronous code block
         setTimeout(() => {
           if (selectedLayerRef.current === layer) {
@@ -647,19 +648,19 @@ export const useTaxonomy = (
         // Ignore storage errors
       }
 
-      console.log(
+      debugLog(
         `[CONTEXT ${contextId}:${operationId}] Layer selection complete: ${layer}`
       );
 
       // Schedule verification logs to track state changes over time
       setTimeout(() => {
-        console.log(
+        debugLog(
           `[CONTEXT ${contextId}:${operationId}] Verification after 100ms - selectedLayer: ${selectedLayerRef.current}`
         );
       }, 100);
       
       setTimeout(() => {
-        console.log(
+        debugLog(
           `[CONTEXT ${contextId}:${operationId}] Verification after 300ms - categories: ${categoriesRef.current.length} items`
         );
       }, 300);
@@ -672,11 +673,11 @@ export const useTaxonomy = (
     (category: string) => {
       // Generate a unique operation ID to track this action across logs
       const operationId = `cat_${Date.now().toString(36)}_${Math.random().toString(36).substr(2, 5)}`;
-      console.log(`[CONTEXT ${contextId}:${operationId}] Selecting category: ${category}`);
+      debugLog(`[CONTEXT ${contextId}:${operationId}] Selecting category: ${category}`);
       
       // FIXED: Prevent duplicate selections to avoid unnecessary re-renders
       if (category === selectedCategoryRef.current) {
-        console.log(`[CONTEXT ${contextId}:${operationId}] Category ${category} already selected, skipping`); 
+        debugLog(`[CONTEXT ${contextId}:${operationId}] Category ${category} already selected, skipping`); 
         return;
       }
 
@@ -690,7 +691,7 @@ export const useTaxonomy = (
       // Immediately invoke useEffect behavior to load subcategories
       // This ensures subcategories start loading right away, avoiding state batch update delays
       if (autoLoad && selectedLayerRef.current) {
-        console.log(`[CONTEXT ${contextId}:${operationId}] Proactively loading subcategories for ${selectedLayerRef.current}.${category}`);
+        debugLog(`[CONTEXT ${contextId}:${operationId}] Proactively loading subcategories for ${selectedLayerRef.current}.${category}`);
         // Use setTimeout with 0ms to ensure this runs after the current synchronous code block
         setTimeout(() => {
           if (selectedCategoryRef.current === category) {
@@ -709,7 +710,7 @@ export const useTaxonomy = (
       
       // Schedule verification logs to track state changes
       setTimeout(() => {
-        console.log(
+        debugLog(
           `[CONTEXT ${contextId}:${operationId}] Verification after 100ms - selectedCategory: ${selectedCategoryRef.current}`
         );
       }, 100);
@@ -728,11 +729,11 @@ export const useTaxonomy = (
     (subcategory: string) => {
       // Generate a unique operation ID to track this action across logs
       const operationId = `subcat_${Date.now().toString(36)}_${Math.random().toString(36).substr(2, 5)}`;
-      console.log(`[CONTEXT ${contextId}:${operationId}] Selecting subcategory: ${subcategory}`);
+      debugLog(`[CONTEXT ${contextId}:${operationId}] Selecting subcategory: ${subcategory}`);
       
       // FIXED: Prevent duplicate selections to avoid unnecessary re-renders
       if (subcategory === selectedSubcategoryRef.current) {
-        console.log(`[CONTEXT ${contextId}:${operationId}] Subcategory ${subcategory} already selected, skipping`);
+        debugLog(`[CONTEXT ${contextId}:${operationId}] Subcategory ${subcategory} already selected, skipping`);
         return;
       }
 
@@ -754,7 +755,7 @@ export const useTaxonomy = (
       
       // Schedule verification log to track state changes
       setTimeout(() => {
-        console.log(
+        debugLog(
           `[CONTEXT ${contextId}:${operationId}] Verification after 100ms - selectedSubcategory: ${selectedSubcategoryRef.current}`
         );
       }, 100);
@@ -794,7 +795,7 @@ export const useTaxonomy = (
 
   // Reset all selections - ENHANCED for better layer switching
   const reset = useCallback(() => {
-    console.log('[CONTEXT] Resetting all taxonomy state');
+    debugLog('[CONTEXT] Resetting all taxonomy state');
 
     // Clear selection state
     setSelectedLayer(null);
@@ -819,12 +820,12 @@ export const useTaxonomy = (
       showSuccessFeedback('Reset all taxonomy selections');
     }
 
-    console.log('[CONTEXT] Taxonomy state reset complete');
+    debugLog('[CONTEXT] Taxonomy state reset complete');
   }, [showFeedback, showSuccessFeedback]);
 
   // Additional method to reset just category data (useful when changing layers)
   const resetCategoryData = useCallback(() => {
-    console.log('[CONTEXT] Resetting category data');
+    debugLog('[CONTEXT] Resetting category data');
     setCategories([]);
     setSelectedCategory(null);
     setCategoryError(null);
@@ -838,7 +839,7 @@ export const useTaxonomy = (
     setHfn('');
     setMfa('');
 
-    console.log('[CONTEXT] Category data reset complete');
+    debugLog('[CONTEXT] Category data reset complete');
   }, []);
 
   // Force reload categories - ENHANCED with diagnostic logging
@@ -847,10 +848,10 @@ export const useTaxonomy = (
     const reloadId = `reload_${Date.now().toString(36)}`;
 
     if (selectedLayer) {
-      console.log(
+      debugLog(
         `[CONTEXT ${reloadId}] Reloading categories for layer: ${selectedLayer}`
       );
-      console.log(
+      debugLog(
         `[CONTEXT ${reloadId}] Current categories before reload: ${categories.length} items`
       );
 
@@ -863,7 +864,7 @@ export const useTaxonomy = (
           require('../services/simpleTaxonomyService').taxonomyService;
         const directCategories = taxonomyService.getCategories(selectedLayer);
 
-        console.log(
+        debugLog(
           `[CONTEXT ${reloadId}] Direct service returned ${
             directCategories.length
           } categories in ${Math.round(performance.now() - startTime)}ms`
@@ -871,7 +872,7 @@ export const useTaxonomy = (
 
         // If we got categories directly and our state is empty, update immediately
         if (directCategories.length > 0 && categories.length === 0) {
-          console.log(
+          debugLog(
             `[CONTEXT ${reloadId}] Setting categories from direct service call`
           );
           setCategories(directCategories);
@@ -900,11 +901,11 @@ export const useTaxonomy = (
 
       // Schedule a verification log
       setTimeout(() => {
-        console.log(
+        debugLog(
           `[CONTEXT ${reloadId}] After reload (100ms): ${categories.length} categories available`
         );
         if (categories.length > 0) {
-          console.log(
+          debugLog(
             `[CONTEXT ${reloadId}] Category codes: ${JSON.stringify(
               categories.map(c => c.code)
             )}`

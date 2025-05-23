@@ -4,7 +4,7 @@
  * A centralized utility for consistent formatting of taxonomy codes, HFNs, and MFAs.
  * This ensures uniform display and processing of taxonomy data throughout the application.
  */
-import { logger } from './logger';
+import { logger, debugLog } from './logger';
 import { taxonomyService } from '../services/simpleTaxonomyService';
 import { LAYER_LOOKUPS } from '../taxonomyLookup/constants';
 
@@ -103,7 +103,7 @@ class TaxonomyFormatter {
       // Handle format like "POP.BAS" - extract just the subcategory part
       const parts = subcategory.split('.');
       normalizedSubcategory = parts[parts.length - 1];
-      console.log(`Normalized subcategory from ${subcategory} to ${normalizedSubcategory}`);
+      debugLog(`Normalized subcategory from ${subcategory} to ${normalizedSubcategory}`);
     }
 
     // Special case handling for known display name issues
@@ -177,7 +177,7 @@ class TaxonomyFormatter {
       const [layer, categoryPart, subcategoryPart, sequential, ...rest] = parts;
 
       // Debug the input parts
-      console.log(`[taxonomyFormatter] Formatting HFN from parts:`, {
+      debugLog(`[taxonomyFormatter] Formatting HFN from parts:`, {
         layer, categoryPart, subcategoryPart, sequential
       });
 
@@ -195,7 +195,7 @@ class TaxonomyFormatter {
       if (subcategoryPart.includes('.')) {
         const subParts = subcategoryPart.split('.');
         subcategoryToFormat = subParts[subParts.length - 1];
-        console.log(`[taxonomyFormatter] Extracted subcategory part from ${subcategoryPart} -> ${subcategoryToFormat}`);
+        debugLog(`[taxonomyFormatter] Extracted subcategory part from ${subcategoryPart} -> ${subcategoryToFormat}`);
       }
       
       const formattedSubcategory = this.lookupSubcategoryCode(
@@ -213,7 +213,7 @@ class TaxonomyFormatter {
         formattedHFN += '.' + rest.join('.');
       }
 
-      console.log(`[taxonomyFormatter] Formatted HFN: ${hfn} -> ${formattedHFN}`);
+      debugLog(`[taxonomyFormatter] Formatted HFN: ${hfn} -> ${formattedHFN}`);
       return formattedHFN;
     } catch (error) {
       logger.error(
@@ -248,7 +248,7 @@ class TaxonomyFormatter {
       if (/^[A-Za-z]$/.test(layer)) {
         // If it's a letter, convert to the numeric code
         formattedLayer = this.getLayerCode(layer);
-        console.log(`[taxonomyFormatter] Converted layer: ${layer} → ${formattedLayer}`);
+        debugLog(`[taxonomyFormatter] Converted layer: ${layer} → ${formattedLayer}`);
       }
 
       const formattedCategory = categoryPart.padStart(3, '0');
@@ -283,12 +283,12 @@ class TaxonomyFormatter {
     if (!hfn) return '';
 
     try {
-      console.log(`[taxonomyFormatter] Converting HFN to MFA: ${hfn}`);
+      debugLog(`[taxonomyFormatter] Converting HFN to MFA: ${hfn}`);
       
       // First, ensure HFN has consistent format with canonical codes
       const formattedHFN = this.formatHFN(hfn);
 
-      console.log(`[taxonomyFormatter] Formatted HFN before conversion: ${formattedHFN}`);
+      debugLog(`[taxonomyFormatter] Formatted HFN before conversion: ${formattedHFN}`);
 
       // Handle special cases directly for better reliability
       const parts = formattedHFN.split('.');
@@ -306,7 +306,7 @@ class TaxonomyFormatter {
       // Try to use the taxonomy service for conversion - preferred generic approach
       try {
         const mfa = taxonomyService.convertHFNtoMFA(formattedHFN);
-        console.log(`[taxonomyFormatter] MFA from taxonomy service: ${mfa}`);
+        debugLog(`[taxonomyFormatter] MFA from taxonomy service: ${mfa}`);
 
         // Ensure consistent formatting of the result
         return this.formatMFA(mfa);
@@ -328,7 +328,7 @@ class TaxonomyFormatter {
         for (const cat of categories) {
           if (cat.code === category) {
             categoryCode = cat.numericCode.padStart(3, '0');
-            console.log(`[taxonomyFormatter] Found category numeric code: ${categoryCode} for ${category}`);
+            debugLog(`[taxonomyFormatter] Found category numeric code: ${categoryCode} for ${category}`);
             break;
           }
         }
@@ -342,21 +342,21 @@ class TaxonomyFormatter {
         if (subcategory.includes('.')) {
           const subParts = subcategory.split('.');
           normalizedSubcategory = subParts[subParts.length - 1];
-          console.log(`[taxonomyFormatter] Normalized subcategory for lookup: ${subcategory} -> ${normalizedSubcategory}`);
+          debugLog(`[taxonomyFormatter] Normalized subcategory for lookup: ${subcategory} -> ${normalizedSubcategory}`);
         }
 
         for (const subcat of subcategories) {
           // Check against both the original and normalized subcategory
           if (subcat.code === normalizedSubcategory || subcat.code === subcategory) {
             subcategoryCode = subcat.numericCode.padStart(3, '0');
-            console.log(`[taxonomyFormatter] Found subcategory numeric code: ${subcategoryCode} for ${normalizedSubcategory}`);
+            debugLog(`[taxonomyFormatter] Found subcategory numeric code: ${subcategoryCode} for ${normalizedSubcategory}`);
             break;
           }
         }
 
         // Construct the MFA using the looked-up codes
         const result = `${layerCode}.${categoryCode}.${subcategoryCode}.${this.formatSequential(sequential)}`;
-        console.log(`[taxonomyFormatter] Constructed MFA using fallback: ${result}`);
+        debugLog(`[taxonomyFormatter] Constructed MFA using fallback: ${result}`);
         return result;
       }
     } catch (error) {
@@ -402,12 +402,12 @@ class TaxonomyFormatter {
     if (!mfa) return '';
 
     try {
-      console.log(`[taxonomyFormatter] Converting MFA to HFN: ${mfa}`);
+      debugLog(`[taxonomyFormatter] Converting MFA to HFN: ${mfa}`);
       
       // First, ensure MFA has consistent format
       const formattedMFA = this.formatMFA(mfa);
 
-      console.log(`[taxonomyFormatter] Formatted MFA before conversion: ${formattedMFA}`);
+      debugLog(`[taxonomyFormatter] Formatted MFA before conversion: ${formattedMFA}`);
 
       // Handle special cases directly for better reliability
       const parts = formattedMFA.split('.');
@@ -430,7 +430,7 @@ class TaxonomyFormatter {
       // Try to use the taxonomy service for conversion - preferred generic approach
       try {
         const hfn = taxonomyService.convertMFAtoHFN(formattedMFA);
-        console.log(`[taxonomyFormatter] HFN from taxonomy service: ${hfn}`);
+        debugLog(`[taxonomyFormatter] HFN from taxonomy service: ${hfn}`);
 
         // Ensure consistent formatting of the result
         return this.formatHFN(hfn);
@@ -460,7 +460,7 @@ class TaxonomyFormatter {
           for (const cat of categories) {
             if (cat.numericCode === paddedCategory) {
               categoryCode = cat.code;
-              console.log(`[taxonomyFormatter] Found category code: ${categoryCode} for numeric code ${paddedCategory}`);
+              debugLog(`[taxonomyFormatter] Found category code: ${categoryCode} for numeric code ${paddedCategory}`);
               break;
             }
           }
@@ -475,7 +475,7 @@ class TaxonomyFormatter {
             for (const subcat of subcategories) {
               if (subcat.numericCode === paddedSubcategory) {
                 subcategoryCode = subcat.code;
-                console.log(`[taxonomyFormatter] Found subcategory code: ${subcategoryCode} for numeric code ${paddedSubcategory}`);
+                debugLog(`[taxonomyFormatter] Found subcategory code: ${subcategoryCode} for numeric code ${paddedSubcategory}`);
                 break;
               }
             }
@@ -490,12 +490,12 @@ class TaxonomyFormatter {
             else if (paddedCategory === '003') categoryCode = 'HIP';
 
             if (paddedSubcategory === '001') subcategoryCode = 'BAS';
-            console.log(`[taxonomyFormatter] Applied common case fallback: ${layerLetter}.${categoryCode}.${subcategoryCode}`);
+            debugLog(`[taxonomyFormatter] Applied common case fallback: ${layerLetter}.${categoryCode}.${subcategoryCode}`);
           }
         }
 
         const result = `${layerLetter}.${categoryCode}.${subcategoryCode}.${this.formatSequential(sequential)}`;
-        console.log(`[taxonomyFormatter] Constructed HFN using fallback: ${result}`);
+        debugLog(`[taxonomyFormatter] Constructed HFN using fallback: ${result}`);
         return result;
       }
     } catch (error) {
