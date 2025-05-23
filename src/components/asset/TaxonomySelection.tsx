@@ -20,6 +20,7 @@ import taxonomyService from '../../api/taxonomyService';
 import NNAAddressPreview from './NNAAddressPreview';
 import { getAlphabeticCode, convertHFNToMFA } from '../../api/codeMapping';
 import taxonomyMapper from '../../api/taxonomyMapper.enhanced';
+import { debugLog } from '../../utils/logger';
 // import api from '../../api/api'; // Commented out as we're using the mock implementation
 
 // Import enhanced taxonomy service
@@ -62,7 +63,7 @@ const TaxonomySelection: React.FC<TaxonomySelectionProps> = ({
   subcategoryNumericCode,
   onNNAAddressChange,
 }) => {
-  console.log(categoryName, 'categoryName');
+  debugLog('categoryName:', categoryName || 'undefined');
 
   const [categories, setCategories] = useState<CategoryOption[]>([]);
   const [subcategories, setSubcategories] = useState<SubcategoryOption[]>([]);
@@ -85,11 +86,11 @@ const TaxonomySelection: React.FC<TaxonomySelectionProps> = ({
         setLoading(true);
         
         // Debug logging
-        console.log(`=== TAXONOMY DEBUG: Fetching categories for layer ${layerCode} ===`);
+        debugLog(`=== TAXONOMY DEBUG: Fetching categories for layer ${layerCode} ===`);
         
         // Use enhanced service for category loading
         const enhancedCategoryItems = getCategories(layerCode);
-        console.log('Enhanced service result:', enhancedCategoryItems);
+        debugLog('Enhanced service result:', enhancedCategoryItems);
         
         // Map TaxonomyItem[] to CategoryOption[]
         const categoryOptions = enhancedCategoryItems.map(item => ({
@@ -101,14 +102,14 @@ const TaxonomySelection: React.FC<TaxonomySelectionProps> = ({
         
         // Also get original categories for comparison
         const originalCategoryOptions = taxonomyService.getCategories(layerCode);
-        console.log('Original service result:', originalCategoryOptions);
+        debugLog('Original service result:', originalCategoryOptions);
         
         // Enhanced debugging for category display
         categoryOptions.forEach(category => {
           // For numeric category codes, we need to make sure we display the alphabetic version
           if (/^\d+$/.test(category.code)) {
-            console.log(`Category with numeric code: ${category.code} (${category.name})`);
-            console.log(`This will display as: ${getAlphabeticCode(layerCode, category.code, category.name)}`);
+            debugLog(`Category with numeric code: ${category.code} (${category.name})`);
+            debugLog(`This will display as: ${getAlphabeticCode(layerCode, category.code, category.name)}`);
           }
         });
 
@@ -130,7 +131,7 @@ const TaxonomySelection: React.FC<TaxonomySelectionProps> = ({
 
   const fetchSequential = async () => {
     try {
-      console.log(layerCode, 'layerCode');
+      debugLog(layerCode, 'layerCode');
 
       // For development, use the mock implementation in taxonomyService
       // instead of making the actual API call that results in 404
@@ -140,7 +141,7 @@ const TaxonomySelection: React.FC<TaxonomySelectionProps> = ({
       const categoryCode = selectedCategoryCode || '';
       const subcategoryCode = selectedSubcategoryCode || '';
 
-      console.log(`Using category code: ${categoryCode}, subcategory code: ${subcategoryCode}`);
+      debugLog(`Using category code: ${categoryCode}, subcategory code: ${subcategoryCode}`);
 
       const response = await taxonomyService.getSequentialNumber(
         layerCode,
@@ -163,7 +164,7 @@ const TaxonomySelection: React.FC<TaxonomySelectionProps> = ({
       setSequential(response.data.sequential);
       */
     } catch (error) {
-      console.log(error);
+      debugLog('Error fetching taxonomy data:', error);
     }
   };
 
@@ -183,15 +184,15 @@ const TaxonomySelection: React.FC<TaxonomySelectionProps> = ({
             (layerCode === 'S' && selectedCategoryCode === 'DNC') ||
             (layerCode === 'S' && selectedCategoryCode === 'POP') ||
             (layerCode === 'W' && selectedCategoryCode === 'BCH')) {
-          console.log(`[DEBUG] Known problematic combination detected: ${layerCode}.${selectedCategoryCode}`);
+          debugLog(`[DEBUG] Known problematic combination detected: ${layerCode}.${selectedCategoryCode}`);
           // Use the inspection utility from enhanced service
           const inspection = inspectTaxonomyStructure(layerCode, selectedCategoryCode);
-          console.log('Inspection result:', inspection);
+          debugLog('Inspection result:', inspection);
         }
         
         // Use enhanced service to get subcategories
         const enhancedSubcategoryItems = getSubcategories(layerCode, selectedCategoryCode);
-        console.log('Enhanced service subcategory result:', enhancedSubcategoryItems);
+        debugLog('Enhanced service subcategory result:', enhancedSubcategoryItems);
         
         // Map TaxonomyItem[] to SubcategoryOption[]
         const enhancedSubcategoryOptions = enhancedSubcategoryItems.map(item => ({
@@ -206,10 +207,10 @@ const TaxonomySelection: React.FC<TaxonomySelectionProps> = ({
           layerCode,
           selectedCategoryCode
         );
-        console.log('Original service subcategory result:', originalSubcategoryOptions);
+        debugLog('Original service subcategory result:', originalSubcategoryOptions);
         
         // Log comprehensive debug info
-        console.log(`[DEBUG] Subcategory fetch for ${layerCode}.${selectedCategoryCode}:`, {
+        debugLog(`[DEBUG] Subcategory fetch for ${layerCode}.${selectedCategoryCode}:`, {
           enhancedResults: {
             success: Array.isArray(enhancedSubcategoryItems),
             count: enhancedSubcategoryItems.length,
@@ -270,7 +271,7 @@ const TaxonomySelection: React.FC<TaxonomySelectionProps> = ({
           // If we have numeric codes, convert them to alphabetic for consistency
           if (/^\d+$/.test(categoryAlpha)) {
             categoryAlpha = getAlphabeticCode(layerCode, categoryAlpha, '');
-            console.log(`Converted numeric category code to alphabetic: ${categoryAlpha}`);
+            debugLog(`Converted numeric category code to alphabetic: ${categoryAlpha}`);
           }
 
           // Create the properly formatted HFN with the alphabetic codes
@@ -280,7 +281,7 @@ const TaxonomySelection: React.FC<TaxonomySelectionProps> = ({
           const originalMfaAddress = convertHFNToMFA(hfnAddress);
           const enhancedMfaAddress = convertHFNtoMFA(hfnAddress);
           
-          console.log(`MFA conversion comparison:`, {
+          debugLog(`MFA conversion comparison:`, {
             hfnAddress,
             originalMfaAddress,
             enhancedMfaAddress,
@@ -294,15 +295,15 @@ const TaxonomySelection: React.FC<TaxonomySelectionProps> = ({
           // the real sequential number to the form for backend API to ensure correct registration
           const sequentialNum = parseInt(sequential, 10) || 1;
 
-          console.log(`Generated NNA addresses for form state: HFN=${hfnAddress}, MFA=${mfaAddress}, seq=${sequentialNum}`);
-          console.log(`Note: Preview will display with '.000' instead of the actual sequential number`);
+          debugLog(`Generated NNA addresses for form state: HFN=${hfnAddress}, MFA=${mfaAddress}, seq=${sequentialNum}`);
+          debugLog(`Note: Preview will display with '.000' instead of the actual sequential number`);
 
-          console.log(`Generated MFA conversion for ${hfnAddress} -> ${mfaAddress}`);
+          debugLog(`Generated MFA conversion for ${hfnAddress} -> ${mfaAddress}`);
 
           // Store the original subcategory code to preserve it after backend normalization
           // This will be used to display the correct subcategory in the success screen
           const originalSubcategoryCode = subcategoryAlpha;
-          console.log(`Storing original subcategory code: ${originalSubcategoryCode} for display override`);
+          debugLog(`Storing original subcategory code: ${originalSubcategoryCode} for display override`);
 
           // Always pass the original 3-letter codes along with the MFA and HFN
           // This ensures consistency between steps
@@ -484,7 +485,7 @@ const TaxonomySelection: React.FC<TaxonomySelectionProps> = ({
                 key={subcategory.code}
                 value={subcategory.code}
                 onDoubleClick={() => {
-                  console.log(
+                  debugLog(
                     `Double clicked on subcategory: ${subcategory.name} (${subcategory.code})`
                   );
                   onSubcategorySelect(subcategory, true);

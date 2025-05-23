@@ -558,7 +558,7 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
             const directCategories = taxonomyService.getCategories(newLayer);
 
             if (directCategories && directCategories.length > 0) {
-              console.log(
+              debugLog(
                 `[EVENT ${
                   operationId || 'unknown'
                 }] Tier 2: Direct service call returned ${
@@ -598,12 +598,12 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
 
       // Tier 3: Final check and emergency reload (400ms)
       setTimeout(() => {
-        console.log(
+        debugLog(
           `[EVENT ${
             operationId || 'unknown'
           }] Tier 3 (400ms): Final check for layer ${newLayer}`
         );
-        console.log(
+        debugLog(
           `[EVENT ${
             operationId || 'unknown'
           }] Tier 3: Current categories: ${JSON.stringify(
@@ -612,7 +612,7 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
         );
 
         if (categories.length === 0) {
-          console.log(
+          debugLog(
             `[EVENT ${
               operationId || 'unknown'
             }] Tier 3: CRITICAL - Categories still empty after multiple attempts`
@@ -643,7 +643,7 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
 
       // Only handle if this is for our current layer
       if (eventLayer === layer) {
-        console.log(
+        debugLog(
           `[CATEGORIES EVENT] Received taxonomyCategoriesLoaded event with ${eventCategories.length} categories from source: ${source}`
         );
       }
@@ -653,7 +653,7 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
     const handleEmergencyReloadEvent = (event: CustomEvent) => {
       const { layer: emergencyLayer, operationId } = event.detail;
 
-      console.log(
+      debugLog(
         `[EMERGENCY ${
           operationId || 'unknown'
         }] Received emergency reload event for layer ${emergencyLayer}`
@@ -661,7 +661,7 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
 
       // Only handle if this is for our current layer
       if (emergencyLayer === layer) {
-        console.log(
+        debugLog(
           `[EMERGENCY ${
             operationId || 'unknown'
           }] This event is for our current layer: ${layer}`
@@ -680,7 +680,7 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
           const emergencyCategories = taxonomyService.getCategories(layer);
 
           if (emergencyCategories && emergencyCategories.length > 0) {
-            console.log(
+            debugLog(
               `[EMERGENCY ${
                 operationId || 'unknown'
               }] Direct service call returned ${
@@ -772,7 +772,7 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
   const handleCategoryRetry = useCallback(() => {
     if (layer) {
       // ENHANCED: Force more aggressive reloads on retry
-      console.log(
+      debugLog(
         `[RETRY] Forcing aggressive category reload for layer: ${layer}`
       );
 
@@ -783,7 +783,7 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
       try {
         const directCategories = taxonomyService.getCategories(layer);
         if (directCategories && directCategories.length > 0) {
-          console.log(
+          debugLog(
             `[RETRY] Direct category load returned ${directCategories.length} categories`
           );
           // Use a custom event to notify listeners
@@ -809,7 +809,7 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
     if (layer) {
       // Log less in production for performance
       if (process.env.NODE_ENV !== 'production') {
-        console.log(
+        debugLog(
           `[INIT] Initial setup for layer ${layer}, initialSetupRef=${
             initialSetupRef.current
           }, selected category=${selectedCategory || 'none'}`
@@ -824,7 +824,7 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
         const directCategories = taxonomyService.getCategories(layer);
         if (directCategories && directCategories.length > 0) {
           if (process.env.NODE_ENV !== 'production') {
-            console.log(
+            debugLog(
               `[INIT] Direct category load successful: ${directCategories.length} categories`
             );
           }
@@ -988,7 +988,7 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
     if (!layer) return;
 
     // Log layer switch to help with debugging
-    console.log(`[LAYER SWITCH] Handling layer change to: ${layer}`);
+    debugLog(`[LAYER SWITCH] Handling layer change to: ${layer}`);
 
     // STEP 1: Cancel any in-progress category loads and clear timers
     if (categoryDebounceRef.current) {
@@ -1003,7 +1003,7 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
     // STEP 3: Create a reference to track this specific layer change operation
     // This helps prevent race conditions when quickly switching between layers
     const layerChangeId = Date.now().toString();
-    console.log(
+    debugLog(
       `[LAYER SWITCH ${layerChangeId}] Starting category load sequence`
     );
 
@@ -1013,7 +1013,7 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
       const directCategories = taxonomyService.getCategories(layer);
 
       if (directCategories && directCategories.length > 0) {
-        console.log(
+        debugLog(
           `[LAYER SWITCH ${layerChangeId}] Direct load successful: ${directCategories.length} categories`
         );
 
@@ -1040,7 +1040,7 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
     }
 
     // STEP 5: Also request categories from context for consistency
-    console.log(
+    debugLog(
       `[LAYER SWITCH ${layerChangeId}] Requesting categories from context`
     );
     reloadCategories();
@@ -1048,16 +1048,16 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
     // STEP 6: Set up a tiered retry approach with multiple layers of recovery
     // First retry after a short delay (100ms) - quick but allows context to update
     const shortRetryTimer = setTimeout(() => {
-      console.log(`[LAYER SWITCH ${layerChangeId}] Short retry check (100ms)`);
+      debugLog(`[LAYER SWITCH ${layerChangeId}] Short retry check (100ms)`);
       if (categories.length === 0) {
-        console.log(
+        debugLog(
           `[LAYER SWITCH ${layerChangeId}] Categories still empty, trying direct service again`
         );
         // Try direct service call again
         try {
           const retryCategories = taxonomyService.getCategories(layer);
           if (retryCategories && retryCategories.length > 0) {
-            console.log(
+            debugLog(
               `[LAYER SWITCH ${layerChangeId}] Short retry successful: ${retryCategories.length} categories`
             );
             // Notify listeners
@@ -1078,7 +1078,7 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
           );
         }
       } else {
-        console.log(
+        debugLog(
           `[LAYER SWITCH ${layerChangeId}] Short retry unnecessary - already have ${categories.length} categories`
         );
       }
@@ -1086,7 +1086,7 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
 
     // Second retry after a medium delay (300ms) - if short retry failed
     const mediumRetryTimer = setTimeout(() => {
-      console.log(`[LAYER SWITCH ${layerChangeId}] Medium retry check (300ms)`);
+      debugLog(`[LAYER SWITCH ${layerChangeId}] Medium retry check (300ms)`);
       if (categories.length === 0) {
         debugLog(
           `[LAYER SWITCH ${layerChangeId}] Categories still empty, trying context reload`
@@ -1098,7 +1098,7 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
         try {
           const lastChanceCategories = taxonomyService.getCategories(layer);
           if (lastChanceCategories && lastChanceCategories.length > 0) {
-            console.log(
+            debugLog(
               `[LAYER SWITCH ${layerChangeId}] Medium retry successful: ${lastChanceCategories.length} categories`
             );
             // Notify listeners
@@ -1119,7 +1119,7 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
           );
         }
       } else {
-        console.log(
+        debugLog(
           `[LAYER SWITCH ${layerChangeId}] Medium retry unnecessary - already have ${categories.length} categories`
         );
       }
@@ -1127,7 +1127,7 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
 
     // Last resort safety check (500ms) - if everything else failed
     const safetyCheckTimer = setTimeout(() => {
-      console.log(`[LAYER SWITCH ${layerChangeId}] Final safety check (500ms)`);
+      debugLog(`[LAYER SWITCH ${layerChangeId}] Final safety check (500ms)`);
       if (categories.length === 0) {
         console.warn(
           `[LAYER SWITCH ${layerChangeId}] CRITICAL: Categories still empty after all retries!`
@@ -1136,7 +1136,7 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
         try {
           const emergencyCategories = taxonomyService.getCategories(layer);
           if (emergencyCategories && emergencyCategories.length > 0) {
-            console.log(
+            debugLog(
               `[LAYER SWITCH ${layerChangeId}] Emergency load successful: ${emergencyCategories.length} categories`
             );
             // Notify listeners with emergency flag
@@ -1169,7 +1169,7 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
           );
         }
       } else {
-        console.log(
+        debugLog(
           `[LAYER SWITCH ${layerChangeId}] Safety check successful - have ${categories.length} categories`
         );
       }
@@ -1177,7 +1177,7 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
 
     // Clean up all timers when component unmounts or layer changes again
     return () => {
-      console.log(
+      debugLog(
         `[LAYER SWITCH ${layerChangeId}] Cleaning up timers from layer change sequence`
       );
       clearTimeout(shortRetryTimer);
@@ -1208,7 +1208,7 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
     subcategoriesRef.current = [];
 
     // Log the reset for debugging
-    console.log(
+    debugLog(
       `[LAYER SWITCH] Reset all category/subcategory state for layer change to: ${layer}`
     );
   }, [layer]);
@@ -1332,7 +1332,7 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
         // Log debug information for common problematic categories
         if ((layer === 'L' && category === 'PRF') || 
             (layer === 'S' && category === 'DNC')) {
-          console.log(`[SimpleTaxonomySelectionV2] Getting subcategories for known problematic case: ${layer}.${category}`);
+          debugLog(`[SimpleTaxonomySelectionV2] Getting subcategories for known problematic case: ${layer}.${category}`);
         }
         
         // Try to normalize the category code to handle case mismatches
@@ -1340,7 +1340,7 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
         
         // Debug case sensitivity
         if (normalizedCategory !== category) {
-          console.log(`[SimpleTaxonomySelectionV2] Checking if case sensitivity is causing issues. Original: ${category}, Normalized: ${normalizedCategory}`);
+          debugLog(`[SimpleTaxonomySelectionV2] Checking if case sensitivity is causing issues. Original: ${category}, Normalized: ${normalizedCategory}`);
         }
         
         // Try both the original and normalized category codes
@@ -1348,12 +1348,12 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
         
         // If no results with original case, try with normalized case
         if (results.length === 0 && normalizedCategory !== category) {
-          console.log(`[SimpleTaxonomySelectionV2] No results with original case, trying normalized case ${normalizedCategory}`);
+          debugLog(`[SimpleTaxonomySelectionV2] No results with original case, trying normalized case ${normalizedCategory}`);
           results = taxonomyService.getSubcategories(layer, normalizedCategory);
         }
         
         // Log the results for debugging
-        console.log(`Retrieved ${results.length} subcategories for ${layer}.${category}`);
+        debugLog(`Retrieved ${results.length} subcategories for ${layer}.${category}`);
         
         if (results.length === 0) {
           console.warn(`[SimpleTaxonomySelectionV2] No subcategories found for ${layer}.${category} despite all attempts`);
@@ -1410,13 +1410,13 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
     setLoadingError(null);
 
     // IMPORTANT: Track the fetch attempt and result for debugging
-    console.log(
+    debugLog(
       `Direct subcategories fetch for ${layer}.${activeCategory} started`
     );
     
     try {
       const results = getDirectSubcategories(layer, activeCategory);
-      console.log(`Direct subcategories fetch returned ${results.length} items`);
+      debugLog(`Direct subcategories fetch returned ${results.length} items`);
 
       // If we got results, save them to the local state and ref as a backup
       if (results.length > 0) {
@@ -1446,7 +1446,7 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
   useEffect(() => {
     // If we have an error and no subcategories, try the universal fallback
     if (loadingError && activeCategory && directSubcategories.length === 0 && localSubcategories.length === 0) {
-      console.log(`[FALLBACK] Attempting recovery for ${layer}.${activeCategory}`);
+      debugLog(`[FALLBACK] Attempting recovery for ${layer}.${activeCategory}`);
       
       // Build fallback subcategories for known problematic combinations
       let fallbackSubcategories: TaxonomyItem[] = [];
@@ -1483,7 +1483,7 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
       }
       
       if (fallbackSubcategories.length > 0) {
-        console.log(`[FALLBACK] Applied ${fallbackSubcategories.length} subcategories for ${layer}.${activeCategory}`);
+        debugLog(`[FALLBACK] Applied ${fallbackSubcategories.length} subcategories for ${layer}.${activeCategory}`);
         // Update both ref and state for maximum reliability
         subcategoriesRef.current = fallbackSubcategories;
         setLocalSubcategories(fallbackSubcategories);
@@ -1495,12 +1495,12 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
 
   // When selectedSubcategory changes from props, update the active subcategory
   useEffect(() => {
-    console.log(
+    debugLog(
       `[PROP SYNC] selectedSubcategory prop changed to: ${selectedSubcategory}, activeSubcategory state: ${activeSubcategory}`
     );
 
     if (selectedSubcategory && selectedSubcategory !== activeSubcategory) {
-      console.log(
+      debugLog(
         `[PROP SYNC] Updating activeSubcategory state to match prop: ${selectedSubcategory}`
       );
       setActiveSubcategory(selectedSubcategory);
@@ -1512,7 +1512,7 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
         localSubcategories.length === 0 &&
         subcategoriesRef.current.length === 0
       ) {
-        console.log(
+        debugLog(
           `[PROP SYNC] No subcategory data available, trying emergency load for ${layer}.${activeCategory}`
         );
 
@@ -1524,7 +1524,7 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
               activeCategory
             );
             if (emergencySubcategories.length > 0) {
-              console.log(
+              debugLog(
                 `[PROP SYNC] Emergency fetch successful, got ${emergencySubcategories.length} items`
               );
 
@@ -1566,7 +1566,7 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
         // Check if this category selection is happening too quickly after the last one
         const lastTimestamp = window[categoryThrottleKey] || 0;
         if (now - lastTimestamp < throttleTime) {
-          console.log(
+          debugLog(
             `[CATEGORY SELECT] Throttled - ignoring category selection too soon after previous (${now - lastTimestamp}ms)`
           );
           return; // Ignore this selection
@@ -1584,20 +1584,20 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
         setActiveSubcategory(null);
         
         // Call context update ONCE (not twice as before)
-        console.log(`[CATEGORY SELECT ${operationId}] Updating context with: ${category}`);
+        debugLog(`[CATEGORY SELECT ${operationId}] Updating context with: ${category}`);
         selectCategory(category);
         
         // Notify parent component
         onCategorySelect(category, false);
         
         // CRITICAL FIX: Make direct subcategory loading more robust
-        console.log(`[CATEGORY SELECT ${operationId}] Loading subcategories for: ${layer}.${category}`);
+        debugLog(`[CATEGORY SELECT ${operationId}] Loading subcategories for: ${layer}.${category}`);
         try {
           // Pre-fetch subcategories directly from the service for immediate feedback
           const subcats = taxonomyService.getSubcategories(layer, category);
           
           if (subcats && subcats.length > 0) {
-            console.log(`[CATEGORY SELECT ${operationId}] Direct load successful: ${subcats.length} subcategories`);
+            debugLog(`[CATEGORY SELECT ${operationId}] Direct load successful: ${subcats.length} subcategories`);
             
             // Store in multiple backup locations for resilience
             subcategoriesRef.current = [...subcats]; // update ref first (synchronous)
@@ -1646,7 +1646,7 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
         
         subcategoryDebounceRef.current = setTimeout(() => {
           if (layer && category) {
-            console.log(`[CATEGORY SELECT ${operationId}] Executing fallback subcategory reload`);
+            debugLog(`[CATEGORY SELECT ${operationId}] Executing fallback subcategory reload`);
             reloadSubcategories();
           }
         }, 100); // Increased from 50ms for better reliability
@@ -1675,7 +1675,7 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
       // Prevent duplicate selections but handle double-click special case
       if (subcategory === activeSubcategory && !isDoubleClick) return;
 
-      console.log(
+      debugLog(
         `[SUB SELECT] Subcategory selection started: ${subcategory}, double-click: ${isDoubleClick}`
       );
 
@@ -1689,7 +1689,7 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
       };
       
       // Log which sources have data
-      console.log(
+      debugLog(
         `[SUB SELECT] Snapshot: context=${subcategoriesSnapshot.context.length}, direct=${subcategoriesSnapshot.direct.length}, local=${subcategoriesSnapshot.local.length}, ref=${subcategoriesSnapshot.ref.length}`
       );
 
@@ -1702,17 +1702,17 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
         
       // CRITICAL FIX: Lock to prevent concurrent state updates causing data loss
       const operationId = `subselect-${Date.now()}`;
-      console.log(`[SUB SELECT ${operationId}] Using guaranteed list with ${guaranteedSubcategoriesList.length} items`);
+      debugLog(`[SUB SELECT ${operationId}] Using guaranteed list with ${guaranteedSubcategoriesList.length} items`);
       
       // STEP 1: Update local state IMMEDIATELY for responsive UI feedback
       setActiveSubcategory(subcategory);
-      console.log(
+      debugLog(
         `[SUB SELECT ${operationId}] Local state updated: activeSubcategory = ${subcategory}`
       );
 
       // STEP 2: Update context in parallel (but don't depend on its completion)
       selectSubcategory(subcategory);
-      console.log(
+      debugLog(
         `[SUB SELECT ${operationId}] Context update requested for subcategory = ${subcategory}`
       );
 
@@ -1744,7 +1744,7 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
             sessionStorage.setItem(key, value);
           });
 
-          console.log(
+          debugLog(
             `[SUB SELECT ${operationId}] Session storage updated with ${
               Object.keys(storageUpdates).length
             } backup records, including full subcategory list`
@@ -1756,7 +1756,7 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
       }
 
       // STEP 4: Find the subcategory details, checking MULTIPLE sources for resilience
-      console.log(
+      debugLog(
         `[SUB SELECT ${operationId}] Searching for subcategory details from ${subcategories.length} context items, ${directSubcategories.length} direct items, ${localSubcategories.length} local items, ${subcategoriesRef.current.length} ref items`
       );
 
@@ -1771,7 +1771,7 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
           details = guaranteedSubcategoriesList.find(s => s.code === subcategory);
           if (details) {
             source = 'guaranteed-snapshot';
-            console.log(`[SUB SELECT ${operationId}] Found details in guaranteed snapshot`);
+            debugLog(`[SUB SELECT ${operationId}] Found details in guaranteed snapshot`);
             return { details, source };
           }
         }
@@ -1781,7 +1781,7 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
           details = subcategories.find(s => s.code === subcategory);
           if (details) {
             source = 'context';
-            console.log(`[SUB SELECT ${operationId}] Found details in context subcategories`);
+            debugLog(`[SUB SELECT ${operationId}] Found details in context subcategories`);
             return { details, source };
           }
         }
@@ -1791,7 +1791,7 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
           details = directSubcategories.find(s => s.code === subcategory);
           if (details) {
             source = 'direct';
-            console.log(`[SUB SELECT ${operationId}] Found details in direct subcategories`);
+            debugLog(`[SUB SELECT ${operationId}] Found details in direct subcategories`);
             return { details, source };
           }
         }
@@ -1801,7 +1801,7 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
           details = localSubcategories.find(s => s.code === subcategory);
           if (details) {
             source = 'local';
-            console.log(
+            debugLog(
               `[SUB SELECT ${operationId}] Found details in local subcategories backup`
             );
             return { details, source };
@@ -1813,7 +1813,7 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
           details = subcategoriesRef.current.find(s => s.code === subcategory);
           if (details) {
             source = 'ref';
-            console.log(
+            debugLog(
               `[SUB SELECT ${operationId}] Found details in ref subcategories backup`
             );
             return { details, source };
@@ -1829,7 +1829,7 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
               details = storedList.find(s => s.code === subcategory);
               if (details) {
                 source = 'session-storage';
-                console.log(`[SUB SELECT ${operationId}] Found details in session storage`);
+                debugLog(`[SUB SELECT ${operationId}] Found details in session storage`);
                 return { details, source };
               }
             }
@@ -1840,7 +1840,7 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
 
         // Finally try direct service fetch one more time, just in case
         try {
-          console.log(
+          debugLog(
             `[SUB SELECT ${operationId}] Last resort: direct service fetch for ${layer}.${activeCategory}.${subcategory}`
           );
           if (layer && activeCategory) {
@@ -1854,7 +1854,7 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
               );
               if (details) {
                 source = 'last-resort-fetch';
-                console.log(
+                debugLog(
                   `[SUB SELECT ${operationId}] Found details in last resort service fetch`
                 );
                 return { details, source };
@@ -1882,12 +1882,12 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
       // Get details with source tracking
       const { details: subcategoryDetails, source: detailsSource } =
         findSubcategoryDetails();
-      console.log(
+      debugLog(
         `[SUB SELECT ${operationId}] Using subcategory details from source: ${detailsSource}`
       );
 
       // STEP 5: Notify parent component
-      console.log(
+      debugLog(
         `[SUB SELECT ${operationId}] Notifying parent with subcategory: ${subcategory}, double-click: ${isDoubleClick}`
       );
       onSubcategorySelect(subcategory, isDoubleClick);
@@ -1899,7 +1899,7 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
       // Update ref immediately (most reliable, doesn't trigger re-renders)
       if (guaranteedSubcategoriesList.length > 0) {
         subcategoriesRef.current = [...guaranteedSubcategoriesList]; // Clone to ensure independence
-        console.log(
+        debugLog(
           `[SUB SELECT ${operationId}] Updated ref backup with ${guaranteedSubcategoriesList.length} items from guaranteed list`
         );
       }
@@ -1908,7 +1908,7 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
       // First immediate update (no delay)
       if (guaranteedSubcategoriesList.length > 0) {
         setLocalSubcategories([...guaranteedSubcategoriesList]); // Clone to ensure independence
-        console.log(
+        debugLog(
           `[SUB SELECT ${operationId}] Immediate update of local state with ${guaranteedSubcategoriesList.length} items`
         );
       }
@@ -1919,7 +1919,7 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
           setLocalSubcategories(prevState => {
             // Only update if we have more items than current state
             if (guaranteedSubcategoriesList.length > prevState.length || prevState.length === 0) {
-              console.log(
+              debugLog(
                 `[SUB SELECT ${operationId}] 10ms update of local state with ${guaranteedSubcategoriesList.length} items`
               );
               return [...guaranteedSubcategoriesList];
@@ -1936,7 +1936,7 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
                             (subcategoriesRef.current.length > 0 ? subcategoriesRef.current : []);
                             
         if (currentItems.length === 0 && guaranteedSubcategoriesList.length > 0) {
-          console.log(
+          debugLog(
             `[SUB SELECT ${operationId}] RECOVERY: 50ms update needed because current items = ${currentItems.length}`
           );
           setLocalSubcategories([...guaranteedSubcategoriesList]);
@@ -1949,7 +1949,7 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
       // 6c. As a last resort, if we have a single good subcategory but no list, create a synthetic list
       if (guaranteedSubcategoriesList.length === 0 && subcategoryDetails) {
         const syntheticList = [subcategoryDetails];
-        console.log(
+        debugLog(
           `[SUB SELECT ${operationId}] Creating synthetic subcategory list with single item`
         );
 
@@ -1976,7 +1976,7 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
         const measurements = performance.getEntriesByName(
           'Subcategory Selection Time'
         );
-        console.log(
+        debugLog(
           `[SUB SELECT ${operationId}] Selection completed in ${measurements[0]?.duration.toFixed(
             2
           )}ms`
@@ -2008,7 +2008,7 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
           layer,
           activeCategory
         );
-        console.log(
+        debugLog(
           `Retry: Directly loaded ${directSubcats.length} subcategories for ${layer}.${activeCategory}`
         );
 
@@ -2028,10 +2028,10 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
   // ENHANCED with extreme multi-tiered fallback for subcategory display - CRITICAL FIX FOR DISAPPEARING SUBCATEGORIES
   const displaySubcategoriesData = useMemo(() => {
     const displayId = `display-${Date.now().toString().slice(-4)}`;
-    console.log(
+    debugLog(
       `[DISPLAY ${displayId}] Computing which subcategories to display for ${layer}.${activeCategory}`
     );
-    console.log(
+    debugLog(
       `[DISPLAY ${displayId}] Available sources: ${subcategories.length} context, ${directSubcategories.length} direct, ${localSubcategories.length} local, ${subcategoriesRef.current.length} ref`
     );
     
@@ -2040,7 +2040,7 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
         localSubcategories.length === 0 && subcategoriesRef.current.length === 0 && 
         layer && activeCategory) {
       
-      console.log(`[DISPLAY ${displayId}] All subcategory sources are empty for ${layer}.${activeCategory}, trying recovery`);
+      debugLog(`[DISPLAY ${displayId}] All subcategory sources are empty for ${layer}.${activeCategory}, trying recovery`);
       
       // Make a direct call to taxonomyService for immediate recovery
       try {
@@ -2048,7 +2048,7 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
         const recoverySubcategories = taxonomyService.getSubcategories(layer, activeCategory);
         
         if (recoverySubcategories.length > 0) {
-          console.log(`[DISPLAY ${displayId}] Recovery successful: got ${recoverySubcategories.length} subcategories`);
+          debugLog(`[DISPLAY ${displayId}] Recovery successful: got ${recoverySubcategories.length} subcategories`);
           
           // Store in all backup mechanisms
           subcategoriesRef.current = [...recoverySubcategories];
@@ -2086,7 +2086,7 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
           const parsedData = JSON.parse(storedData);
           if (Array.isArray(parsedData) && parsedData.length > 0) {
             sessionStorageData = parsedData;
-            console.log(
+            debugLog(
               `[DISPLAY ${displayId}] Found ${sessionStorageData.length} items in session storage backup`
             );
           }
@@ -2098,7 +2098,7 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
 
     // TIER 1: If context has subcategories, use them (preferred source)
     if (subcategories.length > 0) {
-      console.log(
+      debugLog(
         `[DISPLAY ${displayId}] Using ${subcategories.length} subcategories from context (primary source)`
       );
 
@@ -2129,7 +2129,7 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
 
     // TIER 2: Try direct service call results (next most reliable)
     if (directSubcategories.length > 0) {
-      console.log(
+      debugLog(
         `[DISPLAY ${displayId}] Using ${directSubcategories.length} subcategories from direct service call (fallback 1)`
       );
 
@@ -2158,7 +2158,7 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
 
     // TIER 3: Try local state backup (previously computed results)
     if (localSubcategories.length > 0) {
-      console.log(
+      debugLog(
         `[DISPLAY ${displayId}] Using ${localSubcategories.length} subcategories from local state backup (fallback 2)`
       );
 
@@ -2186,7 +2186,7 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
 
     // TIER 4: Try reference backup (most persistent in-memory)
     if (subcategoriesRef.current.length > 0) {
-      console.log(
+      debugLog(
         `[DISPLAY ${displayId}] Using ${subcategoriesRef.current.length} subcategories from ref backup (fallback 3)`
       );
 
@@ -2214,7 +2214,7 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
 
     // TIER 5: Try session storage backup (most persistent across renders)
     if (sessionStorageData.length > 0) {
-      console.log(
+      debugLog(
         `[DISPLAY ${displayId}] Using ${sessionStorageData.length} subcategories from session storage (fallback 4)`
       );
 
@@ -2232,7 +2232,7 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
     // TIER 6: Last resort - try a direct fetch again right now
     if (layer && activeCategory) {
       try {
-        console.log(
+        debugLog(
           `[DISPLAY ${displayId}] Emergency: Making one last direct fetch attempt for ${layer}.${activeCategory}`
         );
         const emergencyFetch = taxonomyService.getSubcategories(
@@ -2241,7 +2241,7 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
         );
 
         if (emergencyFetch.length > 0) {
-          console.log(
+          debugLog(
             `[DISPLAY ${displayId}] Emergency fetch successful! Got ${emergencyFetch.length} items`
           );
 
@@ -2273,7 +2273,7 @@ const SimpleTaxonomySelectionV2: React.FC<SimpleTaxonomySelectionV2Props> = ({
     // TIER 7: Complete failure - try to create synthetic subcategories for the current category
     if (layer && activeCategory) {
       try {
-        console.log(
+        debugLog(
           `[DISPLAY ${displayId}] CRITICAL: Attempting to create synthetic subcategories for ${layer}.${activeCategory}`
         );
         

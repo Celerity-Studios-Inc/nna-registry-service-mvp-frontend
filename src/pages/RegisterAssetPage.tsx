@@ -1769,11 +1769,18 @@ const RegisterAssetPage: React.FC = () => {
     
     environmentSafeLog(`[SUCCESS] Using original form values for formatting: layer=${layer}, category=${categoryCode}, subcategory=${subcategoryCode}, sequential=${sequential}`);
     
+    // Check if we have an original subcategory code that was saved during NNA address change
+    // This is critical for ensuring the header uses the same format as the details section
+    if (originalSubcategoryCode) {
+      environmentSafeLog(`[SUCCESS] Using original subcategory code for formatting: ${originalSubcategoryCode}`);
+      subcategoryCode = originalSubcategoryCode;
+    }
+    
     // We've already imported taxonomyFormatter at the top of the file
     
     // Create properly formatted HFN with the original codes
     const hfnToFormat = `${layer}.${categoryCode}.${subcategoryCode}.${sequential}`;
-    const displayHfn = taxonomyFormatter.formatHFN(hfnToFormat);
+    let displayHfn = taxonomyFormatter.formatHFN(hfnToFormat);
     
     // Convert HFN to MFA using our formatter
     let displayMfa = taxonomyFormatter.convertHFNtoMFA(displayHfn);
@@ -1801,6 +1808,26 @@ const RegisterAssetPage: React.FC = () => {
         // Use our formatter to ensure proper format
         displayMfa = taxonomyFormatter.formatMFA(backendMfa);
         environmentSafeLog(`Using formatted MFA from backend: ${backendMfa} → ${displayMfa}`);
+      }
+    }
+    
+    // Alternative approach: Extract HFN from asset metadata if available
+    // This ensures the success page header matches the value in the asset details
+    if (createdAsset.metadata?.hfn || createdAsset.metadata?.humanFriendlyName) {
+      const metadataHfn = createdAsset.metadata?.hfn || createdAsset.metadata?.humanFriendlyName;
+      // Use the formatter to ensure proper casing and formatting
+      const formattedMetadataHfn = taxonomyFormatter.formatHFN(metadataHfn);
+      
+      environmentSafeLog(`[SUCCESS] Found HFN in metadata: ${metadataHfn} → ${formattedMetadataHfn}`);
+      
+      // If the HFN in metadata differs from our calculated one, use it as an override
+      if (formattedMetadataHfn && formattedMetadataHfn !== displayHfn) {
+        environmentSafeLog(`[SUCCESS] Using metadata HFN instead of calculated HFN`);
+        environmentSafeLog(`Calculated: ${displayHfn}, Metadata: ${formattedMetadataHfn}`);
+        // Override with metadata value for consistency
+        displayHfn = formattedMetadataHfn;
+        // Regenerate MFA from the HFN to ensure consistency
+        displayMfa = taxonomyFormatter.convertHFNtoMFA(displayHfn);
       }
     }
     

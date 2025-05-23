@@ -680,8 +680,8 @@ const SimpleTaxonomySelectionV3: React.FC<SimpleTaxonomySelectionV3Props> = ({
             Retry Loading Subcategories
           </Button>
           
-          {/* Debug toggle - only shown in development mode */}
-          {!isProduction() && (
+          {/* Debug toggle - only shown in development mode with explicit enabling */}
+          {!isProduction() && process.env.NODE_ENV === 'development' && (
             <Button 
               size="small" 
               variant="outlined" 
@@ -695,8 +695,8 @@ const SimpleTaxonomySelectionV3: React.FC<SimpleTaxonomySelectionV3Props> = ({
         </Box>
       </Box>
       
-      {/* Show debug info only when enabled (development mode or debug parameter) */}
-      {debugMode && (
+      {/* Show debug info only when enabled (development mode with explicit enabling) */}
+      {debugMode && process.env.NODE_ENV === 'development' && (
         <Alert severity="info" sx={{ mt: 2 }}>
           <Typography variant="subtitle2" gutterBottom>
             Debug Information

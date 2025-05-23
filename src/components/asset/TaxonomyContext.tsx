@@ -72,46 +72,36 @@ const TaxonomyContext: React.FC<TaxonomyContextProps> = ({
               <Typography variant="body2" fontWeight="bold" color="text.secondary" minWidth="80px">
                 Category:
               </Typography>
-              <Chip 
-                label={`${categoryCode}${categoryName ? ` - ${categoryName?.replace(/_/g, ' ')}` : categoryCode === 'DNC' ? ' - Dance Electronic' : ''}`}
-                size="small" 
-                color="primary"
-                variant="outlined"
-                sx={{ 
-                  maxWidth: '100%',
-                  '.MuiChip-label': { 
-                    whiteSpace: 'normal',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    display: 'block',
-                    maxWidth: '100%'
-                  }
-                }}
-                title={categoryName || categoryCode} // Add title for tooltip on hover
-              />
+              <Box display="flex" alignItems="center">
+                <Chip 
+                  label={categoryCode}
+                  size="small" 
+                  color="primary"
+                  variant="outlined"
+                  sx={{ mr: 1 }}
+                />
+                <Typography variant="body2" fontWeight="medium" color="text.primary">
+                  {categoryName?.replace(/_/g, ' ') || (categoryCode === 'DNC' ? 'Dance Electronic' : '')}
+                </Typography>
+              </Box>
             </Box>
             
             <Box display="flex" alignItems="center" gap={1}>
               <Typography variant="body2" fontWeight="bold" color="text.secondary" minWidth="80px">
                 Subcategory:
               </Typography>
-              <Chip 
-                label={`${subcategoryCode}${subcategoryName ? ` - ${subcategoryName?.replace(/_/g, ' ')}` : ''}`}
-                size="small"
-                color="primary" 
-                variant="outlined"
-                title={subcategoryName || subcategoryCode} // Add title for tooltip on hover
-                sx={{ 
-                  maxWidth: '100%',
-                  '.MuiChip-label': { 
-                    whiteSpace: 'normal',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    display: 'block',
-                    maxWidth: '100%'
-                  }
-                }}
-              />
+              <Box display="flex" alignItems="center">
+                <Chip 
+                  label={subcategoryCode}
+                  size="small" 
+                  color="primary"
+                  variant="outlined"
+                  sx={{ mr: 1 }}
+                />
+                <Typography variant="body2" fontWeight="medium" color="text.primary">
+                  {subcategoryName?.replace(/_/g, ' ') || ''}
+                </Typography>
+              </Box>
             </Box>
           </Box>
         </Grid>

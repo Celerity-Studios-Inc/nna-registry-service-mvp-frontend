@@ -77,9 +77,9 @@ import {
 } from '../../types/asset.types';
 
 // CRITICAL: Debugging to ensure the simplified taxonomy service is the source of truth
-console.log('RegisterAssetPageNew using simplified taxonomy service');
-console.log('Taxonomy service initialized:', !!taxonomyService);
-console.log(
+debugLog('RegisterAssetPageNew using simplified taxonomy service');
+debugLog('Taxonomy service initialized:', !!taxonomyService);
+debugLog(
   'Available taxonomy methods:',
   Object.keys(taxonomyService).join(', ')
 );
@@ -282,7 +282,7 @@ const RegisterAssetPageNew: React.FC = () => {
         // Clear any previously stored data to ensure a fresh form
         window.sessionStorage.removeItem('showSuccessPage');
         localStorage.removeItem('lastCreatedAsset');
-        console.log(
+        debugLog(
           'Direct navigation to Register Asset - clearing stored data (one-time check)'
         );
         window.sessionStorage.setItem('directNavigation', 'true');
@@ -294,7 +294,7 @@ const RegisterAssetPageNew: React.FC = () => {
   React.useEffect(() => {
     // Set forceMockApi to false to ensure we use the real backend
     localStorage.setItem('forceMockApi', 'false');
-    console.log('FORCING REAL API MODE for asset creation');
+    debugLog('FORCING REAL API MODE for asset creation');
 
     // Clean up on unmount
     return () => {
@@ -452,7 +452,7 @@ const RegisterAssetPageNew: React.FC = () => {
       };
 
       if (process.env.NODE_ENV === 'development') {
-        console.log('Form data to submit:', {
+        debugLog('Form data to submit:', {
           layer: data.layer,
           categoryCode: data.categoryCode,
           subcategoryCode: data.subcategoryCode,
@@ -508,7 +508,7 @@ const RegisterAssetPageNew: React.FC = () => {
       updateProgress('Preparing asset data...');
 
       if (process.env.NODE_ENV === 'development') {
-        console.log('Form data for asset creation:', {
+        debugLog('Form data for asset creation:', {
           layer: data.layer,
           categoryCode: data.categoryCode,
           subcategoryCode: data.subcategoryCode,
@@ -518,15 +518,15 @@ const RegisterAssetPageNew: React.FC = () => {
           isNumericSubcategory: /^\d+$/.test(data.subcategoryCode),
         });
 
-        console.log('IMPORTANT: Category/Subcategory Format Check:');
-        console.log(
+        debugLog('IMPORTANT: Category/Subcategory Format Check:');
+        debugLog(
           `Category: ${data.categoryCode} (${
             /^\d+$/.test(data.categoryCode)
               ? 'NUMERIC - needs conversion'
               : 'ALPHABETIC - OK'
           })`
         );
-        console.log(
+        debugLog(
           `Subcategory: ${data.subcategoryCode} (${
             /^\d+$/.test(data.subcategoryCode)
               ? 'NUMERIC - needs conversion'
@@ -549,7 +549,7 @@ const RegisterAssetPageNew: React.FC = () => {
           
           if (categoryObj && categoryObj.code) {
             convertedCategory = categoryObj.code;
-            console.log(
+            debugLog(
               `Converted numeric category ${data.categoryCode} to ${convertedCategory}`
             );
           }
@@ -567,7 +567,7 @@ const RegisterAssetPageNew: React.FC = () => {
           
           if (subcategoryObj && subcategoryObj.code) {
             convertedSubcategory = subcategoryObj.code;
-            console.log(
+            debugLog(
               `Converted numeric subcategory ${data.subcategoryCode} to ${convertedSubcategory}`
             );
           }
@@ -578,11 +578,11 @@ const RegisterAssetPageNew: React.FC = () => {
 
       // General logging for taxonomy conversion (no special cases)
       if (process.env.NODE_ENV === 'development') {
-        console.log('TAXONOMY CONVERSION INFO:');
-        console.log(
+        debugLog('TAXONOMY CONVERSION INFO:');
+        debugLog(
           `Original values: layer=${data.layer}, category=${data.categoryCode}, subcategory=${data.subcategoryCode}`
         );
-        console.log(
+        debugLog(
           `Converted values: layer=${data.layer}, category=${convertedCategory}, subcategory=${convertedSubcategory}`
         );
         
@@ -594,7 +594,7 @@ const RegisterAssetPageNew: React.FC = () => {
           if (!isValidCategory || !isValidSubcategory) {
             console.warn('Taxonomy conversion may have issues - check the input values');
           } else {
-            console.log('✅ Taxonomy conversion successful');
+            debugLog('✅ Taxonomy conversion successful');
           }
         }
       }
@@ -630,10 +630,10 @@ const RegisterAssetPageNew: React.FC = () => {
             const hfn = `${data.layer}.${data.categoryCode}.${data.subcategoryCode}.001`;
             const mfa = taxonomyService.convertHFNtoMFA(hfn);
 
-            console.log(
+            debugLog(
               `Using simplified taxonomy service exclusively for address generation:`
             );
-            console.log(`HFN=${hfn}, MFA=${mfa}`);
+            debugLog(`HFN=${hfn}, MFA=${mfa}`);
 
             // Generic fallback mechanism for all combinations if conversion fails
             let finalMfa = mfa;
@@ -672,13 +672,13 @@ const RegisterAssetPageNew: React.FC = () => {
                 
                 // Construct fallback MFA
                 finalMfa = `${layerCode}.${categoryCode}.${subcategoryCode}.001`;
-                console.log(`Constructed fallback MFA: ${finalMfa}`);
+                debugLog(`Constructed fallback MFA: ${finalMfa}`);
               } catch (fallbackError) {
                 console.error('Failed to construct fallback MFA:', fallbackError);
                 // Last resort fallback: use whatever we can extract from the layer
                 const layerCode = taxonomyService.getLayerNumericCode(data.layer) || '0';
                 finalMfa = `${layerCode}.000.000.001`;
-                console.log(`Using last resort fallback MFA: ${finalMfa}`);
+                debugLog(`Using last resort fallback MFA: ${finalMfa}`);
               }
             }
 
@@ -709,7 +709,7 @@ const RegisterAssetPageNew: React.FC = () => {
 
       // Send asset data to server
       const createdAsset = await assetService.createAsset(assetData);
-      console.log('Asset created successfully:', createdAsset);
+      debugLog('Asset created successfully:', createdAsset);
 
       // Update progress to show success
       updateProgress('Asset created successfully!');
@@ -750,7 +750,7 @@ const RegisterAssetPageNew: React.FC = () => {
         const measurements = performance.getEntriesByName(
           'Form Submission Time'
         );
-        console.log(
+        debugLog(
           `Form submission took ${measurements[0]?.duration.toFixed(2)}ms`
         );
       }
@@ -958,7 +958,7 @@ const RegisterAssetPageNew: React.FC = () => {
     if (storedTaxonomySelection && activeStep === 0 && !watchLayer) {
       // Delay to ensure component is fully mounted
       setTimeout(() => {
-        console.log('[RegisterAssetPageNew] Restoring saved taxonomy selection:', storedTaxonomySelection);
+        debugLog('[RegisterAssetPageNew] Restoring saved taxonomy selection:', storedTaxonomySelection);
         
         // Use EventCoordinator to ensure operations happen in sequence
         EventCoordinator.clear();
@@ -1057,7 +1057,7 @@ const RegisterAssetPageNew: React.FC = () => {
   
   // Handle layer selection - ENHANCED FIX for layer switching issue
   const handleLayerSelect = (layer: LayerOption, isDoubleClick?: boolean) => {
-    console.log(
+    debugLog(
       `[LAYER SELECT] Called with layer=${layer.code}, isDoubleClick=${isDoubleClick}`
     );
     
@@ -1147,7 +1147,7 @@ const RegisterAssetPageNew: React.FC = () => {
       // Force reload of categories for the new layer
       setTimeout(() => {
         taxonomyContext.reloadCategories();
-        console.log(`[RegisterAssetPageNew] Categories reloaded for layer: ${layer.code}`);
+        debugLog(`[RegisterAssetPageNew] Categories reloaded for layer: ${layer.code}`);
       }, 100);
     }, 100);
 
@@ -1161,7 +1161,7 @@ const RegisterAssetPageNew: React.FC = () => {
   // Handle category selection - Enhanced to ensure proper form state updates
   const handleCategorySelect = (category: CategoryOption) => {
     // Log for debugging
-    console.log(
+    debugLog(
       `Setting category in form: ${category.code}, ${category.name}, ${category.numericCode}`
     );
 
@@ -1208,7 +1208,7 @@ const RegisterAssetPageNew: React.FC = () => {
     // Verification check to ensure state was updated
     setTimeout(() => {
       const currentCategory = getValues('categoryCode');
-      console.log(`[RegisterAssetPageNew] Verification - Form category value after update: ${currentCategory}`);
+      debugLog(`[RegisterAssetPageNew] Verification - Form category value after update: ${currentCategory}`);
     }, 100);
   };
 
@@ -1218,7 +1218,7 @@ const RegisterAssetPageNew: React.FC = () => {
     isDoubleClick?: boolean
   ) => {
     // Log for debugging
-    console.log(
+    debugLog(
       `Setting subcategory in form: ${subcategory.code}, ${subcategory.name}, ${subcategory.numericCode}`
     );
 
@@ -1262,7 +1262,7 @@ const RegisterAssetPageNew: React.FC = () => {
     // Verification check to ensure state was updated
     setTimeout(() => {
       const currentSubcategory = getValues('subcategoryCode');
-      console.log(`[RegisterAssetPageNew] Verification - Form subcategory value after update: ${currentSubcategory}`);
+      debugLog(`[RegisterAssetPageNew] Verification - Form subcategory value after update: ${currentSubcategory}`);
     }, 100);
 
     // If double click, add a small delay before advancing to ensure state is updated
@@ -1308,7 +1308,7 @@ const RegisterAssetPageNew: React.FC = () => {
         if (newFileHash === existingFileHash) {
           // Confirmed duplicate by content
           duplicateFiles.push(file.name);
-          console.log(
+          debugLog(
             `File "${file.name}" is a duplicate (same content). Skipping.`
           );
           continue;
@@ -1410,7 +1410,7 @@ const RegisterAssetPageNew: React.FC = () => {
         });
       } else {
         // Low confidence - just log but don't show warning
-        console.log(
+        debugLog(
           `File name matches existing asset "${asset.name}" with NNA address ${mfa}.`
         );
       }
@@ -1420,7 +1420,7 @@ const RegisterAssetPageNew: React.FC = () => {
   // Handle file upload progress
   const handleUploadProgress = (fileId: string, progress: number) => {
     // Track progress for future UI improvements
-    console.log(`File ${fileId} upload progress: ${progress}%`);
+    debugLog(`File ${fileId} upload progress: ${progress}%`);
   };
 
   // Handle training data collection
@@ -1542,7 +1542,7 @@ const RegisterAssetPageNew: React.FC = () => {
     if (success && createdAsset) {
       // Clear the stored selection once we've successfully created an asset
       SelectionStorage.clear('asset-registration');
-      console.log('[RegisterAssetPageNew] Cleared stored selections after successful submission');
+      debugLog('[RegisterAssetPageNew] Cleared stored selections after successful submission');
       setHasUnsavedChanges(false);
     }
   }, [success, createdAsset]);
