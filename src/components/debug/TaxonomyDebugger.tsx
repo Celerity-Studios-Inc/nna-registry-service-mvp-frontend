@@ -5,7 +5,8 @@
  */
 import React, { useState, useEffect, useCallback } from 'react';
 import { taxonomyService } from '../../services/simpleTaxonomyService';
-import { logger, LogLevel, LogCategory, verboseLog } from '../../utils/logger';
+import { logger, LogLevel, LogCategory } from '../../utils/logger';
+import { environmentSafeLog, isDebuggingAllowed } from '../../utils/environment';
 import {
   LAYER_LOOKUPS,
   LAYER_SUBCATEGORIES,
@@ -24,9 +25,18 @@ const TaxonomyDebugger: React.FC = () => {
   const [error, setError] = useState<string>('');
   const [outputLog, setOutputLog] = useState<string[]>([]);
   const [debugInfo, setDebugInfo] = useState<any>(null);
-  const [isVerboseLoggingEnabled, setIsVerboseLoggingEnabled] = useState<boolean>(
-    localStorage.getItem('verbose_taxonomy_logging') === 'true'
-  );
+  const [isVerboseLoggingEnabled, setIsVerboseLoggingEnabled] = useState<boolean>(false);
+  
+  // Initialize verbose logging setting from localStorage safely
+  useEffect(() => {
+    try {
+      if (typeof localStorage !== 'undefined') {
+        setIsVerboseLoggingEnabled(localStorage.getItem('verbose_taxonomy_logging') === 'true');
+      }
+    } catch (e) {
+      // Silently fail if localStorage is not available
+    }
+  }, []);
 
   const layers = ['G', 'S', 'L', 'M', 'W', 'B', 'P', 'T', 'C', 'R'];
 
@@ -128,24 +138,26 @@ const TaxonomyDebugger: React.FC = () => {
           serviceResult,
         });
 
-        // Log detailed debugging info to console
-        console.log(`[DEBUG] ${selectedLayer} LAYER_LOOKUP:`, layerLookup);
-        console.log(
-          `[DEBUG] ${selectedLayer} LAYER_SUBCATEGORIES:`,
-          layerSubcats
-        );
-        console.log(`[DEBUG] Categories for ${selectedLayer}:`, categories);
+        // Log detailed debugging info to console only when debugging is allowed
+        if (isDebuggingAllowed()) {
+          environmentSafeLog(`[DEBUG] ${selectedLayer} LAYER_LOOKUP:`, layerLookup);
+          environmentSafeLog(
+            `[DEBUG] ${selectedLayer} LAYER_SUBCATEGORIES:`,
+            layerSubcats
+          );
+          environmentSafeLog(`[DEBUG] Categories for ${selectedLayer}:`, categories);
 
-        if (categoryToTest) {
-          console.log(
-            `[DEBUG] Subcategory codes for ${selectedLayer}.${categoryToTest}:`,
-            subcatCodes
-          );
-          console.log(`[DEBUG] Mapped subcategories:`, subcats);
-          console.log(
-            `[DEBUG] Service result for ${selectedLayer}.${categoryToTest}:`,
-            serviceResult
-          );
+          if (categoryToTest) {
+            environmentSafeLog(
+              `[DEBUG] Subcategory codes for ${selectedLayer}.${categoryToTest}:`,
+              subcatCodes
+            );
+            environmentSafeLog(`[DEBUG] Mapped subcategories:`, subcats);
+            environmentSafeLog(
+              `[DEBUG] Service result for ${selectedLayer}.${categoryToTest}:`,
+              serviceResult
+            );
+          }
         }
 
         // Add debug info to log
@@ -714,7 +726,13 @@ const TaxonomyDebugger: React.FC = () => {
           onClick={() => {
             const newValue = !isVerboseLoggingEnabled;
             setIsVerboseLoggingEnabled(newValue);
-            localStorage.setItem('verbose_taxonomy_logging', newValue ? 'true' : 'false');
+            try {
+              if (typeof localStorage !== 'undefined') {
+                localStorage.setItem('verbose_taxonomy_logging', newValue ? 'true' : 'false');
+              }
+            } catch (e) {
+              // Silently fail if localStorage is not available
+            }
             addToLog(`Verbose taxonomy logging ${newValue ? 'enabled' : 'disabled'}`);
           }}
           style={{
