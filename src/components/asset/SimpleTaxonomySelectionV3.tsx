@@ -15,6 +15,7 @@ import {
   Grid, Typography, Button, CircularProgress, Alert, Box, Card,
   CardContent, CardActionArea, Chip, Tooltip
 } from '@mui/material';
+import { isProduction, isDevelopment, environmentSafeLog } from '../../utils/environment';
 import {
   getLayers,
   getCategories,
@@ -357,52 +358,73 @@ const SimpleTaxonomySelectionV3: React.FC<SimpleTaxonomySelectionV3Props> = ({
     }, 100);
   };
 
-  // Toggle debug mode - only visible in development or with debug query param
+  // Toggle debug mode - only functional in development environment
   const toggleDebugMode = () => {
-    setDebugMode(!debugMode);
+    // Don't allow toggling in production
+    if (isProduction()) {
+      return;
+    }
+    
+    const newMode = !debugMode;
+    setDebugMode(newMode);
+    
     // Store debug mode preference in sessionStorage
     try {
-      sessionStorage.setItem('taxonomyDebugMode', (!debugMode).toString());
+      if (typeof window !== 'undefined' && sessionStorage) {
+        sessionStorage.setItem('taxonomyDebugMode', newMode.toString());
+      }
     } catch (e) {
-      console.warn('Could not store debug mode preference in sessionStorage');
+      environmentSafeLog('Could not store debug mode preference in sessionStorage');
     }
   };
   
   // Initialize debug mode from query params or sessionStorage
   useEffect(() => {
     try {
-      // Check for development environment
-      const isDevEnvironment = process.env.NODE_ENV === 'development' || 
-                              process.env.REACT_APP_ENV === 'development';
+      // Always disable debug mode in production environment
+      if (isProduction()) {
+        setDebugMode(false);
+        // Clear any stored debug mode preference in production
+        if (typeof window !== 'undefined' && sessionStorage) {
+          sessionStorage.removeItem('taxonomyDebugMode');
+        }
+        return;
+      }
       
-      // Check for debug URL parameter
+      // In development, check for debug parameters
       const hasDebugParam = typeof window !== 'undefined' && 
         (window.location.search.includes('debug=true') || 
          window.location.search.includes('debug_mode=true'));
       
       // Check for stored debug mode preference
-      const storedDebugMode = typeof window !== 'undefined' && 
-        sessionStorage.getItem('taxonomyDebugMode') === 'true';
+      let storedDebugMode = false;
+      try {
+        if (typeof window !== 'undefined' && sessionStorage) {
+          storedDebugMode = sessionStorage.getItem('taxonomyDebugMode') === 'true';
+        }
+      } catch (e) {
+        // Silently fail if sessionStorage is not available
+      }
       
-      // Log the debug mode conditions for troubleshooting
-      console.log('[DEBUG PANEL] Environment checks:', {
-        isDevEnvironment,
+      // Log the debug mode conditions for troubleshooting (only in development)
+      environmentSafeLog('[DEBUG PANEL] Environment checks:', {
+        isDevelopment: isDevelopment(),
         hasDebugParam,
         storedDebugMode,
         'process.env.NODE_ENV': process.env.NODE_ENV,
         'window.location.search': window.location.search
       });
       
-      // Only enable debug mode in development or if explicitly requested
-      if (isDevEnvironment || hasDebugParam || storedDebugMode) {
+      // Only enable debug mode in development and if explicitly requested
+      if (isDevelopment() && (hasDebugParam || storedDebugMode)) {
         setDebugMode(true);
-        console.log('[DEBUG PANEL] Debug mode enabled');
+        environmentSafeLog('[DEBUG PANEL] Debug mode enabled');
       } else {
         setDebugMode(false);
-        console.log('[DEBUG PANEL] Debug mode disabled');
+        environmentSafeLog('[DEBUG PANEL] Debug mode disabled');
       }
     } catch (error) {
-      console.error('[DEBUG PANEL] Error initializing debug mode:', error);
+      environmentSafeLog('[DEBUG PANEL] Error initializing debug mode:', error);
       setDebugMode(false);
     }
   }, []);
@@ -658,14 +680,16 @@ const SimpleTaxonomySelectionV3: React.FC<SimpleTaxonomySelectionV3Props> = ({
             Retry Loading Subcategories
           </Button>
           
-          {/* Debug toggle - visible in development mode or with debug parameter */}
-          <Button 
-            size="small" 
-            variant="outlined" 
-            onClick={toggleDebugMode}
-          >
-            {debugMode ? 'Hide Debug Info' : 'Show Debug Info'}
-          </Button>
+          {/* Debug toggle - only shown in development mode */}
+          {!isProduction() && (
+            <Button 
+              size="small" 
+              variant="outlined" 
+              onClick={toggleDebugMode}
+            >
+              {debugMode ? 'Hide Debug Info' : 'Show Debug Info'}
+            </Button>
+          )}
           
           {isProcessing && <CircularProgress size={20} />}
         </Box>

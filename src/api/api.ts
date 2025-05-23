@@ -4,6 +4,7 @@ import {
   ErrorMessage,
   ErrorHandler,
 } from '../types/error.types';
+import { environmentSafeLog, environmentSafeWarn, environmentSafeError, isDebuggingAllowed } from '../utils/environment';
 
 // Create a global error handler for use outside React components
 let globalErrorHandler: ErrorHandler | null = null;
@@ -35,15 +36,15 @@ try {
   const localStorageMockOverride = localStorage.getItem('forceMockApi');
   if (localStorageMockOverride !== null) {
     apiConfig.useMockApi = localStorageMockOverride === 'true';
-    console.log(
+    environmentSafeLog(
       `Using localStorage override for mock API: ${apiConfig.useMockApi}`
     );
   }
 } catch (e) {
-  console.warn('Unable to access localStorage for mock API setting');
+  environmentSafeWarn('Unable to access localStorage for mock API setting');
 }
 
-console.log('API Configuration:', apiConfig);
+environmentSafeLog('API Configuration:', apiConfig);
 
 // Create an Axios instance
 const api = axios.create({
@@ -56,21 +57,23 @@ const api = axios.create({
 });
 
 // Log API configuration in a visible way
-console.log(`🔄 API Client configured with baseURL: ${apiConfig.baseURL}`);
+environmentSafeLog(`🔄 API Client configured with baseURL: ${apiConfig.baseURL}`);
 
 // Add request logging to see all outgoing requests
 api.interceptors.request.use(request => {
-  console.log(
-    `🔼 API Request: ${request.method?.toUpperCase()} ${request.baseURL}${
-      request.url
-    }`
-  );
-  console.log(
-    'Full Request URL:',
-    `${window.location.origin}${request.baseURL}${request.url}`
-  );
-  console.log('Request headers:', request.headers);
-  console.log('Request data:', request.data);
+  if (isDebuggingAllowed()) {
+    environmentSafeLog(
+      `🔼 API Request: ${request.method?.toUpperCase()} ${request.baseURL}${
+        request.url
+      }`
+    );
+    environmentSafeLog(
+      'Full Request URL:',
+      `${window.location.origin}${request.baseURL}${request.url}`
+    );
+    environmentSafeLog('Request headers:', request.headers);
+    environmentSafeLog('Request data:', request.data);
+  }
   return request;
 });
 
@@ -80,16 +83,16 @@ api.interceptors.request.use(
     const token = localStorage.getItem('accessToken');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
-      console.log('🔑 Added auth token to request');
+      environmentSafeLog('🔑 Added auth token to request');
     } else {
-      console.warn('⚠️ No auth token found in localStorage!');
+      environmentSafeWarn('⚠️ No auth token found in localStorage!');
 
       // For development/debugging in production environment
       // Create a test token if in development mode
       if (process.env.NODE_ENV === 'development') {
         // Only add this for certain endpoints where auth is required
         if (config.url?.includes('/assets')) {
-          console.log('🔧 Adding test token for development');
+          environmentSafeLog('🔧 Adding test token for development');
           config.headers.Authorization = 'Bearer test-development-token';
         }
       }
@@ -97,7 +100,7 @@ api.interceptors.request.use(
     return config;
   },
   error => {
-    console.error('Error in request interceptor:', error);
+    environmentSafeError('Error in request interceptor:', error);
     return Promise.reject(error);
   }
 );
@@ -108,13 +111,15 @@ export let isBackendAvailable = true;
 // Add response interceptor to handle common error cases
 api.interceptors.response.use(
   response => {
-    console.log(`🔽 API Response: ${response.status} ${response.statusText}`);
-    console.log('Response headers:', response.headers);
-    console.log(
-      'Response data preview:',
-      JSON.stringify(response.data).substring(0, 200) +
-        (JSON.stringify(response.data).length > 200 ? '...' : '')
-    );
+    if (isDebuggingAllowed()) {
+      environmentSafeLog(`🔽 API Response: ${response.status} ${response.statusText}`);
+      environmentSafeLog('Response headers:', response.headers);
+      environmentSafeLog(
+        'Response data preview:',
+        JSON.stringify(response.data).substring(0, 200) +
+          (JSON.stringify(response.data).length > 200 ? '...' : '')
+      );
+    }
 
     // If we get a successful response, the backend is available
     isBackendAvailable = true;
@@ -122,7 +127,7 @@ api.interceptors.response.use(
     return response;
   },
   error => {
-    console.log('❌ API Error:', error.message);
+    environmentSafeError('❌ API Error:', error.message);
 
     // Extract useful error information
     let errorMessage = 'An unknown error occurred';
@@ -130,15 +135,15 @@ api.interceptors.response.use(
     let severity: 'error' | 'warning' | 'info' = 'error';
 
     if (error.response) {
-      console.log(
+      environmentSafeLog(
         `Error response status: ${error.response.status} ${error.response.statusText}`
       );
-      console.log('Error response headers:', error.response.headers);
+      environmentSafeLog('Error response headers:', error.response.headers);
 
       try {
         // Try to log response data if available
         if (error.response.data) {
-          console.log('Error response data:', error.response.data);
+          environmentSafeLog('Error response data:', error.response.data);
 
           // Try to extract error message from various API formats
           if (typeof error.response.data === 'string') {
@@ -155,7 +160,7 @@ api.interceptors.response.use(
           }
         }
       } catch (e) {
-        console.log('Unable to log error response data:', e);
+        environmentSafeError('Unable to log error response data:', e);
       }
 
       // Handle 401 Unauthorized errors
