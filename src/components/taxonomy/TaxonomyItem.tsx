@@ -73,7 +73,7 @@ const TaxonomyItem: React.FC<TaxonomyItemProps> = ({
         textAlign: 'center', 
         padding: '12px 8px',
         height: 'auto', 
-        minHeight: '90px'
+        minHeight: '100px'
       }}
     >
       <div className="taxonomy-item-code" style={{ fontSize: '16px', fontWeight: 'bold' }}>{item.code}</div>
@@ -84,8 +84,10 @@ const TaxonomyItem: React.FC<TaxonomyItemProps> = ({
         margin: '8px 0',
         maxWidth: '100%',
         overflow: 'hidden',
-        textOverflow: 'ellipsis',
-        whiteSpace: 'nowrap'
+        display: '-webkit-box',
+        WebkitLineClamp: 2,
+        WebkitBoxOrient: 'vertical',
+        lineHeight: '1.2'
       }}>{displayName}</div>
       <div className="taxonomy-item-numeric" style={{ fontSize: '12px', color: '#666' }}>{item.numericCode}</div>
     </div>
