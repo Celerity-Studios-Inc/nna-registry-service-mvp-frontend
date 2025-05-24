@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import { Box, Typography, Paper, Chip, Grid } from '@mui/material';
 import { AccountTree as TaxonomyIcon } from '@mui/icons-material';
 import { taxonomyService } from '../../services/simpleTaxonomyService';
+import { STANDARD_LAYER_NAMES } from '../../utils/logger';
 
 // Helper function to handle display name from taxonomy data
 const formatDisplayName = (name?: string): string => {
@@ -9,6 +10,11 @@ const formatDisplayName = (name?: string): string => {
   
   // Clean up formatting - replace underscores with spaces
   return name.replace(/_/g, ' ');
+};
+
+// Helper function to get layer name from layer code
+const getLayerName = (layer: string): string => {
+  return STANDARD_LAYER_NAMES[layer] || layer;
 };
 
 // Generic helper function to get display name for category and subcategory codes
@@ -127,12 +133,18 @@ const TaxonomyContext: React.FC<TaxonomyContextProps> = ({
               <Typography variant="body2" fontWeight="bold" color="text.secondary" minWidth="80px">
                 Layer:
               </Typography>
-              <Chip 
-                label={`${layer}${layerName ? ` - ${layerName}` : ''}`}
-                size="small"
-                color="primary"
-                variant="outlined"
-              />
+              <Box display="flex" alignItems="center">
+                <Chip 
+                  label={layer}
+                  size="small" 
+                  color="primary"
+                  variant="outlined"
+                  sx={{ mr: 1 }}
+                />
+                <Typography variant="body2" fontWeight="medium" color="text.primary">
+                  {layerName || getLayerName(layer)}
+                </Typography>
+              </Box>
             </Box>
             
             <Box display="flex" alignItems="center" gap={1}>

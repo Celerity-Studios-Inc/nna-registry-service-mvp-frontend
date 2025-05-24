@@ -671,15 +671,6 @@ const SimpleTaxonomySelectionV3: React.FC<SimpleTaxonomySelectionV3Props> = ({
         </Typography>
         
         <Box display="flex" alignItems="center" gap={1}>
-          <Button 
-            size="small" 
-            variant="outlined" 
-            onClick={handleRetrySubcategories}
-            disabled={!selectedLayer || !selectedCategoryCode || isProcessing}
-          >
-            Retry Loading Subcategories
-          </Button>
-          
           {/* Debug button completely hidden in production */}
           {process.env.NODE_ENV !== 'production' && window.location.search.includes('debug=true') && (
             <Button 

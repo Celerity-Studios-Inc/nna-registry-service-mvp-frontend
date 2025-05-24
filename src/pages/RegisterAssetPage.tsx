@@ -204,40 +204,7 @@ const RegisterAssetPage: React.FC = () => {
     };
   }, []);
   
-  // Run quick taxonomy test when component mounts
-  React.useEffect(() => {
-    // Run test when component mounts
-    runQuickTaxonomyTest();
-    
-    // Direct test of the enhanced service
-    const testDirectly = () => {
-      try {
-        const { getSubcategories } = require('../services/enhancedTaxonomyService');
-        environmentSafeLog('===== DIRECT SERVICE TEST =====');
-        environmentSafeLog('Testing S.DNC directly:');
-        const resultSDNC = getSubcategories('S', 'DNC');
-        environmentSafeLog('S.DNC Result:', resultSDNC);
-        
-        environmentSafeLog('Testing L.PRF directly:');
-        const resultLPRF = getSubcategories('L', 'PRF');
-        environmentSafeLog('L.PRF Result:', resultLPRF);
-        environmentSafeLog('===== END DIRECT TEST =====');
-      } catch (error) {
-        console.error('Direct test failed:', error);
-      }
-    };
-    
-    // Call the direct test
-    testDirectly();
-    
-    // Run the comprehensive taxonomy fix validation (with delay to ensure form is ready)
-    setTimeout(() => {
-      environmentSafeLog('Running comprehensive taxonomy fix validation...');
-      // Cast setValue to the expected type
-      const setValueAny = (name: string, value: any) => setValue(name as any, value);
-      validateTaxonomyFix(setValueAny);
-    }, 2000);
-  }, []);
+  // Tests disabled - no longer needed as taxonomy has been stabilized
   
 
   // State
