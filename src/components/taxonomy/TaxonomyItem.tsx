@@ -80,14 +80,16 @@ const TaxonomyItem: React.FC<TaxonomyItemProps> = ({
       <div className="taxonomy-item-name" style={{ 
         fontWeight: 'bold', 
         color: '#000', 
-        fontSize: '15px',
-        margin: '8px 0',
+        fontSize: '14px',
+        margin: '6px 0',
         maxWidth: '100%',
         overflow: 'hidden',
         display: '-webkit-box',
         WebkitLineClamp: 2,
         WebkitBoxOrient: 'vertical',
-        lineHeight: '1.2'
+        lineHeight: '1.3',
+        wordBreak: 'break-word',
+        padding: '0 2px'
       }}>{displayName}</div>
       <div className="taxonomy-item-numeric" style={{ fontSize: '12px', color: '#666' }}>{item.numericCode}</div>
     </div>

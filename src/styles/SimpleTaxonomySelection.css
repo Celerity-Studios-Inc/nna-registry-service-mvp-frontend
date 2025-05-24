@@ -55,7 +55,7 @@
 /* Fixed grid layout for taxonomy items with higher specificity */
 .taxonomy-section .taxonomy-items {
   display: grid !important;
-  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)) !important;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)) !important;
   grid-template-rows: auto !important;
   grid-auto-flow: row !important;
   grid-auto-rows: auto !important;
@@ -90,7 +90,7 @@
 /* Additional selector for higher specificity - for category section */
 .simple-taxonomy-selection .taxonomy-section:first-child .taxonomy-items {
   display: grid !important;
-  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)) !important;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)) !important;
   grid-template-rows: auto !important;
   grid-auto-flow: row !important;
   gap: 12px !important;
@@ -99,7 +99,7 @@
 /* Target subcategory grid specifically with even higher specificity */
 .simple-taxonomy-selection .taxonomy-section:nth-child(2) .taxonomy-items {
   display: grid !important;
-  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)) !important;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)) !important;
   grid-template-rows: auto !important;
   grid-auto-flow: row !important;
   gap: 12px !important;
@@ -177,13 +177,17 @@
 }
 
 .taxonomy-item-name {
-  font-size: 0.8rem;
+  font-size: 0.9rem;
   color: #343a40;
   overflow: hidden;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
-  line-height: 1.2;
+  line-height: 1.3;
+  word-break: break-word;
+  padding: 0 2px;
+  max-width: 100%;
+  margin: 6px 0;
 }
 
 /* Status states with consistent sizing */
@@ -373,7 +377,7 @@ html body .simple-taxonomy-selection .taxonomy-section .taxonomy-items {
   display: grid !important;
   grid-template-columns: repeat(
     auto-fill,
-    minmax(130px, 1fr)
+    minmax(150px, 1fr)
   ) !important; /* Adjusted for better fit */
   grid-template-rows: auto !important;
   grid-auto-flow: row !important;
