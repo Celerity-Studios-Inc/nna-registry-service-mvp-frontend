@@ -4,7 +4,7 @@
 
 - **Repository URL**: https://github.com/Celerity-Studios-Inc/nna-registry-service-mvp-frontend
 - **Branch**: main
-- **Latest Commit**: 53f5065474d15be2ad1bc8dec95f8e5b52cf93b9
+- **Latest Commit**: 32fb60a19e83984cb8394e74e4925150e5ce6164
 - **Project**: NNA Registry Service MVP Frontend
 - **Framework**: React/TypeScript with Material UI
 
@@ -24,77 +24,77 @@ Please conduct a comprehensive code review of the NNA Registry Service Frontend 
 Please start by reviewing these core documents, which provide context about the project:
 
 1. **Project Overview**: 
-   - https://github.com/Celerity-Studios-Inc/nna-registry-service-mvp-frontend/blob/53f5065474d15be2ad1bc8dec95f8e5b52cf93b9/docs/review/PROJECT_OVERVIEW.md
+   - https://github.com/Celerity-Studios-Inc/nna-registry-service-mvp-frontend/blob/32fb60a19e83984cb8394e74e4925150e5ce6164/docs/review/PROJECT_OVERVIEW.md
 
 2. **Architecture**:
-   - https://github.com/Celerity-Studios-Inc/nna-registry-service-mvp-frontend/blob/53f5065474d15be2ad1bc8dec95f8e5b52cf93b9/docs/review/ARCHITECTURE.md
+   - https://github.com/Celerity-Studios-Inc/nna-registry-service-mvp-frontend/blob/32fb60a19e83984cb8394e74e4925150e5ce6164/docs/review/ARCHITECTURE.md
 
 3. **Taxonomy System**:
-   - https://github.com/Celerity-Studios-Inc/nna-registry-service-mvp-frontend/blob/53f5065474d15be2ad1bc8dec95f8e5b52cf93b9/docs/review/TAXONOMY_SYSTEM.md
-   - https://github.com/Celerity-Studios-Inc/nna-registry-service-mvp-frontend/blob/53f5065474d15be2ad1bc8dec95f8e5b52cf93b9/docs/review/TAXONOMY_SYSTEM_DOCUMENTATION.md
+   - https://github.com/Celerity-Studios-Inc/nna-registry-service-mvp-frontend/blob/32fb60a19e83984cb8394e74e4925150e5ce6164/docs/review/TAXONOMY_SYSTEM.md
+   - https://github.com/Celerity-Studios-Inc/nna-registry-service-mvp-frontend/blob/32fb60a19e83984cb8394e74e4925150e5ce6164/docs/review/TAXONOMY_SYSTEM_DOCUMENTATION.md
 
 4. **Current Status and Gaps**:
-   - https://github.com/Celerity-Studios-Inc/nna-registry-service-mvp-frontend/blob/53f5065474d15be2ad1bc8dec95f8e5b52cf93b9/docs/review/CURRENT_STATUS.md
-   - https://github.com/Celerity-Studios-Inc/nna-registry-service-mvp-frontend/blob/53f5065474d15be2ad1bc8dec95f8e5b52cf93b9/docs/review/GAPS_AND_TODOS.md
+   - https://github.com/Celerity-Studios-Inc/nna-registry-service-mvp-frontend/blob/32fb60a19e83984cb8394e74e4925150e5ce6164/docs/review/CURRENT_STATUS.md
+   - https://github.com/Celerity-Studios-Inc/nna-registry-service-mvp-frontend/blob/32fb60a19e83984cb8394e74e4925150e5ce6164/docs/review/GAPS_AND_TODOS.md
 
 5. **Recent Changes**:
-   - https://github.com/Celerity-Studios-Inc/nna-registry-service-mvp-frontend/blob/53f5065474d15be2ad1bc8dec95f8e5b52cf93b9/docs/review/RECENT_CHANGES.md
+   - https://github.com/Celerity-Studios-Inc/nna-registry-service-mvp-frontend/blob/32fb60a19e83984cb8394e74e4925150e5ce6164/docs/review/RECENT_CHANGES.md
 
 6. **Implementation Details**:
-   - https://github.com/Celerity-Studios-Inc/nna-registry-service-mvp-frontend/blob/53f5065474d15be2ad1bc8dec95f8e5b52cf93b9/docs/review/IMPLEMENTATION_DETAILS.md
-   - https://github.com/Celerity-Studios-Inc/nna-registry-service-mvp-frontend/blob/53f5065474d15be2ad1bc8dec95f8e5b52cf93b9/docs/review/IMPLEMENTATION.md
+   - https://github.com/Celerity-Studios-Inc/nna-registry-service-mvp-frontend/blob/32fb60a19e83984cb8394e74e4925150e5ce6164/docs/review/IMPLEMENTATION_DETAILS.md
+   - https://github.com/Celerity-Studios-Inc/nna-registry-service-mvp-frontend/blob/32fb60a19e83984cb8394e74e4925150e5ce6164/docs/review/IMPLEMENTATION.md
 
 ## Key Source Code Files
 
 Please review these critical source code files to understand the implementation:
 
 1. **App Entry Point**:
-   - https://github.com/Celerity-Studios-Inc/nna-registry-service-mvp-frontend/blob/53f5065474d15be2ad1bc8dec95f8e5b52cf93b9/src/App.tsx
+   - https://github.com/Celerity-Studios-Inc/nna-registry-service-mvp-frontend/blob/32fb60a19e83984cb8394e74e4925150e5ce6164/src/App.tsx
 
 2. **Taxonomy Components**:
-   - https://github.com/Celerity-Studios-Inc/nna-registry-service-mvp-frontend/blob/53f5065474d15be2ad1bc8dec95f8e5b52cf93b9/src/components/taxonomy/TaxonomySelector.tsx
-   - https://github.com/Celerity-Studios-Inc/nna-registry-service-mvp-frontend/blob/53f5065474d15be2ad1bc8dec95f8e5b52cf93b9/src/components/taxonomy/CategoryGrid.tsx
-   - https://github.com/Celerity-Studios-Inc/nna-registry-service-mvp-frontend/blob/53f5065474d15be2ad1bc8dec95f8e5b52cf93b9/src/components/taxonomy/SubcategoryGrid.tsx
-   - https://github.com/Celerity-Studios-Inc/nna-registry-service-mvp-frontend/blob/53f5065474d15be2ad1bc8dec95f8e5b52cf93b9/src/components/taxonomy/LayerGrid.tsx
+   - https://github.com/Celerity-Studios-Inc/nna-registry-service-mvp-frontend/blob/32fb60a19e83984cb8394e74e4925150e5ce6164/src/components/taxonomy/TaxonomySelector.tsx
+   - https://github.com/Celerity-Studios-Inc/nna-registry-service-mvp-frontend/blob/32fb60a19e83984cb8394e74e4925150e5ce6164/src/components/taxonomy/CategoryGrid.tsx
+   - https://github.com/Celerity-Studios-Inc/nna-registry-service-mvp-frontend/blob/32fb60a19e83984cb8394e74e4925150e5ce6164/src/components/taxonomy/SubcategoryGrid.tsx
+   - https://github.com/Celerity-Studios-Inc/nna-registry-service-mvp-frontend/blob/32fb60a19e83984cb8394e74e4925150e5ce6164/src/components/taxonomy/LayerGrid.tsx
 
 3. **Taxonomy Provider and Services**:
-   - https://github.com/Celerity-Studios-Inc/nna-registry-service-mvp-frontend/blob/53f5065474d15be2ad1bc8dec95f8e5b52cf93b9/src/providers/taxonomy/TaxonomyDataProvider.tsx
-   - https://github.com/Celerity-Studios-Inc/nna-registry-service-mvp-frontend/blob/53f5065474d15be2ad1bc8dec95f8e5b52cf93b9/src/services/simpleTaxonomyService.ts
+   - https://github.com/Celerity-Studios-Inc/nna-registry-service-mvp-frontend/blob/32fb60a19e83984cb8394e74e4925150e5ce6164/src/providers/taxonomy/TaxonomyDataProvider.tsx
+   - https://github.com/Celerity-Studios-Inc/nna-registry-service-mvp-frontend/blob/32fb60a19e83984cb8394e74e4925150e5ce6164/src/services/simpleTaxonomyService.ts
 
 4. **Asset Registration Page**:
-   - https://github.com/Celerity-Studios-Inc/nna-registry-service-mvp-frontend/blob/53f5065474d15be2ad1bc8dec95f8e5b52cf93b9/src/pages/new/RegisterAssetPageNew.tsx
+   - https://github.com/Celerity-Studios-Inc/nna-registry-service-mvp-frontend/blob/32fb60a19e83984cb8394e74e4925150e5ce6164/src/pages/new/RegisterAssetPageNew.tsx
 
 5. **Taxonomy Context and Hooks**:
-   - https://github.com/Celerity-Studios-Inc/nna-registry-service-mvp-frontend/blob/53f5065474d15be2ad1bc8dec95f8e5b52cf93b9/src/contexts/TaxonomyContext.tsx
-   - https://github.com/Celerity-Studios-Inc/nna-registry-service-mvp-frontend/blob/53f5065474d15be2ad1bc8dec95f8e5b52cf93b9/src/hooks/useTaxonomy.ts
+   - https://github.com/Celerity-Studios-Inc/nna-registry-service-mvp-frontend/blob/32fb60a19e83984cb8394e74e4925150e5ce6164/src/contexts/TaxonomyContext.tsx
+   - https://github.com/Celerity-Studios-Inc/nna-registry-service-mvp-frontend/blob/32fb60a19e83984cb8394e74e4925150e5ce6164/src/hooks/useTaxonomy.ts
 
 6. **Error Handling**:
-   - https://github.com/Celerity-Studios-Inc/nna-registry-service-mvp-frontend/blob/53f5065474d15be2ad1bc8dec95f8e5b52cf93b9/src/components/ErrorBoundary.tsx
-   - https://github.com/Celerity-Studios-Inc/nna-registry-service-mvp-frontend/blob/53f5065474d15be2ad1bc8dec95f8e5b52cf93b9/src/components/TaxonomyErrorRecovery.tsx
+   - https://github.com/Celerity-Studios-Inc/nna-registry-service-mvp-frontend/blob/32fb60a19e83984cb8394e74e4925150e5ce6164/src/components/ErrorBoundary.tsx
+   - https://github.com/Celerity-Studios-Inc/nna-registry-service-mvp-frontend/blob/32fb60a19e83984cb8394e74e4925150e5ce6164/src/components/TaxonomyErrorRecovery.tsx
 
 7. **API Services**:
-   - https://github.com/Celerity-Studios-Inc/nna-registry-service-mvp-frontend/blob/53f5065474d15be2ad1bc8dec95f8e5b52cf93b9/src/api/assetService.ts
-   - https://github.com/Celerity-Studios-Inc/nna-registry-service-mvp-frontend/blob/53f5065474d15be2ad1bc8dec95f8e5b52cf93b9/src/api/taxonomyService.ts
+   - https://github.com/Celerity-Studios-Inc/nna-registry-service-mvp-frontend/blob/32fb60a19e83984cb8394e74e4925150e5ce6164/src/api/assetService.ts
+   - https://github.com/Celerity-Studios-Inc/nna-registry-service-mvp-frontend/blob/32fb60a19e83984cb8394e74e4925150e5ce6164/src/api/taxonomyService.ts
 
 8. **Types**:
-   - https://github.com/Celerity-Studios-Inc/nna-registry-service-mvp-frontend/blob/53f5065474d15be2ad1bc8dec95f8e5b52cf93b9/src/types/taxonomy.types.ts
-   - https://github.com/Celerity-Studios-Inc/nna-registry-service-mvp-frontend/blob/53f5065474d15be2ad1bc8dec95f8e5b52cf93b9/src/types/asset.types.ts
+   - https://github.com/Celerity-Studios-Inc/nna-registry-service-mvp-frontend/blob/32fb60a19e83984cb8394e74e4925150e5ce6164/src/types/taxonomy.types.ts
+   - https://github.com/Celerity-Studios-Inc/nna-registry-service-mvp-frontend/blob/32fb60a19e83984cb8394e74e4925150e5ce6164/src/types/asset.types.ts
 
 ## Recent Improvements
 
 The latest work has focused on several areas:
 
 1. **Taxonomy System Refactoring**:
-   - https://github.com/Celerity-Studios-Inc/nna-registry-service-mvp-frontend/blob/53f5065474d15be2ad1bc8dec95f8e5b52cf93b9/docs/review/TAXONOMY_REFACTOR.md
+   - https://github.com/Celerity-Studios-Inc/nna-registry-service-mvp-frontend/blob/32fb60a19e83984cb8394e74e4925150e5ce6164/docs/review/TAXONOMY_REFACTOR.md
 
 2. **Improved Error Handling**:
-   - https://github.com/Celerity-Studios-Inc/nna-registry-service-mvp-frontend/blob/53f5065474d15be2ad1bc8dec95f8e5b52cf93b9/docs/review/PHASE_8_STEP_3_OPTIMIZATION_SUMMARY.md
+   - https://github.com/Celerity-Studios-Inc/nna-registry-service-mvp-frontend/blob/32fb60a19e83984cb8394e74e4925150e5ce6164/docs/review/PHASE_8_STEP_3_OPTIMIZATION_SUMMARY.md
 
 3. **State Management Optimizations**:
-   - https://github.com/Celerity-Studios-Inc/nna-registry-service-mvp-frontend/blob/53f5065474d15be2ad1bc8dec95f8e5b52cf93b9/docs/review/TAXONOMY_SELECTION_FIX.md
+   - https://github.com/Celerity-Studios-Inc/nna-registry-service-mvp-frontend/blob/32fb60a19e83984cb8394e74e4925150e5ce6164/docs/review/TAXONOMY_SELECTION_FIX.md
 
 4. **Emergency Feature Implementation**:
-   - https://github.com/Celerity-Studios-Inc/nna-registry-service-mvp-frontend/blob/53f5065474d15be2ad1bc8dec95f8e5b52cf93b9/docs/review/EMERGENCY_REGISTRATION.md
+   - https://github.com/Celerity-Studios-Inc/nna-registry-service-mvp-frontend/blob/32fb60a19e83984cb8394e74e4925150e5ce6164/docs/review/EMERGENCY_REGISTRATION.md
 
 ## Known Issues
 
@@ -121,12 +121,30 @@ Please organize your review into the following sections:
 7. **Security Considerations**: Security issues and recommendations
 8. **Next Steps**: Prioritized recommendations for improvement
 
+## Project Organization
+
+The project has been organized into a structured directory layout:
+
+1. **Source Code Structure**:
+   - https://github.com/Celerity-Studios-Inc/nna-registry-service-mvp-frontend/blob/32fb60a19e83984cb8394e74e4925150e5ce6164/docs/PROJECT_ORGANIZATION.md
+
+2. **Documentation Organization**:
+   - `/docs/review/` - Documentation for code review
+   - `/docs/archive/` - Historical documentation
+   - `/docs/taxonomy/` - Taxonomy-specific documentation
+
+3. **Scripts Organization**:
+   - `/scripts/backend/` - Backend-related scripts
+   - `/scripts/deployment/` - Deployment scripts
+   - `/scripts/testing/` - Testing scripts
+
 ## Additional Considerations
 
 1. **Taxonomy System**: This is a core part of the application with complex requirements
 2. **Error Handling**: The application has extensive error recovery mechanisms
 3. **State Management**: The app uses React context and custom hooks for state management
 4. **API Integration**: The application integrates with a backend API
+5. **Project Structure**: The project follows a well-organized structure with documentation, scripts, and source code in logical directories
 
 ## Request for Specific Feedback
 
