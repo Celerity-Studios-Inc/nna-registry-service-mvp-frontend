@@ -39,13 +39,49 @@ import { taxonomyService } from '../../services/simpleTaxonomyService';
 import { taxonomyFormatter } from '../../utils/taxonomyFormatter';
 import FilePreview from '../common/FilePreview';
 
+// Helper function to format display name from taxonomy data
+const formatDisplayName = (name?: string): string => {
+  if (!name) return '';
+  
+  // Clean up formatting - replace underscores with spaces
+  return name.replace(/_/g, ' ');
+};
+
 // Helper function to get display name for category and subcategory codes
 const getCategoryDisplayName = (code: string, name?: string): string => {
+  // If we have a name directly from the taxonomy service, use it (priority 1)
   if (name && name.trim() !== '') {
-    return name.replace(/_/g, ' ');
+    return formatDisplayName(name);
   }
   
-  // Fallback display names for common categories and subcategories
+  // Try to find the name by looking up in the taxonomy service data (priority 2)
+  try {
+    // For categories, we can try to get the categories for the layer and find the matching one
+    const currentLayer = sessionStorage.getItem('selected_layer');
+    if (currentLayer) {
+      // First, check if this might be a category code
+      const categories = taxonomyService.getCategories(currentLayer);
+      const matchingCategory = categories.find(cat => cat.code === code);
+      if (matchingCategory && matchingCategory.name) {
+        return formatDisplayName(matchingCategory.name);
+      }
+      
+      // Then, check if it might be a subcategory code
+      // We'll need the category code as well, which we can get from session storage
+      const currentCategory = sessionStorage.getItem('selected_category');
+      if (currentCategory) {
+        const subcategories = taxonomyService.getSubcategories(currentLayer, currentCategory);
+        const matchingSubcategory = subcategories.find(subcat => subcat.code === code);
+        if (matchingSubcategory && matchingSubcategory.name) {
+          return formatDisplayName(matchingSubcategory.name);
+        }
+      }
+    }
+  } catch (error) {
+    console.warn(`[ReviewSubmit] Could not get name from taxonomy service for code: ${code}`, error);
+  }
+  
+  // Fallback display names for common categories and subcategories (priority 3)
   const displayNames: Record<string, string> = {
     // Categories
     'POP': 'Pop',
@@ -92,6 +128,7 @@ const getCategoryDisplayName = (code: string, name?: string): string => {
     'EXP': 'Experimental'
   };
   
+  // Return from our fallback list or just the code itself if nothing else works
   return displayNames[code] || code;
 };
 

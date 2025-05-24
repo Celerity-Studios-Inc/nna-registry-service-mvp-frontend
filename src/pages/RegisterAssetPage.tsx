@@ -1987,15 +1987,22 @@ const RegisterAssetPage: React.FC = () => {
         {/* CRITICAL FIX: Ensure there's absolutely nothing between the success heading and the content box */}
         {/* This is done with a fragment wrapper to control exactly what renders */}
         <>
-          <Typography variant="h4" gutterBottom color="success.main" sx={{ mb: 2 }}>
+          <Typography variant="h4" gutterBottom color="success.main" sx={{ mb: 1 }}>
             Asset Created Successfully!
           </Typography>
+          
+          {/* Show the correct HFN from asset details metadata in the success title */}
+          {displayHfn && (
+            <Typography variant="h6" color="primary.main" sx={{ mb: 2, fontWeight: 'medium' }}>
+              {displayHfn}
+            </Typography>
+          )}
           
           {/* Force direct adjacency between the heading and content box */}
         </>
         
         <Box sx={{ mt: 0, p: 3, border: '1px solid #e0e0e0', borderRadius: 2, maxWidth: '800px', mx: 'auto' }}>
-          {/* Asset name only - remove HFN from top header to avoid inconsistency */}
+          {/* Asset name only - the HFN is now displayed in the title above */}
           <Typography variant="h6" gutterBottom>
             {createdAsset.name}
           </Typography>

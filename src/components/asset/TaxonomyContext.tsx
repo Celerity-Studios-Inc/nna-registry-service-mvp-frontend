@@ -2,14 +2,22 @@ import React from 'react';
 import { Box, Typography, Paper, Chip, Grid } from '@mui/material';
 import { AccountTree as TaxonomyIcon } from '@mui/icons-material';
 
-// Helper function to get display name for category codes
+// Helper function to handle display name from taxonomy data
+const formatDisplayName = (name?: string): string => {
+  if (!name) return '';
+  
+  // Clean up formatting - replace underscores with spaces
+  return name.replace(/_/g, ' ');
+};
+
+// Helper function to get display name for category and subcategory codes
 const getCategoryDisplayName = (code: string, name?: string): string => {
   if (name && name.trim() !== '') {
-    return name.replace(/_/g, ' ');
+    return formatDisplayName(name);
   }
   
-  // Fallback display names for common categories
-  const categoryDisplayNames: Record<string, string> = {
+  // Fallback display names for common categories and subcategories
+  const displayNames: Record<string, string> = {
     // Categories
     'POP': 'Pop',
     'ROK': 'Rock',
@@ -55,13 +63,7 @@ const getCategoryDisplayName = (code: string, name?: string): string => {
     'EXP': 'Experimental'
   };
   
-  // If we have a code match in our dictionary, use it
-  if (categoryDisplayNames[code]) {
-    return categoryDisplayNames[code];
-  }
-  
-  // Otherwise, just return the code itself as a fallback
-  return code;
+  return displayNames[code] || code;
 };
 
 interface TaxonomyContextProps {
