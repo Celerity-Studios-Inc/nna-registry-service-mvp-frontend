@@ -553,7 +553,7 @@ const SimpleTaxonomySelectionV3: React.FC<SimpleTaxonomySelectionV3Props> = ({
 
       <Box mb={3} sx={{ opacity: selectedLayer ? 1 : 0.5 }}>
         <Typography variant="h6" gutterBottom sx={{ fontWeight: 'bold', color: '#333' }}>
-          Step 2: Select Category
+          Step 2.1: Select Category
         </Typography>
         <div className="taxonomy-section">
           <div className="taxonomy-section-title">
@@ -603,7 +603,7 @@ const SimpleTaxonomySelectionV3: React.FC<SimpleTaxonomySelectionV3Props> = ({
 
       <Box mb={3} sx={{ opacity: selectedCategoryCode ? 1 : 0.5 }}>
         <Typography variant="h6" gutterBottom sx={{ fontWeight: 'bold', color: '#333' }}>
-          Step 3: Select Subcategory
+          Step 2.2: Select Subcategory
         </Typography>
         <div className="taxonomy-section">
           <div className="taxonomy-section-title">
