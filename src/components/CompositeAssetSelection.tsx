@@ -125,6 +125,39 @@ const CompositeAssetSelection: React.FC<CompositeAssetSelectionProps> = ({
     return errors;
   };
 
+  // Step 2: Validate components function as specified
+  const validateComponents = (components: Asset[]): string[] => {
+    const errors: string[] = [];
+    
+    // Check if all components have a layer in allowed layers
+    const invalidComponents = components.filter(
+      asset => !COMPATIBLE_LAYERS.includes(asset.layer)
+    );
+    
+    if (invalidComponents.length > 0) {
+      errors.push(
+        `Components from incompatible layers detected: ${invalidComponents
+          .map(asset => `${asset.layer} (${asset.friendlyName || asset.name})`)
+          .join(', ')}. Allowed layers: ${COMPATIBLE_LAYERS.join(', ')}`
+      );
+    }
+    
+    return errors;
+  };
+
+  // Handle Continue button click with validation
+  const handleContinue = () => {
+    const errors = validateComponents(selectedComponents);
+    setValidationErrors(errors);
+    
+    if (errors.length === 0) {
+      toast.success('All components are compatible! Ready to proceed.');
+      // Additional logic for proceeding with composite creation would go here
+    } else {
+      toast.error('Please fix validation errors before continuing');
+    }
+  };
+
   // Verify rights for components via Clearity integration
   const verifyComponentRights = async (asset: Asset): Promise<RightsVerificationResult> => {
     try {
@@ -434,6 +467,21 @@ const CompositeAssetSelection: React.FC<CompositeAssetSelectionProps> = ({
           </Paper>
         </Grid>
       </Grid>
+
+      {/* Continue Button */}
+      {selectedComponents.length > 0 && (
+        <Box sx={{ mt: 3, display: 'flex', justifyContent: 'center' }}>
+          <Button
+            variant="contained"
+            color="primary"
+            size="large"
+            onClick={handleContinue}
+            aria-label="Continue with selected components"
+          >
+            Continue
+          </Button>
+        </Box>
+      )}
 
       {/* Preview Dialog */}
       <Dialog
