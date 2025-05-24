@@ -680,8 +680,8 @@ const SimpleTaxonomySelectionV3: React.FC<SimpleTaxonomySelectionV3Props> = ({
             Retry Loading Subcategories
           </Button>
           
-          {/* Debug toggle - only visible in development and when explicitly requested in URL */}
-          {!isProduction() && process.env.NODE_ENV === 'development' && window.location.search.includes('debug=true') && (
+          {/* Debug button completely hidden in production */}
+          {process.env.NODE_ENV !== 'production' && window.location.search.includes('debug=true') && (
             <Button 
               size="small" 
               variant="outlined" 
@@ -695,8 +695,8 @@ const SimpleTaxonomySelectionV3: React.FC<SimpleTaxonomySelectionV3Props> = ({
         </Box>
       </Box>
       
-      {/* Show debug info only when explicitly enabled via URL parameter - never in production */}
-      {debugMode && process.env.NODE_ENV === 'development' && window.location.search.includes('debug=true') && (
+      {/* Debug info completely hidden in production */}
+      {debugMode && process.env.NODE_ENV !== 'production' && window.location.search.includes('debug=true') && (
         <Alert severity="info" sx={{ mt: 2 }}>
           <Typography variant="subtitle2" gutterBottom>
             Debug Information
@@ -710,23 +710,6 @@ const SimpleTaxonomySelectionV3: React.FC<SimpleTaxonomySelectionV3Props> = ({
             <strong>Load Attempts:</strong> {selectedLayer && selectedCategoryCode ? 
               loadAttemptsRef.current[getSubcategoryCacheKey(selectedLayer, selectedCategoryCode)] || 0 : 0}
           </Typography>
-          
-          {selectedLayer && selectedCategoryCode && (
-            <Box mt={1}>
-              <Typography variant="caption">
-                Subcategory Codes:
-              </Typography>
-              <Box component="ul" sx={{ m: '5px 0', pl: '20px' }}>
-                {subcategoryOptions.map((item, index) => (
-                  <li key={index}>
-                    <Typography variant="caption">
-                      {item.code} ({item.numericCode}) - {item.name}
-                    </Typography>
-                  </li>
-                ))}
-              </Box>
-            </Box>
-          )}
         </Alert>
       )}
     </div>

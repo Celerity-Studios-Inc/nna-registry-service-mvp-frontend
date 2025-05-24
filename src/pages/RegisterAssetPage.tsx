@@ -1134,20 +1134,22 @@ const RegisterAssetPage: React.FC = () => {
               onSubcategorySelect={handleSubcategorySelectV3}
             />
             
-            {/* Debug component - add this temporarily */}
-            <Box sx={{ mt: 2, p: 2, bgcolor: 'info.light', borderRadius: 1 }}>
-              <Typography variant="subtitle2">Debug Info:</Typography>
-              <Typography variant="body2">
-                Layer: {watchLayer || 'None'}<br />
-                Category: {watchCategoryCode || 'None'}<br />
-                Subcategory: {watchSubcategoryCode || 'None'}
-              </Typography>
-              {watchLayer && watchCategoryCode && (
-                <Typography variant="body2" color="primary">
-                  Expected subcategories should load for: {watchLayer}.{watchCategoryCode}
+            {/* Debug component - only shown in development with debug parameter */}
+            {process.env.NODE_ENV !== 'production' && window.location.search.includes('debug=true') && (
+              <Box sx={{ mt: 2, p: 2, bgcolor: 'info.light', borderRadius: 1 }}>
+                <Typography variant="subtitle2">Debug Info:</Typography>
+                <Typography variant="body2">
+                  Layer: {watchLayer || 'None'}<br />
+                  Category: {watchCategoryCode || 'None'}<br />
+                  Subcategory: {watchSubcategoryCode || 'None'}
                 </Typography>
-              )}
-            </Box>
+                {watchLayer && watchCategoryCode && (
+                  <Typography variant="body2" color="primary">
+                    Expected subcategories should load for: {watchLayer}.{watchCategoryCode}
+                  </Typography>
+                )}
+              </Box>
+            )}
           </>
         );
       case 2:
