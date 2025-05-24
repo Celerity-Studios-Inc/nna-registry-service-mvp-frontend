@@ -39,6 +39,62 @@ import { taxonomyService } from '../../services/simpleTaxonomyService';
 import { taxonomyFormatter } from '../../utils/taxonomyFormatter';
 import FilePreview from '../common/FilePreview';
 
+// Helper function to get display name for category and subcategory codes
+const getCategoryDisplayName = (code: string, name?: string): string => {
+  if (name && name.trim() !== '') {
+    return name.replace(/_/g, ' ');
+  }
+  
+  // Fallback display names for common categories and subcategories
+  const displayNames: Record<string, string> = {
+    // Categories
+    'POP': 'Pop',
+    'ROK': 'Rock',
+    'DNC': 'Dance Electronic',
+    'HIP': 'Hip Hop',
+    'RNB': 'R&B',
+    'PRF': 'Performance',
+    'EVC': 'Everyday Casual',
+    'BCH': 'Beach',
+    'LAT': 'Latin',
+    'VAV': 'Virtual Avatars',
+    'JZZ': 'Jazz',
+    'AFB': 'Afrobeats Dance',
+    'FLK': 'Folk',
+    'MET': 'Metal',
+    'CTR': 'Country',
+    'CLS': 'Classical',
+    'DIS': 'Disco',
+    'EDM': 'EDM',
+    'URB': 'Urban Dance',
+    'BLT': 'Ballet',
+    'HHS': 'Hip Hop Style',
+    
+    // Subcategories
+    'BAS': 'Base',
+    'PAL': 'Palm',
+    'REG': 'Reggaeton',
+    'CUM': 'Cumbia',
+    'MER': 'Merengue',
+    'SAL': 'Salsa',
+    'TRP': 'Trap',
+    'BAC': 'Bachata',
+    'FLM': 'Flamenco',
+    'AIG': 'AI Generated',
+    'AZN': 'Azonto',
+    'BAT': 'Bata',
+    'HLF': 'Highlife',
+    'KUD': 'Kuduro',
+    'SHK': 'Shaku',
+    'SHB': 'Shoki',
+    'ZAN': 'Zanku',
+    'CPR': 'Coupe Decale',
+    'EXP': 'Experimental'
+  };
+  
+  return displayNames[code] || code;
+};
+
 // Props interface
 interface ReviewSubmitProps {
   assetData: {
@@ -419,13 +475,9 @@ const ReviewSubmit: React.FC<ReviewSubmitProps> = ({
                   primary="Category"
                   secondary={
                     <>
-                      {categoryName && categoryCode ? (
+                      {categoryCode ? (
                         <Box component="span" fontWeight="medium">
-                          {categoryName} ({categoryCode})
-                        </Box>
-                      ) : categoryCode ? (
-                        <Box component="span" fontWeight="medium">
-                          {categoryCode}
+                          {getCategoryDisplayName(categoryCode, categoryName)} ({categoryCode})
                         </Box>
                       ) : (
                         <Box
@@ -489,13 +541,9 @@ const ReviewSubmit: React.FC<ReviewSubmitProps> = ({
                   primary="Subcategory"
                   secondary={
                     <>
-                      {subcategoryName && subcategoryCode ? (
+                      {subcategoryCode ? (
                         <Box component="span" fontWeight="medium">
-                          {subcategoryName} ({subcategoryCode})
-                        </Box>
-                      ) : subcategoryCode ? (
-                        <Box component="span" fontWeight="medium">
-                          {subcategoryCode}
+                          {getCategoryDisplayName(subcategoryCode, subcategoryName)} ({subcategoryCode})
                         </Box>
                       ) : (
                         <Box

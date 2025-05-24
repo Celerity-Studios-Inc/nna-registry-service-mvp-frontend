@@ -20,6 +20,18 @@ const getCategoryDisplayName = (code: string, name?: string): string => {
     'EVC': 'Everyday Casual',
     'BCH': 'Beach',
     'LAT': 'Latin',
+    'VAV': 'Virtual Avatars',
+    'JZZ': 'Jazz',
+    'AFB': 'Afrobeats Dance',
+    'FLK': 'Folk',
+    'MET': 'Metal',
+    'CTR': 'Country',
+    'CLS': 'Classical',
+    'DIS': 'Disco',
+    'EDM': 'EDM',
+    'URB': 'Urban Dance',
+    'BLT': 'Ballet',
+    'HHS': 'Hip Hop Style',
     
     // Subcategories
     'BAS': 'Base',
@@ -29,9 +41,18 @@ const getCategoryDisplayName = (code: string, name?: string): string => {
     'MER': 'Merengue',
     'SAL': 'Salsa',
     'TRP': 'Trap',
-    'JZZ': 'Jazz',
     'BAC': 'Bachata',
-    'FLM': 'Flamenco'
+    'FLM': 'Flamenco',
+    'AIG': 'AI Generated',
+    'AZN': 'Azonto',
+    'BAT': 'Bata',
+    'HLF': 'Highlife',
+    'KUD': 'Kuduro',
+    'SHK': 'Shaku',
+    'SHB': 'Shoki',
+    'ZAN': 'Zanku',
+    'CPR': 'Coupe Decale',
+    'EXP': 'Experimental'
   };
   
   // If we have a code match in our dictionary, use it
