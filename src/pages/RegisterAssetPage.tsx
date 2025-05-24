@@ -1939,12 +1939,11 @@ const RegisterAssetPage: React.FC = () => {
         </Typography>
         
         <Box sx={{ my: 4, p: 3, border: '1px solid #e0e0e0', borderRadius: 2, maxWidth: '800px', mx: 'auto' }}>
+          {/* Asset name and HFN */}
           <Typography variant="h6" gutterBottom>
             {createdAsset.name}
           </Typography>
-          
-          {/* Hide the default HFN display at the top of the success page since it's shown in the details section */}
-          
+
           <Grid container spacing={3} sx={{ mt: 2 }}>
             {/* Asset Preview Column */}
             <Grid item xs={12} md={6}>

@@ -4,12 +4,13 @@ import { AccountTree as TaxonomyIcon } from '@mui/icons-material';
 
 // Helper function to get display name for category codes
 const getCategoryDisplayName = (code: string, name?: string): string => {
-  if (name) {
+  if (name && name.trim() !== '') {
     return name.replace(/_/g, ' ');
   }
   
   // Fallback display names for common categories
   const categoryDisplayNames: Record<string, string> = {
+    // Categories
     'POP': 'Pop',
     'ROK': 'Rock',
     'DNC': 'Dance Electronic',
@@ -18,11 +19,28 @@ const getCategoryDisplayName = (code: string, name?: string): string => {
     'PRF': 'Performance',
     'EVC': 'Everyday Casual',
     'BCH': 'Beach',
+    'LAT': 'Latin',
+    
+    // Subcategories
     'BAS': 'Base',
-    'PAL': 'Palm'
+    'PAL': 'Palm',
+    'REG': 'Reggaeton',
+    'CUM': 'Cumbia',
+    'MER': 'Merengue',
+    'SAL': 'Salsa',
+    'TRP': 'Trap',
+    'JZZ': 'Jazz',
+    'BAC': 'Bachata',
+    'FLM': 'Flamenco'
   };
   
-  return categoryDisplayNames[code] || code;
+  // If we have a code match in our dictionary, use it
+  if (categoryDisplayNames[code]) {
+    return categoryDisplayNames[code];
+  }
+  
+  // Otherwise, just return the code itself as a fallback
+  return code;
 };
 
 interface TaxonomyContextProps {
