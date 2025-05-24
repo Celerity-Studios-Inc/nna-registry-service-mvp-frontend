@@ -63,7 +63,9 @@
       "Bash(CI=true npm test -- --testPathPattern=\"AssetRegistrationWrapper\" --passWithNoTests)",
       "Bash(CI=true npm run build)",
       "Bash(git submodule:*)",
-      "Bash(git log:*)"
+      "Bash(git log:*)",
+      "Bash(gh workflow run:*)",
+      "Bash(gh run list:*)"
     ],
     "deny": []
   }

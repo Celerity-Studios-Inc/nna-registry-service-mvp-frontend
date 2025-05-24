@@ -2,6 +2,29 @@ import React from 'react';
 import { Box, Typography, Paper, Chip, Grid } from '@mui/material';
 import { AccountTree as TaxonomyIcon } from '@mui/icons-material';
 
+// Helper function to get display name for category codes
+const getCategoryDisplayName = (code: string, name?: string): string => {
+  if (name) {
+    return name.replace(/_/g, ' ');
+  }
+  
+  // Fallback display names for common categories
+  const categoryDisplayNames: Record<string, string> = {
+    'POP': 'Pop',
+    'ROK': 'Rock',
+    'DNC': 'Dance Electronic',
+    'HIP': 'Hip Hop',
+    'RNB': 'R&B',
+    'PRF': 'Performance',
+    'EVC': 'Everyday Casual',
+    'BCH': 'Beach',
+    'BAS': 'Base',
+    'PAL': 'Palm'
+  };
+  
+  return categoryDisplayNames[code] || code;
+};
+
 interface TaxonomyContextProps {
   layer: string;
   layerName?: string;
@@ -81,7 +104,7 @@ const TaxonomyContext: React.FC<TaxonomyContextProps> = ({
                   sx={{ mr: 1 }}
                 />
                 <Typography variant="body2" fontWeight="medium" color="text.primary">
-                  {categoryName?.replace(/_/g, ' ') || (categoryCode === 'DNC' ? 'Dance Electronic' : '')}
+                  {getCategoryDisplayName(categoryCode, categoryName)}
                 </Typography>
               </Box>
             </Box>
@@ -99,7 +122,7 @@ const TaxonomyContext: React.FC<TaxonomyContextProps> = ({
                   sx={{ mr: 1 }}
                 />
                 <Typography variant="body2" fontWeight="medium" color="text.primary">
-                  {subcategoryName?.replace(/_/g, ' ') || ''}
+                  {getCategoryDisplayName(subcategoryCode, subcategoryName)}
                 </Typography>
               </Box>
             </Box>
