@@ -656,35 +656,19 @@ const SimpleTaxonomySelectionV3: React.FC<SimpleTaxonomySelectionV3Props> = ({
         </div>
       </Box>
 
-      <Box mb={2} display="flex" justifyContent="space-between" alignItems="center">
-        <Typography variant="body2" color="textSecondary">
-          {selectedLayer && selectedCategoryCode && selectedSubcategoryCode ? (
-            <Chip 
-              label={`Selected: ${selectedLayer}.${selectedCategoryCode}.${getShortSubcategoryCode(selectedSubcategoryCode)}`}
-              color="primary"
-              variant="outlined"
-              sx={{ fontWeight: 'medium', fontSize: '0.9rem' }}
-            />
-          ) : (
-            'Please select a layer, category, and subcategory'
-          )}
-        </Typography>
-        
-        <Box display="flex" alignItems="center" gap={1}>
-          {/* Debug button completely hidden in production */}
-          {process.env.NODE_ENV !== 'production' && window.location.search.includes('debug=true') && (
-            <Button 
-              size="small" 
-              variant="outlined" 
-              onClick={toggleDebugMode}
-            >
-              {debugMode ? 'Hide Debug Info' : 'Show Debug Info'}
-            </Button>
-          )}
-          
-          {isProcessing && <CircularProgress size={20} />}
+      {/* Moving selection to the bottom navigation row - the chip will be centered */}
+      {process.env.NODE_ENV !== 'production' && window.location.search.includes('debug=true') && (
+        <Box mb={2} display="flex" justifyContent="flex-end" alignItems="center">
+          <Button 
+            size="small" 
+            variant="outlined" 
+            onClick={toggleDebugMode}
+          >
+            {debugMode ? 'Hide Debug Info' : 'Show Debug Info'}
+          </Button>
+          {isProcessing && <CircularProgress size={20} sx={{ ml: 1 }} />}
         </Box>
-      </Box>
+      )}
       
       {/* Debug info completely hidden in production */}
       {debugMode && process.env.NODE_ENV !== 'production' && window.location.search.includes('debug=true') && (
@@ -703,6 +687,48 @@ const SimpleTaxonomySelectionV3: React.FC<SimpleTaxonomySelectionV3Props> = ({
           </Typography>
         </Alert>
       )}
+      
+      {/* Navigation footer with centered selection chip */}
+      <Box 
+        sx={{ 
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          alignItems: 'center', 
+          mt: 3,
+          px: 1,
+          py: 2,
+          borderTop: '1px solid #e0e0e0'
+        }}
+      >
+        <Button 
+          variant="outlined" 
+          sx={{ visibility: 'hidden' }}
+        >
+          Back
+        </Button>
+        
+        <Box sx={{ flexGrow: 0, mx: 'auto' }}>
+          {selectedLayer && selectedCategoryCode && selectedSubcategoryCode ? (
+            <Chip 
+              label={`Selected: ${selectedLayer}.${selectedCategoryCode}.${getShortSubcategoryCode(selectedSubcategoryCode)}`}
+              color="primary"
+              variant="outlined"
+              sx={{ fontWeight: 'medium', fontSize: '0.9rem' }}
+            />
+          ) : (
+            <Typography variant="body2" color="text.secondary">
+              Please select a layer, category, and subcategory
+            </Typography>
+          )}
+        </Box>
+        
+        <Button 
+          variant="outlined" 
+          sx={{ visibility: 'hidden' }}
+        >
+          Next
+        </Button>
+      </Box>
     </div>
   );
 };
