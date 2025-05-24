@@ -22,6 +22,7 @@ export interface Asset {
   tags?: string[];
   status: 'active' | 'inactive' | 'draft' | 'archived';
   version?: VersionInfo;
+  components?: string[]; // For composite assets - array of component HFNs
 }
 
 export interface AssetSearchFilters {

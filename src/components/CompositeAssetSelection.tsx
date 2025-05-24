@@ -85,6 +85,8 @@ const CompositeAssetSelection: React.FC<CompositeAssetSelectionProps> = ({
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
   const [showPreviewDialog, setShowPreviewDialog] = useState(false);
+  const [registering, setRegistering] = useState(false);
+  const [registrationError, setRegistrationError] = useState<string | null>(null);
 
   // Validate component compatibility
   const validateComponentCompatibility = (components: Asset[]): string[] => {
@@ -151,10 +153,44 @@ const CompositeAssetSelection: React.FC<CompositeAssetSelectionProps> = ({
     setValidationErrors(errors);
     
     if (errors.length === 0) {
-      toast.success('All components are compatible! Ready to proceed.');
-      // Additional logic for proceeding with composite creation would go here
+      toast.success('All components are compatible! Ready to register.');
+      setRegistrationError(null); // Clear any previous registration errors
     } else {
       toast.error('Please fix validation errors before continuing');
+    }
+  };
+
+  // Step 4: Handle composite registration
+  const handleRegister = async () => {
+    // First validate components
+    const errors = validateComponents(selectedComponents);
+    if (errors.length > 0) {
+      setValidationErrors(errors);
+      toast.error('Please fix validation errors before registering');
+      return;
+    }
+
+    setRegistering(true);
+    setRegistrationError(null);
+    
+    try {
+      const registeredAsset = await registerCompositeAsset(selectedComponents);
+      toast.success(`Composite registered successfully: ${registeredAsset.friendlyName || registeredAsset.name}`);
+      
+      // Reset form after successful registration
+      setSelectedComponents([]);
+      setValidationErrors([]);
+      setRightsValidation({});
+      
+      // Notify parent component of successful registration
+      onComponentsSelected([]);
+      
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to register composite asset';
+      setRegistrationError(errorMessage);
+      toast.error(errorMessage);
+    } finally {
+      setRegistering(false);
     }
   };
 
@@ -185,11 +221,52 @@ const CompositeAssetSelection: React.FC<CompositeAssetSelectionProps> = ({
     }
   };
 
-  // Generate composite HFN in the format C.[CategoryCode].[SubCategoryCode].[Sequential]:[Component IDs]
-  const generateCompositeHFN = (components: Asset[]): string => {
-    const componentIds = components.map(asset => asset.friendlyName || asset.id).join('+');
-    // Default to C.001.001.001 for composite category/subcategory
-    return `C.001.001.001:${componentIds}`;
+  // Step 4: Generate composite HFN in the format C.[CategoryCode].[SubCategoryCode].[Sequential]:[Component IDs]
+  const generateCompositeHFN = (components: Asset[], sequential: string = '001'): string => {
+    const componentIds = components.map(asset => asset.friendlyName || asset.name).join('+');
+    // Format: C.[CategoryCode].[SubCategoryCode].[Sequential]:[Component IDs]
+    return `C.001.001.${sequential}:${componentIds}`;
+  };
+
+  // Step 4: Register composite asset with backend
+  const registerCompositeAsset = async (components: Asset[]): Promise<Asset> => {
+    try {
+      const componentHFNs = components.map(asset => asset.friendlyName || asset.name);
+      const compositeHFN = generateCompositeHFN(components);
+      
+      // Prepare registration payload
+      const registrationPayload = {
+        layer: 'C',
+        category: '001',
+        subcategory: '001',
+        sequential: '001',
+        components: componentHFNs.join(','), // Backend expects comma-separated string
+        metadata: {
+          components: componentHFNs, // Also include as array in metadata
+          componentCount: components.length,
+          totalSize: components.reduce((sum, asset) => 
+            sum + (asset.files?.reduce((fileSum, file) => fileSum + file.size, 0) || 0), 0),
+          createdFrom: 'CompositeAssetSelection',
+        },
+        name: compositeHFN,
+        friendlyName: compositeHFN,
+        description: `Composite asset containing ${components.length} components: ${componentHFNs.join(', ')}`,
+        tags: ['composite', 'generated', ...Array.from(new Set(components.flatMap(asset => asset.tags || [])))],
+        source: 'ReViz', // Default source for composites
+      };
+
+      const response = await axios.post('/v1/asset/register', registrationPayload);
+      return response.data;
+    } catch (error) {
+      // Handle HTTP 409 for duplicate HFN
+      if (axios.isAxiosError(error) && error.response?.status === 409) {
+        throw new Error('HFN conflict: A composite with this combination already exists');
+      }
+      
+      // Handle other registration errors
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      throw new Error(`Failed to register composite asset: ${errorMessage}`);
+    }
   };
 
   // Generate composite preview
@@ -357,6 +434,16 @@ const CompositeAssetSelection: React.FC<CompositeAssetSelectionProps> = ({
         </Alert>
       )}
 
+      {/* Registration Errors */}
+      {registrationError && (
+        <Alert severity="error" sx={{ mb: 3 }}>
+          <Typography variant="subtitle2" gutterBottom>
+            Registration Error:
+          </Typography>
+          {registrationError}
+        </Alert>
+      )}
+
       <Grid container spacing={3}>
         {/* Search Section */}
         <Grid item xs={12} md={6}>
@@ -468,18 +555,33 @@ const CompositeAssetSelection: React.FC<CompositeAssetSelectionProps> = ({
         </Grid>
       </Grid>
 
-      {/* Continue Button */}
+      {/* Action Buttons */}
       {selectedComponents.length > 0 && (
-        <Box sx={{ mt: 3, display: 'flex', justifyContent: 'center' }}>
+        <Box sx={{ mt: 3, display: 'flex', justifyContent: 'center', gap: 2 }}>
           <Button
-            variant="contained"
+            variant="outlined"
             color="primary"
             size="large"
             onClick={handleContinue}
-            aria-label="Continue with selected components"
+            disabled={registering}
+            aria-label="Validate selected components"
           >
-            Continue
+            Validate
           </Button>
+          
+          {validationErrors.length === 0 && (
+            <Button
+              variant="contained"
+              color="success"
+              size="large"
+              onClick={handleRegister}
+              disabled={registering}
+              startIcon={registering ? <CircularProgress size={16} /> : null}
+              aria-label="Register composite asset"
+            >
+              {registering ? 'Registering...' : 'Register'}
+            </Button>
+          )}
         </Box>
       )}
 
