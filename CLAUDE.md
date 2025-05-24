@@ -32,14 +32,19 @@ The application uses a flattened taxonomy system with lookup tables for efficien
 
 1. **TaxonomyInitProvider**: Ensures taxonomy data is loaded before rendering the app
 2. **useTaxonomy Hook**: Provides access to taxonomy data with built-in error handling
-3. **SimpleTaxonomySelectionV2**: Component for selecting categories and subcategories
+3. **SimpleTaxonomySelectionV3**: Current active component for selecting categories and subcategories (latest version)
 4. **LayerSelectorV2**: Component for selecting layers
 5. **FeedbackContext**: Provides user feedback during taxonomy operations
 
-### Special Cases
-There are special case mappings that need special handling:
-- W.BCH.SUN.001 → 5.004.003.001
-- S.POP.HPM.001 → 2.001.007.001
+### Current Active Implementation
+- **Primary Registration Flow**: Uses `RegisterAssetPage.tsx` with `SimpleTaxonomySelectionV3`
+- **Emergency Registration**: Available at `/emergency-register` for fallback scenarios
+- **New Architecture**: Complete refactored system exists but is not currently active in main flow
+
+### Architecture Design Principles
+- No special case handling - all taxonomy combinations should be handled generically
+- Use consistent lookup mechanisms for all HFN to MFA conversions
+- Maintain backwards compatibility while avoiding hardcoded mappings
 
 ## Recent Issues and Fixes
 
@@ -207,10 +212,9 @@ There are special case mappings that need special handling:
     ```
 
 - Root Cause Identified (May 23, 2025):
-  - The `subcategoryCodeMap` in `taxonomy.service.ts` only contains explicit mappings for special cases like HPM (Hipster Male)
-  - Other subcategories don't have entries and fall back to a default value 'Base'
-  - In `getHumanFriendlyCodes()`, when a subcategory is not found in the mappings, it defaults to 'Base'
-  - Special case handling exists for S.POP.HPM, which is why this combination works correctly
+  - The backend's subcategory mapping system is incomplete and falls back to default values
+  - Many subcategories don't have proper entries and default to 'Base'
+  - The mapping system needs to be comprehensive rather than relying on individual mappings
   
 - Frontend Solution:
   - Implemented SubcategoryDiscrepancyAlert component to inform users about the discrepancy
@@ -302,7 +306,7 @@ There are special case mappings that need special handling:
   - Added methods that directly look up canonical codes from the flattened taxonomy data
   - Enhanced the HFN formatter to normalize input using these taxonomy lookups
   - Improved error handling with direct fallbacks to taxonomy service data
-  - Maintained special case handling for known edge cases like "HIP_HOP" → "HIP" and "BASE" → "BAS"
+  - Implemented consistent mapping for category and subcategory codes
 - Key Changes:
   - `/src/utils/taxonomyFormatter.ts`:
     - Added `lookupCategoryCode` method to get canonical category codes from taxonomy
@@ -402,7 +406,7 @@ There are special case mappings that need special handling:
     2. Created guaranteed subcategory list from multiple sources
     3. Enhanced local component state with multiple delayed updates
     4. Improved session storage persistence for subcategory data
-    5. Added special case handling for Star layer BAS subcategory
+    5. Enhanced subcategory handling for all layers including BAS subcategory
     6. Enhanced SubcategoriesGrid component with local item persistence
     7. Improved CSS for better visibility of subcategory cards
   - Key changes:
@@ -477,7 +481,7 @@ We are implementing a comprehensive refactoring of the taxonomy selection system
   - `/src/pages/new/RegisterAssetPageNew.tsx`: New version with TaxonomySelector integration
   - Implemented adapter methods to convert between string-based and object-based interfaces
   - Added feature toggle to switch between old and new implementations
-  - Removed special case handling for specific taxonomy combinations (S+POP+HPM)
+  - Implemented generic handling for all taxonomy combinations
   - Implemented generic approaches for all error handling and fallbacks
   - Enhanced form state management with React Hook Form integration
 
@@ -491,7 +495,7 @@ We are implementing a comprehensive refactoring of the taxonomy selection system
 
 ### Phase 7: Comprehensive Testing (COMPLETED May 25, 2025)
 - Created detailed test plan in `TAXONOMY_REFACTOR_TEST_PLAN.md`
-- Conducted testing focused on the problematic combinations (S.POP.HPM, W.BCH.SUN)
+- Conducted comprehensive testing across all taxonomy combinations
 - Created automated test scripts:
   - `/scripts/test-critical-cases.js`: Node.js test for critical combinations
   - `/public/test-critical-cases.html`: Browser-based test UI
@@ -503,7 +507,7 @@ We are implementing a comprehensive refactoring of the taxonomy selection system
 - Summarized findings in `PHASE_7_SUMMARY.md`:
   - All critical issues fixed
   - Performance significantly improved
-  - No special case handling required
+  - Generic architecture handles all combinations consistently
   - Architecture proven to be robust and maintainable
 
 ### Phase 8: Final Cleanup and Rollout (PARTIALLY IMPLEMENTED)
@@ -559,11 +563,23 @@ We are implementing a comprehensive refactoring of the taxonomy selection system
     - Proper cleanup after form submission
 - Documentation in `SELECTION_STORAGE_DOCS.md`
 
-## Current Status
+## Current Status (Updated January 2025)
 
-Currently using the original implementation with SimpleTaxonomySelectionV3 while planning for future integration of the refactored architecture:
+The project has undergone significant organization and cleanup. Currently using the original implementation with SimpleTaxonomySelectionV3:
 
-1. Recent UI Improvements (May 22-23, 2025)
+### Recent Project Organization (January 2025)
+- Reorganized project structure with better documentation organization
+- Removed redundant documentation files from main directory
+- Centralized documentation in `/docs` folder with proper categorization
+- Enhanced code review processes with comprehensive prompts
+- Improved UI consistency with better taxonomy card layouts and text wrapping
+- Cleaned up unnecessary testing code while maintaining functionality
+- Updated taxonomy selection step numbering for better clarity
+- Centered taxonomy selection chip in navigation footer for improved UX
+
+Currently using the original implementation with SimpleTaxonomySelectionV3 while the refactored architecture remains available but not active:
+
+1. Recent UI Improvements (January 2025 + Previous May 2025 fixes)
    - Enhanced SimpleTaxonomySelectionV3 with tooltips and better text formatting
    - Fixed debug panel visibility to only show in development environment
    - Added TaxonomyContext component for better display of current selections
@@ -616,7 +632,7 @@ Currently using the original implementation with SimpleTaxonomySelectionV3 while
      - Created comprehensive documentation in `EMERGENCY_REGISTRATION.md`
    - Key features:
      - Direct access to taxonomy data through simplified adapter
-     - Special handling for known edge cases (S.POP.HPM and W.BCH.SUN)
+     - Generic handling for all taxonomy combinations
      - Single-page form with improved error handling
      - Visual indicators and clear user guidance
      - "Emergency" tagging of assets registered through this path
@@ -627,8 +643,8 @@ Currently using the original implementation with SimpleTaxonomySelectionV3 while
    - Enhancing developer guides
 
 The taxonomy refactoring project has successfully:
-- Resolved the React Error #301 issue when selecting S.POP.HPM
-- Fixed the incorrect MFA generation for W.BCH.SUN
+- Resolved React Error #301 issues during taxonomy selection
+- Fixed MFA generation across all taxonomy combinations
 - Eliminated state management issues during rapid layer switching
 - Maintained proper subcategory grid display throughout the workflow
 - Significantly improved performance and reduced render count
@@ -691,11 +707,15 @@ The original implementation with SimpleTaxonomySelectionV3 remains the active im
 - Always get user validation BEFORE implementing changes
 - Present a clear diagnosis and action plan for approval
 - Keep CLAUDE.md updated after each significant change
-- Update CURRENT_STATUS.md to maintain work context between sessions
+- Focus on maintaining the current stable implementation while keeping refactored architecture available
+- Use the emergency registration page for critical fallback scenarios
 
 ## Reminder
 When continuing work on this project, remember:
+- The current implementation uses SimpleTaxonomySelectionV3 and RegisterAssetPage.tsx
 - Do not add test steps to the CI/CD workflow
 - Do not re-enable the CI or Run Tests workflows
 - Focus on UI functionality over test coverage
 - Make minimal targeted changes rather than broad refactoring
+- The refactored taxonomy architecture exists but is not active in main application flow
+- Emergency registration is available at `/emergency-register` for critical scenarios
