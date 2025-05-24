@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Box, Typography, Paper, Chip, Grid } from '@mui/material';
 import { AccountTree as TaxonomyIcon } from '@mui/icons-material';
+import { taxonomyService } from '../../services/simpleTaxonomyService';
 
 // Helper function to handle display name from taxonomy data
 const formatDisplayName = (name?: string): string => {
@@ -10,103 +11,51 @@ const formatDisplayName = (name?: string): string => {
   return name.replace(/_/g, ' ');
 };
 
-// Helper function to get display name for category and subcategory codes
-const getCategoryDisplayName = (code: string, name?: string): string => {
-  // If we have a name directly from the taxonomy service, use it (priority 1)
+// Generic helper function to get display name for category and subcategory codes
+// This version uses the taxonomy service to look up names dynamically
+const getCategoryDisplayName = (code: string, name?: string, layer?: string, isCategory: boolean = true): string => {
+  // Priority 1: If we have a name directly provided in props, use it
   if (name && name.trim() !== '') {
     return formatDisplayName(name);
   }
   
-  // Fallback display names for common categories and subcategories (priority 2)
-  const displayNames: Record<string, string> = {
-    // Categories
-    'POP': 'Pop',
-    'ROK': 'Rock',
-    'RCK': 'Rock',
-    'DNC': 'Dance Electronic',
-    'HIP': 'Hip Hop',
-    'RNB': 'R&B',
-    'PRF': 'Performance',
-    'EVC': 'Everyday Casual',
-    'BCH': 'Beach',
-    'LAT': 'Latin',
-    'VAV': 'Virtual Avatars',
-    'JZZ': 'Jazz',
-    'AFB': 'Afrobeats Dance',
-    'FLK': 'Folk',
-    'MET': 'Metal',
-    'CTR': 'Country',
-    'CLS': 'Classical',
-    'DIS': 'Disco',
-    'EDM': 'EDM',
-    'URB': 'Urban Dance',
-    'BLT': 'Ballet',
-    'HHS': 'Hip Hop Style',
-    'STG': 'Concert Stages',
-    'CLB': 'Dance Clubs',
-    'FUT': 'Futuristic',
-    'FAN': 'Fantasy',
-    'NTL': 'Natural',
-    'VIR': 'Virtual',
-    'IND': 'Industrial',
-    'RUR': 'Rural',
-    'HST': 'Historical',
-    'CUL': 'Cultural',
-    'ABS': 'Abstract',
-    'RET': 'Retro',
-    'NAT': 'Nature',
-    'ALT': 'Alternative',
-    'WLD': 'World',
-    'JPO': 'J Pop',
-    'KPO': 'K Pop',
-    'BOL': 'Bollywood',
-    
-    // Subcategories
-    'BAS': 'Base',
-    'PAL': 'Palm',
-    'REG': 'Reggaeton',
-    'CUM': 'Cumbia',
-    'MER': 'Merengue',
-    'SAL': 'Salsa',
-    'TRP': 'Trap',
-    'BAC': 'Bachata',
-    'FLM': 'Flamenco',
-    'AIG': 'AI Generated',
-    'AZN': 'Azonto',
-    'BAT': 'Bata',
-    'HLF': 'Highlife',
-    'KUD': 'Kuduro',
-    'SHK': 'Shaku',
-    'SHB': 'Shoki',
-    'ZAN': 'Zanku',
-    'CPR': 'Coupe Decale',
-    'EXP': 'Experimental',
-    'MTN': 'Mountain',
-    'FOR': 'Forest',
-    'DSR': 'Desert',
-    'LKE': 'Lake',
-    'PLB': 'Playback',
-    'PFU': 'Pop Fusion',
-    'CLS': 'Classical',
-    'IFU': 'Indie Fusion',
-    'ELC': 'Electronic',
-    'SFI': 'Sufi',
-    'RMX': 'Remix',
-    'GLB': 'Global'
-  };
+  // If we don't have a layer, try to get it from session storage
+  const currentLayer = layer || sessionStorage.getItem('selected_layer');
   
-  // If we have a match in our dictionary, return it
-  if (displayNames[code]) {
-    return displayNames[code];
+  // Priority 2: Try to get the name from the taxonomy service if we have a layer
+  if (currentLayer) {
+    try {
+      if (isCategory) {
+        // For categories, get all categories for the layer and find the matching one
+        const categories = taxonomyService.getCategories(currentLayer);
+        const matchingCategory = categories.find(cat => cat.code === code);
+        if (matchingCategory && matchingCategory.name) {
+          return formatDisplayName(matchingCategory.name);
+        }
+      } else {
+        // For subcategories, we need to get the parent category first
+        const currentCategory = sessionStorage.getItem('selected_category');
+        if (currentCategory) {
+          // Get subcategories for the current layer/category and find the matching one
+          const subcategories = taxonomyService.getSubcategories(currentLayer, currentCategory);
+          const matchingSubcategory = subcategories.find(subcat => subcat.code === code);
+          if (matchingSubcategory && matchingSubcategory.name) {
+            return formatDisplayName(matchingSubcategory.name);
+          }
+        }
+      }
+    } catch (error) {
+      console.warn(`Error looking up display name from taxonomy service: ${error}`);
+    }
   }
   
-  // If no match, try to generate a human-readable name from the code
-  // For codes like NTL, URB, etc., this provides a reasonable fallback
+  // Priority 3: Try to generate a human-readable name from the code
   if (code && code.length <= 4) {
+    // For short codes like "BOL", make it Title Case (e.g., "Bol")
     return code.charAt(0).toUpperCase() + code.slice(1).toLowerCase();
   }
   
-  // Last resort - just return the code
+  // Last resort: Just return the code itself
   return code;
 };
 
@@ -137,6 +86,16 @@ const TaxonomyContext: React.FC<TaxonomyContextProps> = ({
   hfn,
   mfa
 }) => {
+  // Store the selected layer and category in session storage for reuse
+  useMemo(() => {
+    if (layer) {
+      sessionStorage.setItem('selected_layer', layer);
+    }
+    if (categoryCode) {
+      sessionStorage.setItem('selected_category', categoryCode);
+    }
+  }, [layer, categoryCode]);
+
   // Only render if we have the minimum required data
   if (!layer || !categoryCode || !subcategoryCode) {
     return null;
@@ -189,7 +148,7 @@ const TaxonomyContext: React.FC<TaxonomyContextProps> = ({
                   sx={{ mr: 1 }}
                 />
                 <Typography variant="body2" fontWeight="medium" color="text.primary">
-                  {getCategoryDisplayName(categoryCode, categoryName)}
+                  {getCategoryDisplayName(categoryCode, categoryName, layer, true)}
                 </Typography>
               </Box>
             </Box>
@@ -207,7 +166,7 @@ const TaxonomyContext: React.FC<TaxonomyContextProps> = ({
                   sx={{ mr: 1 }}
                 />
                 <Typography variant="body2" fontWeight="medium" color="text.primary">
-                  {getCategoryDisplayName(subcategoryCode, subcategoryName)}
+                  {getCategoryDisplayName(subcategoryCode, subcategoryName, layer, false)}
                 </Typography>
               </Box>
             </Box>
