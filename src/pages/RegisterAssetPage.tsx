@@ -428,17 +428,35 @@ const RegisterAssetPage: React.FC = () => {
       environmentSafeLog(`Category: ${data.categoryCode} (${/^\d+$/.test(data.categoryCode) ? 'NUMERIC - needs conversion' : 'ALPHABETIC - OK'})`);
       environmentSafeLog(`Subcategory: ${data.subcategoryCode} (${/^\d+$/.test(data.subcategoryCode) ? 'NUMERIC - needs conversion' : 'ALPHABETIC - OK'})`);
 
-      // For S.POP.LGM, log the specific mapping that will be used
-      if (data.layer === 'S' && (data.categoryCode === 'POP' || data.categoryCode === '001') &&
-          (data.subcategoryCode === 'LGM' || data.subcategoryCode === '005')) {
-        environmentSafeLog('DETECTED S.POP.LGM COMBINATION - Will convert to proper codes for backend');
+      // Log important taxonomy combinations for tracking
+      if (data.layer === 'S' && (data.categoryCode === 'POP' || data.categoryCode === '001')) {
+        if (data.subcategoryCode === 'LGM' || data.subcategoryCode === '005') {
+          environmentSafeLog('DETECTED S.POP.LGM COMBINATION - Will convert to proper codes for backend');
+        }
+        
+        if (data.subcategoryCode === 'HPM' || data.subcategoryCode === '007') {
+          environmentSafeLog('IMPORTANT - Asset registration with S.POP.HPM:');
+          environmentSafeLog(`HFN: ${data.hfn}`);
+          environmentSafeLog(`MFA: ${data.mfa}`);
+        }
+        
+        if (data.subcategoryCode === 'BAS' || data.subcategoryCode === 'BASE' || data.subcategoryCode === '001') {
+          environmentSafeLog('DETECTED S.POP.BAS COMBINATION - Important for testing');
+          environmentSafeLog(`HFN: ${data.hfn}`);
+          environmentSafeLog(`MFA: ${data.mfa}`);
+        }
       }
-
-      // Add extended debug logging for the current MFA/HFN without hardcoded expected values
-      if (data.layer === 'S' && data.categoryCode === 'POP' && data.subcategoryCode === 'HPM') {
-        environmentSafeLog('IMPORTANT - Asset registration with S.POP.HPM:');
+      
+      // Add special logging for Star (Virtual Avatars) layer
+      if (data.layer === 'S' && (data.categoryCode === 'VAV')) {
+        environmentSafeLog(`IMPORTANT - Asset registration with S.VAV.${data.subcategoryCode}:`);
         environmentSafeLog(`HFN: ${data.hfn}`);
         environmentSafeLog(`MFA: ${data.mfa}`);
+        
+        // Special handling for AI Generated Star subcategory (S.VAV.AIG)
+        if (data.subcategoryCode === 'AIG') {
+          environmentSafeLog('DETECTED S.VAV.AIG COMBINATION - This is an AI Generated Star');
+        }
       }
 
       // Create the asset
@@ -531,21 +549,40 @@ const RegisterAssetPage: React.FC = () => {
           trainingData: data.trainingData,
           // Use our enhanced formatter to generate consistent addresses
           // This eliminates the need for special cases while ensuring correct display
+          // Use a self-invoking function for cleaner code
           ...(() => {
-            // Generate formatted addresses using enhanced formatter
-            const { hfn, mfa } = formatNNAAddressForDisplay(
+            // Use the taxonomyFormatter utility directly for consistency
+            // Generate properly formatted HFN with the original codes
+            const hfnToFormat = `${data.layer}.${data.categoryCode}.${data.subcategoryCode}.001`;
+            const formattedHfn = taxonomyFormatter.formatHFN(hfnToFormat);
+            const formattedMfa = taxonomyFormatter.convertHFNtoMFA(formattedHfn);
+            
+            environmentSafeLog(`Taxonomy formatter generated HFN=${formattedHfn}, MFA=${formattedMfa}`);
+            
+            // Also generate with the previous formatter for comparison logging
+            const prevFormatter = formatNNAAddressForDisplay(
               data.layer,
               data.categoryCode,
               data.subcategoryCode,
               '001'
             );
-            environmentSafeLog(`Enhanced formatter generated HFN=${hfn}, MFA=${mfa}`);
+            environmentSafeLog(`Previous formatter generated HFN=${prevFormatter.hfn}, MFA=${prevFormatter.mfa}`);
+            
+            // Compare the two to check for discrepancies
+            if (formattedHfn !== prevFormatter.hfn || formattedMfa !== prevFormatter.mfa) {
+              environmentSafeLog('DISCREPANCY DETECTED between formatters:');
+              environmentSafeLog(`taxonomyFormatter: HFN=${formattedHfn}, MFA=${formattedMfa}`);
+              environmentSafeLog(`Previous formatter: HFN=${prevFormatter.hfn}, MFA=${prevFormatter.mfa}`);
+            }
+            
             return {
               // Include both consistently formatted addresses
-              mfa: mfa,
-              machineFriendlyAddress: mfa,
-              hfn: hfn,
-              humanFriendlyName: hfn
+              mfa: formattedMfa,
+              machineFriendlyAddress: formattedMfa,
+              hfn: formattedHfn,
+              humanFriendlyName: formattedHfn,
+              // Store original values for reference
+              original_subcategory: data.subcategoryCode
             };
           })(),
           // For composite assets, include the component references
@@ -560,6 +597,21 @@ const RegisterAssetPage: React.FC = () => {
 
       const createdAsset = await assetService.createAsset(assetData);
       environmentSafeLog("Asset created successfully:", createdAsset);
+      
+      // Add prominent console logging about the asset HFN and MFA for debugging
+      console.log("%c=== ASSET CREATED SUCCESSFULLY ===", "background: #4CAF50; color: white; font-size: 16px; padding: 5px;");
+      console.log(`Asset Name: ${assetData.name}`);
+      console.log(`%cHFN from metadata: ${assetData.metadata.hfn}`, "font-weight: bold; color: blue;");
+      console.log(`%cMFA from nnaAddress: ${assetData.nnaAddress}`, "font-weight: bold; color: blue;");
+      console.log(`Original subcategory code: ${assetData.metadata.original_subcategory || data.subcategoryCode}`);
+      console.log("Layer: " + data.layer + ", Category: " + data.categoryCode + ", Subcategory: " + data.subcategoryCode);
+      console.log("%c=================================", "background: #4CAF50; color: white; font-size: 16px; padding: 5px;");
+      
+      // Additional console message about how to check the asset on the success page
+      console.log("%cIMPORTANT: Check the success page to verify HFN and MFA display", "color: #FF5722; font-weight: bold;");
+      console.log("The success page should now show the same HFN and MFA in both the header and asset details card.");
+      console.log("If you notice any discrepancies, they will be highlighted with an info alert.");
+      console.log("This fix ensures consistent display of taxonomy data across the application.");
       
       if (!createdAsset) {
         throw new Error("Asset creation failed - no asset returned from API");
@@ -1746,92 +1798,88 @@ const RegisterAssetPage: React.FC = () => {
 
     environmentSafeLog("Rendering success screen with asset:", createdAsset);
 
-    // ENHANCED DISPLAY FIX: Use the unified formatter for consistent display
+    // ENHANCED DISPLAY FIX: Always prioritize using metadata HFN and MFA values from the asset details
 
-    // Extract basic asset information from the backend response
-    const layer = createdAsset.layer || '';
-
-    // Get the MFA directly from the asset (what the backend reported)
-    const rawMfa = createdAsset.nnaAddress ||
-                   createdAsset.metadata?.machineFriendlyAddress ||
-                   createdAsset.metadata?.mfa ||
-                   (createdAsset as any).nna_address || '';
-
-    // Extract sequential number from MFA
-    const sequentialParts = rawMfa ? rawMfa.split('.') : [];
-    const sequential = sequentialParts.length > 3 ? sequentialParts[3] : '001';
-
-    // IMPORTANT: We need to use the actual subcategory code, not the display name
-    // For HFN/MFA formatting, use the last saved subcategory code from the form
-    const savedSubcategoryCode = watch('subcategoryCode');
+    // Extract HFN directly from metadata first as the primary source of truth
+    let displayHfn = '';
+    let displayMfa = '';
     
-    // First try to get the original codes that were used to create the asset
-    const categoryCode = watch('categoryCode') || 'POP';
-    let subcategoryCode = savedSubcategoryCode || 'BAS';
-    
-    environmentSafeLog(`[SUCCESS] Using original form values for formatting: layer=${layer}, category=${categoryCode}, subcategory=${subcategoryCode}, sequential=${sequential}`);
-    
-    // Check if we have an original subcategory code that was saved during NNA address change
-    // This is critical for ensuring the header uses the same format as the details section
-    if (originalSubcategoryCode) {
-      environmentSafeLog(`[SUCCESS] Using original subcategory code for formatting: ${originalSubcategoryCode}`);
-      subcategoryCode = originalSubcategoryCode;
+    // Use a type guard to safely access metadata properties
+    if (createdAsset && createdAsset.metadata) {
+      // PRIMARY APPROACH: Always use the metadata HFN/MFA when available
+      // This ensures the value shown at the top matches the one in the asset details card
+      const metadata = createdAsset.metadata;
+      
+      // Extract HFN from metadata (priority order)
+      const metadataHfn = metadata.hfn || metadata.humanFriendlyName;
+      if (metadataHfn) {
+        displayHfn = taxonomyFormatter.formatHFN(metadataHfn);
+        environmentSafeLog(`[SUCCESS] Using HFN directly from asset metadata: ${metadataHfn} → ${displayHfn}`);
+      }
+      
+      // Extract MFA from metadata (priority order)
+      const metadataMfa = createdAsset.nnaAddress || 
+                          metadata.mfa || 
+                          metadata.machineFriendlyAddress || 
+                          (createdAsset as any).nna_address;
+      
+      if (metadataMfa) {
+        displayMfa = taxonomyFormatter.formatMFA(metadataMfa);
+        environmentSafeLog(`[SUCCESS] Using MFA directly from asset metadata: ${metadataMfa} → ${displayMfa}`);
+      }
     }
     
-    // We've already imported taxonomyFormatter at the top of the file
+    // FALLBACK APPROACH: Only if metadata values are not available, construct them
+    if (!displayHfn || !displayMfa) {
+      environmentSafeLog(`[SUCCESS] Metadata HFN/MFA not available, constructing from component parts`);
+      
+      // Extract basic asset information from the backend response
+      const layer = createdAsset.layer || '';
+      
+      // Get the MFA directly from the asset (what the backend reported)
+      const rawMfa = createdAsset.nnaAddress ||
+                     createdAsset.metadata?.machineFriendlyAddress ||
+                     createdAsset.metadata?.mfa ||
+                     (createdAsset as any).nna_address || '';
+  
+      // Extract sequential number from MFA
+      const sequentialParts = rawMfa ? rawMfa.split('.') : [];
+      const sequential = sequentialParts.length > 3 ? sequentialParts[3] : '001';
+  
+      // Use the last saved subcategory code from the form
+      const savedSubcategoryCode = watch('subcategoryCode');
+      
+      // Get the original codes that were used to create the asset
+      const categoryCode = watch('categoryCode') || 'POP';
+      let subcategoryCode = savedSubcategoryCode || 'BAS';
+      
+      environmentSafeLog(`[SUCCESS] Using original form values for formatting: layer=${layer}, category=${categoryCode}, subcategory=${subcategoryCode}, sequential=${sequential}`);
+      
+      // Check if we have an original subcategory code that was saved during NNA address change
+      if (originalSubcategoryCode) {
+        environmentSafeLog(`[SUCCESS] Using original subcategory code for formatting: ${originalSubcategoryCode}`);
+        subcategoryCode = originalSubcategoryCode;
+      }
+      
+      // Only create these values if we don't already have them from metadata
+      if (!displayHfn) {
+        // Create properly formatted HFN with the original codes
+        const hfnToFormat = `${layer}.${categoryCode}.${subcategoryCode}.${sequential}`;
+        displayHfn = taxonomyFormatter.formatHFN(hfnToFormat);
+        environmentSafeLog(`[SUCCESS] Created formatted HFN: ${displayHfn}`);
+      }
+      
+      if (!displayMfa) {
+        // Convert HFN to MFA using our formatter
+        displayMfa = taxonomyFormatter.convertHFNtoMFA(displayHfn);
+        environmentSafeLog(`[SUCCESS] Created formatted MFA: ${displayMfa}`);
+      }
+    }
     
-    // Create properly formatted HFN with the original codes
-    const hfnToFormat = `${layer}.${categoryCode}.${subcategoryCode}.${sequential}`;
-    let displayHfn = taxonomyFormatter.formatHFN(hfnToFormat);
-    
-    // Convert HFN to MFA using our formatter
-    let displayMfa = taxonomyFormatter.convertHFNtoMFA(displayHfn);
-    
-    environmentSafeLog(`[SUCCESS] Formatted addresses using taxonomyFormatter:`);
-    environmentSafeLog(`HFN: ${displayHfn}, MFA: ${displayMfa}`);
-
-    // displayHfn and displayMfa variables are now set correctly by the taxonomyFormatter
-
     environmentSafeLog('IMPORTANT: Created asset is using proper format:');
     environmentSafeLog(`Original backend Name: ${createdAsset.name}`);
     environmentSafeLog(`Display HFN: ${displayHfn}`);
     environmentSafeLog(`Display MFA: ${displayMfa}`);
-    
-    // Fallback: If MFA is still empty, try to get it from the backend response
-    if (!displayMfa && createdAsset) {
-      // Try to get it from various backend response formats
-      const backendMfa = createdAsset.nnaAddress || 
-                  (createdAsset as any).nna_address || 
-                  createdAsset.metadata?.machineFriendlyAddress || 
-                  createdAsset.metadata?.mfa || 
-                  '';
-                  
-      if (backendMfa) {
-        // Use our formatter to ensure proper format
-        displayMfa = taxonomyFormatter.formatMFA(backendMfa);
-        environmentSafeLog(`Using formatted MFA from backend: ${backendMfa} → ${displayMfa}`);
-      }
-    }
-    
-    // Alternative approach: Extract HFN from asset metadata if available
-    // This ensures the success page header matches the value in the asset details
-    if (createdAsset.metadata?.hfn || createdAsset.metadata?.humanFriendlyName) {
-      const metadataHfn = createdAsset.metadata?.hfn || createdAsset.metadata?.humanFriendlyName;
-      // Use the formatter to ensure proper casing and formatting
-      const formattedMetadataHfn = taxonomyFormatter.formatHFN(metadataHfn);
-      
-      environmentSafeLog(`[SUCCESS] Found HFN in metadata: ${metadataHfn} → ${formattedMetadataHfn}`);
-      
-      // If the HFN in metadata differs from our calculated one, use it as an override
-      if (formattedMetadataHfn && formattedMetadataHfn !== displayHfn) {
-        environmentSafeLog(`[SUCCESS] Using metadata HFN instead of calculated HFN`);
-        environmentSafeLog(`Calculated: ${displayHfn}, Metadata: ${formattedMetadataHfn}`);
-        // Override with metadata value for consistency
-        displayHfn = formattedMetadataHfn;
-        // Regenerate MFA from the HFN to ensure consistency
-        displayMfa = taxonomyFormatter.convertHFNtoMFA(displayHfn);
-      }
-    }
     
     // Add clear logging for debugging
     environmentSafeLog('Asset structure:', {
@@ -1941,7 +1989,7 @@ const RegisterAssetPage: React.FC = () => {
         </Typography>
         
         <Box sx={{ my: 4, p: 3, border: '1px solid #e0e0e0', borderRadius: 2, maxWidth: '800px', mx: 'auto' }}>
-          {/* Asset name and HFN */}
+          {/* Asset name only - remove HFN from top header to avoid inconsistency */}
           <Typography variant="h6" gutterBottom>
             {createdAsset.name}
           </Typography>
@@ -2181,7 +2229,7 @@ const RegisterAssetPage: React.FC = () => {
                       </Typography>
                       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         <Typography variant="body1" fontWeight="bold">
-                          {displayHfn}
+                          {displayHfn || createdAsset.metadata?.hfn || createdAsset.metadata?.humanFriendlyName || ''}
                         </Typography>
                         <Tooltip title="Using consistent NNA format from the unified formatter">
                           <InfoIcon color="info" fontSize="small" sx={{ ml: 1, width: 18, height: 18 }} />
@@ -2189,16 +2237,14 @@ const RegisterAssetPage: React.FC = () => {
                       </Box>
                     </Grid>
                     
-                    {/* Add subcategory discrepancy alert if needed */}
-                    {createdAsset && createdAsset.subcategory === 'Base' && (
-                      <Grid item xs={12}>
-                        <SubcategoryDiscrepancyAlert
-                          backendSubcategory={createdAsset.subcategory}
-                          displayHfn={displayHfn}
-                          displayMfa={displayMfa}
-                        />
-                      </Grid>
-                    )}
+                    {/* Always show the discrepancy alert - it will only render if needed */}
+                    <Grid item xs={12}>
+                      <SubcategoryDiscrepancyAlert
+                        backendSubcategory={createdAsset.subcategory || ''}
+                        displayHfn={displayHfn}
+                        displayMfa={displayMfa}
+                      />
+                    </Grid>
                     
                     <Grid item xs={12}>
                       <Typography variant="subtitle2" color="text.secondary" align="center">
@@ -2206,7 +2252,7 @@ const RegisterAssetPage: React.FC = () => {
                       </Typography>
                       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         <Typography variant="body1" fontFamily="monospace" fontWeight="medium" align="center">
-                          {displayMfa}
+                          {displayMfa || createdAsset.nnaAddress || createdAsset.metadata?.machineFriendlyAddress || createdAsset.metadata?.mfa || ''}
                         </Typography>
                         <Tooltip title="Using consistent NNA format from the unified formatter">
                           <InfoIcon color="info" fontSize="small" sx={{ ml: 1, width: 18, height: 18 }} />
