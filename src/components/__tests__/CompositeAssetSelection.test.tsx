@@ -56,6 +56,11 @@ describe('CompositeAssetSelection', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    // Mock axios.isAxiosError for proper error detection
+    mockedAxios.isAxiosError = jest.fn().mockImplementation((error: any) => {
+      return error && error.isAxiosError === true;
+    });
+    
     // Mock successful rights verification by default
     mockedAxios.post.mockImplementation((url) => {
       if (url.includes('/v1/rights/verify/')) {
@@ -144,11 +149,12 @@ describe('CompositeAssetSelection', () => {
   });
 
   it('handles HTTP 409 for duplicate HFN', async () => {
-    const duplicateError = {
-      response: {
-        status: 409,
-        data: { message: 'HFN already exists' }
-      }
+    // Create a proper Axios error object
+    const duplicateError = new Error('Request failed with status code 409');
+    (duplicateError as any).isAxiosError = true;
+    (duplicateError as any).response = {
+      status: 409,
+      data: { message: 'HFN already exists' }
     };
 
     // Mock registration endpoint to return 409
@@ -192,7 +198,7 @@ describe('CompositeAssetSelection', () => {
     // Wait for error handling
     await waitFor(() => {
       expect(screen.getByText(/Registration Error:/)).toBeInTheDocument();
-      expect(screen.getByText(/HFN conflict/)).toBeInTheDocument();
+      expect(screen.getByText(/HFN conflict: A composite with this combination already exists/)).toBeInTheDocument();
     });
 
     // Verify error toast
@@ -288,6 +294,142 @@ describe('CompositeAssetSelection', () => {
             components: ['G.POP.TSW.001', 'S.POP.PNK.001'],
             componentCount: 2,
             createdFrom: 'CompositeAssetSelection'
+          })
+        })
+      );
+    });
+  });
+
+  // Step 5: Preview optimization tests
+  it('generates preview in <2s', async () => {
+    const consoleSpy = jest.spyOn(console, 'warn').mockImplementation();
+    
+    mockedAxios.post.mockImplementation((url) => {
+      if (url.includes('/v1/rights/verify/')) {
+        return Promise.resolve({
+          data: { status: 'approved', message: 'Rights verified' }
+        });
+      }
+      if (url === '/v1/asset/preview') {
+        // Simulate fast preview generation (under 2s)
+        return Promise.resolve({ 
+          data: { previewUrl: 'http://preview.com/fast.mp4' } 
+        });
+      }
+      return Promise.reject(new Error('Unknown endpoint'));
+    });
+
+    render(
+      <CompositeAssetSelection 
+        onComponentsSelected={mockOnComponentsSelected}
+        initialComponents={mockAssets}
+      />
+    );
+
+    // Click preview button
+    const previewButton = screen.getByText('Preview');
+    fireEvent.click(previewButton);
+
+    // Wait for preview player to appear
+    await waitFor(() => {
+      expect(screen.getByTestId('preview-player')).toBeInTheDocument();
+    });
+
+    // Should not have logged any performance warnings
+    expect(consoleSpy).not.toHaveBeenCalledWith(
+      expect.stringContaining('exceeded 2s')
+    );
+
+    consoleSpy.mockRestore();
+  });
+
+  it('logs warning for slow preview', async () => {
+    const consoleSpy = jest.spyOn(console, 'warn').mockImplementation();
+    
+    mockedAxios.post.mockImplementation((url) => {
+      if (url.includes('/v1/rights/verify/')) {
+        return Promise.resolve({
+          data: { status: 'approved', message: 'Rights verified' }
+        });
+      }
+      if (url === '/v1/asset/preview') {
+        // Simulate slow preview generation (over 2s)
+        return new Promise((resolve) => 
+          setTimeout(() => resolve({ 
+            data: { previewUrl: 'http://preview.com/slow.mp4' } 
+          }), 2500) // 2.5 seconds
+        );
+      }
+      return Promise.reject(new Error('Unknown endpoint'));
+    });
+
+    render(
+      <CompositeAssetSelection 
+        onComponentsSelected={mockOnComponentsSelected}
+        initialComponents={mockAssets}
+      />
+    );
+
+    // Click preview button
+    const previewButton = screen.getByText('Preview');
+    fireEvent.click(previewButton);
+
+    // Wait for preview player to appear (with longer timeout for slow preview)
+    await waitFor(() => {
+      expect(screen.getByTestId('preview-player')).toBeInTheDocument();
+    }, { timeout: 5000 });
+
+    // Should have logged performance warning
+    await waitFor(() => {
+      expect(consoleSpy).toHaveBeenCalledWith(
+        expect.stringContaining('exceeded 2s target')
+      );
+    });
+
+    consoleSpy.mockRestore();
+  });
+
+  it('includes performance optimization headers in preview request', async () => {
+    mockedAxios.post.mockImplementation((url) => {
+      if (url.includes('/v1/rights/verify/')) {
+        return Promise.resolve({
+          data: { status: 'approved', message: 'Rights verified' }
+        });
+      }
+      if (url === '/v1/asset/preview') {
+        return Promise.resolve({ 
+          data: { previewUrl: 'http://preview.com/optimized.mp4' } 
+        });
+      }
+      return Promise.reject(new Error('Unknown endpoint'));
+    });
+
+    render(
+      <CompositeAssetSelection 
+        onComponentsSelected={mockOnComponentsSelected}
+        initialComponents={mockAssets}
+      />
+    );
+
+    // Click preview button
+    fireEvent.click(screen.getByText('Preview'));
+
+    // Wait for request and verify optimization headers
+    await waitFor(() => {
+      expect(mockedAxios.post).toHaveBeenCalledWith(
+        '/v1/asset/preview',
+        expect.objectContaining({
+          components: ['asset-1', 'asset-2'],
+          optimization: expect.objectContaining({
+            targetDuration: 2000,
+            fastMode: true,
+            resolution: '720p'
+          })
+        }),
+        expect.objectContaining({
+          headers: expect.objectContaining({
+            'X-Performance-Target': '2000ms',
+            'X-Component-Count': '2'
           })
         })
       );

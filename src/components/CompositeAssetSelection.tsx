@@ -131,6 +131,11 @@ const CompositeAssetSelection: React.FC<CompositeAssetSelectionProps> = ({
   const validateComponents = (components: Asset[]): string[] => {
     const errors: string[] = [];
     
+    // Check minimum components requirement
+    if (components.length < 2) {
+      errors.push('Composite assets require at least 2 components');
+    }
+    
     // Check if all components have a layer in allowed layers
     const invalidComponents = components.filter(
       asset => !COMPATIBLE_LAYERS.includes(asset.layer)
@@ -269,30 +274,77 @@ const CompositeAssetSelection: React.FC<CompositeAssetSelectionProps> = ({
     }
   };
 
-  // Generate composite preview
+  // Step 5: Optimized composite preview generation with performance logging
   const generatePreview = async (components: Asset[]): Promise<string> => {
     const startTime = performance.now();
     
     try {
+      // Performance logging: Track start time and component count
+      console.log(`Starting preview generation for ${components.length} components at ${new Date().toISOString()}`);
+      
+      // Optimized payload for faster processing
       const response = await axios.post('/v1/asset/preview', {
         components: components.map(asset => asset.id),
         format: 'mp4',
         quality: 'preview',
+        // Performance optimizations
+        optimization: {
+          targetDuration: 2000, // 2s target in milliseconds
+          compression: 'medium',
+          resolution: '720p', // Lower resolution for faster generation
+          fastMode: true, // Enable fast mode if supported by backend
+        },
+      }, {
+        // Axios timeout configuration for better error handling
+        timeout: 5000, // 5s timeout as fallback
+        headers: {
+          'X-Performance-Target': '2000ms',
+          'X-Component-Count': components.length.toString(),
+        },
       });
 
       const endTime = performance.now();
       const duration = endTime - startTime;
 
-      // Log warning if preview generation exceeds 2s target
+      // Enhanced performance logging
+      console.log(`Preview generation completed in ${duration.toFixed(2)}ms for ${components.length} components`);
+      
+      // Log warning if preview generation exceeds 2s target (Section 6.6)
       if (duration > 2000) {
-        console.warn(`Preview generation exceeded 2s: ${duration}ms`);
-        toast.warning('Preview generation was slower than expected');
+        console.warn(`⚠️ Preview generation exceeded 2s target: ${duration.toFixed(2)}ms (target: <2000ms)`);
+        console.warn(`Component details:`, components.map(c => ({ id: c.id, layer: c.layer, name: c.friendlyName })));
+        toast.warning(`Preview generation took ${(duration / 1000).toFixed(1)}s (target: <2s)`);
+      } else {
+        console.log(`✅ Preview generation met performance target: ${duration.toFixed(2)}ms < 2000ms`);
+        toast.success(`Preview generated in ${(duration / 1000).toFixed(1)}s`);
+      }
+
+      // Validate response format
+      if (!response.data?.previewUrl) {
+        throw new Error('Invalid preview response: missing previewUrl');
       }
 
       return response.data.previewUrl;
     } catch (error) {
-      console.error('Preview generation failed:', error);
-      throw new Error('Failed to generate preview');
+      const endTime = performance.now();
+      const duration = endTime - startTime;
+      
+      // Enhanced error logging with timing information
+      console.error(`Preview generation failed after ${duration.toFixed(2)}ms:`, error);
+      
+      if (axios.isAxiosError(error)) {
+        if (error.code === 'ECONNABORTED') {
+          throw new Error('Preview generation timed out - please try again');
+        }
+        if (error.response?.status === 429) {
+          throw new Error('Preview service is busy - please wait and try again');
+        }
+        if (error.response?.status && error.response.status >= 500) {
+          throw new Error('Preview service is temporarily unavailable');
+        }
+      }
+      
+      throw new Error('Failed to generate preview - please check your components and try again');
     }
   };
 
@@ -351,7 +403,7 @@ const CompositeAssetSelection: React.FC<CompositeAssetSelectionProps> = ({
     onComponentsSelected(newComponents);
   };
 
-  // Handle preview generation
+  // Step 5: Enhanced preview generation handler with performance tracking
   const handleGeneratePreview = async () => {
     if (selectedComponents.length < 2) {
       toast.error('Need at least 2 components to generate preview');
@@ -359,12 +411,24 @@ const CompositeAssetSelection: React.FC<CompositeAssetSelectionProps> = ({
     }
 
     setPreviewLoading(true);
+    setRegistrationError(null); // Clear any previous errors
+    
+    // Show performance-aware loading message
+    toast.info(`Generating preview for ${selectedComponents.length} components...`);
+    
     try {
       const url = await generatePreview(selectedComponents);
       setPreviewUrl(url);
       setShowPreviewDialog(true);
+      
+      // Success feedback is handled in generatePreview function
     } catch (error) {
-      toast.error('Failed to generate preview');
+      const errorMessage = error instanceof Error ? error.message : 'Failed to generate preview';
+      console.error('Preview generation error in handler:', error);
+      toast.error(errorMessage);
+      
+      // Set error state for UI display
+      setRegistrationError(`Preview Error: ${errorMessage}`);
     } finally {
       setPreviewLoading(false);
     }
@@ -604,6 +668,7 @@ const CompositeAssetSelection: React.FC<CompositeAssetSelectionProps> = ({
                 style={{ maxWidth: '100%', maxHeight: '400px' }}
                 src={previewUrl}
                 aria-label="Composite asset preview video"
+                data-testid="preview-player"
               >
                 Your browser does not support the video tag.
               </video>
