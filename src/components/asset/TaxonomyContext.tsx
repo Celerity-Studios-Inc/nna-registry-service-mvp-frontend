@@ -22,6 +22,7 @@ const getCategoryDisplayName = (code: string, name?: string): string => {
     // Categories
     'POP': 'Pop',
     'ROK': 'Rock',
+    'RCK': 'Rock',
     'DNC': 'Dance Electronic',
     'HIP': 'Hip Hop',
     'RNB': 'R&B',
@@ -54,6 +55,11 @@ const getCategoryDisplayName = (code: string, name?: string): string => {
     'ABS': 'Abstract',
     'RET': 'Retro',
     'NAT': 'Nature',
+    'ALT': 'Alternative',
+    'WLD': 'World',
+    'JPO': 'J Pop',
+    'KPO': 'K Pop',
+    'BOL': 'Bollywood',
     
     // Subcategories
     'BAS': 'Base',
@@ -78,7 +84,15 @@ const getCategoryDisplayName = (code: string, name?: string): string => {
     'MTN': 'Mountain',
     'FOR': 'Forest',
     'DSR': 'Desert',
-    'LKE': 'Lake'
+    'LKE': 'Lake',
+    'PLB': 'Playback',
+    'PFU': 'Pop Fusion',
+    'CLS': 'Classical',
+    'IFU': 'Indie Fusion',
+    'ELC': 'Electronic',
+    'SFI': 'Sufi',
+    'RMX': 'Remix',
+    'GLB': 'Global'
   };
   
   // If we have a match in our dictionary, return it
