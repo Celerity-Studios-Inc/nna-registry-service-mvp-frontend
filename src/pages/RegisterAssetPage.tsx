@@ -1984,11 +1984,17 @@ const RegisterAssetPage: React.FC = () => {
     
     return (
       <Box sx={{ textAlign: 'center', py: 4 }}>
-        <Typography variant="h4" gutterBottom color="success.main">
-          Asset Created Successfully!
-        </Typography>
+        {/* CRITICAL FIX: Ensure there's absolutely nothing between the success heading and the content box */}
+        {/* This is done with a fragment wrapper to control exactly what renders */}
+        <>
+          <Typography variant="h4" gutterBottom color="success.main" sx={{ mb: 2 }}>
+            Asset Created Successfully!
+          </Typography>
+          
+          {/* Force direct adjacency between the heading and content box */}
+        </>
         
-        <Box sx={{ my: 4, p: 3, border: '1px solid #e0e0e0', borderRadius: 2, maxWidth: '800px', mx: 'auto' }}>
+        <Box sx={{ mt: 0, p: 3, border: '1px solid #e0e0e0', borderRadius: 2, maxWidth: '800px', mx: 'auto' }}>
           {/* Asset name only - remove HFN from top header to avoid inconsistency */}
           <Typography variant="h6" gutterBottom>
             {createdAsset.name}
