@@ -12,11 +12,12 @@ const formatDisplayName = (name?: string): string => {
 
 // Helper function to get display name for category and subcategory codes
 const getCategoryDisplayName = (code: string, name?: string): string => {
+  // If we have a name directly from the taxonomy service, use it (priority 1)
   if (name && name.trim() !== '') {
     return formatDisplayName(name);
   }
   
-  // Fallback display names for common categories and subcategories
+  // Fallback display names for common categories and subcategories (priority 2)
   const displayNames: Record<string, string> = {
     // Categories
     'POP': 'Pop',
@@ -40,6 +41,19 @@ const getCategoryDisplayName = (code: string, name?: string): string => {
     'URB': 'Urban Dance',
     'BLT': 'Ballet',
     'HHS': 'Hip Hop Style',
+    'STG': 'Concert Stages',
+    'CLB': 'Dance Clubs',
+    'FUT': 'Futuristic',
+    'FAN': 'Fantasy',
+    'NTL': 'Natural',
+    'VIR': 'Virtual',
+    'IND': 'Industrial',
+    'RUR': 'Rural',
+    'HST': 'Historical',
+    'CUL': 'Cultural',
+    'ABS': 'Abstract',
+    'RET': 'Retro',
+    'NAT': 'Nature',
     
     // Subcategories
     'BAS': 'Base',
@@ -60,10 +74,26 @@ const getCategoryDisplayName = (code: string, name?: string): string => {
     'SHB': 'Shoki',
     'ZAN': 'Zanku',
     'CPR': 'Coupe Decale',
-    'EXP': 'Experimental'
+    'EXP': 'Experimental',
+    'MTN': 'Mountain',
+    'FOR': 'Forest',
+    'DSR': 'Desert',
+    'LKE': 'Lake'
   };
   
-  return displayNames[code] || code;
+  // If we have a match in our dictionary, return it
+  if (displayNames[code]) {
+    return displayNames[code];
+  }
+  
+  // If no match, try to generate a human-readable name from the code
+  // For codes like NTL, URB, etc., this provides a reasonable fallback
+  if (code && code.length <= 4) {
+    return code.charAt(0).toUpperCase() + code.slice(1).toLowerCase();
+  }
+  
+  // Last resort - just return the code
+  return code;
 };
 
 interface TaxonomyContextProps {
