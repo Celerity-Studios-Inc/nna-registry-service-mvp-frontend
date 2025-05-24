@@ -67,7 +67,8 @@
       "Bash(gh workflow run:*)",
       "Bash(gh run list:*)",
       "Bash(git remote set-url:*)",
-      "Bash(git rev-parse:*)"
+      "Bash(git rev-parse:*)",
+      "Bash(npm ls:*)"
     ],
     "deny": []
   }

@@ -1,0 +1,475 @@
+import React, { useState, useCallback } from 'react';
+import {
+  Box,
+  Typography,
+  Paper,
+  Grid,
+  Button,
+  Alert,
+  CircularProgress,
+  Card,
+  CardContent,
+  List,
+  ListItem,
+  ListItemText,
+  ListItemIcon,
+  ListItemSecondaryAction,
+  IconButton,
+  Tooltip,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+} from '@mui/material';
+import {
+  Remove as RemoveIcon,
+  Security as SecurityIcon,
+  Preview as PreviewIcon,
+  WorkspacePremium as CrownIcon,
+  Lock as LockIcon,
+  AudioFile as AudioIcon,
+  Person as PersonIcon,
+  Palette as PaletteIcon,
+  DirectionsRun as MovesIcon,
+  Public as WorldIcon,
+} from '@mui/icons-material';
+import axios from 'axios';
+import { toast } from 'react-toastify';
+import { Asset } from '../types/asset.types';
+import AssetSearch from './AssetSearch';
+
+// Component compatibility matrix per NNA Framework Section 1.3.2
+const COMPATIBLE_LAYERS = ['G', 'S', 'L', 'M', 'W', 'B', 'P'];
+
+// Layer icons and colors for visual identification
+const LAYER_CONFIG = {
+  G: { icon: AudioIcon, color: '#1976d2', name: 'Songs' },
+  S: { icon: PersonIcon, color: '#9c27b0', name: 'Stars' },
+  L: { icon: PaletteIcon, color: '#f57c00', name: 'Looks' },
+  M: { icon: MovesIcon, color: '#388e3c', name: 'Moves' },
+  W: { icon: WorldIcon, color: '#00796b', name: 'Worlds' },
+  B: { icon: CrownIcon, color: '#d32f2f', name: 'Branded' },
+  P: { icon: LockIcon, color: '#7b1fa2', name: 'Personalize' },
+};
+
+interface CompositeAssetSelectionProps {
+  onComponentsSelected: (components: Asset[]) => void;
+  initialComponents?: Asset[];
+}
+
+interface SearchParams {
+  query: string;
+  layer: string;
+}
+
+interface RightsVerificationResult {
+  assetId: string;
+  status: 'approved' | 'denied' | 'restricted';
+  message?: string;
+  restrictions?: string[];
+}
+
+const CompositeAssetSelection: React.FC<CompositeAssetSelectionProps> = ({
+  onComponentsSelected,
+  initialComponents = [],
+}) => {
+  const [selectedComponents, setSelectedComponents] = useState<Asset[]>(initialComponents);
+  const [searchParams, setSearchParams] = useState<SearchParams>({
+    query: '',
+    layer: '',
+  });
+  const [validationErrors, setValidationErrors] = useState<string[]>([]);
+  const [rightsValidation, setRightsValidation] = useState<{
+    [assetId: string]: RightsVerificationResult;
+  }>({});
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
+  const [showPreviewDialog, setShowPreviewDialog] = useState(false);
+
+  // Validate component compatibility
+  const validateComponentCompatibility = (components: Asset[]): string[] => {
+    const errors: string[] = [];
+
+    // Check layer compatibility
+    const incompatibleLayers = components.filter(
+      asset => !COMPATIBLE_LAYERS.includes(asset.layer)
+    );
+
+    if (incompatibleLayers.length > 0) {
+      errors.push(
+        `Incompatible layers detected: ${incompatibleLayers
+          .map(asset => `${asset.layer} (${asset.friendlyName})`)
+          .join(', ')}`
+      );
+    }
+
+    // Check minimum components requirement
+    if (components.length < 2) {
+      errors.push('Composite assets require at least 2 components');
+    }
+
+    // Check maximum components limit (optional business rule)
+    if (components.length > 10) {
+      errors.push('Composite assets cannot have more than 10 components');
+    }
+
+    // Check for duplicate components
+    const duplicateIds = components
+      .map(asset => asset.id)
+      .filter((id, index, arr) => arr.indexOf(id) !== index);
+
+    if (duplicateIds.length > 0) {
+      errors.push('Duplicate components detected');
+    }
+
+    return errors;
+  };
+
+  // Verify rights for components via Clearity integration
+  const verifyComponentRights = async (asset: Asset): Promise<RightsVerificationResult> => {
+    try {
+      const response = await axios.post(`/v1/rights/verify/${asset.id}`, {
+        usage_context: {
+          platform: 'TikTok',
+          territories: ['US'],
+          usage_type: 'composite',
+        },
+      });
+
+      return {
+        assetId: asset.id,
+        status: response.data.status,
+        message: response.data.message,
+        restrictions: response.data.restrictions,
+      };
+    } catch (error) {
+      console.error(`Rights verification failed for ${asset.id}:`, error);
+      return {
+        assetId: asset.id,
+        status: 'denied',
+        message: 'Rights verification failed',
+      };
+    }
+  };
+
+  // Generate composite HFN in the format C.[CategoryCode].[SubCategoryCode].[Sequential]:[Component IDs]
+  const generateCompositeHFN = (components: Asset[]): string => {
+    const componentIds = components.map(asset => asset.friendlyName || asset.id).join('+');
+    // Default to C.001.001.001 for composite category/subcategory
+    return `C.001.001.001:${componentIds}`;
+  };
+
+  // Generate composite preview
+  const generatePreview = async (components: Asset[]): Promise<string> => {
+    const startTime = performance.now();
+    
+    try {
+      const response = await axios.post('/v1/asset/preview', {
+        components: components.map(asset => asset.id),
+        format: 'mp4',
+        quality: 'preview',
+      });
+
+      const endTime = performance.now();
+      const duration = endTime - startTime;
+
+      // Log warning if preview generation exceeds 2s target
+      if (duration > 2000) {
+        console.warn(`Preview generation exceeded 2s: ${duration}ms`);
+        toast.warning('Preview generation was slower than expected');
+      }
+
+      return response.data.previewUrl;
+    } catch (error) {
+      console.error('Preview generation failed:', error);
+      throw new Error('Failed to generate preview');
+    }
+  };
+
+  // Handle adding a component
+  const handleAddComponent = useCallback(async (asset: Asset) => {
+    // Check if already added
+    if (selectedComponents.some(comp => comp.id === asset.id)) {
+      toast.info('Component already added');
+      return;
+    }
+
+    // Verify rights before adding
+    toast.info('Verifying component rights...');
+    const rightsResult = await verifyComponentRights(asset);
+    
+    setRightsValidation(prev => ({
+      ...prev,
+      [asset.id]: rightsResult,
+    }));
+
+    if (rightsResult.status !== 'approved') {
+      toast.error(`Rights verification failed: ${rightsResult.message}`);
+      return;
+    }
+
+    const newComponents = [...selectedComponents, asset];
+    setSelectedComponents(newComponents);
+    
+    // Validate compatibility
+    const errors = validateComponentCompatibility(newComponents);
+    setValidationErrors(errors);
+
+    // Update parent component
+    onComponentsSelected(newComponents);
+
+    toast.success(`Added ${asset.friendlyName || asset.name}`);
+  }, [selectedComponents, onComponentsSelected]);
+
+  // Handle removing a component
+  const handleRemoveComponent = (assetId: string) => {
+    const newComponents = selectedComponents.filter(comp => comp.id !== assetId);
+    setSelectedComponents(newComponents);
+    
+    // Remove from rights validation
+    setRightsValidation(prev => {
+      const updated = { ...prev };
+      delete updated[assetId];
+      return updated;
+    });
+
+    // Validate compatibility
+    const errors = validateComponentCompatibility(newComponents);
+    setValidationErrors(errors);
+
+    // Update parent component
+    onComponentsSelected(newComponents);
+  };
+
+  // Handle preview generation
+  const handleGeneratePreview = async () => {
+    if (selectedComponents.length < 2) {
+      toast.error('Need at least 2 components to generate preview');
+      return;
+    }
+
+    setPreviewLoading(true);
+    try {
+      const url = await generatePreview(selectedComponents);
+      setPreviewUrl(url);
+      setShowPreviewDialog(true);
+    } catch (error) {
+      toast.error('Failed to generate preview');
+    } finally {
+      setPreviewLoading(false);
+    }
+  };
+
+  // Get layer icon component
+  const getLayerIcon = (layer: string) => {
+    const config = LAYER_CONFIG[layer as keyof typeof LAYER_CONFIG];
+    if (!config) return null;
+    
+    const IconComponent = config.icon;
+    return <IconComponent sx={{ color: config.color }} />;
+  };
+
+  // Get asset accessibility tags display
+  const getAccessibilityDisplay = (asset: Asset) => {
+    const accessibilityTags = asset.metadata?.Accessibility_Tags || [];
+    if (accessibilityTags.length === 0) return null;
+
+    return (
+      <Box sx={{ mt: 1 }}>
+        {accessibilityTags.map((tag: string, index: number) => (
+          <Box
+            key={index}
+            component="span"
+            sx={{
+              display: 'inline-block',
+              backgroundColor: 'info.light',
+              color: 'info.contrastText',
+              px: 1,
+              py: 0.25,
+              borderRadius: 1,
+              fontSize: '0.75rem',
+              mr: 0.5,
+              mb: 0.5,
+            }}
+            aria-label={`Accessibility tag: ${tag}`}
+          >
+            {tag}
+          </Box>
+        ))}
+      </Box>
+    );
+  };
+
+  return (
+    <Box>
+      <Typography variant="h6" gutterBottom>
+        Select Composite Components
+      </Typography>
+      <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+        Add compatible assets (G, S, L, M, W, B, P layers) to create your composite.
+        All components will be verified for rights clearance.
+      </Typography>
+
+      {/* Validation Errors */}
+      {validationErrors.length > 0 && (
+        <Alert severity="error" sx={{ mb: 3 }}>
+          <Typography variant="subtitle2" gutterBottom>
+            Validation Errors:
+          </Typography>
+          <ul style={{ margin: 0, paddingLeft: '20px' }}>
+            {validationErrors.map((error, index) => (
+              <li key={index}>{error}</li>
+            ))}
+          </ul>
+        </Alert>
+      )}
+
+      <Grid container spacing={3}>
+        {/* Search Section */}
+        <Grid item xs={12} md={6}>
+          <Paper sx={{ p: 2 }}>
+            <Typography variant="subtitle1" gutterBottom>
+              Search Assets
+            </Typography>
+            
+            <AssetSearch
+              onAssetSelect={handleAddComponent}
+              searchParams={searchParams}
+              setSearchParams={setSearchParams}
+            />
+          </Paper>
+        </Grid>
+
+        {/* Selected Components Section */}
+        <Grid item xs={12} md={6}>
+          <Paper sx={{ p: 2 }}>
+            <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
+              <Typography variant="subtitle1">
+                Selected Components ({selectedComponents.length})
+              </Typography>
+              {selectedComponents.length >= 2 && (
+                <Button
+                  variant="outlined"
+                  startIcon={previewLoading ? <CircularProgress size={16} /> : <PreviewIcon />}
+                  onClick={handleGeneratePreview}
+                  disabled={previewLoading}
+                  aria-label="Generate preview of composite"
+                >
+                  Preview
+                </Button>
+              )}
+            </Box>
+
+            {selectedComponents.length === 0 ? (
+              <Alert severity="info">
+                No components selected. Search and add assets above to create your composite.
+              </Alert>
+            ) : (
+              <Box>
+                {/* Composite HFN Preview */}
+                <Alert severity="info" sx={{ mb: 2 }}>
+                  <Typography variant="caption" gutterBottom>
+                    Composite HFN Preview:
+                  </Typography>
+                  <Typography variant="body2" fontFamily="monospace">
+                    {generateCompositeHFN(selectedComponents)}
+                  </Typography>
+                </Alert>
+
+                <List>
+                  {selectedComponents.map(asset => {
+                    const rightsStatus = rightsValidation[asset.id];
+                    return (
+                      <ListItem key={asset.id} divider>
+                        <ListItemIcon>
+                          {getLayerIcon(asset.layer)}
+                        </ListItemIcon>
+                        <ListItemText
+                          primary={
+                            <Box display="flex" alignItems="center" gap={1}>
+                              {asset.friendlyName || asset.name}
+                              {asset.layer === 'B' && (
+                                <CrownIcon sx={{ color: 'gold', fontSize: 16 }} />
+                              )}
+                              {asset.layer === 'P' && (
+                                <LockIcon sx={{ color: 'purple', fontSize: 16 }} />
+                              )}
+                              {rightsStatus && (
+                                <Tooltip title={rightsStatus.message || 'Rights verified'}>
+                                  <SecurityIcon
+                                    sx={{
+                                      color: rightsStatus.status === 'approved' ? 'success.main' : 'error.main',
+                                      fontSize: 16,
+                                    }}
+                                  />
+                                </Tooltip>
+                              )}
+                            </Box>
+                          }
+                          secondary={
+                            <Box>
+                              <Typography variant="caption" color="text.secondary">
+                                {asset.layer} • {asset.nnaAddress || 'No address'}
+                              </Typography>
+                              {getAccessibilityDisplay(asset)}
+                            </Box>
+                          }
+                        />
+                        <ListItemSecondaryAction>
+                          <IconButton
+                            size="small"
+                            onClick={() => handleRemoveComponent(asset.id)}
+                            color="error"
+                            aria-label={`Remove ${asset.friendlyName || asset.name} from composite`}
+                          >
+                            <RemoveIcon />
+                          </IconButton>
+                        </ListItemSecondaryAction>
+                      </ListItem>
+                    );
+                  })}
+                </List>
+              </Box>
+            )}
+          </Paper>
+        </Grid>
+      </Grid>
+
+      {/* Preview Dialog */}
+      <Dialog
+        open={showPreviewDialog}
+        onClose={() => setShowPreviewDialog(false)}
+        maxWidth="md"
+        fullWidth
+        aria-labelledby="preview-dialog-title"
+      >
+        <DialogTitle id="preview-dialog-title">
+          Composite Preview
+        </DialogTitle>
+        <DialogContent>
+          {previewUrl ? (
+            <Box sx={{ textAlign: 'center' }}>
+              <video
+                controls
+                style={{ maxWidth: '100%', maxHeight: '400px' }}
+                src={previewUrl}
+                aria-label="Composite asset preview video"
+              >
+                Your browser does not support the video tag.
+              </video>
+            </Box>
+          ) : (
+            <Typography>No preview available</Typography>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setShowPreviewDialog(false)}>
+            Close
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </Box>
+  );
+};
+
+export default CompositeAssetSelection;
