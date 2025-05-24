@@ -5,12 +5,17 @@ Frontend application for the Naming, Numbering, and Addressing (NNA) Registry Se
 [![Deployed on Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-black?style=for-the-badge&logo=vercel)](https://nna-registry-service-mvp-frontend.vercel.app)
 
 ## Latest Update (2025-05-24)
+- **NEW**: Implemented Composite Assets Feature (Steps 1-5 Complete)
+  - Component discovery and selection with debounced search
+  - Compatibility validation for allowed layers (G, S, L, M, W, B, P)
+  - Composite HFN generation: `C.001.001.001:G.POP.TSW.001+S.POP.PNK.001`
+  - Optimized preview generation with <2s performance target
+  - Comprehensive error handling and user feedback
 - Implemented generic solution for category labels in TaxonomyContext
 - Fixed display of category labels in Step 3 
 - Fixed display of subcategory labels in Step 3
-- Now ready for thorough testing of Asset registration
-- Using stable, working version of code
-- Future work will focus on Browse Assets functionality
+- Enhanced testing coverage with 8 comprehensive test suites
+- Now ready for thorough testing of Asset registration and Composite Assets
 
 ## Project Overview
 
@@ -18,15 +23,18 @@ The NNA Registry Service is a platform for managing digital assets within a Nami
 
 Key features include:
 - Asset registration with metadata and file uploads
+- **Composite Assets Creation** - Combine multiple components into aggregated datasets
 - Taxonomy-based categorization system
 - Dual addressing with HFN and MFA formats
-- Asset search and discovery
-- Responsive user interface
+- Asset search and discovery with performance optimization
+- Responsive user interface with comprehensive error handling
 
 ## Technical Documentation
 
 Comprehensive technical documentation is available:
 
+- [**COMPOSITE_ASSETS_IMPLEMENTATION.md**](./COMPOSITE_ASSETS_IMPLEMENTATION.md) - Complete guide to composite assets feature
+- [**TESTING_GUIDE.md**](./TESTING_GUIDE.md) - Comprehensive testing instructions and scenarios
 - [**ARCHITECTURE.md**](./ARCHITECTURE.md) - System architecture, design patterns, and data flow
 - [**IMPLEMENTATION_DETAILS.md**](./IMPLEMENTATION_DETAILS.md) - Detailed implementation information and code examples
 - [**TESTING.md**](./TESTING.md) - Testing strategies, critical test cases, and troubleshooting guides
