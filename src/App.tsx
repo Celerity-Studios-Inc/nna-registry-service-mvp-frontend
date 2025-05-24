@@ -30,6 +30,7 @@ import TaxonomyDebugPage from './pages/TaxonomyDebugPage';
 import TaxonomyTestPage from './pages/TaxonomyTestPage';
 import TaxonomySelectorTestPage from './pages/TaxonomySelectorTestPage';
 import TaxonomyComparisonTest from './pages/TaxonomyComparisonTest';
+import CompositeAssetsTestPage from './pages/CompositeAssetsTestPage';
 import AssetRegistration from './pages/AssetRegistration';
 import EmergencyAssetRegistrationPage from './pages/EmergencyAssetRegistrationPage';
 import UltraSimpleAssetRegistrationPage from './pages/UltraSimpleAssetRegistrationPage';
@@ -215,6 +216,10 @@ const App: React.FC = () => {
                         <Route
                           path="/taxonomy-comparison-test"
                           element={<TaxonomyComparisonTest />}
+                        />
+                        <Route
+                          path="/composite-assets-test"
+                          element={<CompositeAssetsTestPage />}
                         />
                         <Route
                           path="/taxonomy-selector-v3-test"
