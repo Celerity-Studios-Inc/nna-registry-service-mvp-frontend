@@ -312,17 +312,22 @@ const CompositeAssetSelection: React.FC<CompositeAssetSelectionProps> = ({
     }
   };
 
-  // Step 4: Generate composite HFN in the format [Layer].[CategoryCode].[SubCategoryCode].[Sequential]:[Component IDs]
+  // Step 4: Generate composite address in the format [Layer].[CategoryCode].[SubCategoryCode].[Sequential]:[MFA addresses]
   const generateCompositeHFN = (components: Asset[], sequential: string = '001'): string => {
-    const componentIds = components.map(asset => asset.friendlyName || asset.name).join('+');
-    // Format: [targetLayer].001.001.[Sequential]:[Component IDs]
-    return `${targetLayer}.001.001.${sequential}:${componentIds}`;
+    // Extract MFA addresses from components (backend uses nna_address, frontend uses nnaAddress)
+    const componentMFAs = components.map(asset => {
+      // Try multiple possible field names for MFA address
+      return (asset as any).nna_address || asset.nnaAddress || (asset as any).mfa || (asset as any).MFA || 'UNKNOWN.MFA';
+    }).join('+');
+    
+    // Format: [targetLayer].001.001.[Sequential]:[MFA addresses]
+    return `${targetLayer}.001.001.${sequential}:${componentMFAs}`;
   };
 
   // Step 4: Register composite asset with backend
   const registerCompositeAsset = async (components: Asset[]): Promise<Asset> => {
     try {
-      const componentHFNs = components.map(asset => asset.friendlyName || asset.name);
+      const componentMFAs = components.map(asset => (asset as any).nna_address || asset.nnaAddress || (asset as any).mfa || (asset as any).MFA || 'UNKNOWN.MFA');
       const compositeHFN = generateCompositeHFN(components);
       
       // Prepare registration payload matching backend asset structure
@@ -334,8 +339,8 @@ const CompositeAssetSelection: React.FC<CompositeAssetSelectionProps> = ({
         nna_address: `${targetLayer}.001.001.001`, // Generate NNA address format
         source: 'ReViz', // Default source for composites
         tags: ['composite', 'generated', ...Array.from(new Set(components.flatMap(asset => asset.tags || [])))],
-        description: `Composite asset containing ${components.length} components: ${componentHFNs.join(', ')}`,
-        components: componentHFNs, // Backend expects array based on asset structure
+        description: `Composite asset containing ${components.length} components: ${componentMFAs.join(', ')}`,
+        components: componentMFAs, // Backend expects array of MFA addresses
         trainingData: null, // Optional field from backend structure
         rights: null, // Optional field from backend structure
       };
