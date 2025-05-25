@@ -263,13 +263,38 @@ const CompositeAssetSelection: React.FC<CompositeAssetSelectionProps> = ({
   // Verify rights for components via Clearity integration
   const verifyComponentRights = async (asset: Asset): Promise<RightsVerificationResult> => {
     try {
-      const response = await axios.post(`/v1/rights/verify/${asset.id}`, {
+      const requestData = {
         usage_context: {
           platform: 'TikTok',
           territories: ['US'],
           usage_type: 'composite',
         },
-      });
+      };
+
+      let response;
+      try {
+        // Try proxy first
+        response = await axios.post(`/v1/rights/verify/${asset.id}`, requestData, {
+          headers: {
+            'Authorization': localStorage.getItem('authToken') ? `Bearer ${localStorage.getItem('authToken')?.replace(/\s+/g, '')}` : 
+                            localStorage.getItem('testToken') ? `Bearer ${localStorage.getItem('testToken')?.replace(/\s+/g, '')}` : undefined,
+            'Content-Type': 'application/json',
+          },
+          timeout: 5000,
+        });
+      } catch (proxyError) {
+        console.log('Rights verification proxy failed, trying direct backend connection...');
+        // If proxy fails, try direct backend connection
+        response = await axios.post(`https://registry.reviz.dev/v1/rights/verify/${asset.id}`, requestData, {
+          headers: {
+            'Authorization': localStorage.getItem('authToken') ? `Bearer ${localStorage.getItem('authToken')?.replace(/\s+/g, '')}` : 
+                            localStorage.getItem('testToken') ? `Bearer ${localStorage.getItem('testToken')?.replace(/\s+/g, '')}` : undefined,
+            'Content-Type': 'application/json',
+          },
+          timeout: 10000,
+        });
+        console.log('Direct backend connection successful for rights verification!');
+      }
 
       return {
         assetId: asset.id,
@@ -409,7 +434,7 @@ const CompositeAssetSelection: React.FC<CompositeAssetSelectionProps> = ({
       console.log(`Starting preview generation for ${components.length} components at ${new Date().toISOString()}`);
       
       // Optimized payload for faster processing
-      const response = await axios.post('/v1/asset/preview', {
+      const requestData = {
         components: components.map(asset => asset.id),
         format: 'mp4',
         quality: 'preview',
@@ -420,14 +445,33 @@ const CompositeAssetSelection: React.FC<CompositeAssetSelectionProps> = ({
           resolution: '720p', // Lower resolution for faster generation
           fastMode: true, // Enable fast mode if supported by backend
         },
-      }, {
+      };
+
+      const requestConfig = {
         // Axios timeout configuration for better error handling
         timeout: 5000, // 5s timeout as fallback
         headers: {
+          'Authorization': localStorage.getItem('authToken') ? `Bearer ${localStorage.getItem('authToken')?.replace(/\s+/g, '')}` : 
+                          localStorage.getItem('testToken') ? `Bearer ${localStorage.getItem('testToken')?.replace(/\s+/g, '')}` : undefined,
+          'Content-Type': 'application/json',
           'X-Performance-Target': '2000ms',
           'X-Component-Count': components.length.toString(),
         },
-      });
+      };
+
+      let response;
+      try {
+        // Try proxy first
+        response = await axios.post('/v1/asset/preview', requestData, requestConfig);
+      } catch (proxyError) {
+        console.log('Preview generation proxy failed, trying direct backend connection...');
+        // If proxy fails, try direct backend connection
+        response = await axios.post('https://registry.reviz.dev/v1/asset/preview', requestData, {
+          ...requestConfig,
+          timeout: 10000, // Longer timeout for direct connection
+        });
+        console.log('Direct backend connection successful for preview generation!');
+      }
 
       const endTime = performance.now();
       const duration = endTime - startTime;
