@@ -710,12 +710,70 @@ The original implementation with SimpleTaxonomySelectionV3 remains the active im
 - Focus on maintaining the current stable implementation while keeping refactored architecture available
 - Use the emergency registration page for critical fallback scenarios
 
+## Composite Assets Implementation (May 24-25, 2025)
+
+A comprehensive composite assets feature has been implemented in the `feature/composite-assets` branch. This allows users to create composite assets by selecting and combining multiple component assets from different layers.
+
+### Key Features Implemented
+
+#### 1. Composite Asset Workflow
+- **Component Search & Selection:** Search existing assets across all layers (G, S, L, M, W, B, P, T, C, R)
+- **Component Management:** Add/remove components with real-time validation
+- **HFN Generation:** Special format for composites: `C.001.001.001:G.POP.TSW.001+S.POP.PNK.001+W.BCH.SUN.001`
+- **Registration:** Submit composite assets to backend with component references
+- **Rights Verification:** Framework for rights checking (currently bypassed due to missing backend endpoint)
+
+#### 2. Target Layers for Composite Workflow
+The following layers require datasets/collections and will use the composite workflow:
+- **B (Branded):** Brand assets, logos, marketing materials
+- **P (Personalize):** Personalized user content and customizations  
+- **T (Training_Data):** AI training datasets and machine learning resources
+- **C (Composites):** Combined assets referencing components from other layers
+- **R (Rights):** Rights, licenses, and legal documentation
+
+#### 3. New Components Created
+- **CompositeAssetSelection** (`/src/components/CompositeAssetSelection.tsx`): Main workflow component
+- **AssetSearch** (`/src/components/AssetSearch.tsx`): Enhanced search with layer filtering
+- **CompositeAssetsTestPage** (`/src/pages/CompositeAssetsTestPage.tsx`): Test page for validation
+- **AuthTestHelper** (`/src/components/AuthTestHelper.tsx`): JWT token management utility
+
+#### 4. API Integration & Fallbacks
+- **Primary Endpoint:** `/api/assets` for search and registration
+- **Proxy Fallback:** Falls back to direct backend calls when local proxy fails
+- **Mock Data Fallback:** Provides test data when backend unavailable
+- **Authentication:** JWT token support with automatic cleaning/validation
+
+#### 5. Integration Plan
+**Current Status:** Complete implementation in feature branch, ready for merge to main
+
+**Required Integration Steps:**
+1. **Merge to Main:** Merge `feature/composite-assets` branch to main
+2. **Layer Routing:** Wire composite layers (B, P, T, C, R) to use composite workflow instead of regular asset flow
+3. **Navigation Updates:** Update RegisterAssetPage to detect composite layers and route appropriately
+4. **Flow Customization:** Customize workflow for each layer's specific needs (future enhancement)
+
+**Technical Details:**
+- **HFN Format:** `C.001.001.001:G.POP.TSW.001+S.POP.PNK.001+W.BCH.SUN.001`
+- **Component Separator:** `+` character between component references
+- **Metadata:** Includes component count, layers, and creation context
+- **Validation:** Ensures components are from compatible layers
+
+### Files Created/Modified
+- **New Components:** 4 new React components for composite workflow
+- **API Integration:** Enhanced AssetSearch with backend integration and fallback mechanisms
+- **Test Infrastructure:** Complete test page and authentication helpers
+- **Documentation:** Detailed implementation guide in `COMPOSITE_ASSETS_IMPLEMENTATION.md`
+
+The composite assets feature is ready for integration and will enable the creation of complex multi-layer assets as required by the NNA Framework specifications.
+
 ## Reminder
 When continuing work on this project, remember:
 - The current implementation uses SimpleTaxonomySelectionV3 and RegisterAssetPage.tsx
+- **NEW:** Composite assets implementation is complete in `feature/composite-assets` branch and ready for merge
 - Do not add test steps to the CI/CD workflow
 - Do not re-enable the CI or Run Tests workflows
 - Focus on UI functionality over test coverage
 - Make minimal targeted changes rather than broad refactoring
 - The refactored taxonomy architecture exists but is not active in main application flow
 - Emergency registration is available at `/emergency-register` for critical scenarios
+- **Next Priority:** Integrate composite assets workflow for layers B, P, T, C, R
