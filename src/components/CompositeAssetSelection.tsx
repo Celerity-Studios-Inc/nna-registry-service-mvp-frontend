@@ -276,7 +276,7 @@ const CompositeAssetSelection: React.FC<CompositeAssetSelectionProps> = ({
         // Try proxy first
         response = await axios.post(`/v1/rights/verify/${asset.id}`, requestData, {
           headers: {
-            'Authorization': localStorage.getItem('authToken') ? `Bearer ${localStorage.getItem('authToken')?.replace(/\s+/g, '')}` : 
+            'Authorization': localStorage.getItem('accessToken') ? `Bearer ${localStorage.getItem('accessToken')?.replace(/\s+/g, '')}` : 
                             localStorage.getItem('testToken') ? `Bearer ${localStorage.getItem('testToken')?.replace(/\s+/g, '')}` : undefined,
             'Content-Type': 'application/json',
           },
@@ -287,7 +287,7 @@ const CompositeAssetSelection: React.FC<CompositeAssetSelectionProps> = ({
         // If proxy fails, try direct backend connection
         response = await axios.post(`https://registry.reviz.dev/v1/rights/verify/${asset.id}`, requestData, {
           headers: {
-            'Authorization': localStorage.getItem('authToken') ? `Bearer ${localStorage.getItem('authToken')?.replace(/\s+/g, '')}` : 
+            'Authorization': localStorage.getItem('accessToken') ? `Bearer ${localStorage.getItem('accessToken')?.replace(/\s+/g, '')}` : 
                             localStorage.getItem('testToken') ? `Bearer ${localStorage.getItem('testToken')?.replace(/\s+/g, '')}` : undefined,
             'Content-Type': 'application/json',
           },
@@ -354,7 +354,7 @@ const CompositeAssetSelection: React.FC<CompositeAssetSelectionProps> = ({
         try {
           response = await axios.post('/api/assets', registrationPayload, {
             headers: {
-              'Authorization': localStorage.getItem('authToken') ? `Bearer ${localStorage.getItem('authToken')?.replace(/\s+/g, '')}` : 
+              'Authorization': localStorage.getItem('accessToken') ? `Bearer ${localStorage.getItem('accessToken')?.replace(/\s+/g, '')}` : 
                               localStorage.getItem('testToken') ? `Bearer ${localStorage.getItem('testToken')?.replace(/\s+/g, '')}` : undefined,
               'Content-Type': 'application/json',
             },
@@ -365,7 +365,7 @@ const CompositeAssetSelection: React.FC<CompositeAssetSelectionProps> = ({
           // If proxy fails, try direct backend connection
           response = await axios.post('https://registry.reviz.dev/api/assets', registrationPayload, {
             headers: {
-              'Authorization': localStorage.getItem('authToken') ? `Bearer ${localStorage.getItem('authToken')?.replace(/\s+/g, '')}` : 
+              'Authorization': localStorage.getItem('accessToken') ? `Bearer ${localStorage.getItem('accessToken')?.replace(/\s+/g, '')}` : 
                               localStorage.getItem('testToken') ? `Bearer ${localStorage.getItem('testToken')?.replace(/\s+/g, '')}` : undefined,
               'Content-Type': 'application/json',
             },
@@ -451,7 +451,7 @@ const CompositeAssetSelection: React.FC<CompositeAssetSelectionProps> = ({
         // Axios timeout configuration for better error handling
         timeout: 5000, // 5s timeout as fallback
         headers: {
-          'Authorization': localStorage.getItem('authToken') ? `Bearer ${localStorage.getItem('authToken')?.replace(/\s+/g, '')}` : 
+          'Authorization': localStorage.getItem('accessToken') ? `Bearer ${localStorage.getItem('accessToken')?.replace(/\s+/g, '')}` : 
                           localStorage.getItem('testToken') ? `Bearer ${localStorage.getItem('testToken')?.replace(/\s+/g, '')}` : undefined,
           'Content-Type': 'application/json',
           'X-Performance-Target': '2000ms',

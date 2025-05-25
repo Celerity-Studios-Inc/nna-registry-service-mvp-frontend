@@ -87,7 +87,7 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
             timeout: 5000, // Shorter timeout for proxy attempt
             headers: {
               // Add authorization header if we have a token (clean any newlines/whitespace)
-              'Authorization': localStorage.getItem('authToken') ? `Bearer ${localStorage.getItem('authToken')?.replace(/\s+/g, '')}` : 
+              'Authorization': localStorage.getItem('accessToken') ? `Bearer ${localStorage.getItem('accessToken')?.replace(/\s+/g, '')}` : 
                               localStorage.getItem('testToken') ? `Bearer ${localStorage.getItem('testToken')?.replace(/\s+/g, '')}` : undefined,
             },
           });
@@ -102,7 +102,7 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
             },
             timeout: 10000,
             headers: {
-              'Authorization': localStorage.getItem('authToken') ? `Bearer ${localStorage.getItem('authToken')?.replace(/\s+/g, '')}` : 
+              'Authorization': localStorage.getItem('accessToken') ? `Bearer ${localStorage.getItem('accessToken')?.replace(/\s+/g, '')}` : 
                               localStorage.getItem('testToken') ? `Bearer ${localStorage.getItem('testToken')?.replace(/\s+/g, '')}` : undefined,
             },
           });
