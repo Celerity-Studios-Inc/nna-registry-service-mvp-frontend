@@ -45,8 +45,9 @@ import { LayerOption, CategoryOption, SubcategoryOption } from '../types/taxonom
 import { FileUploadResponse, Asset, SOURCE_OPTIONS } from '../types/asset.types';
 
 // Define the steps in the composite registration process
+// Layer is already selected via URL parameters, so we start with taxonomy
 const getCompositeSteps = () => {
-  return ['Select Layer', 'Choose Taxonomy', 'Upload Files', 'Search & Add Components', 'Review & Submit'];
+  return ['Choose Taxonomy', 'Upload Files', 'Search & Add Components', 'Review & Submit'];
 };
 
 // Define the form validation schema
@@ -150,22 +151,21 @@ const CompositeRegisterAssetPage: React.FC = () => {
     let isValid = true;
     
     switch (activeStep) {
-      case 0: // Layer Selection
-        isValid = await trigger(['layer', 'layerName']);
-        break;
-      case 1: // Taxonomy Selection
+      case 0: // Taxonomy Selection (Category + Subcategory)
         isValid = await trigger(['categoryCode', 'subcategoryCode']);
         break;
-      case 2: // File Upload
+      case 1: // File Upload
         isValid = await trigger(['files', 'name', 'description', 'source']);
         break;
-      case 3: // Component Selection
+      case 2: // Component Selection
         isValid = selectedComponents.length >= 2;
         if (!isValid) {
           setError('Please select at least 2 component assets for the composite.');
           return;
         }
         setValue('components', selectedComponents as any);
+        break;
+      case 3: // Review & Submit - no validation needed, will submit
         break;
     }
 
@@ -328,15 +328,7 @@ const CompositeRegisterAssetPage: React.FC = () => {
   // Render step content
   const getStepContent = (step: number) => {
     switch (step) {
-      case 0: // Select Layer
-        return (
-          <LayerSelection
-            onLayerSelect={handleLayerSelect}
-            selectedLayerCode={watchLayer}
-          />
-        );
-      
-      case 1: // Choose Taxonomy
+      case 0: // Choose Taxonomy (Category + Subcategory)
         return (
           <>
             <SimpleTaxonomySelectionV3
@@ -363,7 +355,7 @@ const CompositeRegisterAssetPage: React.FC = () => {
           </>
         );
       
-      case 2: // Upload Files
+      case 1: // Upload Files
         return (
           <Box>
             {/* Show taxonomy context */}
@@ -500,7 +492,7 @@ const CompositeRegisterAssetPage: React.FC = () => {
           </Box>
         );
       
-      case 3: // Search & Add Components
+      case 2: // Search & Add Components
         return (
           <Box>
             <Typography variant="h6" gutterBottom>
@@ -520,7 +512,7 @@ const CompositeRegisterAssetPage: React.FC = () => {
           </Box>
         );
       
-      case 4: // Review & Submit
+      case 3: // Review & Submit
         return (
           <ReviewSubmit
             assetData={{
@@ -635,7 +627,7 @@ const CompositeRegisterAssetPage: React.FC = () => {
     <Container maxWidth="lg">
       <Paper sx={{ p: 4, mt: 4 }}>
         <Typography variant="h4" gutterBottom>
-          Composite Asset Registration
+          Composite Asset Registration - {urlLayerName} Layer
         </Typography>
         <Typography variant="body1" color="text.secondary" paragraph>
           Register a composite asset that references multiple component assets from different layers.
