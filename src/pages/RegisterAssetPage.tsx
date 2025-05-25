@@ -637,11 +637,11 @@ const RegisterAssetPage: React.FC = () => {
     const isCompositeWorkflow = compositeLayerCodes.includes(layer.code);
     
     if (isCompositeWorkflow) {
-      // Route to composite assets workflow for these layers
-      environmentSafeLog(`Detected composite layer ${layer.code} - routing to composite assets workflow`);
+      // Route to composite registration workflow for these layers
+      environmentSafeLog(`Detected composite layer ${layer.code} - routing to composite registration workflow`);
       
-      // Navigate to composite assets page with layer pre-selected
-      const url = `/composite-assets-test?layer=${layer.code}&layerName=${encodeURIComponent(layer.name)}`;
+      // Navigate to composite registration page with layer pre-selected
+      const url = `/composite-register?layer=${layer.code}&layerName=${encodeURIComponent(layer.name)}`;
       window.location.href = url;
       return;
     }
