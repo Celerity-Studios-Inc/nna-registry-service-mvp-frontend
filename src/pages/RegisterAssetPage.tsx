@@ -632,29 +632,17 @@ const RegisterAssetPage: React.FC = () => {
     setValue('layer', layer.code);
     setValue('layerName', layer.name);
     
-    // Check if this is a composite layer that requires dataset/collection workflow
+    // All layers now use the unified workflow
+    // Composite layers (B, P, T, C, R) will get an additional step after file upload
     const compositeLayerCodes = ['B', 'P', 'T', 'C', 'R'];
-    const isCompositeWorkflow = compositeLayerCodes.includes(layer.code);
-    
-    if (isCompositeWorkflow) {
-      // Route to composite registration workflow for these layers
-      environmentSafeLog(`Detected composite layer ${layer.code} - routing to composite registration workflow`);
-      
-      // Navigate to composite registration page with layer pre-selected
-      const url = `/composite-register?layer=${layer.code}&layerName=${encodeURIComponent(layer.name)}`;
-      window.location.href = url;
-      return;
-    }
+    const isComposite = compositeLayerCodes.includes(layer.code);
+    setIsCompositeLayer(isComposite);
     
     // For individual asset layers (G, S, L, M, W), use the regular workflow
     
-    // Check if this is the training layer (T) - This check is now redundant since T goes to composite workflow
+    // Check if this is the training layer (T) - special case for training data collection
     const isTraining = layer.code === 'T';
     setIsTrainingLayer(isTraining);
-    
-    // Check if this is the composite layer (C) - This check is now redundant since C goes to composite workflow
-    const isComposite = layer.code === 'C';
-    setIsCompositeLayer(isComposite);
     
     // Clear category and subcategory when layer changes
     setValue('categoryCode', '');
