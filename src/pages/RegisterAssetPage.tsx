@@ -38,7 +38,7 @@ import TaxonomyContext from '../components/asset/TaxonomyContext';
 import FileUpload from '../components/asset/FileUpload';
 import ReviewSubmit from '../components/asset/ReviewSubmit';
 import TrainingDataCollection from '../components/asset/TrainingDataCollection';
-import { ComponentsForm } from '../components/asset/ComponentsForm';
+import CompositeAssetSelection from '../components/CompositeAssetSelection';
 import { TaxonomyConverter } from '../services/taxonomyConverter';
 import { runQuickTaxonomyTest } from '../utils/taxonomyQuickTest';
 import { validateTaxonomyFix } from '../utils/taxonomyFixValidator';
@@ -1350,20 +1350,14 @@ const RegisterAssetPage: React.FC = () => {
         if (isCompositeLayer) {
           // Composite layers: Search & Add Components (Step 4)
           return (
-            <Paper sx={{ p: 3, mb: 4 }}>
-              <Typography variant="h6" gutterBottom>
-                Search & Add Components
-              </Typography>
-              <Typography variant="body2" color="text.secondary" paragraph>
-                A composite asset references other existing assets. Select the components that make up this composite asset.
-              </Typography>
-              <Divider sx={{ mb: 3 }} />
-              
-              <ComponentsForm 
-                control={methods.control} 
-                watchLayer={watchLayer}
-              />
-            </Paper>
+            <CompositeAssetSelection
+              onComponentsSelected={(components) => {
+                setValue('layerSpecificData.components', components);
+              }}
+              targetLayer={watchLayer}
+              layerName={getValues('layerName')}
+              initialComponents={getValues('layerSpecificData.components') || []}
+            />
           );
         }
         
