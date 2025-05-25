@@ -1,14 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Box, Typography, Container, Paper, Chip, Alert } from '@mui/material';
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import CompositeAssetSelection from '../components/CompositeAssetSelection';
-import AuthTestHelper from '../components/AuthTestHelper';
 import { Asset } from '../types/asset.types';
 
 const CompositeAssetsTestPage: React.FC = () => {
-  const [selectedComponents, setSelectedComponents] = useState<Asset[]>([]);
   const [searchParams] = useSearchParams();
-  const navigate = useNavigate();
   
   // Get layer information from URL parameters
   const selectedLayer = searchParams.get('layer');
@@ -28,12 +25,7 @@ const CompositeAssetsTestPage: React.FC = () => {
   const description = currentLayerInfo?.description || 'Create composite assets by selecting and combining multiple component assets.';
 
   const handleComponentsSelected = (components: Asset[]) => {
-    setSelectedComponents(components);
     console.log('Components selected for', selectedLayer, 'layer:', components);
-  };
-
-  const handleBackToRegistration = () => {
-    navigate('/register-asset');
   };
 
   return (
@@ -64,8 +56,6 @@ const CompositeAssetsTestPage: React.FC = () => {
           </Alert>
         )}
         
-        <AuthTestHelper />
-        
         <Box sx={{ mt: 3 }}>
           <CompositeAssetSelection
             onComponentsSelected={handleComponentsSelected}
@@ -75,16 +65,6 @@ const CompositeAssetsTestPage: React.FC = () => {
           />
         </Box>
 
-        {selectedComponents.length > 0 && (
-          <Box sx={{ mt: 4 }}>
-            <Typography variant="h6" gutterBottom>
-              Selected Components Debug Info:
-            </Typography>
-            <Paper sx={{ p: 2, backgroundColor: '#f5f5f5' }}>
-              <pre>{JSON.stringify(selectedComponents, null, 2)}</pre>
-            </Paper>
-          </Box>
-        )}
       </Paper>
     </Container>
   );

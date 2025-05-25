@@ -7,8 +7,6 @@ import {
   Button,
   Alert,
   CircularProgress,
-  Card,
-  CardContent,
   List,
   ListItem,
   ListItemText,
@@ -636,16 +634,6 @@ const CompositeAssetSelection: React.FC<CompositeAssetSelectionProps> = ({
         </Alert>
       )}
 
-      {/* Rights Validation Warning - Step 3 Placeholder */}
-      <Alert severity="warning" sx={{ mb: 3 }}>
-        <Typography variant="subtitle2" gutterBottom>
-          Rights Validation Notice:
-        </Typography>
-        Rights verification is currently unavailable as the Clearity service endpoint (/v1/rights/verify) is not yet implemented. 
-        Composite assets will be registered without rights clearance validation. Please ensure you have proper rights 
-        to use all selected components before creating composites. Rights validation will be automatically enabled 
-        when the backend service becomes available.
-      </Alert>
 
       <Grid container spacing={3}>
         {/* Search Section */}
