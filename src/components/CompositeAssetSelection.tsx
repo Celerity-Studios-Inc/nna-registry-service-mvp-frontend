@@ -32,6 +32,7 @@ import {
   Palette as PaletteIcon,
   DirectionsRun as MovesIcon,
   Public as WorldIcon,
+  Subscriptions as SubscriptionsIcon,
 } from '@mui/icons-material';
 import axios from 'axios';
 import { toast } from 'react-toastify';
@@ -91,6 +92,8 @@ const CompositeAssetSelection: React.FC<CompositeAssetSelectionProps> = ({
   const [showPreviewDialog, setShowPreviewDialog] = useState(false);
   const [registering, setRegistering] = useState(false);
   const [registrationError, setRegistrationError] = useState<string | null>(null);
+  const [validating, setValidating] = useState(false);
+  const [validationStatus, setValidationStatus] = useState<'idle' | 'validating' | 'success' | 'error'>('idle');
 
   // Validate component compatibility
   const validateComponentCompatibility = (components: Asset[]): string[] => {
@@ -216,16 +219,26 @@ const CompositeAssetSelection: React.FC<CompositeAssetSelectionProps> = ({
   };
 
   // Handle Continue button click with validation
-  const handleContinue = () => {
+  const handleContinue = async () => {
+    setValidating(true);
+    setValidationStatus('validating');
+    
+    // Add a small delay to show loading state
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
     const errors = validateComponents(selectedComponents);
     setValidationErrors(errors);
     
     if (errors.length === 0) {
-      toast.success('All components are compatible! Ready to register.');
+      setValidationStatus('success');
+      toast.success(`✅ Validation passed! ${selectedComponents.length} components are compatible and ready to register.`);
       setRegistrationError(null); // Clear any previous registration errors
     } else {
-      toast.error('Please fix validation errors before continuing');
+      setValidationStatus('error');
+      toast.error(`❌ Validation failed: ${errors.length} error${errors.length > 1 ? 's' : ''} found. Please fix before continuing.`);
     }
+    
+    setValidating(false);
   };
 
   // Step 4: Handle composite registration
@@ -972,13 +985,26 @@ const CompositeAssetSelection: React.FC<CompositeAssetSelectionProps> = ({
         <Box sx={{ mt: 3, display: 'flex', justifyContent: 'center', gap: 2 }}>
           <Button
             variant="outlined"
-            color="primary"
+            color={validationStatus === 'success' ? 'success' : validationStatus === 'error' ? 'error' : 'primary'}
             size="large"
             onClick={handleContinue}
-            disabled={registering}
+            disabled={registering || validating}
+            startIcon={validating ? <CircularProgress size={16} sx={{ color: 'inherit' }} /> : null}
             aria-label="Validate selected components"
+            sx={{
+              minWidth: 120,
+              fontWeight: validationStatus === 'success' ? 'bold' : 'normal',
+              borderWidth: validationStatus === 'success' ? 2 : 1,
+            }}
           >
-            Validate
+            {validating 
+              ? 'Validating...' 
+              : validationStatus === 'success' 
+                ? '✅ Valid' 
+                : validationStatus === 'error'
+                  ? '❌ Invalid'
+                  : 'Validate'
+            }
           </Button>
           
           {validationErrors.length === 0 && (
@@ -988,7 +1014,7 @@ const CompositeAssetSelection: React.FC<CompositeAssetSelectionProps> = ({
               size="large"
               onClick={handleRegister}
               disabled={registering}
-              startIcon={registering ? <CircularProgress size={16} sx={{ color: 'inherit' }} /> : null}
+              startIcon={registering ? <CircularProgress size={16} sx={{ color: 'inherit' }} /> : <SubscriptionsIcon />}
               aria-label="Register composite asset"
               sx={{
                 minWidth: 140,
@@ -998,7 +1024,7 @@ const CompositeAssetSelection: React.FC<CompositeAssetSelectionProps> = ({
                 },
               }}
             >
-              {registering ? 'Registering...' : '🚀 Register Composite'}
+              {registering ? 'Registering...' : 'Register Composite'}
             </Button>
           )}
         </Box>

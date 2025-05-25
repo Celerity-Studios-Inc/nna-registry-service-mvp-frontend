@@ -569,14 +569,19 @@ We are implementing a comprehensive refactoring of the taxonomy selection system
 The composite assets feature has been successfully implemented and tested:
 
 **✅ Recent CI/CD Deployments:**
+- **CI/CD #443: Commit 061b0b2** - STEP 1 COMPLETE: Enhanced Registration Workflow with Progress & Navigation
 - **CI/CD #442: Commit 48c1d62** - CRITICAL FIX: Prevent Register button from clearing selected components
-- Enhanced registration workflow with mock/real registration distinction
-- Fixed backend data staleness debugging and enhanced error handling
-- Component selection now preserved during testing workflow
+
+**✅ Step 1 Completed (CI/CD #443):**
+- Added comprehensive progress toasts during registration process
+- Implemented navigation to success page after successful registration  
+- Enhanced error handling with specific error types (CORS, Auth, Duplicate)
+- Added retry functionality for failed registrations
+- Improved visual feedback with loading states and status display panel
 
 **Current Issues Identified (January 2025):**
 1. **Backend Data Staleness** - Backend serving stale data, new assets not appearing in search
-2. **Registration Workflow** - Register button doesn't navigate to success page 
+2. **Missing Composite Workflow** - Need to implement proper 6-step composite registration workflow
 3. **Preview Not Working** - Preview shows details but no images/videos
 4. **Validate Button No Effect** - No visible feedback from validation
 5. **Search Case Sensitivity** - Search doesn't handle case variations properly
@@ -617,12 +622,27 @@ The composite assets feature has been successfully implemented and tested:
 - Implement mock validation when backend validation fails
 
 **Step 6: Complete Composite Workflow** (NEW REQUIREMENT)
-- Missing key step: Upload composite asset first, assign HFN/MFA with .000 sequential number
-- Step 1: Upload composite asset file (.mp4) and assign taxonomy/sequential number
-- Step 2: Search and add component assets to generate composite address
-- Step 3: Review and validate all components
-- Step 4: Submit complete composite asset
-- Make workflow intuitive with proper 4-step progression like simple workflow
+**Current Issue:** Missing the initial composite asset upload workflow. Currently jumping straight to component selection.
+
+**Correct 6-Step Composite Asset Registration Workflow:**
+
+1. **Step 1: Select Layer** - Double-click Composites (C) layer card to launch composite workflow
+2. **Step 2: Choose Taxonomy** - Select category and subcategory for the composite asset (generates HFN/MFA like `C.001.001.000`)
+3. **Step 3: Upload Files** - Upload composite asset file (.mp4 video), provide description, source, and tags (similar to component registration Step 3)
+4. **Step 4: Search & Add Components** - Search and add existing component assets that were layered together to create the composite:
+   - Typical layer order: Songs (G) → Stars (S) → Looks (L) → Moves (M) → Worlds (W)
+   - Components must already exist in backend (registered via component workflows)
+   - Generates full composite address: `C.001.001.000:G.001.001.001+S.001.001.001+L.001.001.001`
+5. **Step 5: Review & Submit** - Review composite asset + components, allow editing via tooltip to return to Step 4
+6. **Success Page** - Show **composite asset details** (the uploaded .mp4), not individual components
+   - Display composite asset card with correct HFN/MFA
+   - Four action buttons: Dashboard, Register Another Asset, Upload Training Data, Upload Personalize Data
+
+**Key Technical Requirements:**
+- HFN/MFA format: `C.[category].[subcategory].000:[component1+component2+component3]`
+- Success page shows the composite asset (uploaded file), not its components
+- Components are shown in Step 4 (Search & Add) and Step 5 (Review), but not on success page
+- Workflow follows same 5-step pattern as component registration with additional component selection step
 
 **Step 7: Implement UI Nice-to-Have Features**
 - Show filename + description instead of just HFN in search results
