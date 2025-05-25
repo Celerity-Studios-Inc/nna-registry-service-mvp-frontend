@@ -223,6 +223,7 @@ const CompositeRegisterAssetPage: React.FC = () => {
 
   // Category selection handler
   const handleCategorySelect = (categoryCode: string) => {
+    environmentSafeLog('Category selected in composite workflow:', categoryCode);
     setValue('categoryCode', categoryCode);
     setValue('categoryName', ''); // Will be set by SimpleTaxonomySelectionV3
     setValue('subcategoryCode', '');
@@ -331,6 +332,21 @@ const CompositeRegisterAssetPage: React.FC = () => {
       case 0: // Step 2: Choose Taxonomy (Category + Subcategory)
         return (
           <>
+            {/* Layer Selection (allow changing from pre-selected) */}
+            <Box sx={{ mb: 4 }}>
+              <Typography variant="h6" gutterBottom>
+                Layer Selection
+              </Typography>
+              <Typography variant="body2" color="text.secondary" paragraph>
+                You can change the layer if needed, or continue with the pre-selected layer.
+              </Typography>
+              <LayerSelection
+                onLayerSelect={handleLayerSelect}
+                selectedLayerCode={watchLayer}
+              />
+            </Box>
+            
+            {/* Taxonomy Selection */}
             <SimpleTaxonomySelectionV3
               selectedLayer={watchLayer}
               onLayerSelect={(layer) => {
@@ -344,9 +360,15 @@ const CompositeRegisterAssetPage: React.FC = () => {
               selectedSubcategoryCode={watchSubcategoryCode}
             />
             
-            {/* Show current selection */}
+            {/* Show current selection and debug info */}
+            <Box sx={{ mt: 3, p: 2, bgcolor: 'grey.100', borderRadius: 1 }}>
+              <Typography variant="body2">
+                <strong>Debug Info:</strong> Layer: {watchLayer}, Category: {watchCategoryCode || 'None'}, Subcategory: {watchSubcategoryCode || 'None'}
+              </Typography>
+            </Box>
+            
             {watchCategoryCode && watchSubcategoryCode && (
-              <Box sx={{ mt: 3, p: 2, bgcolor: 'info.main', color: 'info.contrastText', borderRadius: 1 }}>
+              <Box sx={{ mt: 2, p: 2, bgcolor: 'info.main', color: 'info.contrastText', borderRadius: 1 }}>
                 <Typography variant="body2">
                   <strong>Selected:</strong> {watchLayer}.{watchCategoryCode}.{watchSubcategoryCode}.000
                 </Typography>
