@@ -177,16 +177,41 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
           friendlyName: asset.name || asset.friendlyName || asset.hfn || asset.HFN,
         }));
 
-        // Frontend-side layer filtering as fallback if backend filtering doesn't work
-        const filteredResults = layer ? 
-          normalizedResults.filter(asset => asset.layer === layer) : 
-          normalizedResults;
+        // Frontend-side filtering (layer + search) as fallback if backend filtering doesn't work
+        let filteredResults = normalizedResults;
         
-        console.log(`🎯 Applied frontend layer filter: ${layer ? `"${layer}"` : 'none'}`);
+        // Apply layer filter
+        if (layer) {
+          filteredResults = filteredResults.filter(asset => asset.layer === layer);
+        }
+        
+        // Apply search filter (check name, description, tags)
+        if (query && query.trim()) {
+          const searchTerm = query.toLowerCase();
+          filteredResults = filteredResults.filter(asset => {
+            // Search in name (HFN)
+            const nameMatch = asset.name?.toLowerCase().includes(searchTerm) || 
+                             asset.friendlyName?.toLowerCase().includes(searchTerm);
+            
+            // Search in description  
+            const descriptionMatch = asset.description?.toLowerCase().includes(searchTerm);
+            
+            // Search in tags
+            const tagsMatch = asset.tags?.some((tag: string) => 
+              tag.toLowerCase().includes(searchTerm));
+              
+            return nameMatch || descriptionMatch || tagsMatch;
+          });
+        }
+        
+        console.log(`🎯 Applied frontend filters: layer="${layer || 'none'}", search="${query || 'none'}"`);
         console.log(`📊 Results: ${normalizedResults.length} → ${filteredResults.length} after filtering`);
         
         if (filteredResults.length < normalizedResults.length) {
-          console.log(`🔧 Frontend filtering removed ${normalizedResults.length - filteredResults.length} assets not matching layer "${layer}"`);
+          const filters = [];
+          if (layer) filters.push(`layer "${layer}"`);
+          if (query) filters.push(`search "${query}"`);
+          console.log(`🔧 Frontend filtering removed ${normalizedResults.length - filteredResults.length} assets not matching: ${filters.join(' and ')}`);
         }
 
         setSearchResults(filteredResults);
