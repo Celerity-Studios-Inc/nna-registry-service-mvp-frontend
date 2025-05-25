@@ -75,19 +75,251 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
       setError(null);
 
       try {
-        const response = await axios.get('/v1/asset/search', {
-          params: {
-            q: query,
-            layer: layer || undefined,
-            limit: 20,
-          },
+        // Log token status for debugging
+        const authToken = localStorage.getItem('authToken');
+        const testToken = localStorage.getItem('testToken');
+        console.log('Token status:', { 
+          hasAuthToken: !!authToken, 
+          hasTestToken: !!testToken,
+          authTokenStart: authToken?.substring(0, 20),
+          testTokenStart: testToken?.substring(0, 20)
         });
 
-        setSearchResults(response.data.items || response.data || []);
+        // Try the real backend API endpoint first, fallback to direct if proxy fails
+        let response;
+        try {
+          response = await axios.get('/api/assets', {
+            params: {
+              search: query,
+              layer: layer || undefined,
+              limit: 20,
+            },
+            timeout: 5000, // Shorter timeout for proxy attempt
+            headers: {
+              // Add authorization header if we have a token (clean any newlines/whitespace)
+              'Authorization': localStorage.getItem('authToken') ? `Bearer ${localStorage.getItem('authToken')?.replace(/\s+/g, '')}` : 
+                              localStorage.getItem('testToken') ? `Bearer ${localStorage.getItem('testToken')?.replace(/\s+/g, '')}` : undefined,
+            },
+          });
+        } catch (proxyError) {
+          console.log('Proxy failed, trying direct backend connection...', proxyError.message);
+          // If proxy fails, try direct backend connection
+          response = await axios.get('https://registry.reviz.dev/api/assets', {
+            params: {
+              search: query,
+              layer: layer || undefined,
+              limit: 20,
+            },
+            timeout: 10000,
+            headers: {
+              'Authorization': localStorage.getItem('authToken') ? `Bearer ${localStorage.getItem('authToken')?.replace(/\s+/g, '')}` : 
+                              localStorage.getItem('testToken') ? `Bearer ${localStorage.getItem('testToken')?.replace(/\s+/g, '')}` : undefined,
+            },
+          });
+          console.log('Direct backend connection successful!');
+        }
+
+        // Validate response structure
+        if (!response.data) {
+          throw new Error('Invalid response: missing data');
+        }
+
+        const results = response.data.items || response.data || [];
+        
+        // Validate that results is an array
+        if (!Array.isArray(results)) {
+          throw new Error('Invalid response: expected array of assets');
+        }
+
+        // Validate each asset has required fields
+        const validatedResults = results.filter(asset => {
+          if (!asset || typeof asset !== 'object') return false;
+          if (!asset.id || !asset.layer) return false;
+          return true;
+        });
+
+        setSearchResults(validatedResults);
+        
+        // Show warning if some results were filtered out
+        if (validatedResults.length < results.length) {
+          console.warn(`Filtered out ${results.length - validatedResults.length} invalid assets from search results`);
+        }
+        
       } catch (err) {
         console.error('Search failed:', err);
-        setError('Failed to search assets. Please try again.');
-        setSearchResults([]);
+        
+        // Enhanced error handling based on error type
+        if (axios.isAxiosError(err)) {
+          if (err.response?.status === 401) {
+            // Handle unauthorized - fall back to mock data
+            console.log('Backend requires authentication, falling back to mock data');
+            setError('Backend requires authentication. Using mock data for testing.');
+            
+            // Use existing mock data fallback
+            const mockAssets: Asset[] = [
+              {
+                id: 'mock-g-pop-001',
+                name: 'G.POP.TSW.001',
+                friendlyName: 'Pop Song - Taylor Swift Style',
+                nnaAddress: 'G.POP.TSW.001',
+                layer: 'G',
+                categoryCode: 'POP',
+                subcategoryCode: 'TSW',
+                type: 'audio',
+                gcpStorageUrl: 'gs://mock-bucket/song1.mp3',
+                files: [],
+                metadata: { duration: '3:24', artist: 'Mock Artist' },
+                createdAt: '2024-01-01T00:00:00Z',
+                updatedAt: '2024-01-01T00:00:00Z',
+                createdBy: 'mock-user',
+                status: 'active',
+                tags: ['pop', 'taylor-swift']
+              },
+              {
+                id: 'mock-s-pop-001',
+                name: 'S.POP.PNK.001',
+                friendlyName: 'Pop Star - Pink Style',
+                nnaAddress: 'S.POP.PNK.001',
+                layer: 'S',
+                categoryCode: 'POP',
+                subcategoryCode: 'PNK',
+                type: 'avatar',
+                gcpStorageUrl: 'gs://mock-bucket/star1.png',
+                files: [],
+                metadata: { appearance: 'Pink hair, sparkly outfit' },
+                createdAt: '2024-01-01T00:00:00Z',
+                updatedAt: '2024-01-01T00:00:00Z',
+                createdBy: 'mock-user',
+                status: 'active',
+                tags: ['pop', 'pink']
+              },
+              {
+                id: 'mock-w-bch-001',
+                name: 'W.BCH.SUN.001',
+                friendlyName: 'Beach World - Sunset',
+                nnaAddress: 'W.BCH.SUN.001',
+                layer: 'W',
+                categoryCode: 'BCH',
+                subcategoryCode: 'SUN',
+                type: 'environment',
+                gcpStorageUrl: 'gs://mock-bucket/beach-sunset.jpg',
+                files: [],
+                metadata: { time: 'sunset', location: 'tropical beach' },
+                createdAt: '2024-01-01T00:00:00Z',
+                updatedAt: '2024-01-01T00:00:00Z',
+                createdBy: 'mock-user',
+                status: 'active',
+                tags: ['beach', 'sunset']
+              }
+            ];
+            
+            const filteredMockAssets = mockAssets.filter((asset: Asset) => {
+              const matchesQuery = !query || 
+                asset.name.toLowerCase().includes(query.toLowerCase()) ||
+                asset.friendlyName?.toLowerCase().includes(query.toLowerCase()) ||
+                (asset.tags && asset.tags.some((tag: string) => tag.toLowerCase().includes(query.toLowerCase())));
+              
+              const matchesLayer = !layer || asset.layer === layer;
+              
+              return matchesQuery && matchesLayer;
+            });
+            
+            setSearchResults(filteredMockAssets);
+            return;
+          } else if (err.code === 'ECONNABORTED') {
+            setError('Search request timed out. Please check your connection and try again.');
+          } else if (err.response?.status === 400) {
+            setError('Invalid search parameters. Please check your query and try again.');
+          } else if (err.response?.status === 429) {
+            setError('Too many search requests. Please wait a moment and try again.');
+          } else if (err.response?.status && err.response.status >= 500) {
+            setError('Search service is temporarily unavailable. Please try again later.');
+          } else if (!err.response) {
+            setError('Unable to connect to search service. Please check your internet connection.');
+          } else {
+            setError(`Search failed with status ${err.response?.status || 'unknown'}. Please try again.`);
+          }
+        } else if (err instanceof Error) {
+          setError(`Search error: ${err.message}`);
+        } else {
+          setError('Using mock data for testing - backend search endpoint not available yet.');
+        }
+        
+        // Provide mock data for testing when real API fails
+        if (query.length > 0) {
+          const mockAssets: Asset[] = [
+            {
+              id: 'mock-g-pop-001',
+              name: 'G.POP.TSW.001',
+              friendlyName: 'Pop Song - Taylor Swift Style',
+              nnaAddress: 'G.POP.TSW.001',
+              layer: 'G',
+              categoryCode: 'POP',
+              subcategoryCode: 'TSW',
+              type: 'audio',
+              gcpStorageUrl: 'gs://mock-bucket/song1.mp3',
+              files: [],
+              metadata: { duration: '3:24', artist: 'Mock Artist' },
+              createdAt: '2024-01-01T00:00:00Z',
+              updatedAt: '2024-01-01T00:00:00Z',
+              createdBy: 'mock-user',
+              status: 'active',
+              tags: ['pop', 'taylor-swift']
+            },
+            {
+              id: 'mock-s-pop-001',
+              name: 'S.POP.PNK.001',
+              friendlyName: 'Pop Star - Pink Style',
+              nnaAddress: 'S.POP.PNK.001',
+              layer: 'S',
+              categoryCode: 'POP',
+              subcategoryCode: 'PNK',
+              type: 'avatar',
+              gcpStorageUrl: 'gs://mock-bucket/star1.png',
+              files: [],
+              metadata: { appearance: 'Pink hair, sparkly outfit' },
+              createdAt: '2024-01-01T00:00:00Z',
+              updatedAt: '2024-01-01T00:00:00Z',
+              createdBy: 'mock-user',
+              status: 'active',
+              tags: ['pop', 'pink']
+            },
+            {
+              id: 'mock-w-bch-001',
+              name: 'W.BCH.SUN.001',
+              friendlyName: 'Beach World - Sunset',
+              nnaAddress: 'W.BCH.SUN.001',
+              layer: 'W',
+              categoryCode: 'BCH',
+              subcategoryCode: 'SUN',
+              type: 'environment',
+              gcpStorageUrl: 'gs://mock-bucket/beach-sunset.jpg',
+              files: [],
+              metadata: { time: 'sunset', location: 'tropical beach' },
+              createdAt: '2024-01-01T00:00:00Z',
+              updatedAt: '2024-01-01T00:00:00Z',
+              createdBy: 'mock-user',
+              status: 'active',
+              tags: ['beach', 'sunset']
+            }
+          ];
+          
+          // Filter mock assets based on search criteria
+          const filteredMockAssets = mockAssets.filter(asset => {
+            const matchesQuery = query === '' || 
+              asset.name.toLowerCase().includes(query.toLowerCase()) ||
+              asset.friendlyName.toLowerCase().includes(query.toLowerCase()) ||
+              (asset.tags && asset.tags.some(tag => tag.toLowerCase().includes(query.toLowerCase())));
+            
+            const matchesLayer = !layer || asset.layer === layer;
+            
+            return matchesQuery && matchesLayer;
+          });
+          
+          setSearchResults(filteredMockAssets);
+        } else {
+          setSearchResults([]);
+        }
       } finally {
         setLoading(false);
       }

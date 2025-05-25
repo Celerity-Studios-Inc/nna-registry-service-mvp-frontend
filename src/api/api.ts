@@ -80,9 +80,15 @@ api.interceptors.request.use(request => {
 // Add request interceptor to include auth token
 api.interceptors.request.use(
   config => {
-    const token = localStorage.getItem('accessToken');
+    // Check for both accessToken and testToken (clean any whitespace)
+    const accessToken = localStorage.getItem('accessToken');
+    const testToken = localStorage.getItem('testToken');
+    const token = accessToken || testToken;
+    
     if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+      // Clean any whitespace/newlines from the token
+      const cleanToken = token.replace(/\s+/g, '');
+      config.headers.Authorization = `Bearer ${cleanToken}`;
       environmentSafeLog('🔑 Added auth token to request');
     } else {
       environmentSafeWarn('⚠️ No auth token found in localStorage!');

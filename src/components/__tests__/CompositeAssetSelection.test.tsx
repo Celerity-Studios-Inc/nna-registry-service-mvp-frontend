@@ -435,4 +435,144 @@ describe('CompositeAssetSelection', () => {
       );
     });
   });
+
+  // Additional tests for Grok's recommendations
+  it('handles network failures gracefully', async () => {
+    const networkError = new Error('Network Error');
+    (networkError as any).isAxiosError = true;
+    (networkError as any).response = null; // No response = network failure
+
+    mockedAxios.post.mockImplementation((url) => {
+      if (url.includes('/v1/rights/verify/')) {
+        return Promise.resolve({
+          data: { status: 'approved', message: 'Rights verified' }
+        });
+      }
+      if (url === '/v1/asset/register') {
+        return Promise.reject(networkError);
+      }
+      return Promise.reject(new Error('Unknown endpoint'));
+    });
+
+    render(
+      <CompositeAssetSelection 
+        onComponentsSelected={mockOnComponentsSelected}
+        initialComponents={mockAssets}
+      />
+    );
+
+    // Validate and register
+    fireEvent.click(screen.getByText('Validate'));
+    await waitFor(() => {
+      expect(screen.getByText('Register')).toBeInTheDocument();
+    });
+    
+    fireEvent.click(screen.getByText('Register'));
+
+    // Should handle network error gracefully
+    await waitFor(() => {
+      expect(screen.getByText(/Registration Error:/)).toBeInTheDocument();
+      expect(screen.getByText(/Failed to register composite asset: Network Error/)).toBeInTheDocument();
+    });
+  });
+
+  it('validates components with missing or invalid data', () => {
+    const invalidAssets = [
+      mockAssets[0], // Valid asset
+      { ...mockAssets[1], id: 'invalid-layer-asset', name: 'Invalid Layer Asset', layer: null }, // Invalid layer with unique ID
+      { ...mockAssets[0], id: 'empty-id-asset', name: 'Empty ID Asset', layer: 'G' }, // Valid layer, different ID  
+      { ...mockAssets[1], id: 'invalid-layer-x', name: 'Invalid Layer X', layer: 'X' }, // Invalid layer value with unique ID
+    ];
+
+    render(
+      <CompositeAssetSelection 
+        onComponentsSelected={mockOnComponentsSelected}
+        initialComponents={invalidAssets}
+      />
+    );
+
+    // Click validate button
+    fireEvent.click(screen.getByText('Validate'));
+
+    // Should show validation errors for invalid components
+    expect(screen.getByText(/Validation Errors:/)).toBeInTheDocument();
+    expect(screen.getByText(/missing or invalid layer/i)).toBeInTheDocument();
+    expect(screen.getByText(/incompatible layers/i)).toBeInTheDocument();
+  });
+
+  it('handles registration timeout errors', async () => {
+    const timeoutError = new Error('timeout of 5000ms exceeded');
+    (timeoutError as any).isAxiosError = true;
+    (timeoutError as any).code = 'ECONNABORTED';
+
+    mockedAxios.post.mockImplementation((url) => {
+      if (url.includes('/v1/rights/verify/')) {
+        return Promise.resolve({
+          data: { status: 'approved', message: 'Rights verified' }
+        });
+      }
+      if (url === '/v1/asset/register') {
+        return Promise.reject(timeoutError);
+      }
+      return Promise.reject(new Error('Unknown endpoint'));
+    });
+
+    render(
+      <CompositeAssetSelection 
+        onComponentsSelected={mockOnComponentsSelected}
+        initialComponents={mockAssets}
+      />
+    );
+
+    // Validate and register
+    fireEvent.click(screen.getByText('Validate'));
+    await waitFor(() => {
+      expect(screen.getByText('Register')).toBeInTheDocument();
+    });
+    
+    fireEvent.click(screen.getByText('Register'));
+
+    // Should handle timeout error appropriately
+    await waitFor(() => {
+      expect(screen.getByText(/Registration Error:/)).toBeInTheDocument();
+    });
+  });
+
+  it('validates maximum component limit', () => {
+    // Create 11 components (exceeds 10 limit)
+    const tooManyAssets = Array.from({ length: 11 }, (_, i) => ({
+      ...mockAssets[0],
+      id: `asset-${i}`,
+      name: `Asset-${i}`,
+      friendlyName: `Asset-${i}`
+    }));
+
+    render(
+      <CompositeAssetSelection 
+        onComponentsSelected={mockOnComponentsSelected}
+        initialComponents={tooManyAssets}
+      />
+    );
+
+    // Click validate button
+    fireEvent.click(screen.getByText('Validate'));
+
+    // Should show error about too many components
+    expect(screen.getByText(/Validation Errors:/)).toBeInTheDocument();
+    expect(screen.getByText(/cannot have more than 10 components/i)).toBeInTheDocument();
+  });
+
+  it('displays rights validation warning', () => {
+    render(
+      <CompositeAssetSelection 
+        onComponentsSelected={mockOnComponentsSelected}
+        initialComponents={[]}
+      />
+    );
+
+    // Should show rights validation warning
+    expect(screen.getByText(/Rights Validation Notice:/)).toBeInTheDocument();
+    expect(screen.getByText(/Rights verification is currently unavailable/)).toBeInTheDocument();
+    expect(screen.getByText(/Clearity service endpoint.*is not yet implemented/)).toBeInTheDocument();
+  });
 });

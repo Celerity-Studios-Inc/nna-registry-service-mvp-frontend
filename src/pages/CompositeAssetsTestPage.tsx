@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Box, Typography, Container, Paper } from '@mui/material';
 import CompositeAssetSelection from '../components/CompositeAssetSelection';
+import AuthTestHelper from '../components/AuthTestHelper';
 import { Asset } from '../types/asset.types';
 
 const CompositeAssetsTestPage: React.FC = () => {
@@ -21,6 +22,8 @@ const CompositeAssetsTestPage: React.FC = () => {
           Test the composite assets feature. This page allows you to test component selection, 
           validation, HFN generation, and preview functionality.
         </Typography>
+        
+        <AuthTestHelper />
         
         <Box sx={{ mt: 3 }}>
           <CompositeAssetSelection

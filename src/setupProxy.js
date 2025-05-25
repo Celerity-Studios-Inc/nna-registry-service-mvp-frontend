@@ -26,7 +26,7 @@ module.exports = function (app) {
   app.use(
     '/api',
     createProxyMiddleware({
-      target: 'https://nna-registry-service-5jm4duk5oa-uc.a.run.app',
+      target: 'https://registry.reviz.dev',
       changeOrigin: true,
       pathRewrite: { '^/api': '/api' },
       onProxyRes: function (proxyRes) {
@@ -41,6 +41,29 @@ module.exports = function (app) {
       onError: (err, req, res) => {
         console.error('Proxy error:', err);
         res.status(500).send('Proxy error');
+      },
+    })
+  );
+
+  // Proxy v1 API requests for asset search and registration
+  app.use(
+    '/v1',
+    createProxyMiddleware({
+      target: 'https://registry.reviz.dev',
+      changeOrigin: true,
+      pathRewrite: { '^/v1': '/v1' },
+      onProxyRes: function (proxyRes) {
+        // Add CORS headers to API responses
+        proxyRes.headers['Access-Control-Allow-Origin'] = '*';
+        proxyRes.headers['Access-Control-Allow-Methods'] =
+          'GET,POST,OPTIONS,PUT,DELETE';
+        proxyRes.headers['Access-Control-Allow-Headers'] =
+          'X-Requested-With,content-type,Authorization';
+        proxyRes.headers['Access-Control-Allow-Credentials'] = 'true';
+      },
+      onError: (err, req, res) => {
+        console.error('V1 API Proxy error:', err);
+        res.status(500).send('V1 API Proxy error');
       },
     })
   );

@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Set Token and Test</title>
+</head>
+<body>
+    <h1>Setting Fresh JWT Token</h1>
+    <div id="results"></div>
+    
+    <script>
+        // Set the fresh JWT token
+        const newToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2ODMyNjVkY2QyMTI1YzM0NDA2OTZlY2QiLCJlbWFpbCI6Im5lb3VzZXI0NkBuZW8uY29tIiwicm9sZSI6ImVkaXRvciIsImlhdCI6MTc0ODEzMzM0MSwiZXhwIjoxNzQ4MjE5NzQxfQ.ro-owkJY7NVRG_rN4XTUOIokcFL7r_dyMTChmfPc6-E";
+        
+        // Clear old tokens
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('testToken');
+        localStorage.removeItem('accessToken');
+        
+        // Set the new token
+        localStorage.setItem('testToken', newToken);
+        localStorage.setItem('authToken', newToken);
+        
+        const results = document.getElementById('results');
+        results.innerHTML = `
+            <p><strong>✅ Fresh JWT token set successfully</strong></p>
+            <p><strong>Token expires:</strong> ${new Date(1748219741 * 1000).toISOString()}</p>
+            <p><strong>Current time:</strong> ${new Date().toISOString()}</p>
+            <p><strong>Token valid for:</strong> ${Math.round((1748219741 * 1000 - Date.now()) / (1000 * 60 * 60))} hours</p>
+        `;
+        
+        // Test direct backend call
+        fetch('https://registry.reviz.dev/api/assets?search=G&limit=2', {
+            headers: {
+                'Authorization': `Bearer ${newToken}`,
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => {
+            results.innerHTML += `<p><strong>Direct Backend Test:</strong> ${response.status} ${response.statusText}</p>`;
+            return response.text();
+        })
+        .then(data => {
+            results.innerHTML += `<p><strong>Backend Response:</strong> ${data.substring(0, 300)}...</p>`;
+            
+            // Now test the proxy (which should fail)
+            return fetch('/api/assets?search=G&limit=2', {
+                headers: {
+                    'Authorization': `Bearer ${newToken}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+        })
+        .then(response => {
+            results.innerHTML += `<p><strong>Proxy Test:</strong> ${response.status} ${response.statusText}</p>`;
+            results.innerHTML += `<p><strong>✅ Ready to test composite assets!</strong></p>`;
+            results.innerHTML += `<p><a href="/composite-assets-test" style="font-size: 18px; color: blue;">🔗 Open Composite Assets Test Page</a></p>`;
+        })
+        .catch(error => {
+            results.innerHTML += `<p><strong>Error during testing:</strong> ${error.message}</p>`;
+            results.innerHTML += `<p><strong>This is expected - proxy should fail, fallback should work</strong></p>`;
+            results.innerHTML += `<p><a href="/composite-assets-test" style="font-size: 18px; color: blue;">🔗 Open Composite Assets Test Page</a></p>`;
+        });
+    </script>
+</body>
+</html>

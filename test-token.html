@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Token Test</title>
+</head>
+<body>
+    <h1>Current Token Status</h1>
+    <div id="results"></div>
+    
+    <script>
+        const results = document.getElementById('results');
+        
+        const authToken = localStorage.getItem('authToken');
+        const testToken = localStorage.getItem('testToken');
+        
+        results.innerHTML = `
+            <p><strong>authToken:</strong> ${authToken ? authToken.substring(0, 50) + '...' : 'Not set'}</p>
+            <p><strong>testToken:</strong> ${testToken ? testToken.substring(0, 50) + '...' : 'Not set'}</p>
+            <p><strong>Current time:</strong> ${new Date().toISOString()}</p>
+        `;
+        
+        // Test API call to see what happens
+        fetch('/api/assets?search=G&limit=2', {
+            headers: {
+                'Authorization': testToken ? `Bearer ${testToken.replace(/\s+/g, '')}` : (authToken ? `Bearer ${authToken.replace(/\s+/g, '')}` : ''),
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => {
+            results.innerHTML += `<p><strong>API Test Status:</strong> ${response.status} ${response.statusText}</p>`;
+            return response.text();
+        })
+        .then(data => {
+            results.innerHTML += `<p><strong>API Response:</strong> ${data.substring(0, 200)}...</p>`;
+        })
+        .catch(error => {
+            results.innerHTML += `<p><strong>API Error:</strong> ${error.message}</p>`;
+        });
+    </script>
+</body>
+</html>
