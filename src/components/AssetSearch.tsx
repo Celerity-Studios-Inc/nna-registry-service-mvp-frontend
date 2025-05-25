@@ -75,15 +75,19 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
       setError(null);
 
       try {
+        // Debug: Log search parameters being sent to backend
+        const searchParams = {
+          search: query,
+          layer: layer || undefined,
+          limit: 20,
+        };
+        console.log('🔍 Search parameters:', searchParams);
+        
         // Try the real backend API endpoint first, fallback to direct if proxy fails
         let response;
         try {
           response = await axios.get('/api/assets', {
-            params: {
-              search: query,
-              layer: layer || undefined,
-              limit: 20,
-            },
+            params: searchParams,
             timeout: 5000, // Shorter timeout for proxy attempt
             headers: {
               // Add authorization header if we have a token (clean any newlines/whitespace)
@@ -95,11 +99,7 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
           console.log('Proxy failed, trying direct backend connection...', proxyError instanceof Error ? proxyError.message : 'Unknown error');
           // If proxy fails, try direct backend connection
           response = await axios.get('https://registry.reviz.dev/api/assets', {
-            params: {
-              search: query,
-              layer: layer || undefined,
-              limit: 20,
-            },
+            params: searchParams,
             timeout: 10000,
             headers: {
               'Authorization': localStorage.getItem('accessToken') ? `Bearer ${localStorage.getItem('accessToken')?.replace(/\s+/g, '')}` : 
@@ -177,13 +177,25 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
           friendlyName: asset.name || asset.friendlyName || asset.hfn || asset.HFN,
         }));
 
-        setSearchResults(normalizedResults);
+        // Frontend-side layer filtering as fallback if backend filtering doesn't work
+        const filteredResults = layer ? 
+          normalizedResults.filter(asset => asset.layer === layer) : 
+          normalizedResults;
+        
+        console.log(`🎯 Applied frontend layer filter: ${layer ? `"${layer}"` : 'none'}`);
+        console.log(`📊 Results: ${normalizedResults.length} → ${filteredResults.length} after filtering`);
+        
+        if (filteredResults.length < normalizedResults.length) {
+          console.log(`🔧 Frontend filtering removed ${normalizedResults.length - filteredResults.length} assets not matching layer "${layer}"`);
+        }
+
+        setSearchResults(filteredResults);
         
         // Show warning if some results were filtered out
         if (validatedResults.length < results.length) {
           console.warn(`Filtered out ${results.length - validatedResults.length} invalid assets from search results`);
         } else {
-          console.log(`✅ Successfully loaded ${normalizedResults.length} assets`);
+          console.log(`✅ Successfully loaded ${filteredResults.length} assets`);
         }
         
       } catch (err) {
