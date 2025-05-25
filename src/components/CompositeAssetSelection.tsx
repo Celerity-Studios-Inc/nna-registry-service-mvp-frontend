@@ -32,7 +32,7 @@ import {
   Palette as PaletteIcon,
   DirectionsRun as MovesIcon,
   Public as WorldIcon,
-  Subscriptions as SubscriptionsIcon,
+  Layers as LayersIcon,
 } from '@mui/icons-material';
 import axios from 'axios';
 import { toast } from 'react-toastify';
@@ -1014,7 +1014,7 @@ const CompositeAssetSelection: React.FC<CompositeAssetSelectionProps> = ({
               size="large"
               onClick={handleRegister}
               disabled={registering}
-              startIcon={registering ? <CircularProgress size={16} sx={{ color: 'inherit' }} /> : <SubscriptionsIcon />}
+              startIcon={registering ? <CircularProgress size={16} sx={{ color: 'inherit' }} /> : <LayersIcon />}
               aria-label="Register composite asset"
               sx={{
                 minWidth: 140,
