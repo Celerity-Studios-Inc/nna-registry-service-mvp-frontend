@@ -95,10 +95,15 @@ const getAcceptedFileTypesByLayer = (layerCode?: string): string => {
     'W': 'image/jpeg,image/png,image/gif,image/svg+xml,video/mp4,video/webm,video/quicktime,application/json,model/gltf-binary,model/gltf+json,application/octet-stream', // Worlds
     'V': 'video/mp4,video/webm,video/quicktime', // Videos
     'B': 'image/jpeg,image/png,image/gif,image/svg+xml,video/mp4,video/webm', // Branded assets
+    // Composite layers - Video (primary), Audio, Images only
+    'C': 'video/mp4,video/webm,video/quicktime,audio/mpeg,audio/wav,audio/ogg,audio/flac,audio/aac,image/jpeg,image/png,image/gif,image/svg+xml', // Composites
+    'P': 'video/mp4,video/webm,video/quicktime,audio/mpeg,audio/wav,audio/ogg,audio/flac,audio/aac,image/jpeg,image/png,image/gif,image/svg+xml', // Personalize
+    'T': 'video/mp4,video/webm,video/quicktime,audio/mpeg,audio/wav,audio/ogg,audio/flac,audio/aac,image/jpeg,image/png,image/gif,image/svg+xml', // Training Data
+    'R': 'video/mp4,video/webm,video/quicktime,audio/mpeg,audio/wav,audio/ogg,audio/flac,audio/aac,image/jpeg,image/png,image/gif,image/svg+xml', // Rights
   };
   
   // Use lookup table instead of switch for better performance
-  return fileTypesMap[layerCode || ''] || 'image/*,audio/*,video/*,application/json,application/pdf';
+  return fileTypesMap[layerCode || ''] || 'image/*,audio/*,video/*'; // Removed JSON and PDF from default
 };
 
 // Format file size to human-readable format - memoization would be overkill for this simple function

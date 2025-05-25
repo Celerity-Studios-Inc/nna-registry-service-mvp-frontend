@@ -1109,12 +1109,62 @@ const CompositeAssetSelection: React.FC<CompositeAssetSelectionProps> = ({
                         <strong>MFA:</strong> {component.nnaAddress || (component as any).nna_address || 'N/A'}
                       </Typography>
                       
-                      {/* File preview if available */}
+                      {/* Asset thumbnail/preview */}
                       {component.gcpStorageUrl && (
-                        <Box sx={{ mt: 1 }}>
-                          <Typography variant="caption" color="text.secondary">
-                            File: {component.gcpStorageUrl.split('/').pop()}
-                          </Typography>
+                        <Box sx={{ mt: 1, display: 'flex', alignItems: 'center', gap: 2 }}>
+                          {/* Thumbnail preview */}
+                          <Box sx={{ 
+                            width: 60, 
+                            height: 60, 
+                            borderRadius: 1, 
+                            overflow: 'hidden',
+                            border: '1px solid',
+                            borderColor: 'divider',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            bgcolor: 'grey.100'
+                          }}>
+                            {component.files && component.files.length > 0 && component.files[0].thumbnailUrl ? (
+                              <img 
+                                src={component.files[0].thumbnailUrl} 
+                                alt={`${component.name} thumbnail`}
+                                style={{ 
+                                  width: '100%', 
+                                  height: '100%', 
+                                  objectFit: 'cover' 
+                                }}
+                                onError={(e) => {
+                                  // Fallback to file icon if thumbnail fails to load
+                                  e.currentTarget.style.display = 'none';
+                                  const nextSibling = e.currentTarget.nextElementSibling as HTMLElement;
+                                  if (nextSibling) nextSibling.style.display = 'flex';
+                                }}
+                              />
+                            ) : null}
+                            {/* Fallback icon based on layer */}
+                            <Box sx={{ 
+                              display: component.files?.[0]?.thumbnailUrl ? 'none' : 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              color: 'text.secondary',
+                              fontSize: 24
+                            }}>
+                              {getLayerIcon(component.layer)}
+                            </Box>
+                          </Box>
+                          
+                          {/* File info */}
+                          <Box>
+                            <Typography variant="caption" color="text.secondary" display="block">
+                              File: {component.gcpStorageUrl.split('/').pop()}
+                            </Typography>
+                            {component.files && component.files.length > 0 && (
+                              <Typography variant="caption" color="text.secondary" display="block">
+                                Size: {(component.files[0].size / (1024 * 1024)).toFixed(2)} MB
+                              </Typography>
+                            )}
+                          </Box>
                         </Box>
                       )}
                       
