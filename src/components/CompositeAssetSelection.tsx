@@ -24,7 +24,6 @@ import {
 import {
   Remove as RemoveIcon,
   Security as SecurityIcon,
-  Preview as PreviewIcon,
   WorkspacePremium as CrownIcon,
   Lock as LockIcon,
   AudioFile as AudioIcon,
@@ -87,9 +86,6 @@ const CompositeAssetSelection: React.FC<CompositeAssetSelectionProps> = ({
   const [rightsValidation, setRightsValidation] = useState<{
     [assetId: string]: RightsVerificationResult;
   }>({});
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [previewLoading, setPreviewLoading] = useState(false);
-  const [showPreviewDialog, setShowPreviewDialog] = useState(false);
   // Registration state removed - now handled by unified workflow
   const [validating, setValidating] = useState(false);
   const [validationStatus, setValidationStatus] = useState<'idle' | 'validating' | 'success' | 'error'>('idle');
@@ -417,23 +413,12 @@ const CompositeAssetSelection: React.FC<CompositeAssetSelectionProps> = ({
     }
   };
 
-  // Step 4: Generate composite address in the format [Layer].[CategoryCode].[SubCategoryCode].[Sequential]:[MFA addresses]
-  const generateCompositeHFN = (components: Asset[], sequential: string = '001'): string => {
-    // Extract MFA addresses from components (backend uses nna_address, frontend uses nnaAddress)
-    const componentMFAs = components.map(asset => {
-      // Try multiple possible field names for MFA address
-      return (asset as any).nna_address || asset.nnaAddress || (asset as any).mfa || (asset as any).MFA || 'UNKNOWN.MFA';
-    }).join('+');
-    
-    // Format: [targetLayer].001.001.[Sequential]:[MFA addresses]
-    return `${targetLayer}.001.001.${sequential}:${componentMFAs}`;
-  };
 
   // Step 4: Register composite asset with backend
   const registerCompositeAsset = async (components: Asset[]): Promise<Asset> => {
     try {
       const componentMFAs = components.map(asset => (asset as any).nna_address || asset.nnaAddress || (asset as any).mfa || (asset as any).MFA || 'UNKNOWN.MFA');
-      const compositeHFN = generateCompositeHFN(components);
+      const compositeHFN = `${targetLayer}.001.001.001:${componentMFAs.join('+')}`;
       
       // Prepare registration payload matching backend asset structure
       // Based on discovered backend structure: layer, category, subcategory, name, nna_address
@@ -621,113 +606,6 @@ const CompositeAssetSelection: React.FC<CompositeAssetSelectionProps> = ({
   };
 
   // Step 5: Optimized composite preview generation with performance logging
-  const generatePreview = async (components: Asset[]): Promise<string> => {
-    const startTime = performance.now();
-    
-    try {
-      // Performance logging: Track start time and component count
-      console.log(`Starting preview generation for ${components.length} components at ${new Date().toISOString()}`);
-      
-      // Optimized payload for faster processing
-      const requestData = {
-        components: components.map(asset => asset.id),
-        format: 'mp4',
-        quality: 'preview',
-        // Performance optimizations
-        optimization: {
-          targetDuration: 2000, // 2s target in milliseconds
-          compression: 'medium',
-          resolution: '720p', // Lower resolution for faster generation
-          fastMode: true, // Enable fast mode if supported by backend
-        },
-      };
-
-      const requestConfig = {
-        // Axios timeout configuration for better error handling
-        timeout: 5000, // 5s timeout as fallback
-        headers: {
-          'Authorization': localStorage.getItem('accessToken') ? `Bearer ${localStorage.getItem('accessToken')?.replace(/\s+/g, '')}` : 
-                          localStorage.getItem('testToken') ? `Bearer ${localStorage.getItem('testToken')?.replace(/\s+/g, '')}` : undefined,
-          'Content-Type': 'application/json',
-          'X-Performance-Target': '2000ms',
-          'X-Component-Count': components.length.toString(),
-        },
-      };
-
-      let response;
-      try {
-        // Try proxy first with the correct API path
-        response = await axios.post('/api/assets/preview', requestData, requestConfig);
-      } catch (proxyError) {
-        console.log('Preview generation proxy failed, trying direct backend connection...');
-        // If proxy fails, try direct backend connection
-        response = await axios.post('https://registry.reviz.dev/api/assets/preview', requestData, {
-          ...requestConfig,
-          timeout: 10000, // Longer timeout for direct connection
-        });
-        console.log('Direct backend connection successful for preview generation!');
-      }
-
-      const endTime = performance.now();
-      const duration = endTime - startTime;
-
-      // Enhanced performance logging
-      console.log(`Preview generation completed in ${duration.toFixed(2)}ms for ${components.length} components`);
-      
-      // Log warning if preview generation exceeds 2s target (Section 6.6)
-      if (duration > 2000) {
-        console.warn(`⚠️ Preview generation exceeded 2s target: ${duration.toFixed(2)}ms (target: <2000ms)`);
-        console.warn(`Component details:`, components.map(c => ({ id: c.id, layer: c.layer, name: c.friendlyName })));
-        toast.warning(`Preview generation took ${(duration / 1000).toFixed(1)}s (target: <2s)`);
-      } else {
-        console.log(`✅ Preview generation met performance target: ${duration.toFixed(2)}ms < 2000ms`);
-        toast.success(`Preview generated in ${(duration / 1000).toFixed(1)}s`);
-      }
-
-      // Validate response format
-      if (!response.data?.previewUrl) {
-        throw new Error('Invalid preview response: missing previewUrl');
-      }
-
-      return response.data.previewUrl;
-    } catch (error) {
-      const endTime = performance.now();
-      const duration = endTime - startTime;
-      
-      // Enhanced error logging with timing information
-      console.error(`Preview generation failed after ${duration.toFixed(2)}ms:`, error);
-      
-      if (axios.isAxiosError(error)) {
-        // Handle 405 Method Not Allowed - endpoint might not exist yet
-        if (error.response?.status === 405) {
-          console.log('Preview endpoint not available yet, using mock preview for testing');
-          // Return a mock preview URL for testing
-          return `data:text/html;base64,${btoa(`
-            <html>
-              <body style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">
-                <h2>Composite Preview</h2>
-                <p><strong>Components:</strong> ${components.length}</p>
-                <p><strong>HFN:</strong> ${generateCompositeHFN(components)}</p>
-                <div style="background: #f5f5f5; padding: 20px; margin: 20px 0; border-radius: 8px;">
-                  <h3>Component List:</h3>
-                  ${components.map(c => `<p>• ${c.friendlyName || c.name} (${c.layer})</p>`).join('')}
-                </div>
-                <p><em>Mock preview - Backend endpoint not yet available</em></p>
-              </body>
-            </html>
-          `)}`;
-        } else if (error.code === 'ECONNABORTED') {
-          throw new Error('Preview generation timed out - please try again');
-        } else if (error.response?.status === 429) {
-          throw new Error('Preview service is busy - please wait and try again');
-        } else if (error.response?.status && error.response.status >= 500) {
-          throw new Error('Preview service is temporarily unavailable');
-        }
-      }
-      
-      throw new Error('Failed to generate preview - please check your components and try again');
-    }
-  };
 
   // Handle adding a component
   const handleAddComponent = useCallback(async (asset: Asset) => {
@@ -785,31 +663,6 @@ const CompositeAssetSelection: React.FC<CompositeAssetSelectionProps> = ({
   };
 
   // Step 5: Enhanced preview generation handler with performance tracking
-  const handleGeneratePreview = async () => {
-    if (selectedComponents.length < 2) {
-      toast.error('Need at least 2 components to generate preview');
-      return;
-    }
-
-    setPreviewLoading(true);
-    // setRegistrationError(null); // Clear any previous errors (handled by unified workflow)
-    
-    try {
-      // Instead of calling a backend preview endpoint, show component preview directly
-      console.log('🎬 Generating composite preview for components:', selectedComponents.map(c => ({ name: c.name, layer: c.layer })));
-      setShowPreviewDialog(true);
-      toast.success(`Preview ready for ${selectedComponents.length} components`);
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to generate preview';
-      console.error('Preview generation error in handler:', error);
-      toast.error(errorMessage);
-      
-      // Set error state for UI display
-      // setRegistrationError(`Preview Error: ${errorMessage}`); // Handled by unified workflow
-    } finally {
-      setPreviewLoading(false);
-    }
-  };
 
   // Get layer icon component
   const getLayerIcon = (layer: string) => {
@@ -901,17 +754,6 @@ const CompositeAssetSelection: React.FC<CompositeAssetSelectionProps> = ({
               <Typography variant="subtitle1">
                 Selected Components ({selectedComponents.length})
               </Typography>
-              {selectedComponents.length >= 2 && (
-                <Button
-                  variant="outlined"
-                  startIcon={previewLoading ? <CircularProgress size={16} /> : <PreviewIcon />}
-                  onClick={handleGeneratePreview}
-                  disabled={previewLoading}
-                  aria-label="Generate preview of composite"
-                >
-                  Preview
-                </Button>
-              )}
             </Box>
 
             {selectedComponents.length === 0 ? (
@@ -920,15 +762,6 @@ const CompositeAssetSelection: React.FC<CompositeAssetSelectionProps> = ({
               </Alert>
             ) : (
               <Box>
-                {/* Composite HFN Preview */}
-                <Alert severity="info" sx={{ mb: 2 }}>
-                  <Typography variant="caption" gutterBottom>
-                    Composite HFN Preview:
-                  </Typography>
-                  <Typography variant="body2" fontFamily="monospace">
-                    {generateCompositeHFN(selectedComponents)}
-                  </Typography>
-                </Alert>
 
                 <List>
                   {selectedComponents.map(asset => {
@@ -936,7 +769,34 @@ const CompositeAssetSelection: React.FC<CompositeAssetSelectionProps> = ({
                     return (
                       <ListItem key={asset.id} divider>
                         <ListItemIcon>
-                          {getLayerIcon(asset.layer)}
+                          {/* Show thumbnail if available, otherwise show layer icon */}
+                          {asset.files && asset.files.length > 0 && asset.files[0].thumbnailUrl ? (
+                            <Box
+                              sx={{
+                                width: 40,
+                                height: 40,
+                                borderRadius: 1,
+                                overflow: 'hidden',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                backgroundColor: 'grey.100',
+                              }}
+                            >
+                              <img 
+                                src={asset.files[0].thumbnailUrl} 
+                                alt={`${asset.friendlyName || asset.name} thumbnail`}
+                                style={{ 
+                                  width: '100%', 
+                                  height: '100%', 
+                                  objectFit: 'cover',
+                                  borderRadius: '4px'
+                                }}
+                              />
+                            </Box>
+                          ) : (
+                            getLayerIcon(asset.layer)
+                          )}
                         </ListItemIcon>
                         <ListItemText
                           primary={
@@ -1041,163 +901,6 @@ const CompositeAssetSelection: React.FC<CompositeAssetSelectionProps> = ({
 
       {/* Registration status now handled by unified workflow */}
 
-      {/* Preview Dialog */}
-      <Dialog
-        open={showPreviewDialog}
-        onClose={() => setShowPreviewDialog(false)}
-        maxWidth="md"
-        fullWidth
-        aria-labelledby="preview-dialog-title"
-      >
-        <DialogTitle id="preview-dialog-title">
-          Composite Preview
-        </DialogTitle>
-        <DialogContent>
-          <Box>
-            {/* Debug: Check if components exist */}
-            {selectedComponents.length === 0 ? (
-              <Alert severity="warning">
-                No components selected for preview
-              </Alert>
-            ) : (
-              <>
-                {/* Composite HFN Display */}
-                <Paper sx={{ p: 2, mb: 3, backgroundColor: 'primary.light', color: 'primary.contrastText' }}>
-                  <Typography variant="h6" gutterBottom>
-                    Composite Asset
-                  </Typography>
-                  <Typography variant="body1" fontFamily="monospace" sx={{ wordBreak: 'break-all' }}>
-                    {generateCompositeHFN(selectedComponents)}
-                  </Typography>
-                </Paper>
-
-                {/* Components List */}
-                <Typography variant="h6" gutterBottom>
-                  Components ({selectedComponents.length})
-                </Typography>
-            
-            <List>
-              {selectedComponents.map((component, index) => (
-                <React.Fragment key={component.id}>
-                  <ListItem sx={{ flexDirection: 'column', alignItems: 'flex-start', py: 2 }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', width: '100%', mb: 1 }}>
-                      <ListItemIcon>
-                        {getLayerIcon(component.layer)}
-                      </ListItemIcon>
-                      <Box sx={{ flexGrow: 1 }}>
-                        <Typography variant="subtitle1" fontWeight="bold">
-                          {component.friendlyName || component.name}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          {LAYER_CONFIG[component.layer as keyof typeof LAYER_CONFIG]?.name} Layer
-                        </Typography>
-                      </Box>
-                      <Chip 
-                        label={component.layer} 
-                        color="primary" 
-                        size="small"
-                        sx={{ ml: 1 }}
-                      />
-                    </Box>
-                    
-                    {/* HFN and MFA */}
-                    <Box sx={{ pl: 5, width: '100%' }}>
-                      <Typography variant="body2" color="text.secondary">
-                        <strong>HFN:</strong> {component.friendlyName || component.name}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        <strong>MFA:</strong> {component.nnaAddress || (component as any).nna_address || 'N/A'}
-                      </Typography>
-                      
-                      {/* Asset thumbnail/preview */}
-                      {component.gcpStorageUrl && (
-                        <Box sx={{ mt: 1, display: 'flex', alignItems: 'center', gap: 2 }}>
-                          {/* Thumbnail preview */}
-                          <Box sx={{ 
-                            width: 60, 
-                            height: 60, 
-                            borderRadius: 1, 
-                            overflow: 'hidden',
-                            border: '1px solid',
-                            borderColor: 'divider',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            bgcolor: 'grey.100'
-                          }}>
-                            {component.files && component.files.length > 0 && component.files[0].thumbnailUrl ? (
-                              <img 
-                                src={component.files[0].thumbnailUrl} 
-                                alt={`${component.name} thumbnail`}
-                                style={{ 
-                                  width: '100%', 
-                                  height: '100%', 
-                                  objectFit: 'cover' 
-                                }}
-                                onError={(e) => {
-                                  // Fallback to file icon if thumbnail fails to load
-                                  e.currentTarget.style.display = 'none';
-                                  const nextSibling = e.currentTarget.nextElementSibling as HTMLElement;
-                                  if (nextSibling) nextSibling.style.display = 'flex';
-                                }}
-                              />
-                            ) : null}
-                            {/* Fallback icon based on layer */}
-                            <Box sx={{ 
-                              display: component.files?.[0]?.thumbnailUrl ? 'none' : 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              color: 'text.secondary',
-                              fontSize: 24
-                            }}>
-                              {getLayerIcon(component.layer)}
-                            </Box>
-                          </Box>
-                          
-                          {/* File info */}
-                          <Box>
-                            <Typography variant="caption" color="text.secondary" display="block">
-                              File: {component.gcpStorageUrl.split('/').pop()}
-                            </Typography>
-                            {component.files && component.files.length > 0 && (
-                              <Typography variant="caption" color="text.secondary" display="block">
-                                Size: {(component.files[0].size / (1024 * 1024)).toFixed(2)} MB
-                              </Typography>
-                            )}
-                          </Box>
-                        </Box>
-                      )}
-                      
-                      {/* Tags if available */}
-                      {component.tags && component.tags.length > 0 && (
-                        <Box sx={{ mt: 1 }}>
-                          {component.tags.slice(0, 3).map((tag, tagIndex) => (
-                            <Chip
-                              key={tagIndex}
-                              label={tag}
-                              size="small"
-                              variant="outlined"
-                              sx={{ mr: 0.5, mb: 0.5 }}
-                            />
-                          ))}
-                        </Box>
-                      )}
-                    </Box>
-                  </ListItem>
-                  {index < selectedComponents.length - 1 && <Divider />}
-                </React.Fragment>
-              ))}
-            </List>
-              </>
-            )}
-          </Box>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setShowPreviewDialog(false)}>
-            Close
-          </Button>
-        </DialogActions>
-      </Dialog>
     </Box>
   );
 };

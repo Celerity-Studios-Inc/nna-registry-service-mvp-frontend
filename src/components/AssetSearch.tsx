@@ -564,7 +564,34 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
           {searchResults.map(asset => (
             <ListItem key={asset.id} divider>
               <ListItemIcon>
-                {getLayerIcon(asset.layer)}
+                {/* Show thumbnail if available, otherwise show layer icon */}
+                {asset.files && asset.files.length > 0 && asset.files[0].thumbnailUrl ? (
+                  <Box
+                    sx={{
+                      width: 40,
+                      height: 40,
+                      borderRadius: 1,
+                      overflow: 'hidden',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      backgroundColor: 'grey.100',
+                    }}
+                  >
+                    <img 
+                      src={asset.files[0].thumbnailUrl} 
+                      alt={`${asset.friendlyName || asset.name} thumbnail`}
+                      style={{ 
+                        width: '100%', 
+                        height: '100%', 
+                        objectFit: 'cover',
+                        borderRadius: '4px'
+                      }}
+                    />
+                  </Box>
+                ) : (
+                  getLayerIcon(asset.layer)
+                )}
               </ListItemIcon>
               <ListItemText
                 primary={

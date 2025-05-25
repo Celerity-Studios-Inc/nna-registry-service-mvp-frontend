@@ -899,66 +899,7 @@ const ReviewSubmit: React.FC<ReviewSubmitProps> = ({
             )}
           </Paper>
 
-          {/* Component Assets (only for Composite layer) */}
-          {isCompositeAsset && components && components.length > 0 && (
-            <Paper variant="outlined" sx={{ p: 2, mb: 3 }}>
-              <Box
-                sx={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  mb: 2,
-                }}
-              >
-                <Typography variant="subtitle1" fontWeight="bold">
-                  Component Assets
-                </Typography>
-                <IconButton
-                  size="small"
-                  onClick={() => onEditStep(2)}
-                  color="primary"
-                >
-                  <EditIcon fontSize="small" />
-                </IconButton>
-              </Box>
-              <Divider sx={{ mb: 2 }} />
-
-              <List>
-                {components.map((component, index) => (
-                  <ListItem key={index} divider={index < components.length - 1}>
-                    <ListItemIcon>
-                      {component.layer === 'G' ? (
-                        <AudioIcon color="primary" />
-                      ) : component.layer === 'S' ? (
-                        <CategoryIcon color="secondary" />
-                      ) : component.layer === 'L' ? (
-                        <DescriptionIcon color="success" />
-                      ) : component.layer === 'M' ? (
-                        <VideoIcon color="warning" />
-                      ) : component.layer === 'W' ? (
-                        <PublicIcon color="info" />
-                      ) : (
-                        <FileIcon />
-                      )}
-                    </ListItemIcon>
-                    <ListItemText
-                      primary={component.title}
-                      secondary={
-                        component.nnaAddress || `${component.layer} layer asset`
-                      }
-                      primaryTypographyProps={{ noWrap: true }}
-                    />
-                  </ListItem>
-                ))}
-              </List>
-
-              {components.length === 0 && (
-                <Alert severity="warning">
-                  No component assets have been selected.
-                </Alert>
-              )}
-            </Paper>
-          )}
+          {/* Component Assets section removed - Step 5 should only show the composite asset preview */}
 
           {/* Second NNA Address card removed to avoid duplication */}
         </Grid>
