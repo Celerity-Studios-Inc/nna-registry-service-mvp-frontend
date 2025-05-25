@@ -115,7 +115,7 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
         }
 
         // Handle both paginated and direct array responses
-        let results = [];
+        let results: any[] = [];
         if (response.data.success && response.data.data) {
           // Paginated response format: { success: true, data: { items: [...], pagination: {...} } }
           results = response.data.data.items || [];
@@ -140,6 +140,15 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
         if (results.length > 0) {
           console.log('Sample asset structure from backend:', results[0]);
           console.log('Asset keys:', Object.keys(results[0]));
+          console.log('Description field:', results[0].description);
+          console.log('Tags field:', results[0].tags);
+          console.log('Total assets returned:', results.length);
+          
+          // Check if all assets are identical (cache issue)
+          if (results.length > 1) {
+            const allSame = results.every(asset => asset.name === results[0].name);
+            console.log('All assets have same name (cache issue?):', allSame);
+          }
         }
 
         // Validate each asset has required fields (flexible validation)
@@ -188,19 +197,38 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
         // Apply search filter (check name, description, tags)
         if (query && query.trim()) {
           const searchTerm = query.toLowerCase();
+          console.log(`🔍 Searching for: "${searchTerm}"`);
+          
           filteredResults = filteredResults.filter(asset => {
             // Search in name (HFN)
             const nameMatch = asset.name?.toLowerCase().includes(searchTerm) || 
                              asset.friendlyName?.toLowerCase().includes(searchTerm);
             
-            // Search in description  
-            const descriptionMatch = asset.description?.toLowerCase().includes(searchTerm);
+            // Search in description (check if field exists)
+            const description = asset.description || asset.desc || asset.details || '';
+            const descriptionMatch = description?.toLowerCase().includes(searchTerm);
             
-            // Search in tags
-            const tagsMatch = asset.tags?.some((tag: string) => 
-              tag.toLowerCase().includes(searchTerm));
+            // Search in tags (handle both string and array)
+            let tagsMatch = false;
+            if (Array.isArray(asset.tags)) {
+              tagsMatch = asset.tags.some((tag: string) => 
+                tag?.toLowerCase().includes(searchTerm));
+            } else if (typeof asset.tags === 'string') {
+              tagsMatch = asset.tags.toLowerCase().includes(searchTerm);
+            }
+            
+            // Search in category/subcategory names
+            const categoryMatch = asset.category?.toLowerCase().includes(searchTerm) ||
+                                 asset.subcategory?.toLowerCase().includes(searchTerm);
+            
+            const hasMatch = nameMatch || descriptionMatch || tagsMatch || categoryMatch;
+            
+            // Debug individual asset matching
+            if (searchTerm.length >= 3) { // Only log for longer searches
+              console.log(`Asset ${asset.name}: name=${nameMatch}, desc=${descriptionMatch}, tags=${tagsMatch}, category=${categoryMatch} => ${hasMatch}`);
+            }
               
-            return nameMatch || descriptionMatch || tagsMatch;
+            return hasMatch;
           });
         }
         

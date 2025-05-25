@@ -243,15 +243,24 @@ const CompositeAssetSelection: React.FC<CompositeAssetSelectionProps> = ({
     
     try {
       const registeredAsset = await registerCompositeAsset(selectedComponents);
-      toast.success(`Composite registered successfully: ${registeredAsset.friendlyName || registeredAsset.name}`);
       
-      // Reset form after successful registration
-      setSelectedComponents([]);
-      setValidationErrors([]);
-      setRightsValidation({});
+      // Check if this was a mock registration
+      const isMockRegistration = registeredAsset.metadata?.isMockRegistration === true;
       
-      // Notify parent component of successful registration
-      onComponentsSelected([]);
+      if (isMockRegistration) {
+        toast.success(`Mock registration completed: ${registeredAsset.friendlyName || registeredAsset.name} (for testing)`);
+        // Don't clear components for mock registration - let user continue testing
+      } else {
+        toast.success(`Composite registered successfully: ${registeredAsset.friendlyName || registeredAsset.name}`);
+        
+        // Only reset form after REAL successful registration
+        setSelectedComponents([]);
+        setValidationErrors([]);
+        setRightsValidation({});
+        
+        // Notify parent component of successful registration
+        onComponentsSelected([]);
+      }
       
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to register composite asset';
@@ -406,6 +415,7 @@ const CompositeAssetSelection: React.FC<CompositeAssetSelectionProps> = ({
                 layerName,
                 registrationStatus: 'mock',
                 registeredAt: new Date().toISOString(),
+                isMockRegistration: true, // Flag to indicate this is a mock response
               },
               createdAt: new Date().toISOString(),
               updatedAt: new Date().toISOString(),
@@ -448,6 +458,7 @@ const CompositeAssetSelection: React.FC<CompositeAssetSelectionProps> = ({
                 layerName,
                 registrationStatus: 'mock',
                 registeredAt: new Date().toISOString(),
+                isMockRegistration: true, // Flag to indicate this is a mock response
               },
               createdAt: new Date().toISOString(),
               updatedAt: new Date().toISOString(),
