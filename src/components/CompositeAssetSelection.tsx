@@ -241,17 +241,44 @@ const CompositeAssetSelection: React.FC<CompositeAssetSelectionProps> = ({
     setRegistering(true);
     setRegistrationError(null);
     
+    // Show registration progress toast
+    const progressToastId = toast.info('🔄 Registering composite asset...', {
+      autoClose: false,
+      closeOnClick: false,
+      closeButton: false,
+    });
+    
     try {
       const registeredAsset = await registerCompositeAsset(selectedComponents);
+      
+      // Dismiss progress toast
+      toast.dismiss(progressToastId);
       
       // Check if this was a mock registration
       const isMockRegistration = registeredAsset.metadata?.isMockRegistration === true;
       
       if (isMockRegistration) {
-        toast.success(`Mock registration completed: ${registeredAsset.friendlyName || registeredAsset.name} (for testing)`);
+        toast.success(`✅ Mock registration completed: ${registeredAsset.friendlyName || registeredAsset.name} (for testing)`, {
+          autoClose: 6000,
+        });
+        console.log('Mock registration - components preserved for continued testing');
         // Don't clear components for mock registration - let user continue testing
       } else {
-        toast.success(`Composite registered successfully: ${registeredAsset.friendlyName || registeredAsset.name}`);
+        // Show success message with navigation option
+        toast.success(`🎉 Composite registered successfully! Asset: ${registeredAsset.friendlyName || registeredAsset.name}`, {
+          autoClose: 8000,
+        });
+        
+        // Show a second toast with navigation option
+        setTimeout(() => {
+          toast.info('Click here to view your registered asset', {
+            autoClose: 10000,
+            onClick: () => {
+              window.location.href = `/asset-success?id=${registeredAsset.id}&name=${encodeURIComponent(registeredAsset.name || '')}&type=composite&hfn=${encodeURIComponent(registeredAsset.friendlyName || registeredAsset.name || '')}&mfa=${encodeURIComponent(registeredAsset.nnaAddress || '')}`;
+            },
+            style: { cursor: 'pointer' }
+          });
+        }, 1000);
         
         // Only reset form after REAL successful registration
         setSelectedComponents([]);
@@ -260,12 +287,49 @@ const CompositeAssetSelection: React.FC<CompositeAssetSelectionProps> = ({
         
         // Notify parent component of successful registration
         onComponentsSelected([]);
+        
+        // Navigate to success page after a delay to show the success messages
+        setTimeout(() => {
+          window.location.href = `/asset-success?id=${registeredAsset.id}&name=${encodeURIComponent(registeredAsset.name || '')}&type=composite&hfn=${encodeURIComponent(registeredAsset.friendlyName || registeredAsset.name || '')}&mfa=${encodeURIComponent(registeredAsset.nnaAddress || '')}`;
+        }, 4000);
       }
       
     } catch (error) {
+      // Dismiss progress toast
+      toast.dismiss(progressToastId);
+      
       const errorMessage = error instanceof Error ? error.message : 'Failed to register composite asset';
       setRegistrationError(errorMessage);
-      toast.error(errorMessage);
+      
+      // Enhanced error handling with specific error types
+      if (errorMessage.includes('CORS') || errorMessage.includes('Network') || errorMessage.includes('ERR_NETWORK')) {
+        toast.error('🌐 Network/CORS Error: Registration failed due to network issues. The backend may be temporarily unavailable or have CORS restrictions. Click to retry.', {
+          autoClose: 10000,
+          onClick: () => handleRegister(),
+          style: { cursor: 'pointer' }
+        });
+      } else if (errorMessage.includes('401') || errorMessage.includes('authentication')) {
+        toast.error('🔐 Authentication Error: Registration failed due to authentication issues. Please check your login status.', {
+          autoClose: 8000,
+          onClick: () => {
+            console.log('Current tokens:', {
+              accessToken: localStorage.getItem('accessToken'),
+              testToken: localStorage.getItem('testToken')
+            });
+          },
+          style: { cursor: 'pointer' }
+        });
+      } else if (errorMessage.includes('409') || errorMessage.includes('conflict')) {
+        toast.error('⚠️ Duplicate Asset: A composite asset with this combination already exists. Please modify your component selection.', {
+          autoClose: 8000,
+        });
+      } else {
+        toast.error(`❌ Registration Failed: ${errorMessage}. Click to retry.`, {
+          autoClose: 8000,
+          onClick: () => handleRegister(),
+          style: { cursor: 'pointer' }
+        });
+      }
     } finally {
       setRegistering(false);
     }
@@ -924,12 +988,56 @@ const CompositeAssetSelection: React.FC<CompositeAssetSelectionProps> = ({
               size="large"
               onClick={handleRegister}
               disabled={registering}
-              startIcon={registering ? <CircularProgress size={16} /> : null}
+              startIcon={registering ? <CircularProgress size={16} sx={{ color: 'inherit' }} /> : null}
               aria-label="Register composite asset"
+              sx={{
+                minWidth: 140,
+                fontWeight: 'bold',
+                '&:disabled': {
+                  opacity: 0.7,
+                },
+              }}
             >
-              {registering ? 'Registering...' : 'Register'}
+              {registering ? 'Registering...' : '🚀 Register Composite'}
             </Button>
           )}
+        </Box>
+      )}
+
+      {/* Registration Status */}
+      {(registering || registrationError) && (
+        <Box sx={{ mt: 3 }}>
+          <Paper sx={{ p: 3, bgcolor: registrationError ? 'error.light' : 'info.light', borderRadius: 2 }}>
+            {registering && (
+              <Box display="flex" alignItems="center" gap={2}>
+                <CircularProgress size={24} />
+                <Typography variant="body1" sx={{ fontWeight: 'medium' }}>
+                  🔄 Registering composite asset...
+                </Typography>
+              </Box>
+            )}
+            
+            {registrationError && (
+              <Box>
+                <Typography variant="h6" color="error" gutterBottom>
+                  ❌ Registration Failed
+                </Typography>
+                <Typography variant="body2" color="error" paragraph>
+                  {registrationError}
+                </Typography>
+                <Button
+                  variant="outlined"
+                  color="error"
+                  size="small"
+                  onClick={handleRegister}
+                  startIcon={<CircularProgress size={14} sx={{ display: registering ? 'block' : 'none' }} />}
+                  disabled={registering}
+                >
+                  🔄 Retry Registration
+                </Button>
+              </Box>
+            )}
+          </Paper>
         </Box>
       )}
 
