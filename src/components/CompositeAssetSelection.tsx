@@ -55,6 +55,8 @@ const LAYER_CONFIG = {
 interface CompositeAssetSelectionProps {
   onComponentsSelected: (components: Asset[]) => void;
   initialComponents?: Asset[];
+  targetLayer?: string;
+  layerName?: string;
 }
 
 interface SearchParams {
@@ -72,6 +74,8 @@ interface RightsVerificationResult {
 const CompositeAssetSelection: React.FC<CompositeAssetSelectionProps> = ({
   onComponentsSelected,
   initialComponents = [],
+  targetLayer = 'C',
+  layerName = 'Composite',
 }) => {
   const [selectedComponents, setSelectedComponents] = useState<Asset[]>(initialComponents);
   const [searchParams, setSearchParams] = useState<SearchParams>({
@@ -285,11 +289,11 @@ const CompositeAssetSelection: React.FC<CompositeAssetSelectionProps> = ({
     }
   };
 
-  // Step 4: Generate composite HFN in the format C.[CategoryCode].[SubCategoryCode].[Sequential]:[Component IDs]
+  // Step 4: Generate composite HFN in the format [Layer].[CategoryCode].[SubCategoryCode].[Sequential]:[Component IDs]
   const generateCompositeHFN = (components: Asset[], sequential: string = '001'): string => {
     const componentIds = components.map(asset => asset.friendlyName || asset.name).join('+');
-    // Format: C.[CategoryCode].[SubCategoryCode].[Sequential]:[Component IDs]
-    return `C.001.001.${sequential}:${componentIds}`;
+    // Format: [targetLayer].001.001.[Sequential]:[Component IDs]
+    return `${targetLayer}.001.001.${sequential}:${componentIds}`;
   };
 
   // Step 4: Register composite asset with backend
@@ -300,7 +304,7 @@ const CompositeAssetSelection: React.FC<CompositeAssetSelectionProps> = ({
       
       // Prepare registration payload
       const registrationPayload = {
-        layer: 'C',
+        layer: targetLayer,
         category: '001',
         subcategory: '001',
         sequential: '001',
@@ -311,6 +315,8 @@ const CompositeAssetSelection: React.FC<CompositeAssetSelectionProps> = ({
           totalSize: components.reduce((sum, asset) => 
             sum + (asset.files?.reduce((fileSum, file) => fileSum + file.size, 0) || 0), 0),
           createdFrom: 'CompositeAssetSelection',
+          targetLayer,
+          layerName,
         },
         name: compositeHFN,
         friendlyName: compositeHFN,
@@ -357,7 +363,7 @@ const CompositeAssetSelection: React.FC<CompositeAssetSelectionProps> = ({
             name: compositeHFN,
             friendlyName: compositeHFN,
             nnaAddress: compositeHFN,
-            layer: 'C',
+            layer: targetLayer,
             categoryCode: '001',
             subcategoryCode: '001',
             type: 'composite',

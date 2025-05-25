@@ -632,11 +632,27 @@ const RegisterAssetPage: React.FC = () => {
     setValue('layer', layer.code);
     setValue('layerName', layer.name);
     
-    // Check if this is the training layer (T)
+    // Check if this is a composite layer that requires dataset/collection workflow
+    const compositeLayerCodes = ['B', 'P', 'T', 'C', 'R'];
+    const isCompositeWorkflow = compositeLayerCodes.includes(layer.code);
+    
+    if (isCompositeWorkflow) {
+      // Route to composite assets workflow for these layers
+      environmentSafeLog(`Detected composite layer ${layer.code} - routing to composite assets workflow`);
+      
+      // Navigate to composite assets page with layer pre-selected
+      const url = `/composite-assets-test?layer=${layer.code}&layerName=${encodeURIComponent(layer.name)}`;
+      window.location.href = url;
+      return;
+    }
+    
+    // For individual asset layers (G, S, L, M, W), use the regular workflow
+    
+    // Check if this is the training layer (T) - This check is now redundant since T goes to composite workflow
     const isTraining = layer.code === 'T';
     setIsTrainingLayer(isTraining);
     
-    // Check if this is the composite layer (C)
+    // Check if this is the composite layer (C) - This check is now redundant since C goes to composite workflow
     const isComposite = layer.code === 'C';
     setIsCompositeLayer(isComposite);
     
