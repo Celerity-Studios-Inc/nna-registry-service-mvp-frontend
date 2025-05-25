@@ -331,18 +331,23 @@ const CompositeAssetSelection: React.FC<CompositeAssetSelectionProps> = ({
       const compositeHFN = generateCompositeHFN(components);
       
       // Prepare registration payload matching backend asset structure
+      // Based on discovered backend structure: layer, category, subcategory, name, nna_address
       const registrationPayload = {
         layer: targetLayer,
-        category: 'Composites', // Use descriptive category name like backend
-        subcategory: 'Base', // Use descriptive subcategory name like backend  
+        category: 'Composite', // Simplified category name
+        subcategory: 'Generated', // Descriptive subcategory for composite assets
         name: compositeHFN,
-        nna_address: `${targetLayer}.001.001.001`, // Generate NNA address format
-        source: 'ReViz', // Default source for composites
-        tags: ['composite', 'generated', ...Array.from(new Set(components.flatMap(asset => asset.tags || [])))],
         description: `Composite asset containing ${components.length} components: ${componentMFAs.join(', ')}`,
-        components: componentMFAs, // Backend expects array of MFA addresses
-        trainingData: null, // Optional field from backend structure
-        rights: null, // Optional field from backend structure
+        // Include component references
+        metadata: {
+          components: componentMFAs, // Array of MFA addresses
+          componentCount: components.length,
+          createdFrom: 'CompositeAssetSelection',
+          targetLayer,
+          isComposite: true,
+        },
+        tags: ['composite', 'generated', ...Array.from(new Set(components.flatMap(asset => asset.tags || [])))],
+        source: 'ReViz', // Default source for composites
       };
 
       try {
@@ -372,10 +377,20 @@ const CompositeAssetSelection: React.FC<CompositeAssetSelectionProps> = ({
         }
         return response.data;
       } catch (apiError) {
-        // If the real backend endpoint doesn't exist (404) or requires auth (401), use mock response for testing
-        if (axios.isAxiosError(apiError) && (apiError.response?.status === 404 || apiError.response?.status === 401)) {
-          const reason = apiError.response?.status === 401 ? 'authentication required' : 'endpoint not available';
-          console.log(`Registration ${reason}, using mock response for testing`);
+        // Enhanced error handling with detailed logging for 400 errors
+        if (axios.isAxiosError(apiError)) {
+          if (apiError.response?.status === 400) {
+            console.error('Registration failed with 400 Bad Request:', {
+              payload: registrationPayload,
+              response: apiError.response?.data,
+              error: apiError.response?.data?.message || 'Invalid request format'
+            });
+            // Provide detailed error message to user
+            const errorDetail = apiError.response?.data?.message || 'Invalid request format';
+            throw new Error(`Registration failed: ${errorDetail}. Check console for payload details.`);
+          } else if (apiError.response?.status === 404 || apiError.response?.status === 401) {
+            const reason = apiError.response?.status === 401 ? 'authentication required' : 'endpoint not available';
+            console.log(`Registration ${reason}, using mock response for testing`);
           
           // Return mock successful registration response
           const mockRegisteredAsset: Asset = {
@@ -409,10 +424,11 @@ const CompositeAssetSelection: React.FC<CompositeAssetSelectionProps> = ({
           // Add a small delay to simulate network request
           await new Promise(resolve => setTimeout(resolve, 500));
           
-          return mockRegisteredAsset;
+            return mockRegisteredAsset;
+          }
         }
         
-        // Re-throw the original error if it's not a 404
+        // Re-throw the original error if it's not a 404 or 401
         throw apiError;
       }
     } catch (error) {
@@ -463,12 +479,12 @@ const CompositeAssetSelection: React.FC<CompositeAssetSelectionProps> = ({
 
       let response;
       try {
-        // Try proxy first
-        response = await axios.post('/v1/asset/preview', requestData, requestConfig);
+        // Try proxy first with the correct API path
+        response = await axios.post('/api/assets/preview', requestData, requestConfig);
       } catch (proxyError) {
         console.log('Preview generation proxy failed, trying direct backend connection...');
         // If proxy fails, try direct backend connection
-        response = await axios.post('https://registry.reviz.dev/v1/asset/preview', requestData, {
+        response = await axios.post('https://registry.reviz.dev/api/assets/preview', requestData, {
           ...requestConfig,
           timeout: 10000, // Longer timeout for direct connection
         });
@@ -505,13 +521,29 @@ const CompositeAssetSelection: React.FC<CompositeAssetSelectionProps> = ({
       console.error(`Preview generation failed after ${duration.toFixed(2)}ms:`, error);
       
       if (axios.isAxiosError(error)) {
-        if (error.code === 'ECONNABORTED') {
+        // Handle 405 Method Not Allowed - endpoint might not exist yet
+        if (error.response?.status === 405) {
+          console.log('Preview endpoint not available yet, using mock preview for testing');
+          // Return a mock preview URL for testing
+          return `data:text/html;base64,${btoa(`
+            <html>
+              <body style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">
+                <h2>Composite Preview</h2>
+                <p><strong>Components:</strong> ${components.length}</p>
+                <p><strong>HFN:</strong> ${generateCompositeHFN(components)}</p>
+                <div style="background: #f5f5f5; padding: 20px; margin: 20px 0; border-radius: 8px;">
+                  <h3>Component List:</h3>
+                  ${components.map(c => `<p>• ${c.friendlyName || c.name} (${c.layer})</p>`).join('')}
+                </div>
+                <p><em>Mock preview - Backend endpoint not yet available</em></p>
+              </body>
+            </html>
+          `)}`;
+        } else if (error.code === 'ECONNABORTED') {
           throw new Error('Preview generation timed out - please try again');
-        }
-        if (error.response?.status === 429) {
+        } else if (error.response?.status === 429) {
           throw new Error('Preview service is busy - please wait and try again');
-        }
-        if (error.response?.status && error.response.status >= 500) {
+        } else if (error.response?.status && error.response.status >= 500) {
           throw new Error('Preview service is temporarily unavailable');
         }
       }

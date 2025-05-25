@@ -171,6 +171,10 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
           ...asset,
           id: asset.id || asset._id || asset.assetId,
           layer: asset.layer || asset.assetLayer || asset.metadata?.layer,
+          // Normalize MFA address field
+          nnaAddress: asset.nna_address || asset.nnaAddress || asset.mfa || asset.MFA,
+          // Ensure HFN is available (backend name field is the HFN)
+          friendlyName: asset.name || asset.friendlyName || asset.hfn || asset.HFN,
         }));
 
         setSearchResults(normalizedResults);
@@ -516,9 +520,19 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
                 secondary={
                   <Box>
                     <Typography variant="caption" color="text.secondary">
-                      {LAYER_CONFIG[asset.layer as keyof typeof LAYER_CONFIG]?.name} • 
-                      {asset.nnaAddress || 'No address'}
+                      {LAYER_CONFIG[asset.layer as keyof typeof LAYER_CONFIG]?.name}
                     </Typography>
+                    
+                    {/* Display HFN and MFA clearly */}
+                    <Box sx={{ mt: 0.5 }}>
+                      <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                        HFN: {asset.friendlyName || asset.name || 'N/A'}
+                      </Typography>
+                      <Typography variant="body2" color="primary">
+                        MFA: {asset.nnaAddress || 'N/A'}
+                      </Typography>
+                    </Box>
+                    
                     {asset.tags && asset.tags.length > 0 && (
                       <Box sx={{ mt: 0.5 }}>
                         {asset.tags.slice(0, 3).map((tag, index) => (
