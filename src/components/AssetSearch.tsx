@@ -75,16 +75,6 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
       setError(null);
 
       try {
-        // Log token status for debugging
-        const authToken = localStorage.getItem('authToken');
-        const testToken = localStorage.getItem('testToken');
-        console.log('Token status:', { 
-          hasAuthToken: !!authToken, 
-          hasTestToken: !!testToken,
-          authTokenStart: authToken?.substring(0, 20),
-          testTokenStart: testToken?.substring(0, 20)
-        });
-
         // Try the real backend API endpoint first, fallback to direct if proxy fails
         let response;
         try {
@@ -102,7 +92,7 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
             },
           });
         } catch (proxyError) {
-          console.log('Proxy failed, trying direct backend connection...', proxyError.message);
+          console.log('Proxy failed, trying direct backend connection...', proxyError instanceof Error ? proxyError.message : 'Unknown error');
           // If proxy fails, try direct backend connection
           response = await axios.get('https://registry.reviz.dev/api/assets', {
             params: {
