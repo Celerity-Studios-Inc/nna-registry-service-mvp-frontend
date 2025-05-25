@@ -136,18 +136,50 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
           throw new Error('Invalid response: expected array of assets');
         }
 
-        // Validate each asset has required fields
+        // Debug: Log first asset structure to understand backend format
+        if (results.length > 0) {
+          console.log('Sample asset structure from backend:', results[0]);
+          console.log('Asset keys:', Object.keys(results[0]));
+        }
+
+        // Validate each asset has required fields (flexible validation)
         const validatedResults = results.filter(asset => {
-          if (!asset || typeof asset !== 'object') return false;
-          if (!asset.id || !asset.layer) return false;
+          if (!asset || typeof asset !== 'object') {
+            console.log('Rejected asset: not an object', asset);
+            return false;
+          }
+          
+          // Check for id field (may be _id, id, or assetId)
+          const hasId = asset.id || asset._id || asset.assetId;
+          if (!hasId) {
+            console.log('Rejected asset: missing id field', Object.keys(asset));
+            return false;
+          }
+          
+          // Check for layer field (may be layer, assetLayer, or within metadata)
+          const hasLayer = asset.layer || asset.assetLayer || asset.metadata?.layer;
+          if (!hasLayer) {
+            console.log('Rejected asset: missing layer field', Object.keys(asset));
+            return false;
+          }
+          
           return true;
         });
 
-        setSearchResults(validatedResults);
+        // Normalize asset structure for frontend use
+        const normalizedResults = validatedResults.map(asset => ({
+          ...asset,
+          id: asset.id || asset._id || asset.assetId,
+          layer: asset.layer || asset.assetLayer || asset.metadata?.layer,
+        }));
+
+        setSearchResults(normalizedResults);
         
         // Show warning if some results were filtered out
         if (validatedResults.length < results.length) {
           console.warn(`Filtered out ${results.length - validatedResults.length} invalid assets from search results`);
+        } else {
+          console.log(`✅ Successfully loaded ${normalizedResults.length} assets`);
         }
         
       } catch (err) {
