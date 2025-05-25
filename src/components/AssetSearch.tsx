@@ -114,10 +114,25 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
           throw new Error('Invalid response: missing data');
         }
 
-        const results = response.data.items || response.data || [];
+        // Handle both paginated and direct array responses
+        let results = [];
+        if (response.data.success && response.data.data) {
+          // Paginated response format: { success: true, data: { items: [...], pagination: {...} } }
+          results = response.data.data.items || [];
+        } else if (response.data.items) {
+          // Direct items response: { items: [...] }
+          results = response.data.items;
+        } else if (Array.isArray(response.data)) {
+          // Direct array response: [...]
+          results = response.data;
+        } else {
+          console.warn('Unexpected response format:', response.data);
+          results = [];
+        }
         
         // Validate that results is an array
         if (!Array.isArray(results)) {
+          console.error('Invalid response format - results is not an array:', results);
           throw new Error('Invalid response: expected array of assets');
         }
 
