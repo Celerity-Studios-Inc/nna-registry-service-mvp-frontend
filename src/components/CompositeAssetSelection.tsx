@@ -325,27 +325,19 @@ const CompositeAssetSelection: React.FC<CompositeAssetSelectionProps> = ({
       const componentHFNs = components.map(asset => asset.friendlyName || asset.name);
       const compositeHFN = generateCompositeHFN(components);
       
-      // Prepare registration payload
+      // Prepare registration payload matching backend asset structure
       const registrationPayload = {
         layer: targetLayer,
-        category: '001',
-        subcategory: '001',
-        sequential: '001',
-        components: componentHFNs.join(','), // Backend expects comma-separated string
-        metadata: {
-          components: componentHFNs, // Also include as array in metadata
-          componentCount: components.length,
-          totalSize: components.reduce((sum, asset) => 
-            sum + (asset.files?.reduce((fileSum, file) => fileSum + file.size, 0) || 0), 0),
-          createdFrom: 'CompositeAssetSelection',
-          targetLayer,
-          layerName,
-        },
+        category: 'Composites', // Use descriptive category name like backend
+        subcategory: 'Base', // Use descriptive subcategory name like backend  
         name: compositeHFN,
-        friendlyName: compositeHFN,
-        description: `Composite asset containing ${components.length} components: ${componentHFNs.join(', ')}`,
-        tags: ['composite', 'generated', ...Array.from(new Set(components.flatMap(asset => asset.tags || [])))],
+        nna_address: `${targetLayer}.001.001.001`, // Generate NNA address format
         source: 'ReViz', // Default source for composites
+        tags: ['composite', 'generated', ...Array.from(new Set(components.flatMap(asset => asset.tags || [])))],
+        description: `Composite asset containing ${components.length} components: ${componentHFNs.join(', ')}`,
+        components: componentHFNs, // Backend expects array based on asset structure
+        trainingData: null, // Optional field from backend structure
+        rights: null, // Optional field from backend structure
       };
 
       try {
@@ -393,7 +385,12 @@ const CompositeAssetSelection: React.FC<CompositeAssetSelectionProps> = ({
             gcpStorageUrl: `gs://mock-bucket/${compositeHFN.replace(/:/g, '_')}.json`,
             files: [],
             metadata: {
-              ...registrationPayload.metadata,
+              componentCount: components.length,
+              totalSize: components.reduce((sum, asset) => 
+                sum + (asset.files?.reduce((fileSum, file) => fileSum + file.size, 0) || 0), 0),
+              createdFrom: 'CompositeAssetSelection',
+              targetLayer,
+              layerName,
               registrationStatus: 'mock',
               registeredAt: new Date().toISOString(),
             },
