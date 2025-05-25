@@ -90,8 +90,7 @@ const CompositeAssetSelection: React.FC<CompositeAssetSelectionProps> = ({
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
   const [showPreviewDialog, setShowPreviewDialog] = useState(false);
-  const [registering, setRegistering] = useState(false);
-  const [registrationError, setRegistrationError] = useState<string | null>(null);
+  // Registration state removed - now handled by unified workflow
   const [validating, setValidating] = useState(false);
   const [validationStatus, setValidationStatus] = useState<'idle' | 'validating' | 'success' | 'error'>('idle');
 
@@ -232,7 +231,7 @@ const CompositeAssetSelection: React.FC<CompositeAssetSelectionProps> = ({
     if (errors.length === 0) {
       setValidationStatus('success');
       toast.success(`✅ Validation passed! ${selectedComponents.length} components are compatible and ready to register.`);
-      setRegistrationError(null); // Clear any previous registration errors
+      // Registration errors now handled by unified workflow
     } else {
       setValidationStatus('error');
       toast.error(`❌ Validation failed: ${errors.length} error${errors.length > 1 ? 's' : ''} found. Please fix before continuing.`);
@@ -241,8 +240,26 @@ const CompositeAssetSelection: React.FC<CompositeAssetSelectionProps> = ({
     setValidating(false);
   };
 
-  // Step 4: Handle composite registration
-  const handleRegister = async () => {
+  // Step 4: Handle advancing to Review & Submit step
+  const handleAdvanceToReview = () => {
+    // First validate components
+    const errors = validateComponents(selectedComponents);
+    if (errors.length > 0) {
+      setValidationErrors(errors);
+      toast.error('Please fix validation errors before continuing');
+      return;
+    }
+
+    // Notify parent component with selected components to advance workflow
+    onComponentsSelected(selectedComponents);
+    
+    toast.success(`✅ Components selected! Proceeding to Review & Submit step...`, {
+      autoClose: 3000,
+    });
+  };
+
+  // Step 4: Handle composite registration (DEPRECATED - now handled by unified workflow)
+  const handleRegister_DEPRECATED = async () => {
     // First validate components
     const errors = validateComponents(selectedComponents);
     if (errors.length > 0) {
@@ -251,8 +268,8 @@ const CompositeAssetSelection: React.FC<CompositeAssetSelectionProps> = ({
       return;
     }
 
-    setRegistering(true);
-    setRegistrationError(null);
+    // setRegistering(true);
+    // setRegistrationError(null);
     
     // Show registration progress toast
     const progressToastId = toast.info('🔄 Registering composite asset...', {
@@ -312,13 +329,13 @@ const CompositeAssetSelection: React.FC<CompositeAssetSelectionProps> = ({
       toast.dismiss(progressToastId);
       
       const errorMessage = error instanceof Error ? error.message : 'Failed to register composite asset';
-      setRegistrationError(errorMessage);
+      // setRegistrationError(errorMessage);
       
       // Enhanced error handling with specific error types
       if (errorMessage.includes('CORS') || errorMessage.includes('Network') || errorMessage.includes('ERR_NETWORK')) {
         toast.error('🌐 Network/CORS Error: Registration failed due to network issues. The backend may be temporarily unavailable or have CORS restrictions. Click to retry.', {
           autoClose: 10000,
-          onClick: () => handleRegister(),
+          onClick: () => handleRegister_DEPRECATED(),
           style: { cursor: 'pointer' }
         });
       } else if (errorMessage.includes('401') || errorMessage.includes('authentication')) {
@@ -339,12 +356,12 @@ const CompositeAssetSelection: React.FC<CompositeAssetSelectionProps> = ({
       } else {
         toast.error(`❌ Registration Failed: ${errorMessage}. Click to retry.`, {
           autoClose: 8000,
-          onClick: () => handleRegister(),
+          onClick: () => handleRegister_DEPRECATED(),
           style: { cursor: 'pointer' }
         });
       }
     } finally {
-      setRegistering(false);
+      // setRegistering(false);
     }
   };
 
@@ -775,7 +792,7 @@ const CompositeAssetSelection: React.FC<CompositeAssetSelectionProps> = ({
     }
 
     setPreviewLoading(true);
-    setRegistrationError(null); // Clear any previous errors
+    // setRegistrationError(null); // Clear any previous errors (handled by unified workflow)
     
     try {
       // Instead of calling a backend preview endpoint, show component preview directly
@@ -788,7 +805,7 @@ const CompositeAssetSelection: React.FC<CompositeAssetSelectionProps> = ({
       toast.error(errorMessage);
       
       // Set error state for UI display
-      setRegistrationError(`Preview Error: ${errorMessage}`);
+      // setRegistrationError(`Preview Error: ${errorMessage}`); // Handled by unified workflow
     } finally {
       setPreviewLoading(false);
     }
@@ -858,15 +875,7 @@ const CompositeAssetSelection: React.FC<CompositeAssetSelectionProps> = ({
         </Alert>
       )}
 
-      {/* Registration Errors */}
-      {registrationError && (
-        <Alert severity="error" sx={{ mb: 3 }}>
-          <Typography variant="subtitle2" gutterBottom>
-            Registration Error:
-          </Typography>
-          {registrationError}
-        </Alert>
-      )}
+      {/* Registration errors now handled by unified workflow */}
 
 
       <Grid container spacing={3}>
@@ -988,7 +997,7 @@ const CompositeAssetSelection: React.FC<CompositeAssetSelectionProps> = ({
             color={validationStatus === 'success' ? 'success' : validationStatus === 'error' ? 'error' : 'primary'}
             size="large"
             onClick={handleContinue}
-            disabled={registering || validating}
+            disabled={validating}
             startIcon={validating ? <CircularProgress size={16} sx={{ color: 'inherit' }} /> : null}
             aria-label="Validate selected components"
             sx={{
@@ -1012,10 +1021,10 @@ const CompositeAssetSelection: React.FC<CompositeAssetSelectionProps> = ({
               variant="contained"
               color="success"
               size="large"
-              onClick={handleRegister}
-              disabled={registering}
-              startIcon={registering ? <CircularProgress size={16} sx={{ color: 'inherit' }} /> : <LayersIcon />}
-              aria-label="Register composite asset"
+              onClick={handleAdvanceToReview}
+              disabled={validationStatus !== 'success'}
+              startIcon={<LayersIcon />}
+              aria-label="Proceed to Review & Submit"
               sx={{
                 minWidth: 140,
                 fontWeight: 'bold',
@@ -1024,48 +1033,13 @@ const CompositeAssetSelection: React.FC<CompositeAssetSelectionProps> = ({
                 },
               }}
             >
-              {registering ? 'Registering...' : 'Register Composite'}
+              Continue to Review
             </Button>
           )}
         </Box>
       )}
 
-      {/* Registration Status */}
-      {(registering || registrationError) && (
-        <Box sx={{ mt: 3 }}>
-          <Paper sx={{ p: 3, bgcolor: registrationError ? 'error.light' : 'info.light', borderRadius: 2 }}>
-            {registering && (
-              <Box display="flex" alignItems="center" gap={2}>
-                <CircularProgress size={24} />
-                <Typography variant="body1" sx={{ fontWeight: 'medium' }}>
-                  🔄 Registering composite asset...
-                </Typography>
-              </Box>
-            )}
-            
-            {registrationError && (
-              <Box>
-                <Typography variant="h6" color="error" gutterBottom>
-                  ❌ Registration Failed
-                </Typography>
-                <Typography variant="body2" color="error" paragraph>
-                  {registrationError}
-                </Typography>
-                <Button
-                  variant="outlined"
-                  color="error"
-                  size="small"
-                  onClick={handleRegister}
-                  startIcon={<CircularProgress size={14} sx={{ display: registering ? 'block' : 'none' }} />}
-                  disabled={registering}
-                >
-                  🔄 Retry Registration
-                </Button>
-              </Box>
-            )}
-          </Paper>
-        </Box>
-      )}
+      {/* Registration status now handled by unified workflow */}
 
       {/* Preview Dialog */}
       <Dialog

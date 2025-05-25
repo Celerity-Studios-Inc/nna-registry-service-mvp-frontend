@@ -1353,6 +1353,10 @@ const RegisterAssetPage: React.FC = () => {
             <CompositeAssetSelection
               onComponentsSelected={(components) => {
                 setValue('layerSpecificData.components', components);
+                // When components are selected and validated, advance to Review & Submit
+                if (components.length > 0) {
+                  handleNext();
+                }
               }}
               targetLayer={watchLayer}
               layerName={getValues('layerName')}
