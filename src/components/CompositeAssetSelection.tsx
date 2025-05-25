@@ -413,6 +413,21 @@ const CompositeAssetSelection: React.FC<CompositeAssetSelectionProps> = ({
     }
   };
 
+  // Step 4: Generate composite address in the format [Layer].[CategoryCode].[SubCategoryCode].[Sequential]:[MFA addresses]
+  const generateCompositeHFN = (components: Asset[], sequential: string = '001'): string => {
+    if (components.length === 0) {
+      return `${targetLayer}.001.001.${sequential}`;
+    }
+    
+    // Extract MFA addresses from components (backend uses nna_address, frontend uses nnaAddress)
+    const componentMFAs = components.map(asset => {
+      // Try multiple possible field names for MFA address
+      return (asset as any).nna_address || asset.nnaAddress || (asset as any).mfa || (asset as any).MFA || 'UNKNOWN.MFA';
+    }).join('+');
+    
+    // Format: [targetLayer].001.001.[Sequential]:[MFA addresses]
+    return `${targetLayer}.001.001.${sequential}:${componentMFAs}`;
+  };
 
   // Step 4: Register composite asset with backend
   const registerCompositeAsset = async (components: Asset[]): Promise<Asset> => {
@@ -762,6 +777,15 @@ const CompositeAssetSelection: React.FC<CompositeAssetSelectionProps> = ({
               </Alert>
             ) : (
               <Box>
+                {/* Composite HFN Preview */}
+                <Alert severity="info" sx={{ mb: 2 }}>
+                  <Typography variant="caption" gutterBottom>
+                    Composite HFN Preview:
+                  </Typography>
+                  <Typography variant="body2" fontFamily="monospace">
+                    {generateCompositeHFN(selectedComponents)}
+                  </Typography>
+                </Alert>
 
                 <List>
                   {selectedComponents.map(asset => {
@@ -770,7 +794,7 @@ const CompositeAssetSelection: React.FC<CompositeAssetSelectionProps> = ({
                       <ListItem key={asset.id} divider>
                         <ListItemIcon>
                           {/* Show thumbnail if available, otherwise show layer icon */}
-                          {asset.files && asset.files.length > 0 && asset.files[0].thumbnailUrl ? (
+                          {asset.gcpStorageUrl ? (
                             <Box
                               sx={{
                                 width: 40,
@@ -784,13 +808,24 @@ const CompositeAssetSelection: React.FC<CompositeAssetSelectionProps> = ({
                               }}
                             >
                               <img 
-                                src={asset.files[0].thumbnailUrl} 
+                                src={asset.gcpStorageUrl} 
                                 alt={`${asset.friendlyName || asset.name} thumbnail`}
                                 style={{ 
                                   width: '100%', 
                                   height: '100%', 
                                   objectFit: 'cover',
                                   borderRadius: '4px'
+                                }}
+                                onError={(e) => {
+                                  // Fallback to layer icon if image fails to load
+                                  const target = e.target as HTMLImageElement;
+                                  target.style.display = 'none';
+                                  const parent = target.parentElement;
+                                  if (parent) {
+                                    const iconElement = document.createElement('div');
+                                    iconElement.innerHTML = getLayerIcon(asset.layer) as any;
+                                    parent.appendChild(iconElement);
+                                  }
                                 }}
                               />
                             </Box>

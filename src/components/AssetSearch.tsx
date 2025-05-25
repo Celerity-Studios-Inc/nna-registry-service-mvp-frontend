@@ -565,7 +565,7 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
             <ListItem key={asset.id} divider>
               <ListItemIcon>
                 {/* Show thumbnail if available, otherwise show layer icon */}
-                {asset.files && asset.files.length > 0 && asset.files[0].thumbnailUrl ? (
+                {asset.gcpStorageUrl ? (
                   <Box
                     sx={{
                       width: 40,
@@ -579,13 +579,28 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
                     }}
                   >
                     <img 
-                      src={asset.files[0].thumbnailUrl} 
+                      src={asset.gcpStorageUrl} 
                       alt={`${asset.friendlyName || asset.name} thumbnail`}
                       style={{ 
                         width: '100%', 
                         height: '100%', 
                         objectFit: 'cover',
                         borderRadius: '4px'
+                      }}
+                      onError={(e) => {
+                        // Fallback to layer icon if image fails to load
+                        e.currentTarget.style.display = 'none';
+                        const parent = e.currentTarget.parentElement;
+                        if (parent) {
+                          parent.innerHTML = '';
+                          const iconContainer = document.createElement('div');
+                          iconContainer.style.display = 'flex';
+                          iconContainer.style.alignItems = 'center';
+                          iconContainer.style.justifyContent = 'center';
+                          iconContainer.style.width = '100%';
+                          iconContainer.style.height = '100%';
+                          parent.appendChild(iconContainer);
+                        }
                       }}
                     />
                   </Box>

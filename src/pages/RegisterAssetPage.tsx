@@ -469,6 +469,7 @@ const RegisterAssetPage: React.FC = () => {
       environmentSafeLog('Code conversion results:');
       environmentSafeLog(`Category: ${data.categoryCode} → ${convertedCategory}`);
       environmentSafeLog(`Subcategory: ${data.subcategoryCode} → ${convertedSubcategory}`);
+      console.log(`🔍 COMPOSITE DEBUG: Final conversion - Layer: ${data.layer}, Category: ${data.categoryCode} → ${convertedCategory}, Subcategory: ${data.subcategoryCode} → ${convertedSubcategory}`);
 
       // Add extra validation for the critical S.POP.HPM case
       if (data.layer === 'S' && (data.categoryCode === 'POP' || data.categoryCode === '001') &&
@@ -690,6 +691,7 @@ const RegisterAssetPage: React.FC = () => {
   // Handle subcategory selection for SimpleTaxonomySelectionV3 component
   const handleSubcategorySelectV3 = React.useCallback(async (subcategoryCode: string) => {
     environmentSafeLog('[REGISTER PAGE] Subcategory selected:', subcategoryCode);
+    console.log(`🔍 COMPOSITE DEBUG: Raw subcategory selected: "${subcategoryCode}" for layer: ${getValues('layer')}, category: ${getValues('categoryCode')}`);
     
     // Skip processing empty subcategory codes
     if (!subcategoryCode) {
