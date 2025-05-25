@@ -72,7 +72,8 @@ const getSteps = (isTrainingLayer: boolean, isCompositeLayer: boolean) => {
     return ['Select Layer', 'Choose Taxonomy', 'Upload Files', 'Training Data', 'Review & Submit'];
   }
   if (isCompositeLayer) {
-    return ['Select Layer', 'Choose Taxonomy', 'Select Components', 'Upload Files', 'Review & Submit'];
+    // Unified workflow: Steps 1-3 same as component assets, then fork to Search & Add Components
+    return ['Select Layer', 'Choose Taxonomy', 'Upload Files', 'Search & Add Components', 'Review & Submit'];
   }
   return ['Select Layer', 'Choose Taxonomy', 'Upload Files', 'Review & Submit'];
 };
@@ -1120,17 +1121,10 @@ const RegisterAssetPage: React.FC = () => {
 
   // Render step content
   const getStepContent = (step: number) => {
-    // Adjust step based on layer type
-    let adjustedStep = step;
+    // Unified workflow: Steps 0-2 are the same for all layers
+    // Step 3+ fork based on layer type
     
-    // For composite assets, steps are: Select Layer, Choose Taxonomy, Select Components, Upload Files, Review
-    // So we need to adjust the case handling
-    if (isCompositeLayer && step >= 2) {
-      // For composite assets with step > 1, adjust the step index
-      adjustedStep = step + 1;
-    }
-    
-    switch (adjustedStep) {
+    switch (step) {
       case 0:
         return (
           <LayerSelection
@@ -1176,26 +1170,7 @@ const RegisterAssetPage: React.FC = () => {
           </>
         );
       case 2:
-        // For composite assets, display the component selection form
-        if (isCompositeLayer) {
-          return (
-            <Paper sx={{ p: 3, mb: 4 }}>
-              <Typography variant="h6" gutterBottom>
-                Select Component Assets
-              </Typography>
-              <Typography variant="body2" color="text.secondary" paragraph>
-                A composite asset references other existing assets. Select the components that make up this composite asset.
-              </Typography>
-              <Divider sx={{ mb: 3 }} />
-              
-              <ComponentsForm 
-                control={methods.control} 
-                watchLayer={watchLayer}
-              />
-            </Paper>
-          );
-        }
-        // For other assets, display the file upload and asset details
+        // Unified Step 3: Upload Files (for ALL layers)
         return (
           <Box>
             {/* Display the taxonomy context for reference */}
@@ -1278,36 +1253,7 @@ const RegisterAssetPage: React.FC = () => {
                   </Box>
                 </Grid>
 
-                <Grid item xs={12}>
-                  <Box>
-                    <Typography variant="subtitle1" gutterBottom>
-                      Source
-                    </Typography>
-                    <select
-                      {...register('source')}
-                      defaultValue="ReViz"
-                      style={{
-                        width: '100%',
-                        padding: '10px',
-                        borderRadius: '4px',
-                        border: '1px solid #ccc',
-                      }}
-                    >
-                      <option value="ReViz">ReViz</option>
-                      <option value="Original">Original</option>
-                      <option value="Licensed">Licensed</option>
-                      <option value="External">External</option>
-                    </select>
-                    {errors.source && (
-                      <Typography color="error" variant="caption">
-                        {errors.source.message}
-                      </Typography>
-                    )}
-                    <Typography variant="caption" color="text.secondary">
-                      Source indicates the origin of the asset
-                    </Typography>
-                  </Box>
-                </Grid>
+                {/* Source field is handled by FileUpload component above - no duplicate needed */}
 
                 <Grid item xs={12}>
                   <Box>
@@ -1400,277 +1346,28 @@ const RegisterAssetPage: React.FC = () => {
           </Box>
         );
       case 3:
-        // For composite assets, this is file upload step
+        // FORK POINT: After file upload (Step 3), workflow splits
         if (isCompositeLayer) {
+          // Composite layers: Search & Add Components (Step 4)
           return (
-            <Box>
-              <FileUpload
-                onFilesChange={handleFilesChange}
-                layerCode={watchLayer}
-                maxFiles={1}
-                onUploadProgress={handleUploadProgress}
-                onUploadComplete={handleUploadComplete}
-                onUploadError={handleUploadError}
-                initialFiles={getValues('files')}
-                // Source field now handled directly in the form below
-              />
+            <Paper sx={{ p: 3, mb: 4 }}>
+              <Typography variant="h6" gutterBottom>
+                Search & Add Components
+              </Typography>
+              <Typography variant="body2" color="text.secondary" paragraph>
+                A composite asset references other existing assets. Select the components that make up this composite asset.
+              </Typography>
+              <Divider sx={{ mb: 3 }} />
               
-              <Box mt={3}>
-                <Typography variant="h6" gutterBottom>
-                  Asset Details
-                </Typography>
-                <Typography variant="body2" color="text.secondary" paragraph>
-                  Provide additional information about your composite asset.
-                </Typography>
-                <Divider sx={{ mb: 3 }} />
-                
-                <Grid container spacing={3}>
-                  <Grid item xs={12}>
-                    <Box>
-                      <Typography variant="subtitle1" gutterBottom>
-                        Name
-                      </Typography>
-                      <input
-                        {...register('name')}
-                        placeholder="Asset Name"
-                        style={{
-                          width: '100%',
-                          padding: '10px',
-                          borderRadius: '4px',
-                          border: '1px solid #ccc',
-                        }}
-                      />
-                      {errors.name && (
-                        <Typography color="error" variant="caption">
-                          {errors.name.message}
-                        </Typography>
-                      )}
-                    </Box>
-                  </Grid>
-                  
-                  <Grid item xs={12}>
-                    <Box>
-                      <Typography variant="subtitle1" gutterBottom>
-                        Description
-                      </Typography>
-                      <textarea
-                        {...register('description')}
-                        placeholder="Asset Description"
-                        rows={4}
-                        style={{
-                          width: '100%',
-                          padding: '10px',
-                          borderRadius: '4px',
-                          border: '1px solid #ccc',
-                        }}
-                      />
-                      {errors.description && (
-                        <Typography color="error" variant="caption">
-                          {errors.description.message}
-                        </Typography>
-                      )}
-                    </Box>
-                  </Grid>
-  
-                  <Grid item xs={12}>
-                    <Box>
-                      <Typography variant="subtitle1" gutterBottom>
-                        Tags
-                      </Typography>
-                      <Box sx={{ mb: 2 }}>
-                        {/* Tag Input Field */}
-                        <Box 
-                          component="div" 
-                          sx={{ 
-                            display: 'flex',
-                            alignItems: 'center',
-                            border: '1px solid #ccc',
-                            borderRadius: '4px',
-                            p: 1,
-                            mb: 1
-                          }}
-                        >
-                          <input
-                            id="tag-input"
-                            type="text"
-                            placeholder="Type a tag and press Enter"
-                            style={{
-                              border: 'none',
-                              outline: 'none',
-                              width: '100%',
-                              padding: '8px',
-                              fontSize: '14px'
-                            }}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter' && e.currentTarget.value.trim()) {
-                                e.preventDefault();
-                                const currentValue = e.currentTarget.value.trim();
-                                const currentTags = getValues('tags') || [];
-                                if (!currentTags.includes(currentValue)) {
-                                  setValue('tags', [...currentTags, currentValue]);
-                                  e.currentTarget.value = '';
-                                }
-                              }
-                            }}
-                          />
-                          <Button
-                            variant="contained"
-                            color="primary"
-                            size="small"
-                            sx={{ minWidth: '36px', ml: 1 }}
-                            onClick={() => {
-                              const input = document.getElementById('tag-input') as HTMLInputElement;
-                              if (input && input.value.trim()) {
-                                const currentTags = getValues('tags') || [];
-                                const newTag = input.value.trim();
-                                if (!currentTags.includes(newTag)) {
-                                  setValue('tags', [...currentTags, newTag]);
-                                  input.value = '';
-                                }
-                              }
-                              input?.focus();
-                            }}
-                          >
-                            +
-                          </Button>
-                        </Box>
-  
-                        {/* Tag Display Area */}
-                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                          {(watch('tags') || []).map((tag, index) => (
-                            <Chip
-                              key={`tag-${index}`}
-                              label={tag}
-                              variant="outlined"
-                              color="primary"
-                              size="small"
-                              onDelete={() => {
-                                const currentTags = [...(getValues('tags') || [])];
-                                currentTags.splice(index, 1);
-                                setValue('tags', currentTags);
-                              }}
-                            />
-                          ))}
-                        </Box>
-                      </Box>
-                      <Typography variant="caption" color="text.secondary">
-                        Tags help with searchability and metadata
-                      </Typography>
-                    </Box>
-                  </Grid>
-
-                  {/* Source field - Now under the Tags field */}
-                  <Grid item xs={12}>
-                    <Box sx={{ mb: 3, mt: 2, bgcolor: '#f5f9ff', borderRadius: 1, border: '1px solid #e0e8f5', p: 2 }}>
-                      <Typography variant="subtitle1" fontWeight="bold" gutterBottom sx={{ color: '#1976d2' }}>
-                        Source *
-                      </Typography>
-                      <Typography variant="body2" sx={{ mb: 2 }}>
-                        Select the origin of this asset. This is a required field for asset registration.
-                      </Typography>
-                      <FormControl fullWidth sx={{ mb: 1 }} required>
-                        <InputLabel id="source-label">Source</InputLabel>
-                        <Select
-                          labelId="source-label"
-                          id="source"
-                          value={watch('source')}
-                          label="Source"
-                          error={!!errors.source}
-                          {...register('source')}
-                          onChange={(e) => setValue('source', e.target.value)}
-                          sx={{ 
-                            bgcolor: '#ffffff',
-                            '& .MuiOutlinedInput-notchedOutline': {
-                              borderColor: '#1976d2',
-                            },
-                          }}
-                        >
-                          {SOURCE_OPTIONS.map((option) => (
-                            <MenuItem key={option.value} value={option.value}>
-                              {option.label}
-                            </MenuItem>
-                          ))}
-                        </Select>
-                        {errors.source ? (
-                          <FormHelperText error>
-                            {errors.source.message as string}
-                          </FormHelperText>
-                        ) : (
-                          <FormHelperText>
-                            <Box component="span" fontWeight="medium">
-                              ReViz: Assets created by or for ReViz
-                              <br />
-                              Original: Your own original content
-                              <br />
-                              Licensed: Content licensed from third parties
-                              <br />
-                              External: Content from external sources
-                            </Box>
-                          </FormHelperText>
-                        )}
-                      </FormControl>
-                    </Box>
-                  </Grid>
-                  
-                  {/* Source field for composite assets - Under the Tags field */}
-                  <Grid item xs={12}>
-                    <Box sx={{ mb: 3, mt: 2, bgcolor: '#f5f9ff', borderRadius: 1, border: '1px solid #e0e8f5', p: 2 }}>
-                      <Typography variant="subtitle1" fontWeight="bold" gutterBottom sx={{ color: '#1976d2' }}>
-                        Source *
-                      </Typography>
-                      <Typography variant="body2" sx={{ mb: 2 }}>
-                        Select the origin of this asset. This is a required field for asset registration.
-                      </Typography>
-                      <FormControl fullWidth sx={{ mb: 1 }} required>
-                        <InputLabel id="source-label-composite">Source</InputLabel>
-                        <Select
-                          labelId="source-label-composite"
-                          id="source-composite"
-                          value={watch('source')}
-                          label="Source"
-                          error={!!errors.source}
-                          {...register('source')}
-                          onChange={(e) => setValue('source', e.target.value)}
-                          sx={{ 
-                            bgcolor: '#ffffff',
-                            '& .MuiOutlinedInput-notchedOutline': {
-                              borderColor: '#1976d2',
-                            },
-                          }}
-                        >
-                          {SOURCE_OPTIONS.map((option) => (
-                            <MenuItem key={option.value} value={option.value}>
-                              {option.label}
-                            </MenuItem>
-                          ))}
-                        </Select>
-                        {errors.source ? (
-                          <FormHelperText error>
-                            {errors.source.message as string}
-                          </FormHelperText>
-                        ) : (
-                          <FormHelperText>
-                            <Box component="span" fontWeight="medium">
-                              ReViz: Assets created by or for ReViz
-                              <br />
-                              Original: Your own original content
-                              <br />
-                              Licensed: Content licensed from third parties
-                              <br />
-                              External: Content from external sources
-                            </Box>
-                          </FormHelperText>
-                        )}
-                      </FormControl>
-                    </Box>
-                  </Grid>
-                </Grid>
-              </Box>
-            </Box>
+              <ComponentsForm 
+                control={methods.control} 
+                watchLayer={watchLayer}
+              />
+            </Paper>
           );
         }
         
-        // For Training Data assets
+        // Training layers: Training Data Collection
         if (isTrainingLayer) {
           return (
             <TrainingDataCollection
@@ -1680,7 +1377,8 @@ const RegisterAssetPage: React.FC = () => {
             />
           );
         }
-        // For regular assets, show review
+        
+        // Component layers: Go directly to Review & Submit (end of workflow)
         return (
           <ReviewSubmit
             assetData={{
@@ -1699,7 +1397,7 @@ const RegisterAssetPage: React.FC = () => {
               files: getValues('files'),
               uploadedFiles: uploadedFiles,
               tags: getValues('tags'),
-              components: isCompositeLayer ? getValues('layerSpecificData.components') : undefined,
+              components: undefined, // No components for component layers
             }}
             onEditStep={(step) => setActiveStep(step)}
             loading={loading}
