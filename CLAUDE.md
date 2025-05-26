@@ -850,6 +850,29 @@ The following layers require datasets/collections and will use the composite wor
 
 The composite assets feature is ready for integration and will enable the creation of complex multi-layer assets as required by the NNA Framework specifications.
 
+## Current Status (May 26, 2025)
+
+**Final Stable Rollback - commit 1379b88**
+- **Problem**: Multiple attempted rollbacks had build errors or complexity issues
+- **Solution**: Rolled back to commit 1379b88 "Fix GitHub repository URLs in Claude analysis prompt"
+- **Verification**: ✅ `CI=false npm run build` succeeds with only warnings
+- **Why this commit works**:
+  - ✅ Clean build with no TypeScript errors
+  - ✅ M layer validation present (video/* + application/json support)
+  - ✅ Simple file preview without complex blob URL accessibility testing
+  - ✅ Pre-dates Task Group complexity that introduced recurring issues
+- **Timeline of Issues**:
+  - 1379b88 (current): Stable, builds successfully ✅
+  - ed3b670: Task Group 1 - had TypeScript errors in success page ❌
+  - 746b937: Task Group 2 - introduced complex blob URL handling ❌
+  - dce4157+: Multiple attempts to fix blob URL issues ❌
+- **File Validation Status**:
+  - **M Layer**: video/* + application/json ✅
+  - **G Layer**: audio/* only ✅ 
+  - **S/L Layers**: images only ✅
+  - **V Layer**: video/* only ✅
+- **Key Lesson**: Found truly stable commit that builds without modifications
+
 ## Reminder
 When continuing work on this project, remember:
 - The current implementation uses SimpleTaxonomySelectionV3 and RegisterAssetPage.tsx
