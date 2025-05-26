@@ -1492,8 +1492,21 @@ const RegisterAssetPage: React.FC = () => {
                           (createdAsset as any).nna_address;
       
       if (metadataMfa) {
-        displayMfa = taxonomyFormatter.formatMFA(metadataMfa);
-        environmentSafeLog(`[SUCCESS] Using MFA directly from asset metadata: ${metadataMfa} → ${displayMfa}`);
+        // Force alphabetic MFA format: if backend returns numeric (e.g., 2.004.008.001),
+        // convert it to alphabetic format (e.g., S.DNC.DNB.001) for user display
+        if (/^\d+\.\d+\.\d+\.\d+/.test(metadataMfa)) {
+          // Numeric MFA detected - construct alphabetic version
+          const layer = createdAsset.layer || '';
+          const category = createdAsset.category || metadata.category || '';
+          const subcategory = createdAsset.subcategory || metadata.subcategory || '';
+          const sequential = metadataMfa.split('.')[3] || '001';
+          displayMfa = `${layer}.${category}.${subcategory}.${sequential}`;
+          environmentSafeLog(`[SUCCESS] Converted numeric MFA to alphabetic: ${metadataMfa} → ${displayMfa}`);
+        } else {
+          // Already alphabetic or use formatter
+          displayMfa = taxonomyFormatter.formatMFA(metadataMfa);
+          environmentSafeLog(`[SUCCESS] Using MFA directly from asset metadata: ${metadataMfa} → ${displayMfa}`);
+        }
       }
     }
     
