@@ -3,9 +3,9 @@
 ## Context and Repository Information
 
 **Repository**: NNA Registry Service MVP Frontend  
-**GitHub URL**: https://github.com/ajaymadhok/nna-registry-workspace/nna-registry-service-mvp-frontend  
-**Main Branch**: https://github.com/ajaymadhok/nna-registry-workspace/tree/main/nna-registry-service-mvp-frontend  
-**Current Commit**: 794decf (Add detailed Claude analysis prompt for composite workflow issues)  
+**GitHub URL**: https://github.com/Celerity-Studios-Inc/nna-registry-service-mvp-frontend  
+**Main Branch**: https://github.com/Celerity-Studios-Inc/nna-registry-service-mvp-frontend/tree/main  
+**Current Commit**: 6b2d11e (Update Claude analysis prompt with correct repository URLs and latest commit hash)  
 **Documentation Commit**: 26627d5 (Add comprehensive composite workflow documentation)  
 **Previous Critical Commit**: 427a4f5 (Fix composite workflow critical issues)  
 
@@ -15,9 +15,9 @@ Please analyze the critical "Base" subcategory override issue in our composite a
 
 ## Complete Documentation Context
 
-**Main Documentation**: [COMPOSITE_WORKFLOW_IMPLEMENTATION.md](https://github.com/ajaymadhok/nna-registry-workspace/blob/main/nna-registry-service-mvp-frontend/COMPOSITE_WORKFLOW_IMPLEMENTATION.md)  
-**Project Instructions**: [CLAUDE.md](https://github.com/ajaymadhok/nna-registry-workspace/blob/main/nna-registry-service-mvp-frontend/CLAUDE.md)  
-**Taxonomy Documentation**: [docs/taxonomy/](https://github.com/ajaymadhok/nna-registry-workspace/tree/main/nna-registry-service-mvp-frontend/docs/taxonomy/)
+**Main Documentation**: [COMPOSITE_WORKFLOW_IMPLEMENTATION.md](https://github.com/Celerity-Studios-Inc/nna-registry-service-mvp-frontend/blob/main/COMPOSITE_WORKFLOW_IMPLEMENTATION.md)  
+**Project Instructions**: [CLAUDE.md](https://github.com/Celerity-Studios-Inc/nna-registry-service-mvp-frontend/blob/main/CLAUDE.md)  
+**Taxonomy Documentation**: [docs/taxonomy/](https://github.com/Celerity-Studios-Inc/nna-registry-service-mvp-frontend/tree/main/docs/taxonomy/)
 
 ## Critical Issue Summary
 
@@ -37,29 +37,29 @@ Asset validation failed: Base is not a valid subcategory for category RMX in lay
 ## Key Files for Analysis
 
 ### Core Implementation Files
-1. **Main Workflow Controller**: [src/pages/RegisterAssetPage.tsx](https://github.com/ajaymadhok/nna-registry-workspace/blob/main/nna-registry-service-mvp-frontend/src/pages/RegisterAssetPage.tsx)
+1. **Main Workflow Controller**: [src/pages/RegisterAssetPage.tsx](https://github.com/Celerity-Studios-Inc/nna-registry-service-mvp-frontend/blob/main/src/pages/RegisterAssetPage.tsx)
    - Lines 200-220: `handleSubcategorySelectV3` with debugging
    - Lines 600-650: Form submission with conversion logging
    - Shows correct frontend conversion from "POP" to "Pop"
 
-2. **Composite Component Selection**: [src/components/CompositeAssetSelection.tsx](https://github.com/ajaymadhok/nna-registry-workspace/blob/main/nna-registry-service-mvp-frontend/src/components/CompositeAssetSelection.tsx)
+2. **Composite Component Selection**: [src/components/CompositeAssetSelection.tsx](https://github.com/Celerity-Studios-Inc/nna-registry-service-mvp-frontend/blob/main/src/components/CompositeAssetSelection.tsx)
    - Lines 450-500: Address generation and form integration
    - Shows correct composite address format
 
-3. **Taxonomy Service**: [src/api/taxonomyService.ts](https://github.com/ajaymadhok/nna-registry-workspace/blob/main/nna-registry-service-mvp-frontend/src/api/taxonomyService.ts)
+3. **Taxonomy Service**: [src/api/taxonomyService.ts](https://github.com/Celerity-Studios-Inc/nna-registry-service-mvp-frontend/blob/main/src/api/taxonomyService.ts)
    - Critical for understanding code conversion logic
    - May contain the source of the "Base" override
 
-4. **Taxonomy Converter**: [src/services/taxonomyConverter.ts](https://github.com/ajaymadhok/nna-registry-workspace/blob/main/nna-registry-service-mvp-frontend/src/services/taxonomyConverter.ts)
+4. **Taxonomy Converter**: [src/services/taxonomyConverter.ts](https://github.com/Celerity-Studios-Inc/nna-registry-service-mvp-frontend/blob/main/src/services/taxonomyConverter.ts)
    - Contains conversion logic between formats
    - Potential source of subcategory normalization
 
 ### Taxonomy Structure Files
-5. **C Layer Taxonomy**: [flattened_taxonomy/C_layer.ts](https://github.com/ajaymadhok/nna-registry-workspace/blob/main/nna-registry-service-mvp-frontend/flattened_taxonomy/C_layer.ts)
+5. **C Layer Taxonomy**: [flattened_taxonomy/C_layer.ts](https://github.com/Celerity-Studios-Inc/nna-registry-service-mvp-frontend/blob/main/flattened_taxonomy/C_layer.ts)
    - Shows RMX category has valid subcategories: POP, RCK, HIP, EDM, LAT, JZZ
    - No "Base" subcategory exists for C.RMX
 
-6. **Taxonomy Selection Component**: [src/components/asset/SimpleTaxonomySelectionV3.tsx](https://github.com/ajaymadhok/nna-registry-workspace/blob/main/nna-registry-service-mvp-frontend/src/components/asset/SimpleTaxonomySelectionV3.tsx)
+6. **Taxonomy Selection Component**: [src/components/asset/SimpleTaxonomySelectionV3.tsx](https://github.com/Celerity-Studios-Inc/nna-registry-service-mvp-frontend/blob/main/src/components/asset/SimpleTaxonomySelectionV3.tsx)
    - Current taxonomy selection implementation
    - May contain selection logic issues
 
@@ -111,13 +111,13 @@ POST /api/assets 400 (Bad Request)
 ## Additional Context Files
 
 **Recent Commits for Context**:
-- 427a4f5: [Fix composite workflow critical issues](https://github.com/ajaymadhok/nna-registry-workspace/commit/427a4f5)
-- 5869d9d: [Fix composite workflow UX issues](https://github.com/ajaymadhok/nna-registry-workspace/commit/5869d9d)
-- 00df9c2: [Complete composite asset workflow fixes](https://github.com/ajaymadhok/nna-registry-workspace/commit/00df9c2)
+- 427a4f5: [Fix composite workflow critical issues](https://github.com/Celerity-Studios-Inc/nna-registry-service-mvp-frontend/commit/427a4f5)
+- 5869d9d: [Fix composite workflow UX issues](https://github.com/Celerity-Studios-Inc/nna-registry-service-mvp-frontend/commit/5869d9d)
+- 00df9c2: [Complete composite asset workflow fixes](https://github.com/Celerity-Studios-Inc/nna-registry-service-mvp-frontend/commit/00df9c2)
 
 **Architecture Documentation**:
-- [docs/ARCHITECTURE.md](https://github.com/ajaymadhok/nna-registry-workspace/blob/main/nna-registry-service-mvp-frontend/docs/ARCHITECTURE.md)
-- [docs/taxonomy/README.md](https://github.com/ajaymadhok/nna-registry-workspace/blob/main/nna-registry-service-mvp-frontend/docs/taxonomy/README.md)
+- [docs/ARCHITECTURE.md](https://github.com/Celerity-Studios-Inc/nna-registry-service-mvp-frontend/blob/main/docs/ARCHITECTURE.md)
+- [docs/taxonomy/README.md](https://github.com/Celerity-Studios-Inc/nna-registry-service-mvp-frontend/blob/main/docs/taxonomy/README.md)
 
 ## Expected Output
 
