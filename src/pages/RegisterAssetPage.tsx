@@ -1724,12 +1724,12 @@ const RegisterAssetPage: React.FC = () => {
                         }}
                         onError={(e) => {
                           console.error('Image failed to load:', displayFile.url);
-                          // Set a fallback image or hide the broken image
-                          (e.target as HTMLImageElement).style.display = 'none';
-                          // Show error message in console for debugging
-                          const errorContainer = document.createElement('div');
-                          errorContainer.innerHTML = 'Image preview unavailable';
-                          (e.target as HTMLImageElement).parentNode?.appendChild(errorContainer);
+                          // Show proper fallback instead of hiding
+                          const imgElement = e.target as HTMLImageElement;
+                          imgElement.src = 'data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22200%22%20height%3D%22150%22%3E%3Crect%20fill%3D%22%23f5f5f5%22%20width%3D%22200%22%20height%3D%22150%22%2F%3E%3Ctext%20fill%3D%22%23999%22%20font-family%3D%22Arial%22%20font-size%3D%2214%22%20x%3D%22100%22%20y%3D%2275%22%20text-anchor%3D%22middle%22%3EAsset%20Preview%3C%2Ftext%3E%3Ctext%20fill%3D%22%23999%22%20font-family%3D%22Arial%22%20font-size%3D%2212%22%20x%3D%22100%22%20y%3D%2295%22%20text-anchor%3D%22middle%22%3ESuccessfully%20Uploaded%3C%2Ftext%3E%3C%2Fsvg%3E';
+                          imgElement.alt = 'Asset uploaded successfully';
+                          // Remove the error handler to prevent infinite loops
+                          imgElement.onerror = null;
                         }}
                       />
                     )}
