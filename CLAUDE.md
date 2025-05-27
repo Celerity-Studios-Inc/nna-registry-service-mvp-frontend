@@ -46,11 +46,131 @@ The application uses a flattened taxonomy system with lookup tables for efficien
 - Use consistent lookup mechanisms for all HFN to MFA conversions
 - Maintain backwards compatibility while avoiding hardcoded mappings
 
-## Recent Issues and Fixes
+## CRITICAL: Current Composite Asset Investigation (May 27, 2025)
 
-### 1. Taxonomy Subcategory Display Issue
-- Problem: Subcategories weren't displaying correctly in the Register Asset UI when a layer was selected
-- Solution: Enhanced `simpleTaxonomyService.ts` with robust error handling and fallback mechanisms
+### Active Issue: Component Selection Not Reaching Form Submission
+**Status**: DEBUGGING IN PROGRESS  
+**Priority**: HIGH - Blocking composite asset workflow completion
+
+#### Problem Summary
+Composite asset registration workflow (Layer C) successfully:
+1. ✅ Selects 4 components in Step 5 UI (S.FAN.BAS.001, L.VIN.BAS.001, M.BOL.FUS.001, W.FUT.BAS.001)
+2. ✅ Shows "Selected Components (4)" in UI
+3. ✅ Backend validation works (fixed in commit 87fa177)
+4. ❌ **FAILING**: Components data not included in API payload (`components[]` empty)
+5. ❌ **RESULT**: Success page shows `C.RMX.POP.005:` without component addresses
+
+#### Expected vs Actual Results
+- **Expected HFN**: `C.RMX.POP.005:S.FAN.BAS.001+L.VIN.BAS.001+M.BOL.FUS.001+W.FUT.BAS.001`
+- **Actual HFN**: `C.RMX.POP.005:` (missing component addresses)
+- **Backend Response**: `"components": [""]` (empty array with empty string)
+
+#### Root Cause Analysis
+1. **Data Flow Investigation**: Component selection in `CompositeAssetSelection.tsx` calls `onComponentsSelected(selectedComponents)` 
+2. **Form Integration**: `RegisterAssetPage.tsx` receives callback and calls `setValue('layerSpecificData.components', components)`
+3. **Missing Debug Logs**: Enhanced debugging added in commits fdaf328, ad86fe7, f7e07b6 shows no callback logs
+4. **API Payload**: Network tab shows `components[]` field completely empty in request
+
+#### Files Modified for Investigation
+- `/src/pages/RegisterAssetPage.tsx` (commits: fdaf328, ad86fe7, f7e07b6, 75d14e6, 034e625, 87fa177)
+- `/src/components/CompositeAssetSelection.tsx` (commit 87fa177 - removed redundant buttons)
+- `COMPOSITE_ADDRESS_FORMAT_FIX.md` (commit 87fa177 - documentation)
+
+#### Debug Enhancements Added
+1. **Form Data Logging**: `🔍 FORM DEBUG:` logs in onSubmit function
+2. **Component Selection Logging**: `[REGISTER PAGE] Components updated:` in onComponentsSelected callback  
+3. **Submit Button Logging**: `[SUBMIT DEBUG] Form data before submission:` before form submission
+4. **Success Screen Logging**: `🔍 COMPOSITE DEBUG:` for backend response analysis
+
+#### Next Investigation Steps
+1. **Test Enhanced Debugging**: Deploy commit fdaf328 and check for callback logs
+2. **Component Data Flow**: Verify `onComponentsSelected` is called when components are added/removed
+3. **Form State Verification**: Check if `setValue('layerSpecificData.components', components)` works correctly
+4. **API Payload Construction**: Fix component data inclusion in asset creation payload
+
+#### Temporary Workaround
+Emergency registration available at `/emergency-register` for immediate composite asset needs.
+
+## Repository Context and Commands
+
+### GitHub Repository
+- **URL**: https://github.com/Celerity-Studios-Inc/nna-registry-service-mvp-frontend
+- **Current Branch**: main
+- **Latest Commit**: fdaf328 (Composite asset debugging enhancements)
+
+### Build Commands
+- Build for production: `CI=false npm run build` (CI=false prevents test failures from blocking build)
+- Start development: `npm start`
+- Format code: `npm run format`
+
+### Important Development Notes
+- **TypeScript Strict Mode**: Enabled - use type assertions `(object as any)` for properties not in interfaces
+- **Console Logging**: Use `environmentSafeLog()` function for conditional debug output instead of `console.log`
+- **Component Architecture**: Functional components with React hooks, Material-UI styling with `sx` props
+
+## Complete Workflow Context
+
+### Composite Asset Registration Flow (Layer C)
+**Steps**: Select Layer → Choose Taxonomy → Upload Files → Review Details → **Search & Add Components**
+**Issue**: Step 5 component selection data not reaching form submission
+
+### Key Files for Composite Assets
+1. **`/src/pages/RegisterAssetPage.tsx`** - Main registration page with form handling
+2. **`/src/components/CompositeAssetSelection.tsx`** - Component selection interface  
+3. **`/src/components/AssetSearch.tsx`** - Search interface for finding components
+4. **`/src/api/assetService.ts`** - API integration for asset operations
+
+### Form Data Structure
+```typescript
+interface FormData {
+  layer: string;
+  categoryCode: string;
+  subcategoryCode: string;
+  layerSpecificData?: {
+    components: any[]; // Only for C layer - THIS IS THE ISSUE
+  };
+}
+```
+
+### API Integration Pattern
+```typescript
+// Asset creation payload construction (lines 559-561)
+...(data.layer === 'C' && data.layerSpecificData?.components && {
+  components: data.layerSpecificData.components
+}),
+```
+
+## Recent Issues and Fixes (Historical)
+
+### 1. Composite Asset Backend Validation (May 27, 2025) - FIXED
+- **Problem**: "Invalid subcategory: Base for layer: C, category: Music_Video_ReMixes"
+- **Root Cause**: `taxonomyConverter.ts` using incorrect taxonomy service
+- **Solution**: Changed import from `api/taxonomyService` to `simpleTaxonomyService`
+- **Fix Commit**: 87fa177
+- **Files Modified**: `/src/services/taxonomyConverter.ts`
+
+### 2. Composite Asset Workflow Navigation (May 27, 2025) - FIXED  
+- **Problem**: Step 5 auto-advanced incorrectly, redundant buttons caused confusion
+- **Solution**: Removed auto-advance logic, eliminated redundant "Validate" and "Continue" buttons
+- **Fix Commit**: 87fa177  
+- **Files Modified**: `/src/pages/RegisterAssetPage.tsx`, `/src/components/CompositeAssetSelection.tsx`
+
+### 3. Composite Address Format Implementation (May 27, 2025) - IMPLEMENTED
+- **Problem**: Success page should show `C.RMX.POP.001:S.FAN.BAS.001+L.VIN.BAS.001` format
+- **Solution**: Added composite address formatting logic in success screen
+- **Status**: Logic implemented but not working due to missing component data
+- **Fix Commit**: 87fa177
+- **Files Modified**: `/src/pages/RegisterAssetPage.tsx` (lines 1604-1651)
+
+### 4. TypeScript Build Errors (May 27, 2025) - FIXED
+- **Problem**: TS2339 errors for properties not in Asset interface
+- **Solution**: Used type assertions `(createdAsset as any)` for debugging properties
+- **Fix Commit**: 75d14e6
+- **Files Modified**: `/src/pages/RegisterAssetPage.tsx`
+
+### 5. Taxonomy Subcategory Display Issue (Historical) - FIXED
+- **Problem**: Subcategories weren't displaying correctly in the Register Asset UI when a layer was selected
+- **Solution**: Enhanced `simpleTaxonomyService.ts` with robust error handling and fallback mechanisms
 - Key changes:
   - Added multiple lookup strategies for subcategories
   - Implemented synthetic entry creation for missing subcategories
