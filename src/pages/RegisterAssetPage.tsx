@@ -1427,7 +1427,7 @@ const RegisterAssetPage: React.FC = () => {
                   environmentSafeLog(`[REGISTER PAGE] setValue successful:`, JSON.stringify(currentValue) === JSON.stringify(components));
                   
                   // Force trigger validation to update form state
-                  trigger('layerSpecificData.components');
+                  methods.trigger('layerSpecificData.components');
                   
                   // Additional verification after trigger
                   setTimeout(() => {
