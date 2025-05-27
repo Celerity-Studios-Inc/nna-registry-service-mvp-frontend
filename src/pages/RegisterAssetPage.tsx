@@ -1414,12 +1414,27 @@ const RegisterAssetPage: React.FC = () => {
             <Box>
               <CompositeAssetSelection
                 onComponentsSelected={(components) => {
+                  environmentSafeLog(`[REGISTER PAGE] Components selected callback triggered`);
+                  environmentSafeLog(`[REGISTER PAGE] Components received:`, components);
+                  environmentSafeLog(`[REGISTER PAGE] Component count: ${components.length}`);
+                  
+                  // Set the form value
                   setValue('layerSpecificData.components', components);
-                  environmentSafeLog(`[REGISTER PAGE] Components updated: ${components.length} components selected`);
-                  environmentSafeLog(`[REGISTER PAGE] Component details:`, components);
+                  
                   // Verify the setValue worked
                   const currentValue = getValues('layerSpecificData.components');
-                  environmentSafeLog(`[REGISTER PAGE] Verification - current form value:`, currentValue);
+                  environmentSafeLog(`[REGISTER PAGE] Verification - form value after setValue:`, currentValue);
+                  environmentSafeLog(`[REGISTER PAGE] setValue successful:`, JSON.stringify(currentValue) === JSON.stringify(components));
+                  
+                  // Force trigger validation to update form state
+                  trigger('layerSpecificData.components');
+                  
+                  // Additional verification after trigger
+                  setTimeout(() => {
+                    const reVerify = getValues('layerSpecificData.components');
+                    environmentSafeLog(`[REGISTER PAGE] Re-verification after trigger:`, reVerify);
+                  }, 100);
+                  
                   // Components selected - user can now submit from this step
                 }}
                 targetLayer={watchLayer}
