@@ -1,0 +1,82 @@
+{
+  "taxonomy_validation_requirements": {
+    "description": "Expected taxonomy validation behavior for backend implementation",
+    "valid_combinations": [
+      {
+        "layer": "S",
+        "category": "Pop",
+        "subcategory": "Base",
+        "expected_category_mapping": "Stars_Virtual_Avatars or Pop",
+        "expected_subcategory_mapping": "Base",
+        "notes": "Should accept both display names and internal codes"
+      },
+      {
+        "layer": "C", 
+        "category": "RMX",
+        "subcategory": "POP",
+        "expected_category_mapping": "Music_Video_ReMixes",
+        "expected_subcategory_mapping": "Pop_ReMixes",
+        "notes": "Composite layer with remix category"
+      },
+      {
+        "layer": "S",
+        "category": "POP", 
+        "subcategory": "HPM",
+        "expected_category_mapping": "Pop",
+        "expected_subcategory_mapping": "Hipster_Male",
+        "notes": "Special case - should not default to Base"
+      }
+    ],
+    "invalid_combinations": [
+      {
+        "layer": "C",
+        "category": "Music_Video_ReMixes",
+        "subcategory": "Base", 
+        "error": "Invalid subcategory: Base for layer: C, category: Music_Video_ReMixes",
+        "fix_applied": "Changed taxonomyConverter.ts to use correct taxonomy service"
+      }
+    ]
+  },
+  "current_backend_issue": {
+    "problem": "Backend overrides selected subcategory with 'Base'",
+    "example": {
+      "frontend_sends": {
+        "layer": "C",
+        "category": "RMX", 
+        "subcategory": "POP"
+      },
+      "backend_returns": {
+        "layer": "C",
+        "category": "Music_Video_ReMixes",
+        "subcategory": "Pop_ReMixes"
+      },
+      "note": "Backend correctly processes some subcategories but defaults others to Base"
+    },
+    "root_cause": "Incomplete subcategory mapping in backend taxonomy service",
+    "frontend_workaround": "SubcategoryDiscrepancyAlert component shows user's original selection"
+  },
+  "hfn_mfa_conversion_examples": {
+    "description": "Human-Friendly Name to Machine-Friendly Address conversion examples",
+    "conversions": [
+      {
+        "hfn": "S.POP.BAS.001",
+        "mfa": "2.001.001.001",
+        "layer_code": "S = 2",
+        "category_code": "POP = 001", 
+        "subcategory_code": "BAS = 001"
+      },
+      {
+        "hfn": "C.RMX.POP.001",
+        "mfa": "9.001.001.001",
+        "layer_code": "C = 9",
+        "category_code": "RMX = 001",
+        "subcategory_code": "POP = 001"
+      },
+      {
+        "hfn": "C.RMX.POP.001:S.FAN.BAS.001+L.VIN.BAS.001",
+        "mfa": "9.001.001.001:2.016.001.001+3.007.001.001",
+        "note": "Composite format with component addresses"
+      }
+    ]
+  }
+}

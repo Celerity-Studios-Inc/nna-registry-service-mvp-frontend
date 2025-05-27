@@ -1,0 +1,108 @@
+{
+  "regular_asset_example": {
+    "description": "Standard asset creation payload for non-composite assets",
+    "endpoint": "POST /api/assets",
+    "payload": {
+      "layer": "S",
+      "category": "Stars_Virtual_Avatars",
+      "subcategory": "Base",
+      "source": "ReViz",
+      "description": "Asset reference Star asset (S.VAV.BAS)",
+      "tags": ["general"],
+      "trainingData": "{\"prompts\":[],\"images\":[],\"videos\":[]}",
+      "rights": "{\"source\":\"Original\",\"rights_split\":\"100%\"}",
+      "files": "(binary data)"
+    },
+    "expected_response": {
+      "success": true,
+      "data": {
+        "layer": "S",
+        "category": "Stars_Virtual_Avatars",
+        "subcategory": "Base",
+        "name": "S.VAV.BAS.001",
+        "nna_address": "2.004.001.001",
+        "gcpStorageUrl": "https://storage.googleapis.com/nna_registry_assets/S/VAV/BAS/S.VAV.BAS.001.mp4",
+        "_id": "generated_id",
+        "createdAt": "2025-05-27T12:41:40.316Z",
+        "updatedAt": "2025-05-27T12:41:40.316Z"
+      }
+    }
+  },
+  "composite_asset_example": {
+    "description": "CURRENT ISSUE: Composite asset payload - components[] field is empty",
+    "endpoint": "POST /api/assets",
+    "payload": {
+      "layer": "C",
+      "category": "Music_Video_ReMixes",
+      "subcategory": "Pop_ReMixes",
+      "source": "ReViz",
+      "description": "Asset reference composite asset (C.RMX.POP)",
+      "tags": ["general"],
+      "trainingData": "{\"prompts\":[],\"images\":[],\"videos\":[]}",
+      "rights": "{\"source\":\"Original\",\"rights_split\":\"100%\"}",
+      "components": [],
+      "files": "(binary data)"
+    },
+    "current_response": {
+      "success": true,
+      "data": {
+        "layer": "C",
+        "category": "Music_Video_ReMixes",
+        "subcategory": "Pop_ReMixes",
+        "name": "C.RMX.POP.005:",
+        "nna_address": "C.001.001.005",
+        "components": [""],
+        "_id": "generated_id"
+      }
+    },
+    "expected_payload_fix": {
+      "layer": "C",
+      "category": "Music_Video_ReMixes",
+      "subcategory": "Pop_ReMixes",
+      "source": "ReViz",
+      "description": "Asset reference composite asset (C.RMX.POP)",
+      "tags": ["general", "composite"],
+      "components": [
+        "S.FAN.BAS.001",
+        "L.VIN.BAS.001", 
+        "M.BOL.FUS.001",
+        "W.FUT.BAS.001"
+      ],
+      "metadata": {
+        "components": [
+          "S.FAN.BAS.001",
+          "L.VIN.BAS.001",
+          "M.BOL.FUS.001", 
+          "W.FUT.BAS.001"
+        ],
+        "componentCount": 4,
+        "createdFrom": "CompositeAssetSelection"
+      }
+    },
+    "expected_response_fix": {
+      "success": true,
+      "data": {
+        "layer": "C",
+        "category": "Music_Video_ReMixes",
+        "subcategory": "Pop_ReMixes",
+        "name": "C.RMX.POP.005:S.FAN.BAS.001+L.VIN.BAS.001+M.BOL.FUS.001+W.FUT.BAS.001",
+        "nna_address": "C.001.001.005",
+        "components": [
+          "S.FAN.BAS.001",
+          "L.VIN.BAS.001",
+          "M.BOL.FUS.001",
+          "W.FUT.BAS.001"
+        ],
+        "metadata": {
+          "components": [
+            "S.FAN.BAS.001",
+            "L.VIN.BAS.001", 
+            "M.BOL.FUS.001",
+            "W.FUT.BAS.001"
+          ],
+          "componentCount": 4
+        }
+      }
+    }
+  }
+}
