@@ -1402,6 +1402,8 @@ const RegisterAssetPage: React.FC = () => {
               onComponentsSelected={(components) => {
                 setValue('layerSpecificData.components', components);
                 environmentSafeLog(`[REGISTER PAGE] Components updated: ${components.length} components selected`);
+                // Auto-advance to final review step after component selection
+                handleNext();
               }}
               targetLayer={watchLayer}
               layerName={getValues('layerName')}
