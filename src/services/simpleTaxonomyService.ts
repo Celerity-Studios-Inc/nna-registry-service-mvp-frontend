@@ -95,6 +95,8 @@ class SimpleTaxonomyService {
       console.log(`🔍 C LAYER DEBUG: LAYER_SUBCATEGORIES[C] exists:`, !!LAYER_SUBCATEGORIES['C']);
       console.log(`🔍 C LAYER DEBUG: Keys in LAYER_SUBCATEGORIES[C]:`, Object.keys(LAYER_SUBCATEGORIES['C'] || {}));
       console.log(`🔍 C LAYER DEBUG: LAYER_SUBCATEGORIES[C][RMX]:`, LAYER_SUBCATEGORIES['C']['RMX']);
+      console.log(`🔍 C LAYER DEBUG: LAYER_SUBCATEGORIES[C][${categoryCode}]:`, LAYER_SUBCATEGORIES['C'][categoryCode]);
+      console.log(`🔍 C LAYER DEBUG: Full LAYER_SUBCATEGORIES[C]:`, LAYER_SUBCATEGORIES['C']);
     }
 
     // Input validation with detailed error messages
