@@ -330,6 +330,11 @@ const RegisterAssetPage: React.FC = () => {
   // Handle form submission
   const onSubmit: SubmitHandler<FormData> = async (data) => {
     try {
+      // CRITICAL DEBUG: Check what form data we have before processing
+      environmentSafeLog('🔍 FORM DEBUG: Complete form data received:', data);
+      environmentSafeLog('🔍 FORM DEBUG: layerSpecificData:', data.layerSpecificData);
+      environmentSafeLog('🔍 FORM DEBUG: layerSpecificData.components:', data.layerSpecificData?.components);
+      
       setLoading(true);
       setError(null);
       
