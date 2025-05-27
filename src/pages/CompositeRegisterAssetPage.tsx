@@ -586,6 +586,21 @@ const CompositeRegisterAssetPage: React.FC = () => {
     }
   };
 
+  // Generate composite address in the format [Layer].[CategoryCode].[SubCategoryCode].[Sequential]:[MFA addresses]
+  const generateCompositeAddress = (components: any[], sequential: string = '001'): string => {
+    if (components.length === 0) {
+      return `${watchLayer}.001.001.${sequential}`;
+    }
+    
+    // Extract MFA addresses from components
+    const componentMFAs = components.map(asset => {
+      return asset.nna_address || asset.nnaAddress || asset.mfa || asset.MFA || 'UNKNOWN.MFA';
+    }).join('+');
+    
+    // Format: [targetLayer].001.001.[Sequential]:[MFA addresses]  
+    return `${watchLayer}.001.001.${sequential}:[${componentMFAs}]`;
+  };
+
   // Render Success Screen
   const renderSuccessScreen = () => {
     if (!createdAsset) {
@@ -601,6 +616,27 @@ const CompositeRegisterAssetPage: React.FC = () => {
       );
     }
 
+    // Generate the full composite address
+    // Extract sequential number from nnaAddress (last 3 digits)
+    const sequentialMatch = (createdAsset.nnaAddress || '').match(/\.(\d{3})$/);
+    const sequential = sequentialMatch ? sequentialMatch[1] : '001';
+    const fullCompositeAddress = generateCompositeAddress(selectedComponents, sequential);
+    
+    // Task 8: Align MFA format with HFN (convert numeric to alphabetic if needed)
+    let displayMfa = createdAsset.nnaAddress || createdAsset.metadata?.mfa || 'N/A';
+    const metadataHfn = createdAsset.metadata?.hfn || '';
+    
+    // Check if MFA is numeric format and convert to alphabetic
+    if (/^\d+\.\d+\.\d+\.\d+/.test(displayMfa)) {
+      // Numeric MFA detected - construct alphabetic version using form data
+      const layer = watchLayer || '';
+      const category = watchCategoryCode || '';
+      const subcategory = watchSubcategoryCode || '';
+      const sequential = displayMfa.split('.')[3] || '001';
+      displayMfa = `${layer}.${category}.${subcategory}.${sequential}`;
+      environmentSafeLog(`[SUCCESS] Converted numeric MFA to alphabetic: ${createdAsset.nnaAddress} → ${displayMfa}`);
+    }
+
     return (
       <Box sx={{ textAlign: 'center', py: 4 }}>
         <Typography variant="h4" gutterBottom color="success.main">
@@ -612,11 +648,27 @@ const CompositeRegisterAssetPage: React.FC = () => {
             {createdAsset.friendlyName || createdAsset.name}
           </Typography>
           <Typography variant="body1">
-            <strong>HFN:</strong> {createdAsset.metadata?.hfn || 'N/A'}
+            <strong>HFN:</strong> {metadataHfn || 'N/A'}
           </Typography>
           <Typography variant="body1">
-            <strong>MFA:</strong> {createdAsset.nnaAddress || 'N/A'}
+            <strong>MFA:</strong> {displayMfa}
           </Typography>
+          
+          {/* Task 7: Display Full Composite Address */}
+          <Box sx={{ mt: 2 }} aria-label="Full composite address">
+            <Typography variant="subtitle1">
+              <strong>Full Composite Address:</strong>
+            </Typography>
+            <Typography variant="body2" fontFamily="monospace" sx={{ 
+              bgcolor: 'rgba(255,255,255,0.1)', 
+              p: 1, 
+              borderRadius: 1,
+              wordBreak: 'break-all'
+            }}>
+              {fullCompositeAddress}
+            </Typography>
+          </Box>
+          
           <Typography variant="body2" sx={{ mt: 2 }}>
             <strong>Components:</strong> {selectedComponents.length} assets
           </Typography>

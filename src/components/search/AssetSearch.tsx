@@ -16,6 +16,7 @@ import {
   Select,
   MenuItem,
   SelectChangeEvent,
+  Alert,
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import ClearIcon from '@mui/icons-material/Clear';
@@ -154,17 +155,19 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
     setIsLoading(true);
 
     try {
-      // Construct search parameters
+      // Task 9: Enhanced search with backend filtering
       const searchParams: AssetSearchParams = {
         search: searchQuery || undefined,
         layer: selectedLayer || undefined,
         category: selectedCategory || undefined,
         subcategory: selectedSubcategory || undefined,
+        limit: 20 // Add limit for better performance
       };
 
-      console.log('Searching with params:', searchParams);
+      // Task 9: Add console log to confirm backend query
+      console.log('Querying backend with params:', searchParams);
 
-      // Call the search API
+      // Call the search API with enhanced parameters
       const results = await assetService.getAssets(searchParams);
 
       // Update state with results
@@ -202,157 +205,12 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
           return;
         }
 
-        // If we're doing a text search, ensure results are relevant
-        if (searchQuery) {
-          const searchLower = searchQuery.toLowerCase();
-
-          // BETTER APPROACH: Instead of adding mock assets for specific terms,
-          // we'll improve our search algorithm to be more comprehensive
-
-          // Log the number of results before filtering
-          console.log(
-            `Starting search with ${assetResults.length} assets from the backend`
-          );
-
-          // If we have no results at all, log this clearly
-          if (assetResults.length === 0) {
-            console.log('No assets returned from backend to search through');
-          }
-
-          // Filter results client-side to ensure relevance
-          let filteredResults = assetResults.filter(asset => {
-            // Check various fields for matches
-            const nameMatch =
-              asset.name?.toLowerCase().includes(searchLower) || false;
-            const descMatch =
-              asset.description?.toLowerCase().includes(searchLower) || false;
-
-            // Improved tag matching - handle both string arrays and array-like objects
-            let tagMatch = false;
-
-            if (asset.tags) {
-              // Handle tags as an array of strings (most common format)
-              if (Array.isArray(asset.tags)) {
-                tagMatch = asset.tags.some(
-                  tag =>
-                    typeof tag === 'string' &&
-                    tag.toLowerCase().includes(searchLower)
-                );
-              }
-              // Handle tags as a comma-separated string (sometimes returned from API)
-              else if (typeof asset.tags === 'string') {
-                // Use type assertion to tell TypeScript that we know this is a string
-                tagMatch = (asset.tags as string)
-                  .toLowerCase()
-                  .includes(searchLower);
-              }
-              // Handle tags as an object with values (rare but possible)
-              else if (typeof asset.tags === 'object' && asset.tags !== null) {
-                // Cast the object to Record<string, any> to satisfy TypeScript
-                const tagsObj = asset.tags as Record<string, any>;
-                tagMatch = Object.values(tagsObj).some(
-                  tag =>
-                    typeof tag === 'string' &&
-                    tag.toLowerCase().includes(searchLower)
-                );
-              }
-            }
-
-            // Handle subcategory matching, which is often related to search terms
-            const subcategoryMatch =
-              asset.subcategory?.toLowerCase().includes(searchLower) ||
-              asset.subcategoryCode?.toLowerCase().includes(searchLower) ||
-              false;
-
-            // Consider other potentially relevant fields
-            const categoryMatch =
-              asset.category?.toLowerCase().includes(searchLower) ||
-              asset.categoryCode?.toLowerCase().includes(searchLower) ||
-              false;
-
-            const idMatch =
-              asset.id?.toLowerCase().includes(searchLower) ||
-              (asset._id && asset._id.toLowerCase().includes(searchLower)) ||
-              false;
-
-            // Check the NNA address too
-            const addressMatch =
-              asset.nnaAddress?.toLowerCase().includes(searchLower) ||
-              (asset.metadata?.humanFriendlyName &&
-                asset.metadata.humanFriendlyName
-                  .toLowerCase()
-                  .includes(searchLower)) ||
-              false;
-
-            // Enhanced search matching - check more fields that might contain the search term
-
-            // Check all metadata fields
-            let metadataMatch = false;
-            if (asset.metadata) {
-              metadataMatch = Object.entries(asset.metadata).some(
-                ([key, value]) => {
-                  if (typeof value === 'string') {
-                    return value.toLowerCase().includes(searchLower);
-                  }
-                  return false;
-                }
-              );
-            }
-
-            // Check file names
-            let fileNameMatch = false;
-            if (asset.files && Array.isArray(asset.files)) {
-              fileNameMatch = asset.files.some(
-                file =>
-                  file.filename &&
-                  file.filename.toLowerCase().includes(searchLower)
-              );
-            }
-
-            // Log comprehensive search match information for troubleshooting
-            console.log(
-              `Checking asset "${asset.name}" for "${searchLower}":`,
-              {
-                nameMatch,
-                descMatch,
-                tagMatch,
-                subcategoryMatch,
-                categoryMatch,
-                metadataMatch,
-                fileNameMatch,
-                tags: asset.tags,
-                subcategory: asset.subcategory,
-                category: asset.category,
-              }
-            );
-
-            // Consider a match if any of the fields match
-            // Include our new matching fields for more comprehensive results
-            return (
-              nameMatch ||
-              descMatch ||
-              tagMatch ||
-              subcategoryMatch ||
-              categoryMatch ||
-              idMatch ||
-              addressMatch ||
-              metadataMatch ||
-              fileNameMatch
-            );
-          });
-
-          console.log(
-            `Filtered ${assetResults.length} results to ${filteredResults.length} relevant matches for "${searchQuery}"`
-          );
-
-          // Update state with filtered results
-          setSearchResults(filteredResults);
-          setTotalAssets(filteredResults.length);
-        } else {
-          // No text filtering needed
-          setSearchResults(assetResults);
-          setTotalAssets(totalCount);
-        }
+        // Task 9: Remove frontend filtering, rely on backend results
+        console.log(`Received ${assetResults.length} assets from backend search`);
+        
+        // Set results directly from backend (backend handles filtering)
+        setSearchResults(assetResults);
+        setTotalAssets(totalCount);
       } else {
         console.warn('Received empty or invalid results from assets search');
         setSearchResults([]);
@@ -414,6 +272,7 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
             onKeyPress={handleKeyPress}
+            aria-label="Search assets"
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
@@ -493,6 +352,7 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
                     value={selectedLayer}
                     label="Layer"
                     onChange={handleLayerChange}
+                    aria-label="Filter by layer"
                   >
                     <MenuItem value="">
                       <em>Any Layer</em>
@@ -515,6 +375,7 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
                     label="Category"
                     onChange={handleCategoryChange}
                     disabled={!selectedLayer || categories.length === 0}
+                    aria-label="Filter by category"
                   >
                     <MenuItem value="">
                       <em>Any Category</em>
@@ -539,6 +400,7 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
                     label="Subcategory"
                     onChange={handleSubcategoryChange}
                     disabled={!selectedCategory || subcategories.length === 0}
+                    aria-label="Filter by subcategory"
                   >
                     <MenuItem value="">
                       <em>Any Subcategory</em>
@@ -599,19 +461,16 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
         </Box>
       )}
 
-      {/* No results message - only show if we've actually searched */}
+      {/* Task 9: Enhanced no results message with Material-UI Alert */}
       {searchResults.length === 0 &&
         (searchQuery ||
           selectedLayer ||
           selectedCategory ||
           selectedSubcategory) &&
         !isLoading && (
-          <Box sx={{ textAlign: 'center', py: 4 }}>
-            <Typography variant="h6">No assets found</Typography>
-            <Typography variant="body2" color="text.secondary">
-              Try adjusting your search terms or filters
-            </Typography>
-          </Box>
+          <Alert severity="info" sx={{ mt: 4 }}>
+            No assets found for your search criteria.
+          </Alert>
         )}
     </Box>
   );
