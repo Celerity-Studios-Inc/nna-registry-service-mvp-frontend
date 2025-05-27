@@ -155,7 +155,21 @@ export class TaxonomyConverter {
     subcategoryCode: string | undefined
   ): string {
     if (!categoryCode || !subcategoryCode) return 'Base'; // Default fallback
-    return this.getSubcategoryName(layer, categoryCode, subcategoryCode);
+    
+    const subcategoryName = this.getSubcategoryName(layer, categoryCode, subcategoryCode);
+    
+    // If we get an empty name, log the issue for debugging
+    if (!subcategoryName) {
+      console.warn(`Failed to get subcategory name for ${layer}.${categoryCode}.${subcategoryCode}, falling back to 'Base'`);
+      // For composite assets, try using the code directly as a last resort
+      if (layer === 'C' && subcategoryCode) {
+        console.warn(`Attempting to use subcategory code '${subcategoryCode}' directly for composite asset`);
+        return subcategoryCode;
+      }
+      return 'Base';
+    }
+    
+    return subcategoryName;
   }
 
   /**

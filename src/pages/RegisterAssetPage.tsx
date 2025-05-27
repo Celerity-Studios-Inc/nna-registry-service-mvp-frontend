@@ -69,13 +69,13 @@ declare global {
 // Define the steps in the registration process
 const getSteps = (isTrainingLayer: boolean, isCompositeLayer: boolean) => {
   if (isTrainingLayer) {
-    return ['Select Layer', 'Choose Taxonomy', 'Upload Files', 'Training Data', 'Review & Submit'];
+    return ['Select Layer', 'Choose Taxonomy', 'Upload Files', 'Training Data', 'Review Details'];
   }
   if (isCompositeLayer) {
-    // Unified workflow: Steps 1-3 same as component assets, then fork to Search & Add Components
-    return ['Select Layer', 'Choose Taxonomy', 'Upload Files', 'Search & Add Components', 'Review & Submit'];
+    // Corrected workflow: Steps 1-4 same as component assets, Step 5 adds Search & Add Components
+    return ['Select Layer', 'Choose Taxonomy', 'Upload Files', 'Review Details', 'Search & Add Components'];
   }
-  return ['Select Layer', 'Choose Taxonomy', 'Upload Files', 'Review & Submit'];
+  return ['Select Layer', 'Choose Taxonomy', 'Upload Files', 'Review Details'];
 };
 
 // Define the form validation schema
@@ -1080,6 +1080,8 @@ const RegisterAssetPage: React.FC = () => {
       setError('Please upload at least one file');
       return;
     }
+    // Step 3 (Review Details) - no validation needed, just proceed
+    // Step 4 (Search & Add Components for composites) - validation handled in component
 
     setActiveStep((prevActiveStep) => prevActiveStep + 1);
     setError(null);
@@ -1363,36 +1365,7 @@ const RegisterAssetPage: React.FC = () => {
           </Box>
         );
       case 3:
-        // FORK POINT: After file upload (Step 3), workflow splits
-        if (isCompositeLayer) {
-          // Composite layers: Search & Add Components (Step 4)
-          return (
-            <CompositeAssetSelection
-              onComponentsSelected={(components) => {
-                setValue('layerSpecificData.components', components);
-                // Store the selected components but don't auto-advance
-                // User can manually proceed via "Continue to Review" button
-                environmentSafeLog(`[REGISTER PAGE] Components updated: ${components.length} components selected`);
-              }}
-              targetLayer={watchLayer}
-              layerName={getValues('layerName')}
-              initialComponents={getValues('layerSpecificData.components') || []}
-            />
-          );
-        }
-        
-        // Training layers: Training Data Collection
-        if (isTrainingLayer) {
-          return (
-            <TrainingDataCollection
-              onChange={handleTrainingDataChange}
-              initialData={getValues('trainingData')}
-              isTrainable={true}
-            />
-          );
-        }
-        
-        // Component layers: Go directly to Review & Submit (end of workflow)
+        // Step 4: Review Details (same for all asset types)
         return (
           <ReviewSubmit
             assetData={{
@@ -1411,17 +1384,47 @@ const RegisterAssetPage: React.FC = () => {
               files: getValues('files'),
               uploadedFiles: uploadedFiles,
               tags: getValues('tags'),
-              components: undefined, // No components for component layers
+              components: undefined, // No components at this stage
             }}
             onEditStep={(step) => setActiveStep(step)}
             loading={loading}
             error={error}
             isSubmitting={isSubmitting}
-            onSubmit={handleSubmit(onSubmit as any)}
+            onSubmit={isCompositeLayer ? undefined : handleSubmit(onSubmit as any)} // Only submit for component assets
+            showSubmitButton={!isCompositeLayer} // Hide submit button for composite assets
           />
         );
       case 4:
-        // Final review steps for Training and Composite layers
+        // Step 5: Search & Add Components (only for composite assets)
+        if (isCompositeLayer) {
+          return (
+            <CompositeAssetSelection
+              onComponentsSelected={(components) => {
+                setValue('layerSpecificData.components', components);
+                environmentSafeLog(`[REGISTER PAGE] Components updated: ${components.length} components selected`);
+              }}
+              targetLayer={watchLayer}
+              layerName={getValues('layerName')}
+              initialComponents={getValues('layerSpecificData.components') || []}
+            />
+          );
+        }
+        
+        // Training layers: Training Data Collection (if this step exists for training)
+        if (isTrainingLayer) {
+          return (
+            <TrainingDataCollection
+              onChange={handleTrainingDataChange}
+              initialData={getValues('trainingData')}
+              isTrainable={true}
+            />
+          );
+        }
+        
+        // This should not happen for component assets
+        return <div>Invalid step for this asset type</div>;
+      case 5:
+        // Final review for Training and Composite layers only
         return (
           <ReviewSubmit
             assetData={{
