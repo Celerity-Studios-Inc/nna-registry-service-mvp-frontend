@@ -47,7 +47,7 @@ import { FileUploadResponse, Asset, SOURCE_OPTIONS } from '../types/asset.types'
 // Define the steps in the composite registration process
 // Layer is already selected via URL parameters, so we start with taxonomy (Step 2)
 const getCompositeSteps = () => {
-  return ['Step 2: Choose Taxonomy', 'Step 3: Upload Files', 'Step 4: Search & Add Components', 'Step 5: Review & Submit'];
+  return ['Step 2: Choose Taxonomy', 'Step 3: Upload Files', 'Step 4: Review Upload', 'Step 5: Search & Add Components'];
 };
 
 // Define the form validation schema
@@ -157,21 +157,16 @@ const CompositeRegisterAssetPage: React.FC = () => {
       case 1: // Step 3: Upload Files
         isValid = await trigger(['files', 'name', 'description', 'source']);
         break;
-      case 2: // Step 4: Search & Add Components
-        isValid = selectedComponents.length >= 2;
-        if (!isValid) {
-          setError('Please select at least 2 component assets for the composite.');
-          return;
-        }
-        setValue('components', selectedComponents as any);
-        break;
-      case 3: // Step 5: Review & Submit - no validation needed, will submit
+      case 2: // Step 4: Review Upload (no validation needed)
+        isValid = true;
         break;
     }
 
     if (isValid) {
       setError(null);
-      setActiveStep((prevActiveStep) => prevActiveStep + 1);
+      const newStep = activeStep + 1;
+      environmentSafeLog(`Transitioning to step: ${getCompositeSteps()[newStep]}, activeStep: ${newStep}`);
+      setActiveStep(newStep);
     } else {
       setError('Please complete all required fields before proceeding.');
     }
@@ -179,7 +174,9 @@ const CompositeRegisterAssetPage: React.FC = () => {
 
   const handleBack = () => {
     setError(null);
-    setActiveStep((prevActiveStep) => prevActiveStep - 1);
+    const newStep = activeStep - 1;
+    environmentSafeLog(`Transitioning to step: ${getCompositeSteps()[newStep]}, activeStep: ${newStep}`);
+    setActiveStep(newStep);
   };
 
   // File upload handlers
@@ -514,27 +511,7 @@ const CompositeRegisterAssetPage: React.FC = () => {
           </Box>
         );
       
-      case 2: // Step 4: Search & Add Components
-        return (
-          <Box>
-            <Typography variant="h6" gutterBottom>
-              Search & Add Component Assets
-            </Typography>
-            <Typography variant="body2" color="text.secondary" paragraph>
-              Search and select the existing component assets that were used to create this composite asset.
-              These components should already be registered in the system through the individual layer workflows.
-            </Typography>
-            <Divider sx={{ mb: 3 }} />
-            
-            <CompositeAssetSelection
-              targetLayer={watchLayer}
-              layerName={getValues('layerName')}
-              onComponentsSelected={handleComponentsChange}
-            />
-          </Box>
-        );
-      
-      case 3: // Step 5: Review & Submit
+      case 2: // Step 4: Review Upload
         return (
           <ReviewSubmit
             assetData={{
@@ -558,9 +535,50 @@ const CompositeRegisterAssetPage: React.FC = () => {
             onEditStep={(step) => setActiveStep(step)}
             loading={loading}
             error={error}
-            isSubmitting={isSubmitting}
-            onSubmit={handleSubmit(onSubmit as any)}
+            isSubmitting={false} // Don't submit yet, just review
+            onSubmit={() => {}} // No-op submit function for review step
+            showSubmitButton={false} // Hide submit button in review step
           />
+        );
+      
+      case 3: // Step 5: Search & Add Components (with Submit)
+        return (
+          <Box>
+            <Typography variant="h6" gutterBottom>
+              Search & Add Component Assets
+            </Typography>
+            <Typography variant="body2" color="text.secondary" paragraph>
+              Search and select the existing component assets that were used to create this composite asset.
+              These components should already be registered in the system through the individual layer workflows.
+            </Typography>
+            <Divider sx={{ mb: 3 }} />
+            
+            <CompositeAssetSelection
+              targetLayer={watchLayer}
+              layerName={getValues('layerName')}
+              onComponentsSelected={handleComponentsChange}
+            />
+            
+            {/* Submit Button */}
+            <Box sx={{ mt: 4, display: 'flex', justifyContent: 'center' }}>
+              <Button
+                variant="contained"
+                color="primary"
+                size="large"
+                onClick={handleSubmit(onSubmit as any)}
+                disabled={loading || selectedComponents.length < 2}
+                sx={{ minWidth: 200 }}
+              >
+                {loading ? 'Creating Asset...' : 'Create Composite Asset'}
+              </Button>
+            </Box>
+            
+            {selectedComponents.length < 2 && (
+              <Alert severity="warning" sx={{ mt: 2 }}>
+                Composite assets require at least 2 component assets. Please select more components.
+              </Alert>
+            )}
+          </Box>
         );
       
       default:

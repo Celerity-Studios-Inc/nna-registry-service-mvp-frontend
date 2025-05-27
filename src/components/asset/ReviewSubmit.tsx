@@ -157,6 +157,7 @@ interface ReviewSubmitProps {
   error?: string | null;
   onSubmit?: () => void; // New submit handler
   isSubmitting?: boolean; // Flag to show loading state
+  showSubmitButton?: boolean; // Whether to show the submit button (default: true)
 }
 
 // Helper function to get file icon based on MIME type
@@ -199,6 +200,7 @@ const ReviewSubmit: React.FC<ReviewSubmitProps> = ({
   error = null,
   onSubmit,
   isSubmitting = false,
+  showSubmitButton = true,
 }) => {
   const {
     name,
@@ -930,7 +932,7 @@ const ReviewSubmit: React.FC<ReviewSubmitProps> = ({
           Back
         </Button>
 
-        {isComplete && (
+        {isComplete && showSubmitButton && (
           <Button
             variant="contained"
             color="primary"
