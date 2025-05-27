@@ -1416,6 +1416,10 @@ const RegisterAssetPage: React.FC = () => {
                 onComponentsSelected={(components) => {
                   setValue('layerSpecificData.components', components);
                   environmentSafeLog(`[REGISTER PAGE] Components updated: ${components.length} components selected`);
+                  environmentSafeLog(`[REGISTER PAGE] Component details:`, components);
+                  // Verify the setValue worked
+                  const currentValue = getValues('layerSpecificData.components');
+                  environmentSafeLog(`[REGISTER PAGE] Verification - current form value:`, currentValue);
                   // Components selected - user can now submit from this step
                 }}
                 targetLayer={watchLayer}
@@ -1436,7 +1440,15 @@ const RegisterAssetPage: React.FC = () => {
                 <Button
                   variant="contained"
                   color="primary"
-                  onClick={handleSubmit(onSubmit as any)}
+                  onClick={() => {
+                    // DEBUG: Check form data right before submission
+                    const currentFormData = getValues();
+                    environmentSafeLog(`[SUBMIT DEBUG] Form data before submission:`, currentFormData);
+                    environmentSafeLog(`[SUBMIT DEBUG] layerSpecificData:`, currentFormData.layerSpecificData);
+                    environmentSafeLog(`[SUBMIT DEBUG] components:`, currentFormData.layerSpecificData?.components);
+                    // Now trigger the actual submission
+                    handleSubmit(onSubmit as any)();
+                  }}
                   disabled={isSubmitting || loading}
                   startIcon={isSubmitting ? <CircularProgress size={20} /> : undefined}
                 >
