@@ -1169,6 +1169,20 @@ const RegisterAssetPage: React.FC = () => {
                 )}
               </Box>
             )}
+            
+            {/* Display selected taxonomy context at bottom of Step 2 */}
+            {watchLayer && watchCategoryCode && watchSubcategoryCode && (
+              <Box sx={{ mt: 3 }}>
+                <TaxonomyContext
+                  layer={watchLayer}
+                  layerName={getValues('layerName')}
+                  categoryCode={watchCategoryCode}
+                  categoryName={getValues('categoryName')}
+                  subcategoryCode={watchSubcategoryCode}
+                  subcategoryName={getValues('subcategoryName')}
+                />
+              </Box>
+            )}
           </>
         );
       case 2:
