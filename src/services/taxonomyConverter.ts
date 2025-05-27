@@ -107,12 +107,20 @@ export class TaxonomyConverter {
       canonicalCategoryCode = category?.code || categoryCode;
     }
 
+    // Debug logging for composite assets
+    if (layer === 'C') {
+      console.log(`🔍 COMPOSITE DEBUG: Getting subcategory name for ${layer}.${canonicalCategoryCode}.${subcategoryCode}`);
+    }
+
     // Handle numeric subcategory codes
     if (/^\d+$/.test(subcategoryCode)) {
       const subcategories = taxonomyService.getSubcategories(
         layer,
         canonicalCategoryCode
       );
+      if (layer === 'C') {
+        console.log(`🔍 COMPOSITE DEBUG: Found ${subcategories.length} subcategories for ${layer}.${canonicalCategoryCode}:`, subcategories.map(s => `${s.code}:${s.name}`));
+      }
       const subcategory = subcategories.find(
         s => s.numericCode === parseInt(subcategoryCode, 10)
       );
@@ -124,7 +132,13 @@ export class TaxonomyConverter {
       layer,
       canonicalCategoryCode
     );
+    if (layer === 'C') {
+      console.log(`🔍 COMPOSITE DEBUG: Found ${subcategories.length} subcategories for ${layer}.${canonicalCategoryCode}:`, subcategories.map(s => `${s.code}:${s.name}`));
+    }
     const subcategory = subcategories.find(s => s.code === subcategoryCode);
+    if (layer === 'C') {
+      console.log(`🔍 COMPOSITE DEBUG: Looking for subcategory code '${subcategoryCode}', found:`, subcategory);
+    }
     return subcategory?.name || '';
   }
 
@@ -160,15 +174,11 @@ export class TaxonomyConverter {
     
     // If we get an empty name, log the issue for debugging
     if (!subcategoryName) {
-      console.warn(`Failed to get subcategory name for ${layer}.${categoryCode}.${subcategoryCode}, falling back to 'Base'`);
-      // For composite assets, try using the code directly as a last resort
-      if (layer === 'C' && subcategoryCode) {
-        console.warn(`Attempting to use subcategory code '${subcategoryCode}' directly for composite asset`);
-        return subcategoryCode;
-      }
+      console.warn(`🚨 COMPOSITE DEBUG: Failed to get subcategory name for ${layer}.${categoryCode}.${subcategoryCode}, falling back to 'Base'`);
       return 'Base';
     }
     
+    console.log(`✅ COMPOSITE DEBUG: Successfully mapped ${layer}.${categoryCode}.${subcategoryCode} -> ${subcategoryName}`);
     return subcategoryName;
   }
 

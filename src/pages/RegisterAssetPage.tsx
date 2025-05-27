@@ -22,6 +22,7 @@ import {
   Select,
   FormHelperText,
   Tooltip,
+  CircularProgress,
 } from '@mui/material';
 import {
   ChevronLeft as PreviousIcon,
@@ -1398,17 +1399,39 @@ const RegisterAssetPage: React.FC = () => {
         // Step 5: Search & Add Components (only for composite assets)
         if (isCompositeLayer) {
           return (
-            <CompositeAssetSelection
-              onComponentsSelected={(components) => {
-                setValue('layerSpecificData.components', components);
-                environmentSafeLog(`[REGISTER PAGE] Components updated: ${components.length} components selected`);
-                // Auto-advance to final review step after component selection
-                handleNext();
-              }}
-              targetLayer={watchLayer}
-              layerName={getValues('layerName')}
-              initialComponents={getValues('layerSpecificData.components') || []}
-            />
+            <Box>
+              <CompositeAssetSelection
+                onComponentsSelected={(components) => {
+                  setValue('layerSpecificData.components', components);
+                  environmentSafeLog(`[REGISTER PAGE] Components updated: ${components.length} components selected`);
+                  // Components selected - user can now submit from this step
+                }}
+                targetLayer={watchLayer}
+                layerName={getValues('layerName')}
+                initialComponents={getValues('layerSpecificData.components') || []}
+              />
+              
+              {/* Submit button for composite assets */}
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 3 }}>
+                <Button
+                  variant="outlined"
+                  onClick={handleBack}
+                  startIcon={<PreviousIcon />}
+                  sx={{ mr: 1 }}
+                >
+                  Back
+                </Button>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  onClick={handleSubmit(onSubmit as any)}
+                  disabled={isSubmitting || loading}
+                  startIcon={isSubmitting ? <CircularProgress size={20} /> : undefined}
+                >
+                  {isSubmitting ? 'Creating Asset...' : 'Create Composite Asset'}
+                </Button>
+              </Box>
+            </Box>
           );
         }
         
@@ -2134,10 +2157,9 @@ const RegisterAssetPage: React.FC = () => {
               {/* Form now uses manual handling for the final submit */}
               <Box>{getStepContent(activeStep)}</Box>
 
-              {/* Only show navigation buttons if not on review step */}
-              {(activeStep < getSteps(isTrainingLayer, isCompositeLayer).length - 1 || 
-                (isTrainingLayer && activeStep < getSteps(isTrainingLayer, isCompositeLayer).length - 2) ||
-                (isCompositeLayer && activeStep < getSteps(isTrainingLayer, isCompositeLayer).length - 2)) && (
+              {/* Only show navigation buttons if not on final step */}
+              {(activeStep < getSteps(isTrainingLayer, isCompositeLayer).length - 1 && 
+                !(isCompositeLayer && activeStep === getSteps(isTrainingLayer, isCompositeLayer).length - 1)) && (
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 3 }}>
                   <Button
                     variant="outlined"
