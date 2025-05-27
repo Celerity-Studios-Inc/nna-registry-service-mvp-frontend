@@ -562,6 +562,13 @@ const RegisterAssetPage: React.FC = () => {
         },
       };
 
+      // ENHANCED DEBUG: Log what we're sending to the backend for composite assets
+      if (data.layer === 'C') {
+        environmentSafeLog('🔍 COMPOSITE DEBUG: Asset payload being sent to backend:', assetData);
+        environmentSafeLog('🔍 COMPOSITE DEBUG: Components in payload:', assetData.metadata?.components);
+        environmentSafeLog('🔍 COMPOSITE DEBUG: Form components data:', data.layerSpecificData?.components);
+      }
+
       // Add a small delay for better user experience
       await new Promise(resolve => setTimeout(resolve, 800));
 
@@ -1594,25 +1601,53 @@ const RegisterAssetPage: React.FC = () => {
       }
       
       // For composite assets (layer C), append component addresses to the HFN
-      if (layer === 'C' && createdAsset.metadata?.components && createdAsset.metadata.components.length > 0) {
-        const componentAddresses = createdAsset.metadata.components
-          .map((component: any) => {
-            // Use the component's name if available, otherwise construct from metadata
-            if (component.name) {
-              return component.name;
-            }
-            // Fallback: construct from component metadata if name not available
-            if (component.layer && component.category && component.subcategory && component.sequential) {
-              return `${component.layer}.${component.category}.${component.subcategory}.${component.sequential}`;
-            }
-            return 'UNKNOWN';
-          })
-          .join('+');
+      if (layer === 'C') {
+        // Try to find components in different possible locations
+        let components = null;
         
-        // Format as C.RMX.POP.001:G.POP.TSW.001+S.POP.PNK.001 (NO brackets)
-        const compositeFormat = `${displayHfn}:${componentAddresses}`;
-        environmentSafeLog(`[SUCCESS] Composite HFN with components: ${compositeFormat}`);
-        displayHfn = compositeFormat;
+        // Check multiple possible locations for component data
+        if (createdAsset.metadata?.components && createdAsset.metadata.components.length > 0) {
+          components = createdAsset.metadata.components;
+          environmentSafeLog(`[SUCCESS] Found components in metadata.components:`, components);
+        } else if (createdAsset.components && createdAsset.components.length > 0) {
+          components = createdAsset.components;
+          environmentSafeLog(`[SUCCESS] Found components in root.components:`, components);
+        } else if (createdAsset.layerSpecificData?.components && createdAsset.layerSpecificData.components.length > 0) {
+          components = createdAsset.layerSpecificData.components;
+          environmentSafeLog(`[SUCCESS] Found components in layerSpecificData.components:`, components);
+        } else {
+          environmentSafeLog(`[SUCCESS] WARNING: No components found for composite asset. Checking backend response structure...`);
+          environmentSafeLog(`[SUCCESS] Available keys in createdAsset:`, Object.keys(createdAsset));
+          environmentSafeLog(`[SUCCESS] Metadata keys:`, createdAsset.metadata ? Object.keys(createdAsset.metadata) : 'No metadata');
+        }
+        
+        if (components && components.length > 0) {
+          const componentAddresses = components
+            .map((component: any) => {
+              // Handle different component data formats
+              if (typeof component === 'string') {
+                // If component is already a string (HFN), use it directly
+                return component;
+              } else if (component.name) {
+                // Use the component's name if available
+                return component.name;
+              } else if (component.layer && component.category && component.subcategory && component.sequential) {
+                // Construct from component metadata if available
+                return `${component.layer}.${component.category}.${component.subcategory}.${component.sequential}`;
+              } else {
+                environmentSafeLog(`[SUCCESS] Unknown component format:`, component);
+                return 'UNKNOWN';
+              }
+            })
+            .join('+');
+          
+          // Format as C.RMX.POP.001:G.POP.TSW.001+S.POP.PNK.001 (NO brackets)
+          const compositeFormat = `${displayHfn}:${componentAddresses}`;
+          environmentSafeLog(`[SUCCESS] Composite HFN with components: ${compositeFormat}`);
+          displayHfn = compositeFormat;
+        } else {
+          environmentSafeLog(`[SUCCESS] No components found for composite asset - displaying base HFN only: ${displayHfn}`);
+        }
       }
       
       if (!displayMfa) {
@@ -1660,6 +1695,21 @@ const RegisterAssetPage: React.FC = () => {
       subcategory: createdAsset.subcategory,
       metadata: createdAsset.metadata
     });
+
+    // ENHANCED DEBUG: Check for component data in different locations
+    environmentSafeLog('🔍 COMPOSITE DEBUG: Checking component data locations:');
+    environmentSafeLog('- createdAsset.components:', createdAsset.components);
+    environmentSafeLog('- createdAsset.metadata?.components:', createdAsset.metadata?.components);
+    environmentSafeLog('- createdAsset.metadata?.componentIds:', createdAsset.metadata?.componentIds);
+    environmentSafeLog('- createdAsset.layerSpecificData?.components:', createdAsset.layerSpecificData?.components);
+    
+    // Check if components exist anywhere in the asset object
+    const allKeys = Object.keys(createdAsset);
+    const componentKeys = allKeys.filter(key => key.toLowerCase().includes('component'));
+    environmentSafeLog('🔍 COMPOSITE DEBUG: Keys containing "component":', componentKeys);
+    
+    // Log the raw asset for complete inspection
+    environmentSafeLog('🔍 COMPOSITE DEBUG: Complete asset object:', createdAsset);
 
     environmentSafeLog(`Success screen showing MFA: ${displayMfa} and HFN: ${displayHfn} from asset:`, createdAsset);
                 
