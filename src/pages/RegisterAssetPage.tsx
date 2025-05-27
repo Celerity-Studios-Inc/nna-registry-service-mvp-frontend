@@ -1609,11 +1609,11 @@ const RegisterAssetPage: React.FC = () => {
         if (createdAsset.metadata?.components && createdAsset.metadata.components.length > 0) {
           components = createdAsset.metadata.components;
           environmentSafeLog(`[SUCCESS] Found components in metadata.components:`, components);
-        } else if (createdAsset.components && createdAsset.components.length > 0) {
-          components = createdAsset.components;
+        } else if ((createdAsset as any).components && (createdAsset as any).components.length > 0) {
+          components = (createdAsset as any).components;
           environmentSafeLog(`[SUCCESS] Found components in root.components:`, components);
-        } else if (createdAsset.layerSpecificData?.components && createdAsset.layerSpecificData.components.length > 0) {
-          components = createdAsset.layerSpecificData.components;
+        } else if ((createdAsset as any).layerSpecificData?.components && (createdAsset as any).layerSpecificData.components.length > 0) {
+          components = (createdAsset as any).layerSpecificData.components;
           environmentSafeLog(`[SUCCESS] Found components in layerSpecificData.components:`, components);
         } else {
           environmentSafeLog(`[SUCCESS] WARNING: No components found for composite asset. Checking backend response structure...`);
@@ -1698,10 +1698,10 @@ const RegisterAssetPage: React.FC = () => {
 
     // ENHANCED DEBUG: Check for component data in different locations
     environmentSafeLog('🔍 COMPOSITE DEBUG: Checking component data locations:');
-    environmentSafeLog('- createdAsset.components:', createdAsset.components);
+    environmentSafeLog('- createdAsset.components:', (createdAsset as any).components);
     environmentSafeLog('- createdAsset.metadata?.components:', createdAsset.metadata?.components);
-    environmentSafeLog('- createdAsset.metadata?.componentIds:', createdAsset.metadata?.componentIds);
-    environmentSafeLog('- createdAsset.layerSpecificData?.components:', createdAsset.layerSpecificData?.components);
+    environmentSafeLog('- createdAsset.metadata?.componentIds:', (createdAsset.metadata as any)?.componentIds);
+    environmentSafeLog('- createdAsset.layerSpecificData?.components:', (createdAsset as any).layerSpecificData?.components);
     
     // Check if components exist anywhere in the asset object
     const allKeys = Object.keys(createdAsset);
