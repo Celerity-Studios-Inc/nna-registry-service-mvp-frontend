@@ -1593,10 +1593,56 @@ const RegisterAssetPage: React.FC = () => {
         environmentSafeLog(`[SUCCESS] Created formatted HFN: ${displayHfn}`);
       }
       
+      // For composite assets (layer C), append component addresses to the HFN
+      if (layer === 'C' && createdAsset.metadata?.components && createdAsset.metadata.components.length > 0) {
+        const componentAddresses = createdAsset.metadata.components
+          .map((component: any) => {
+            // Use the component's name if available, otherwise construct from metadata
+            if (component.name) {
+              return component.name;
+            }
+            // Fallback: construct from component metadata if name not available
+            if (component.layer && component.category && component.subcategory && component.sequential) {
+              return `${component.layer}.${component.category}.${component.subcategory}.${component.sequential}`;
+            }
+            return 'UNKNOWN';
+          })
+          .join('+');
+        
+        // Format as C.RMX.POP.001:G.POP.TSW.001+S.POP.PNK.001 (NO brackets)
+        const compositeFormat = `${displayHfn}:${componentAddresses}`;
+        environmentSafeLog(`[SUCCESS] Composite HFN with components: ${compositeFormat}`);
+        displayHfn = compositeFormat;
+      }
+      
       if (!displayMfa) {
-        // Convert HFN to MFA using our formatter
-        displayMfa = taxonomyFormatter.convertHFNtoMFA(displayHfn);
-        environmentSafeLog(`[SUCCESS] Created formatted MFA: ${displayMfa}`);
+        // For composite assets, handle MFA conversion differently
+        if (layer === 'C' && displayHfn.includes(':')) {
+          // Extract the base HFN (before the colon) for MFA conversion
+          const baseHfn = displayHfn.split(':')[0];
+          const componentsPart = displayHfn.split(':')[1];
+          
+          // Convert base HFN to MFA
+          const baseMfa = taxonomyFormatter.convertHFNtoMFA(baseHfn);
+          
+          // Convert each component HFN to MFA
+          const componentMfas = componentsPart.split('+').map(componentHfn => {
+            try {
+              return taxonomyFormatter.convertHFNtoMFA(componentHfn.trim());
+            } catch (error) {
+              environmentSafeLog(`[SUCCESS] Could not convert component HFN ${componentHfn} to MFA:`, error);
+              return componentHfn.trim(); // Fallback to original HFN
+            }
+          }).join('+');
+          
+          // Format as composite MFA: base:component1+component2 (NO brackets)
+          displayMfa = `${baseMfa}:${componentMfas}`;
+          environmentSafeLog(`[SUCCESS] Created composite MFA: ${displayMfa}`);
+        } else {
+          // Regular asset - convert HFN to MFA using our formatter
+          displayMfa = taxonomyFormatter.convertHFNtoMFA(displayHfn);
+          environmentSafeLog(`[SUCCESS] Created formatted MFA: ${displayMfa}`);
+        }
       }
     }
     

@@ -884,55 +884,7 @@ const CompositeAssetSelection: React.FC<CompositeAssetSelectionProps> = ({
         </Grid>
       </Grid>
 
-      {/* Action Buttons */}
-      {selectedComponents.length > 0 && (
-        <Box sx={{ mt: 3, display: 'flex', justifyContent: 'center', gap: 2 }}>
-          <Button
-            variant="outlined"
-            color={validationStatus === 'success' ? 'success' : validationStatus === 'error' ? 'error' : 'primary'}
-            size="large"
-            onClick={handleContinue}
-            disabled={validating}
-            startIcon={validating ? <CircularProgress size={16} sx={{ color: 'inherit' }} /> : null}
-            aria-label="Validate selected components"
-            sx={{
-              minWidth: 120,
-              fontWeight: validationStatus === 'success' ? 'bold' : 'normal',
-              borderWidth: validationStatus === 'success' ? 2 : 1,
-            }}
-          >
-            {validating 
-              ? 'Validating...' 
-              : validationStatus === 'success' 
-                ? '✅ Valid' 
-                : validationStatus === 'error'
-                  ? '❌ Invalid'
-                  : 'Validate'
-            }
-          </Button>
-          
-          {validationErrors.length === 0 && (
-            <Button
-              variant="contained"
-              color="success"
-              size="large"
-              onClick={handleAdvanceToReview}
-              disabled={validationStatus !== 'success'}
-              startIcon={<LayersIcon />}
-              aria-label="Proceed to Review & Submit"
-              sx={{
-                minWidth: 140,
-                fontWeight: 'bold',
-                '&:disabled': {
-                  opacity: 0.7,
-                },
-              }}
-            >
-              Continue to Review
-            </Button>
-          )}
-        </Box>
-      )}
+      {/* Action buttons now handled by RegisterAssetPage - no redundant buttons needed */}
 
       {/* Registration status now handled by unified workflow */}
 
