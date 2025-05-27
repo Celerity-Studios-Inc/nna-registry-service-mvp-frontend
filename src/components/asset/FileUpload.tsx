@@ -237,6 +237,18 @@ const FileUpload: React.FC<FileUploadProps> = ({
         return `${file.name} is not a video file. Videos layer only accepts video files.`;
       }
 
+      // W layer accepts multiple types: images, videos, models, JSON
+      if (layerCode === 'W') {
+        const acceptedTypes = [
+          'image/jpeg', 'image/png', 'image/gif', 'image/svg+xml',
+          'video/mp4', 'video/webm', 'video/quicktime',
+          'application/json', 'model/gltf-binary', 'model/gltf+json', 'application/octet-stream'
+        ];
+        if (!acceptedTypes.includes(file.type)) {
+          return `${file.name} is not a valid file type for Worlds layer. Accepted types: images, videos, 3D models, or JSON.`;
+        }
+      }
+
       return true;
     },
     [layerCode, maxSize]
