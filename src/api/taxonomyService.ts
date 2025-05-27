@@ -368,24 +368,8 @@ class TaxonomyService {
       return [];
     }
 
-    // Try to get category by normalized code first
-    let category = layer.categories[normalizedCategoryCode];
-
-    // If not found and we're looking for POP, try 001
-    if (!category && layerCode === 'S' && normalizedCategoryCode === 'POP') {
-      category = layer.categories['001'];
-      debugLog(
-        'Falling back to numeric category code 001 for POP in layer S'
-      );
-    }
-
-    // If not found and we're looking for 001, try POP
-    if (!category && layerCode === 'S' && normalizedCategoryCode === '001') {
-      category = layer.categories['POP'];
-      debugLog(
-        'Falling back to alphabetic category code POP for 001 in layer S'
-      );
-    }
+    // Use getCategory method which has comprehensive fallback logic
+    let category = this.getCategory(layerCode, normalizedCategoryCode);
 
     if (!category || !category.subcategories) {
       return [];

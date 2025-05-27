@@ -89,6 +89,13 @@ class SimpleTaxonomyService {
   getSubcategories(layer: string, categoryCode: string): TaxonomyItem[] {
     // Enhanced logging for debugging
     logger.info(`getSubcategories called with: layer=${layer}, categoryCode=${categoryCode}`);
+    
+    // Debug: Check what's actually in LAYER_SUBCATEGORIES for C layer
+    if (layer === 'C') {
+      console.log(`🔍 C LAYER DEBUG: LAYER_SUBCATEGORIES[C] exists:`, !!LAYER_SUBCATEGORIES['C']);
+      console.log(`🔍 C LAYER DEBUG: Keys in LAYER_SUBCATEGORIES[C]:`, Object.keys(LAYER_SUBCATEGORIES['C'] || {}));
+      console.log(`🔍 C LAYER DEBUG: LAYER_SUBCATEGORIES[C][RMX]:`, LAYER_SUBCATEGORIES['C']['RMX']);
+    }
 
     // Input validation with detailed error messages
     if (!layer) {
