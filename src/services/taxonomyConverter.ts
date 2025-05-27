@@ -1,5 +1,7 @@
 // src/services/taxonomyConverter.ts
-import taxonomyService from '../api/taxonomyService';
+import { taxonomyService } from './simpleTaxonomyService';
+
+// Now using the working SimpleTaxonomyService instead of the broken API taxonomyService
 
 /**
  * TaxonomyConverter - Utility to convert between various taxonomy formats
@@ -37,7 +39,7 @@ export class TaxonomyConverter {
     if (codeType === 'category') {
       const categories = taxonomyService.getCategories(layer);
       const category = categories.find(
-        c => c.numericCode === parseInt(code, 10)
+        c => parseInt(c.numericCode, 10) === parseInt(code, 10)
       );
       return category?.code || code;
     } else {
@@ -58,7 +60,7 @@ export class TaxonomyConverter {
         canonicalCategoryCode
       );
       const subcategory = subcategories.find(
-        s => s.numericCode === parseInt(code, 10)
+        s => parseInt(s.numericCode, 10) === parseInt(code, 10)
       );
       return subcategory?.code || code;
     }
@@ -74,7 +76,7 @@ export class TaxonomyConverter {
     if (/^\d+$/.test(categoryCode)) {
       const categories = taxonomyService.getCategories(layer);
       const category = categories.find(
-        c => c.numericCode === parseInt(categoryCode, 10)
+        c => parseInt(c.numericCode, 10) === parseInt(categoryCode, 10)
       );
       return category?.name || '';
     }
@@ -102,15 +104,12 @@ export class TaxonomyConverter {
     if (/^\d+$/.test(categoryCode)) {
       const categories = taxonomyService.getCategories(layer);
       const category = categories.find(
-        c => c.numericCode === parseInt(categoryCode, 10)
+        c => parseInt(c.numericCode, 10) === parseInt(categoryCode, 10)
       );
       canonicalCategoryCode = category?.code || categoryCode;
     }
 
-    // Debug logging for composite assets
-    if (layer === 'C') {
-      console.log(`🔍 COMPOSITE DEBUG: Getting subcategory name for ${layer}.${canonicalCategoryCode}.${subcategoryCode}`);
-    }
+    // Debug logging removed - now using working SimpleTaxonomyService
 
     // Handle numeric subcategory codes
     if (/^\d+$/.test(subcategoryCode)) {
@@ -118,11 +117,9 @@ export class TaxonomyConverter {
         layer,
         canonicalCategoryCode
       );
-      if (layer === 'C') {
-        console.log(`🔍 COMPOSITE DEBUG: Found ${subcategories.length} subcategories for ${layer}.${canonicalCategoryCode}:`, subcategories.map(s => `${s.code}:${s.name}`));
-      }
+      // Now using working SimpleTaxonomyService - should find subcategories correctly
       const subcategory = subcategories.find(
-        s => s.numericCode === parseInt(subcategoryCode, 10)
+        s => parseInt(s.numericCode, 10) === parseInt(subcategoryCode, 10)
       );
       return subcategory?.name || '';
     }
@@ -132,13 +129,8 @@ export class TaxonomyConverter {
       layer,
       canonicalCategoryCode
     );
-    if (layer === 'C') {
-      console.log(`🔍 COMPOSITE DEBUG: Found ${subcategories.length} subcategories for ${layer}.${canonicalCategoryCode}:`, subcategories.map(s => `${s.code}:${s.name}`));
-    }
+    // Now using working SimpleTaxonomyService - should find subcategories correctly
     const subcategory = subcategories.find(s => s.code === subcategoryCode);
-    if (layer === 'C') {
-      console.log(`🔍 COMPOSITE DEBUG: Looking for subcategory code '${subcategoryCode}', found:`, subcategory);
-    }
     return subcategory?.name || '';
   }
 
@@ -172,13 +164,11 @@ export class TaxonomyConverter {
     
     const subcategoryName = this.getSubcategoryName(layer, categoryCode, subcategoryCode);
     
-    // If we get an empty name, log the issue for debugging
+    // If we get an empty name, fall back to 'Base'
     if (!subcategoryName) {
-      console.warn(`🚨 COMPOSITE DEBUG: Failed to get subcategory name for ${layer}.${categoryCode}.${subcategoryCode}, falling back to 'Base'`);
+      console.warn(`Failed to get subcategory name for ${layer}.${categoryCode}.${subcategoryCode}, falling back to 'Base'`);
       return 'Base';
     }
-    
-    console.log(`✅ COMPOSITE DEBUG: Successfully mapped ${layer}.${categoryCode}.${subcategoryCode} -> ${subcategoryName}`);
     return subcategoryName;
   }
 
@@ -199,7 +189,7 @@ export class TaxonomyConverter {
     if (/^\d+$/.test(categoryCode)) {
       const categories = taxonomyService.getCategories(layer);
       const category = categories.find(
-        c => c.numericCode === parseInt(categoryCode, 10)
+        c => parseInt(c.numericCode, 10) === parseInt(categoryCode, 10)
       );
       canonicalCategoryCode = category?.code || categoryCode;
     }
@@ -212,7 +202,7 @@ export class TaxonomyConverter {
 
     if (/^\d+$/.test(subcategoryCode)) {
       return subcategories.some(
-        s => s.numericCode === parseInt(subcategoryCode, 10)
+        s => parseInt(s.numericCode, 10) === parseInt(subcategoryCode, 10)
       );
     }
 

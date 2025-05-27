@@ -90,14 +90,7 @@ class SimpleTaxonomyService {
     // Enhanced logging for debugging
     logger.info(`getSubcategories called with: layer=${layer}, categoryCode=${categoryCode}`);
     
-    // Debug: Check what's actually in LAYER_SUBCATEGORIES for C layer
-    if (layer === 'C') {
-      console.log(`🔍 C LAYER DEBUG: LAYER_SUBCATEGORIES[C] exists:`, !!LAYER_SUBCATEGORIES['C']);
-      console.log(`🔍 C LAYER DEBUG: Keys in LAYER_SUBCATEGORIES[C]:`, Object.keys(LAYER_SUBCATEGORIES['C'] || {}));
-      console.log(`🔍 C LAYER DEBUG: LAYER_SUBCATEGORIES[C][RMX]:`, LAYER_SUBCATEGORIES['C']['RMX']);
-      console.log(`🔍 C LAYER DEBUG: LAYER_SUBCATEGORIES[C][${categoryCode}]:`, LAYER_SUBCATEGORIES['C'][categoryCode]);
-      console.log(`🔍 C LAYER DEBUG: Full LAYER_SUBCATEGORIES[C]:`, LAYER_SUBCATEGORIES['C']);
-    }
+    // Debug logging removed - issue identified as TaxonomyConverter using wrong service
 
     // Input validation with detailed error messages
     if (!layer) {
