@@ -565,13 +565,19 @@ const RegisterAssetPage: React.FC = () => {
             components: data.layerSpecificData.components
           }),
         },
+        // CRITICAL FIX: Also add components at root level for API compatibility
+        ...(data.layer === 'C' && data.layerSpecificData?.components && {
+          components: data.layerSpecificData.components
+        }),
       };
 
       // ENHANCED DEBUG: Log what we're sending to the backend for composite assets
       if (data.layer === 'C') {
         environmentSafeLog('🔍 COMPOSITE DEBUG: Asset payload being sent to backend:', assetData);
-        environmentSafeLog('🔍 COMPOSITE DEBUG: Components in payload:', assetData.metadata?.components);
+        environmentSafeLog('🔍 COMPOSITE DEBUG: Components in metadata:', assetData.metadata?.components);
+        environmentSafeLog('🔍 COMPOSITE DEBUG: Components at root level:', (assetData as any).components);
         environmentSafeLog('🔍 COMPOSITE DEBUG: Form components data:', data.layerSpecificData?.components);
+        environmentSafeLog('🔍 COMPOSITE DEBUG: Form validation - components exist:', !!(data.layerSpecificData?.components && data.layerSpecificData.components.length > 0));
       }
 
       // Add a small delay for better user experience

@@ -1031,7 +1031,21 @@ class AssetService {
 
       // Components - using array bracket format
       // The backend expects this specific format
-      formData.append('components[]', '');
+      // Check if components exist in metadata or root level (for composite assets)
+      const components = (assetData as any).components || (assetData as any).metadata?.components;
+      if (components && Array.isArray(components) && components.length > 0) {
+        environmentSafeLog('🔍 COMPONENTS DEBUG: Adding components to FormData:', components);
+        // Add each component as a separate form field
+        components.forEach((component: any, index: number) => {
+          // Extract the component identifier (HFN/MFA/name)
+          const componentId = component.nna_address || component.friendlyName || component.name || component;
+          environmentSafeLog(`🔍 COMPONENTS DEBUG: Adding component ${index}:`, componentId);
+          formData.append('components[]', componentId);
+        });
+      } else {
+        environmentSafeLog('🔍 COMPONENTS DEBUG: No components found, adding empty component');
+        formData.append('components[]', '');
+      }
 
       // Make the API request using fetch for better FormData handling
       environmentSafeLog('Sending asset creation request to API...');
