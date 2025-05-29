@@ -43,6 +43,8 @@ const VideoThumbnail: React.FC<VideoThumbnailProps> = ({
     generateVideoThumbnail(asset.gcpStorageUrl)
       .then((dataUrl) => {
         console.log(`✅ Successfully generated thumbnail for ${asset.name}`);
+        console.log(`📸 Thumbnail data URL length: ${dataUrl?.length || 0} chars`);
+        console.log(`📸 Setting thumbnail URL state for ${asset.name}`);
         setThumbnailUrl(dataUrl);
         setIsLoading(false);
       })
@@ -97,6 +99,7 @@ const VideoThumbnail: React.FC<VideoThumbnailProps> = ({
 
   // Show generated thumbnail
   if (thumbnailUrl && !hasError) {
+    console.log(`🖼️ Rendering thumbnail for ${asset.name}, URL length: ${thumbnailUrl.length}`);
     return (
       <Box sx={containerStyle}>
         <img
@@ -132,6 +135,7 @@ const VideoThumbnail: React.FC<VideoThumbnailProps> = ({
 
   // Show enhanced fallback icon for errors or non-video assets
   if (showFallbackIcon) {
+    console.log(`🔄 Showing EnhancedLayerIcon fallback for ${asset.name} - thumbnailUrl: ${thumbnailUrl ? 'exists' : 'null'}, hasError: ${hasError}, isLoading: ${isLoading}`);
     return (
       <EnhancedLayerIcon 
         layer={asset.layer}
