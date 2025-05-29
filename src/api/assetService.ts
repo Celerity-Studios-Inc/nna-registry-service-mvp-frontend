@@ -483,7 +483,7 @@ class AssetService {
       // Use direct axios call like the working asset search
       let response;
       try {
-        response = await axios.get(`/api/asset/${id}`, {
+        response = await axios.get(`/api/assets/${id}`, {
           timeout: 5000,
           headers: {
             'Authorization': localStorage.getItem('accessToken') ? `Bearer ${localStorage.getItem('accessToken')?.replace(/\s+/g, '')}` : 
