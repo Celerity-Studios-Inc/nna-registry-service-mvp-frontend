@@ -21,7 +21,9 @@ import {
 import SearchIcon from '@mui/icons-material/Search';
 import ClearIcon from '@mui/icons-material/Clear';
 import FilterListIcon from '@mui/icons-material/FilterList';
+import SortIcon from '@mui/icons-material/Sort';
 import AssetCard from '../asset/AssetCard';
+import PaginationControls from '../common/PaginationControls';
 import { Asset, AssetSearchParams } from '../../types/asset.types';
 import assetService from '../../api/assetService';
 import taxonomyService from '../../api/taxonomyService';
@@ -52,6 +54,19 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
   const [subcategories, setSubcategories] = useState<SubcategoryOption[]>([]);
   const [layers, setLayers] = useState<LayerOption[]>([]);
   const [totalAssets, setTotalAssets] = useState<number>(0);
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [itemsPerPage, setItemsPerPage] = useState<number>(12);
+  const [totalPages, setTotalPages] = useState<number>(1);
+  
+  // Sorting state
+  const [sortBy, setSortBy] = useState<string>('createdAt');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [showSortControls, setShowSortControls] = useState<boolean>(false);
+  
+  // Cache busting
+  const [lastSearchTime, setLastSearchTime] = useState<number>(0);
 
   // Load layers for filtering
   useEffect(() => {
@@ -65,49 +80,61 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
 
   // Load initial assets when component mounts
   useEffect(() => {
+    // Load initial assets using the enhanced search function
     const loadInitialAssets = async () => {
-      try {
-        setIsLoading(true);
-        const results = await assetService.getAssets();
+      setIsLoading(true);
+      const searchTime = Date.now();
 
-        // Handle both API response formats: results.data as array, or results.data.items as array
+      try {
+        const searchParams: AssetSearchParams = {
+          page: 1,
+          limit: itemsPerPage,
+          sort: sortBy,
+          order: sortOrder,
+        };
+
+        console.log('🔍 Loading initial assets with params:', searchParams);
+        const results = await assetService.getAssets(searchParams);
+
         if (results && results.data) {
+          let assetResults: Asset[] = [];
+          let totalCount = 0;
+
           if (Array.isArray(results.data)) {
-            // Old format: results.data is the array
-            setSearchResults(results.data);
-            setTotalAssets(results.pagination?.total || results.data.length);
+            assetResults = results.data;
+            totalCount = results.pagination?.total || results.data.length;
           } else if (
             typeof results.data === 'object' &&
             results.data !== null &&
             'items' in results.data &&
             Array.isArray((results.data as any).items)
           ) {
-            // New format: results.data.items is the array
             const dataWithItems = results.data as {
               items: Asset[];
               total?: number;
             };
-            console.log(
-              'Using items array from API response:',
-              dataWithItems.items.length
-            );
-            setSearchResults(dataWithItems.items);
-            setTotalAssets(dataWithItems.total || dataWithItems.items.length);
-          } else {
-            console.warn('Unexpected API response format:', results);
-            setSearchResults([]);
-            setTotalAssets(0);
+            assetResults = dataWithItems.items;
+            totalCount = dataWithItems.total || dataWithItems.items.length;
           }
+
+          setSearchResults(assetResults);
+          setTotalAssets(totalCount);
+          setCurrentPage(1);
+          setTotalPages(Math.ceil(totalCount / itemsPerPage));
+          setLastSearchTime(searchTime);
         }
       } catch (error) {
         console.error('Error loading initial assets:', error);
+        setSearchResults([]);
+        setTotalAssets(0);
+        setTotalPages(1);
       } finally {
         setIsLoading(false);
       }
     };
 
     loadInitialAssets();
-  }, []);
+  }, [itemsPerPage, sortBy, sortOrder]);
 
   // Load categories when layer changes
   useEffect(() => {
@@ -142,30 +169,26 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
     }
   }, [selectedLayer, selectedCategory]);
 
-  const handleSearch = async () => {
-    if (
-      !searchQuery &&
-      !selectedLayer &&
-      !selectedCategory &&
-      !selectedSubcategory
-    ) {
-      return;
-    }
-
+  const performSearch = async (page = currentPage, forceRefresh = false) => {
     setIsLoading(true);
+    const searchTime = Date.now();
 
     try {
-      // Task 9: Enhanced search with backend filtering
+      // Enhanced search with pagination, sorting, and cache-busting
       const searchParams: AssetSearchParams = {
         search: searchQuery || undefined,
         layer: selectedLayer || undefined,
         category: selectedCategory || undefined,
         subcategory: selectedSubcategory || undefined,
-        limit: 20 // Add limit for better performance
+        page: page,
+        limit: itemsPerPage,
+        sort: sortBy,
+        order: sortOrder,
+        // Cache busting: add timestamp for force refresh or if data is stale
+        ...(forceRefresh || searchTime - lastSearchTime > 30000 ? { _t: searchTime } : {})
       };
 
-      // Task 9: Add console log to confirm backend query
-      console.log('Querying backend with params:', searchParams);
+      console.log('🔍 Search parameters:', searchParams);
 
       // Call the search API with enhanced parameters
       const results = await assetService.getAssets(searchParams);
@@ -205,16 +228,21 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
           return;
         }
 
-        // Task 9: Remove frontend filtering, rely on backend results
-        console.log(`Received ${assetResults.length} assets from backend search`);
+        // Enhanced result processing with pagination
+        console.log(`📊 Received ${assetResults.length} assets from backend search`);
+        console.log(`📄 Total count: ${totalCount}, Current page: ${page}`);
         
         // Set results directly from backend (backend handles filtering)
         setSearchResults(assetResults);
         setTotalAssets(totalCount);
+        setCurrentPage(page);
+        setTotalPages(Math.ceil(totalCount / itemsPerPage));
+        setLastSearchTime(searchTime);
       } else {
         console.warn('Received empty or invalid results from assets search');
         setSearchResults([]);
         setTotalAssets(0);
+        setTotalPages(1);
       }
 
       // Call the onSearch callback with the query
@@ -223,9 +251,42 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
       console.error('Error searching assets:', error);
       setSearchResults([]);
       setTotalAssets(0);
+      setTotalPages(1);
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // Wrapper function for backward compatibility
+  const handleSearch = () => performSearch(1);
+
+  // Pagination handlers
+  const handlePageChange = (page: number) => {
+    performSearch(page);
+  };
+
+  const handleItemsPerPageChange = (newItemsPerPage: number) => {
+    setItemsPerPage(newItemsPerPage);
+    setCurrentPage(1);
+    performSearch(1);
+  };
+
+  // Sorting handlers
+  const handleSortChange = (newSortBy: string) => {
+    setSortBy(newSortBy);
+    setCurrentPage(1);
+    performSearch(1);
+  };
+
+  const handleSortOrderChange = (newOrder: 'asc' | 'desc') => {
+    setSortOrder(newOrder);
+    setCurrentPage(1);
+    performSearch(1);
+  };
+
+  // Force refresh handler for cache busting
+  const handleForceRefresh = () => {
+    performSearch(currentPage, true);
   };
 
   const handleClearSearch = () => {
@@ -235,6 +296,9 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
     setSelectedSubcategory('');
     setSearchResults([]);
     setShowAdvancedFilters(false);
+    setCurrentPage(1);
+    setTotalAssets(0);
+    setTotalPages(1);
   };
 
   const handleKeyPress = (event: React.KeyboardEvent) => {
@@ -312,29 +376,96 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: 1,
           }}
         >
-          <Button
-            startIcon={<FilterListIcon />}
-            onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
-            sx={{ mb: 2 }}
-          >
-            {showAdvancedFilters ? 'Hide Filters' : 'Show Filters'}
-          </Button>
-
-          {(searchQuery ||
-            selectedLayer ||
-            selectedCategory ||
-            selectedSubcategory) && (
+          <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
             <Button
-              color="secondary"
-              onClick={handleClearSearch}
+              startIcon={<FilterListIcon />}
+              onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
               sx={{ mb: 2 }}
             >
-              Clear All
+              {showAdvancedFilters ? 'Hide Filters' : 'Show Filters'}
             </Button>
-          )}
+
+            <Button
+              startIcon={<SortIcon />}
+              onClick={() => setShowSortControls(!showSortControls)}
+              sx={{ mb: 2 }}
+            >
+              {showSortControls ? 'Hide Sort' : 'Sort'}
+            </Button>
+          </Box>
+
+          <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+            {totalAssets > 0 && (
+              <Button
+                variant="outlined"
+                size="small"
+                onClick={handleForceRefresh}
+                disabled={isLoading}
+                sx={{ mb: 2 }}
+              >
+                Refresh
+              </Button>
+            )}
+
+            {(searchQuery ||
+              selectedLayer ||
+              selectedCategory ||
+              selectedSubcategory) && (
+              <Button
+                color="secondary"
+                onClick={handleClearSearch}
+                sx={{ mb: 2 }}
+              >
+                Clear All
+              </Button>
+            )}
+          </Box>
         </Box>
+
+        {/* Sorting Controls */}
+        {showSortControls && (
+          <Box sx={{ mb: 3 }}>
+            <Divider sx={{ mb: 2 }} />
+            <Typography variant="subtitle2" gutterBottom>
+              Sort Results
+            </Typography>
+            <Grid container spacing={2}>
+              <Grid item xs={12} sm={6}>
+                <FormControl fullWidth>
+                  <InputLabel>Sort By</InputLabel>
+                  <Select
+                    value={sortBy}
+                    label="Sort By"
+                    onChange={(e) => handleSortChange(e.target.value)}
+                  >
+                    <MenuItem value="createdAt">Creation Date</MenuItem>
+                    <MenuItem value="name">Asset Name</MenuItem>
+                    <MenuItem value="layer">Layer</MenuItem>
+                    <MenuItem value="category">Category</MenuItem>
+                    <MenuItem value="updatedAt">Last Modified</MenuItem>
+                  </Select>
+                </FormControl>
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <FormControl fullWidth>
+                  <InputLabel>Order</InputLabel>
+                  <Select
+                    value={sortOrder}
+                    label="Order"
+                    onChange={(e) => handleSortOrderChange(e.target.value as 'asc' | 'desc')}
+                  >
+                    <MenuItem value="desc">Newest First</MenuItem>
+                    <MenuItem value="asc">Oldest First</MenuItem>
+                  </Select>
+                </FormControl>
+              </Grid>
+            </Grid>
+          </Box>
+        )}
 
         {showAdvancedFilters && (
           <Box sx={{ mb: 3 }}>
@@ -451,6 +582,20 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
               </Grid>
             ))}
           </Grid>
+
+          {/* Pagination Controls */}
+          {totalPages > 1 && (
+            <PaginationControls
+              page={currentPage}
+              totalPages={totalPages}
+              totalItems={totalAssets}
+              itemsPerPage={itemsPerPage}
+              onPageChange={handlePageChange}
+              onItemsPerPageChange={handleItemsPerPageChange}
+              itemsPerPageOptions={[6, 12, 24, 48]}
+              disabled={isLoading}
+            />
+          )}
         </Box>
       )}
 
