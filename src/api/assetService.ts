@@ -467,23 +467,27 @@ class AssetService {
   }
 
   /**
-   * Get an asset by ID
-   * @param id Asset ID
+   * Get an asset by ID or Name
+   * @param identifier Asset ID or Name (backend expects name)
    * @returns Asset
    */
-  async getAssetById(id: string): Promise<Asset> {
+  async getAssetById(identifier: string): Promise<Asset> {
     try {
-      console.log(`🔍 Loading asset details for ID: ${id}`);
+      console.log(`🔍 Loading asset details for identifier: ${identifier}`);
 
-      // Check for invalid or empty IDs
-      if (!id || id.trim() === '') {
-        throw new Error('Asset ID is required and cannot be empty');
+      // Check for invalid or empty identifiers
+      if (!identifier || identifier.trim() === '') {
+        throw new Error('Asset identifier is required and cannot be empty');
       }
+
+      // CRITICAL FIX: Backend expects asset name, not MongoDB ID
+      // The /api/assets/{name} endpoint uses asset names like "S.JZZ.CON.001"
+      console.log(`🔍 Using asset name/identifier for backend: ${identifier}`);
 
       // Use direct axios call like the working asset search
       let response;
       try {
-        response = await axios.get(`/api/assets/${id}`, {
+        response = await axios.get(`/api/assets/${identifier}`, {
           timeout: 5000,
           headers: {
             'Authorization': localStorage.getItem('accessToken') ? `Bearer ${localStorage.getItem('accessToken')?.replace(/\s+/g, '')}` : 
@@ -494,7 +498,7 @@ class AssetService {
         console.log('Asset detail proxy failed, trying direct backend connection...', proxyError instanceof Error ? proxyError.message : 'Unknown error');
         // If proxy fails, try direct backend connection
         try {
-          response = await axios.get(`https://registry.reviz.dev/api/assets/${id}`, {
+          response = await axios.get(`https://registry.reviz.dev/api/assets/${identifier}`, {
             timeout: 8000,
             headers: {
               'Authorization': localStorage.getItem('accessToken') ? `Bearer ${localStorage.getItem('accessToken')?.replace(/\s+/g, '')}` : 
@@ -532,7 +536,7 @@ class AssetService {
 
       throw new Error('Invalid response format');
     } catch (error) {
-      console.error('Error fetching asset ' + id + ':', error);
+      console.error('Error fetching asset ' + identifier + ':', error);
       throw new Error('Failed to fetch asset: ' + (error instanceof Error ? error.message : 'Unknown error'));
     }
   }

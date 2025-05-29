@@ -300,20 +300,20 @@ const AssetCard: React.FC<AssetCardProps> = ({
           <Button
             size="small"
             component={Link}
-            to={`/assets/${asset.id || asset._id}`} // Use standard asset route
+            to={`/assets/${asset.name || asset.id || asset._id}`} // Use asset name for backend API compatibility
             endIcon={<LaunchIcon />}
             onClick={e => {
-              // Prevent navigation if id is undefined or null
-              if (!asset.id && !asset._id) {
+              // Prevent navigation if name and id are undefined or null
+              if (!asset.name && !asset.id && !asset._id) {
                 e.preventDefault();
                 console.error(
-                  'Asset ID is undefined, cannot navigate to details page',
+                  'Asset name/ID is undefined, cannot navigate to details page',
                   asset
                 );
                 // Could add an error notification here
               } else {
-                const assetId = asset.id || asset._id;
-                console.log(`Navigating to asset details: ${assetId}`);
+                const assetIdentifier = asset.name || asset.id || asset._id;
+                console.log(`Navigating to asset details: ${assetIdentifier}`);
               }
             }}
           >
