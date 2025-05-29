@@ -27,6 +27,7 @@ import PaginationControls from '../common/PaginationControls';
 import { Asset, AssetSearchParams } from '../../types/asset.types';
 import assetService from '../../api/assetService';
 import taxonomyService from '../../api/taxonomyService';
+import axios from 'axios';
 import {
   LayerOption,
   CategoryOption,
@@ -80,69 +81,71 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
 
   // Load initial assets when component mounts
   useEffect(() => {
-    // Perform initial load with backward compatibility
+    // Perform initial load using working API pattern
     const loadInitialAssets = async () => {
       setIsLoading(true);
-      const searchTime = Date.now();
 
       try {
-        // Try enhanced parameters first
-        let searchParams: AssetSearchParams = {
-          page: 1,
+        // Use simple parameters like working composite search
+        const searchParams = {
           limit: itemsPerPage,
-          sort: sortBy,
-          order: sortOrder,
         };
 
-        console.log('🔍 Loading initial assets with enhanced params:', searchParams);
-        let results = await assetService.getAssets(searchParams);
+        console.log('🔍 Loading initial assets with working pattern:', searchParams);
+
+        // Use direct axios call like the working composite search
+        let response;
+        try {
+          response = await axios.get('/api/assets', {
+            params: searchParams,
+            timeout: 5000,
+            headers: {
+              'Authorization': localStorage.getItem('accessToken') ? `Bearer ${localStorage.getItem('accessToken')?.replace(/\s+/g, '')}` : 
+                              localStorage.getItem('testToken') ? `Bearer ${localStorage.getItem('testToken')?.replace(/\s+/g, '')}` : undefined,
+            },
+          });
+        } catch (proxyError) {
+          console.log('Proxy failed, trying direct backend connection...');
+          response = await axios.get('https://registry.reviz.dev/api/assets', {
+            params: searchParams,
+            timeout: 10000,
+            headers: {
+              'Authorization': localStorage.getItem('accessToken') ? `Bearer ${localStorage.getItem('accessToken')?.replace(/\s+/g, '')}` : 
+                              localStorage.getItem('testToken') ? `Bearer ${localStorage.getItem('testToken')?.replace(/\s+/g, '')}` : undefined,
+            },
+          });
+          console.log('Direct backend connection successful!');
+        }
+
+        // Parse response using the same logic as working composite search
+        let results: Asset[] = [];
         
-        // If enhanced search failed, try basic search (no parameters)
-        if (!results || !results.data || (results as any).error === '500_UNSUPPORTED_PARAMS') {
-          console.log('⚠️ Enhanced initial load failed, falling back to basic...');
-          results = await assetService.getAssets({});
-          searchParams = {}; // Update for pagination logic
+        if (response.data.success && response.data.data) {
+          results = response.data.data.items || [];
+        } else if (response.data.items) {
+          results = response.data.items;
+        } else if (Array.isArray(response.data)) {
+          results = response.data;
         }
 
-        if (results && results.data) {
-          let assetResults: Asset[] = [];
-          let totalCount = 0;
+        console.log(`🎯 Retrieved ${results.length} initial assets`);
 
-          if (Array.isArray(results.data)) {
-            assetResults = results.data;
-            totalCount = results.pagination?.total || results.data.length;
-          } else if (
-            typeof results.data === 'object' &&
-            results.data !== null &&
-            'items' in results.data &&
-            Array.isArray((results.data as any).items)
-          ) {
-            const dataWithItems = results.data as {
-              items: Asset[];
-              total?: number;
-            };
-            assetResults = dataWithItems.items;
-            totalCount = dataWithItems.total || dataWithItems.items.length;
-          }
+        // Normalize asset structure
+        const normalizedResults = results.map(asset => ({
+          ...asset,
+          id: asset.id || (asset as any)._id || (asset as any).assetId,
+          layer: asset.layer || (asset as any).assetLayer || asset.metadata?.layer,
+          nnaAddress: (asset as any).nna_address || asset.nnaAddress || (asset as any).mfa || (asset as any).MFA,
+          friendlyName: asset.name || asset.friendlyName || (asset as any).hfn || (asset as any).HFN,
+        }));
 
-          // Apply client-side pagination if backend doesn't support it
-          const usedPagination = searchParams.page !== undefined;
-          if (usedPagination && totalCount > 0) {
-            // Backend pagination working
-            setSearchResults(assetResults);
-            setTotalAssets(totalCount);
-            setTotalPages(Math.ceil(totalCount / itemsPerPage));
-          } else {
-            // Client-side pagination
-            const paginatedResults = assetResults.slice(0, itemsPerPage);
-            setSearchResults(paginatedResults);
-            setTotalAssets(assetResults.length);
-            setTotalPages(Math.ceil(assetResults.length / itemsPerPage));
-          }
-          
-          setCurrentPage(1);
-          setLastSearchTime(searchTime);
-        }
+        // Client-side pagination
+        const paginatedResults = normalizedResults.slice(0, itemsPerPage);
+        setSearchResults(paginatedResults);
+        setTotalAssets(normalizedResults.length);
+        setTotalPages(Math.ceil(normalizedResults.length / itemsPerPage));
+        setCurrentPage(1);
+        setLastSearchTime(Date.now());
       } catch (error) {
         console.error('Error loading initial assets:', error);
         setSearchResults([]);
@@ -154,7 +157,7 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
     };
 
     loadInitialAssets();
-  }, []);
+  }, [itemsPerPage]);
 
   // Load categories when layer changes
   useEffect(() => {
@@ -194,118 +197,133 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
     const searchTime = Date.now();
 
     try {
-      // Try enhanced search first, fall back to basic on failure
-      let searchParams: AssetSearchParams = {
+      // Use the same working API pattern as composite asset search
+      const searchParams = {
         search: searchQuery || undefined,
         layer: selectedLayer || undefined,
-        category: selectedCategory || undefined,
-        subcategory: selectedSubcategory || undefined,
-        page: page,
         limit: itemsPerPage,
-        sort: sortBy,
-        order: sortOrder,
         // Cache busting: add timestamp for force refresh or if data is stale
         ...(forceRefresh || searchTime - lastSearchTime > 30000 ? { _t: searchTime } : {})
       };
 
-      console.log('🔍 Enhanced search parameters:', searchParams);
+      console.log('🔍 Search parameters (using working pattern):', searchParams);
 
-      // Call the search API with enhanced parameters
-      let results = await assetService.getAssets(searchParams);
+      // Use direct axios call like the working composite search
+      let response;
+      try {
+        response = await axios.get('/api/assets', {
+          params: searchParams,
+          timeout: 5000,
+          headers: {
+            'Authorization': localStorage.getItem('accessToken') ? `Bearer ${localStorage.getItem('accessToken')?.replace(/\s+/g, '')}` : 
+                            localStorage.getItem('testToken') ? `Bearer ${localStorage.getItem('testToken')?.replace(/\s+/g, '')}` : undefined,
+          },
+        });
+      } catch (proxyError) {
+        console.log('Proxy failed, trying direct backend connection...', proxyError instanceof Error ? proxyError.message : 'Unknown error');
+        // If proxy fails, try direct backend connection
+        response = await axios.get('https://registry.reviz.dev/api/assets', {
+          params: searchParams,
+          timeout: 10000,
+          headers: {
+            'Authorization': localStorage.getItem('accessToken') ? `Bearer ${localStorage.getItem('accessToken')?.replace(/\s+/g, '')}` : 
+                            localStorage.getItem('testToken') ? `Bearer ${localStorage.getItem('testToken')?.replace(/\s+/g, '')}` : undefined,
+          },
+        });
+        console.log('Direct backend connection successful!');
+      }
+
+      // Parse response using the same logic as working composite search
+      let results: Asset[] = [];
+      let totalCount = 0;
       
-      // If enhanced search failed with 500 error, try basic search
-      if (!results || !results.data || (results as any).error === '500_UNSUPPORTED_PARAMS') {
-        console.log('⚠️ Enhanced search failed, falling back to basic search...');
-        
-        // Basic search parameters (backward compatible)
-        const basicParams: AssetSearchParams = {
-          // Only include basic parameters that backend supports
-          ...(searchQuery && { search: searchQuery }),
-          ...(selectedLayer && { layer: selectedLayer }),
-          ...(selectedCategory && { category: selectedCategory }),
-          ...(selectedSubcategory && { subcategory: selectedSubcategory })
-        };
-        
-        console.log('🔄 Basic search parameters:', basicParams);
-        results = await assetService.getAssets(basicParams);
-        
-        // Update searchParams to reflect the fallback (for pagination logic)
-        searchParams = basicParams;
+      if (response.data.success && response.data.data) {
+        // Paginated response format: { success: true, data: { items: [...], pagination: {...} } }
+        results = response.data.data.items || [];
+        totalCount = response.data.data.total || results.length;
+      } else if (response.data.items) {
+        // Direct items response: { items: [...] }
+        results = response.data.items;
+        totalCount = results.length;
+      } else if (Array.isArray(response.data)) {
+        // Direct array response: [...]
+        results = response.data;
+        totalCount = results.length;
       }
 
-      // Update state with results
-      if (results && results.data) {
-        // Extract search results using either format
-        let assetResults: Asset[] = [];
-        let totalCount = 0;
+      console.log(`🎯 Retrieved ${results.length} assets, total: ${totalCount}`);
 
-        if (Array.isArray(results.data)) {
-          // Old format: results.data is the array
-          assetResults = results.data;
-          totalCount = results.pagination?.total || results.data.length;
-          console.log('Search results (old format):', assetResults.length);
-        } else if (
-          typeof results.data === 'object' &&
-          results.data !== null &&
-          'items' in results.data &&
-          Array.isArray((results.data as any).items)
-        ) {
-          // New format: results.data.items is the array
-          const dataWithItems = results.data as {
-            items: Asset[];
-            total?: number;
-          };
-          assetResults = dataWithItems.items;
-          totalCount = dataWithItems.total || dataWithItems.items.length;
-          console.log('Search results from items array:', assetResults.length);
-        } else {
-          console.warn(
-            'Received unexpected format from assets search:',
-            results
-          );
-          setSearchResults([]);
-          setTotalAssets(0);
-          return;
-        }
+      // Normalize asset structure for frontend use
+      const normalizedResults = results.map(asset => ({
+        ...asset,
+        id: asset.id || (asset as any)._id || (asset as any).assetId,
+        layer: asset.layer || (asset as any).assetLayer || asset.metadata?.layer,
+        nnaAddress: (asset as any).nna_address || asset.nnaAddress || (asset as any).mfa || (asset as any).MFA,
+        friendlyName: asset.name || asset.friendlyName || (asset as any).hfn || (asset as any).HFN,
+      }));
 
-        // Enhanced result processing with backward compatibility
-        console.log(`📊 Received ${assetResults.length} assets from backend search`);
-        console.log(`📄 Total count: ${totalCount}, Current page: ${page}`);
-        
-        // Check if pagination was used in request (enhanced backend support)
-        const usedPagination = searchParams.page !== undefined;
-        
-        if (usedPagination && totalCount > 0) {
-          // Backend supports pagination - use server-side pagination
-          setSearchResults(assetResults);
-          setTotalAssets(totalCount);
-          setCurrentPage(page);
-          setTotalPages(Math.ceil(totalCount / itemsPerPage));
-          console.log('✅ Using server-side pagination');
-        } else {
-          // Backend doesn't support pagination - implement client-side pagination
-          const startIndex = (page - 1) * itemsPerPage;
-          const endIndex = startIndex + itemsPerPage;
-          const paginatedResults = assetResults.slice(startIndex, endIndex);
+      // Apply client-side filtering for category/subcategory and additional search terms
+      let filteredResults = normalizedResults;
+      
+      if (selectedCategory) {
+        filteredResults = filteredResults.filter(asset => 
+          asset.category === selectedCategory || asset.categoryCode === selectedCategory
+        );
+      }
+      
+      if (selectedSubcategory) {
+        filteredResults = filteredResults.filter(asset => 
+          asset.subcategory === selectedSubcategory || asset.subcategoryCode === selectedSubcategory
+        );
+      }
+
+      // Apply client-side sorting
+      if (sortBy && filteredResults.length > 0) {
+        filteredResults.sort((a, b) => {
+          let aValue: any = '';
+          let bValue: any = '';
           
-          setSearchResults(paginatedResults);
-          setTotalAssets(assetResults.length);
-          setCurrentPage(page);
-          setTotalPages(Math.ceil(assetResults.length / itemsPerPage));
-          console.log('⚙️ Using client-side pagination:', {
-            total: assetResults.length,
-            page: page,
-            showing: paginatedResults.length
-          });
-        }
-        
-        setLastSearchTime(searchTime);
-      } else {
-        console.warn('Received empty or invalid results from assets search');
-        setSearchResults([]);
-        setTotalAssets(0);
-        setTotalPages(1);
+          switch (sortBy) {
+            case 'createdAt':
+              aValue = new Date(a.createdAt || 0).getTime();
+              bValue = new Date(b.createdAt || 0).getTime();
+              break;
+            case 'updatedAt':
+              aValue = new Date(a.updatedAt || 0).getTime();
+              bValue = new Date(b.updatedAt || 0).getTime();
+              break;
+            case 'name':
+              aValue = (a.name || a.friendlyName || '').toLowerCase();
+              bValue = (b.name || b.friendlyName || '').toLowerCase();
+              break;
+            case 'layer':
+              aValue = a.layer || '';
+              bValue = b.layer || '';
+              break;
+            case 'category':
+              aValue = a.category || '';
+              bValue = b.category || '';
+              break;
+            default:
+              return 0;
+          }
+          
+          if (aValue < bValue) return sortOrder === 'asc' ? -1 : 1;
+          if (aValue > bValue) return sortOrder === 'asc' ? 1 : -1;
+          return 0;
+        });
       }
+
+      // Client-side pagination since backend pagination parameters don't work
+      const startIndex = (page - 1) * itemsPerPage;
+      const endIndex = startIndex + itemsPerPage;
+      const paginatedResults = filteredResults.slice(startIndex, endIndex);
+      
+      setSearchResults(paginatedResults);
+      setTotalAssets(filteredResults.length);
+      setCurrentPage(page);
+      setTotalPages(Math.ceil(filteredResults.length / itemsPerPage));
+      setLastSearchTime(searchTime);
 
       // Call the onSearch callback with the query
       onSearch(searchQuery);
@@ -333,16 +351,18 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
     performSearch(1);
   };
 
-  // Sorting handlers
+  // Sorting handlers - now using client-side sorting
   const handleSortChange = (newSortBy: string) => {
     setSortBy(newSortBy);
     setCurrentPage(1);
+    // Since we're now using client-side sorting, trigger a fresh search
     performSearch(1);
   };
 
   const handleSortOrderChange = (newOrder: 'asc' | 'desc') => {
     setSortOrder(newOrder);
     setCurrentPage(1);
+    // Since we're now using client-side sorting, trigger a fresh search
     performSearch(1);
   };
 
