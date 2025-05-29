@@ -29,6 +29,8 @@ export const generateVideoThumbnail = (
     video.muted = true; // Required for autoplay policies
     video.preload = 'metadata';
     
+    console.log(`🎬 Starting thumbnail generation for: ${videoUrl}`);
+    
     // Set up canvas for thumbnail generation
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
@@ -55,11 +57,13 @@ export const generateVideoThumbnail = (
       hasResolved = true;
 
       try {
+        console.log(`🖼️ Drawing video frame to canvas for ${videoUrl}`);
         // Draw video frame to canvas
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
         
         // Convert to base64 data URL
         const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+        console.log(`✅ Successfully generated thumbnail data URL (${dataUrl.length} chars)`);
         
         // Cache the result
         thumbnailCache.set(cacheKey, dataUrl);
@@ -67,7 +71,7 @@ export const generateVideoThumbnail = (
         cleanup();
         resolve(dataUrl);
       } catch (error) {
-        console.warn('Failed to generate video thumbnail:', error);
+        console.error(`❌ Canvas drawing failed for ${videoUrl}:`, error);
         cleanup();
         reject(error);
       }
@@ -75,8 +79,10 @@ export const generateVideoThumbnail = (
 
     // Handle successful metadata load
     video.addEventListener('loadedmetadata', () => {
+      console.log(`📹 Video metadata loaded for ${videoUrl}, duration: ${video.duration}s`);
       // Ensure we don't seek beyond video duration
       const seekTime = Math.min(timeOffset, video.duration * 0.1);
+      console.log(`⏰ Seeking to ${seekTime}s for thumbnail capture`);
       video.currentTime = seekTime;
     });
 
@@ -92,9 +98,10 @@ export const generateVideoThumbnail = (
 
     // Handle errors
     video.addEventListener('error', (e) => {
-      console.warn('Video thumbnail generation failed:', e);
+      console.error(`❌ Video error for ${videoUrl}:`, e);
+      console.error('Video error details:', video.error);
       cleanup();
-      reject(new Error('Failed to load video for thumbnail'));
+      reject(new Error(`Failed to load video: ${video.error?.message || 'Unknown error'}`));
     });
 
     // Timeout after 10 seconds

@@ -8,6 +8,7 @@ import {
 } from '@mui/icons-material';
 import { generateVideoThumbnail, isVideoUrl } from '../../utils/videoThumbnail';
 import { Asset } from '../../types/asset.types';
+import EnhancedLayerIcon from './EnhancedLayerIcon';
 
 interface VideoThumbnailProps {
   asset: Asset;
@@ -35,16 +36,18 @@ const VideoThumbnail: React.FC<VideoThumbnailProps> = ({
       return;
     }
 
+    console.log(`🎬 Attempting to generate thumbnail for ${asset.name}:`, asset.gcpStorageUrl);
     setIsLoading(true);
     setHasError(false);
 
     generateVideoThumbnail(asset.gcpStorageUrl)
       .then((dataUrl) => {
+        console.log(`✅ Successfully generated thumbnail for ${asset.name}`);
         setThumbnailUrl(dataUrl);
         setIsLoading(false);
       })
       .catch((error) => {
-        console.warn(`Failed to generate thumbnail for ${asset.name}:`, error);
+        console.warn(`❌ Failed to generate thumbnail for ${asset.name}:`, error);
         setHasError(true);
         setIsLoading(false);
       });
@@ -127,12 +130,15 @@ const VideoThumbnail: React.FC<VideoThumbnailProps> = ({
     );
   }
 
-  // Show fallback icon for errors or non-video assets
+  // Show enhanced fallback icon for errors or non-video assets
   if (showFallbackIcon) {
     return (
-      <Box sx={containerStyle}>
-        {getFallbackIcon()}
-      </Box>
+      <EnhancedLayerIcon 
+        layer={asset.layer}
+        width={width}
+        height={height}
+        showLabel={width >= 60} // Only show label for larger icons
+      />
     );
   }
 
