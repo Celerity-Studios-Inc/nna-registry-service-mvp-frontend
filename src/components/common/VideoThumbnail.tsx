@@ -159,9 +159,10 @@ const VideoThumbnail: React.FC<VideoThumbnailProps> = ({
     );
   }
 
-  // Show enhanced fallback icon for errors or non-video assets
-  if (showFallbackIcon) {
-    console.log(`🔄 Showing EnhancedLayerIcon fallback for ${asset.name} - thumbnailUrl: ${thumbnailUrl ? 'exists' : 'null'}, hasError: ${hasError}, isLoading: ${isLoading}`);
+  // Show enhanced fallback icon ONLY for errors or non-video assets
+  // Don't show fallback if we're still loading or if this is a video that should have a thumbnail
+  if (showFallbackIcon && !isLoading && (!isVideoUrl(asset.gcpStorageUrl || '') || hasError)) {
+    console.log(`🔄 Showing EnhancedLayerIcon fallback for ${asset.name} - thumbnailUrl: ${thumbnailUrl ? 'exists' : 'null'}, hasError: ${hasError}, isLoading: ${isLoading}, isVideo: ${isVideoUrl(asset.gcpStorageUrl || '')}`);
     return (
       <EnhancedLayerIcon 
         layer={asset.layer}
@@ -169,6 +170,16 @@ const VideoThumbnail: React.FC<VideoThumbnailProps> = ({
         height={height}
         showLabel={width >= 60} // Only show label for larger icons
       />
+    );
+  }
+
+  // Return a loading placeholder for video assets that are generating thumbnails
+  if (isVideoUrl(asset.gcpStorageUrl || '') && !thumbnailUrl && !hasError) {
+    console.log(`⏳ Waiting for video thumbnail generation for ${asset.name}`);
+    return (
+      <Box sx={containerStyle}>
+        <CircularProgress size={Math.min(width, height) * 0.4} />
+      </Box>
     );
   }
 
