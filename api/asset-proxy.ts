@@ -82,10 +82,10 @@ async function handler(req: VercelRequest, res: VercelResponse) {
       if (isMongoId) {
         console.log(`ASSET PROXY - MongoDB ID detected: ${assetId}`);
         
-        // TRY A DIFFERENT APPROACH - use /asset/:id endpoint, which might be more standard
-        const newEndpoint = `/asset/${assetId}`;
-        console.log(`ASSET PROXY - Trying alternative endpoint format: ${newEndpoint}`);
-        endpoint = newEndpoint;
+        // CRITICAL FIX: Keep using /assets/:id format consistently 
+        // The backend expects /assets/:id for both search and detail endpoints
+        console.log(`ASSET PROXY - Using standard /assets/:id format for MongoDB ID: ${assetId}`);
+        // Keep endpoint as-is: /assets/{id}
       } else {
         console.log(`ASSET PROXY - Regular ID detected: ${assetId}`);
       }
