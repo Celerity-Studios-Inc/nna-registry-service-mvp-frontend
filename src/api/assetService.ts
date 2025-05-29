@@ -480,39 +480,67 @@ class AssetService {
         throw new Error('Asset identifier is required and cannot be empty');
       }
 
-      // CRITICAL FIX: Use search endpoint to find specific asset by name
-      // The search endpoint works reliably, so let's use it with name filter
-      console.log(`🔍 Using search endpoint to find asset: ${identifier}`);
+      // CRITICAL FIX: Use search endpoint but check if identifier is MongoDB ID
+      // If it's a MongoDB ID, we need a different approach since search doesn't work with IDs
+      const isMongoId = /^[a-f0-9]{24}$/i.test(identifier);
+      console.log(`🔍 Identifier type: ${isMongoId ? 'MongoDB ID' : 'Asset Name'} - ${identifier}`);
 
-      // Use search endpoint with name filter (more reliable than /api/assets/{name})
       let response;
       try {
-        response = await axios.get(`/api/assets`, {
-          params: {
-            search: identifier,
-            limit: 1
-          },
-          timeout: 5000,
-          headers: {
-            'Authorization': localStorage.getItem('accessToken') ? `Bearer ${localStorage.getItem('accessToken')?.replace(/\s+/g, '')}` : 
-                            localStorage.getItem('testToken') ? `Bearer ${localStorage.getItem('testToken')?.replace(/\s+/g, '')}` : undefined,
-          },
-        });
-      } catch (proxyError) {
-        console.log('Asset detail proxy failed, trying direct backend connection...', proxyError instanceof Error ? proxyError.message : 'Unknown error');
-        // If proxy fails, try direct backend connection
-        try {
-          response = await axios.get(`https://registry.reviz.dev/api/assets`, {
-            params: {
-              search: identifier,
-              limit: 1
-            },
-            timeout: 8000,
+        if (isMongoId) {
+          // For MongoDB IDs, we need to get all assets and filter client-side
+          // This is not ideal but works until backend provides ID-based endpoint
+          console.log('🔍 Fetching all assets to find by ID...');
+          response = await axios.get(`/api/assets`, {
+            params: { limit: 1000 }, // Get enough assets to find the one we need
+            timeout: 5000,
             headers: {
               'Authorization': localStorage.getItem('accessToken') ? `Bearer ${localStorage.getItem('accessToken')?.replace(/\s+/g, '')}` : 
                               localStorage.getItem('testToken') ? `Bearer ${localStorage.getItem('testToken')?.replace(/\s+/g, '')}` : undefined,
             },
           });
+        } else {
+          // For asset names, use search parameter
+          console.log('🔍 Searching by asset name...');
+          response = await axios.get(`/api/assets`, {
+            params: {
+              search: identifier,
+              limit: 1
+            },
+            timeout: 5000,
+            headers: {
+              'Authorization': localStorage.getItem('accessToken') ? `Bearer ${localStorage.getItem('accessToken')?.replace(/\s+/g, '')}` : 
+                              localStorage.getItem('testToken') ? `Bearer ${localStorage.getItem('testToken')?.replace(/\s+/g, '')}` : undefined,
+            },
+          });
+        }
+      } catch (proxyError) {
+        console.log('Asset detail proxy failed, trying direct backend connection...', proxyError instanceof Error ? proxyError.message : 'Unknown error');
+        // If proxy fails, try direct backend connection
+        try {
+          // Use same logic for direct backend
+          if (isMongoId) {
+            response = await axios.get(`https://registry.reviz.dev/api/assets`, {
+              params: { limit: 1000 },
+              timeout: 8000,
+              headers: {
+                'Authorization': localStorage.getItem('accessToken') ? `Bearer ${localStorage.getItem('accessToken')?.replace(/\s+/g, '')}` : 
+                                localStorage.getItem('testToken') ? `Bearer ${localStorage.getItem('testToken')?.replace(/\s+/g, '')}` : undefined,
+              },
+            });
+          } else {
+            response = await axios.get(`https://registry.reviz.dev/api/assets`, {
+              params: {
+                search: identifier,
+                limit: 1
+              },
+              timeout: 8000,
+              headers: {
+                'Authorization': localStorage.getItem('accessToken') ? `Bearer ${localStorage.getItem('accessToken')?.replace(/\s+/g, '')}` : 
+                                localStorage.getItem('testToken') ? `Bearer ${localStorage.getItem('testToken')?.replace(/\s+/g, '')}` : undefined,
+              },
+            });
+          }
         } catch (directError) {
           console.error('Direct backend connection failed:', directError instanceof Error ? directError.message : 'Unknown error');
           throw new Error('Failed to load asset from both proxy and direct backend');
@@ -526,10 +554,23 @@ class AssetService {
         // Handle search response format (items array)
         if (response.data.success && response.data.data && response.data.data.items) {
           const items = response.data.data.items;
-          if (items.length > 0) {
-            asset = items[0]; // Take the first (and should be only) result
+          
+          if (isMongoId) {
+            // Filter by MongoDB ID when we fetched all assets
+            const foundAsset = items.find((item: any) => item._id === identifier);
+            if (foundAsset) {
+              asset = foundAsset;
+              console.log(`🎯 Found asset by MongoDB ID: ${identifier}`);
+            } else {
+              throw new Error(`Asset not found with ID: ${identifier}`);
+            }
           } else {
-            throw new Error(`Asset not found: ${identifier}`);
+            // For name search, take the first result
+            if (items.length > 0) {
+              asset = items[0];
+            } else {
+              throw new Error(`Asset not found: ${identifier}`);
+            }
           }
         } else if (response.data.success && response.data.data) {
           // Fallback: single asset response
