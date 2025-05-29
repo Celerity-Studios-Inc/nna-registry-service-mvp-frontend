@@ -15,6 +15,7 @@ import assetRegistryService from './assetRegistryService';
 import { TaxonomyConverter } from '../services/taxonomyConverter';
 import { debugLog } from '../utils/logger';
 import { environmentSafeLog } from '../utils/environment';
+import axios from 'axios';
 
 // Determine whether real backend is available and connected
 // Use the API module's backend status tracking
@@ -472,55 +473,54 @@ class AssetService {
    */
   async getAssetById(id: string): Promise<Asset> {
     try {
-      environmentSafeLog(`Fetching asset with ID: ${id}`);
+      console.log(`🔍 Loading asset details for ID: ${id}`);
 
       // Check for invalid or empty IDs
       if (!id || id.trim() === '') {
         throw new Error('Asset ID is required and cannot be empty');
       }
 
-      // Get auth token
-      const authToken = localStorage.getItem('accessToken') || '';
-
-      // Use the correct endpoint for the backend - /api/asset/{id}
-      const response = await fetch(`/api/asset/${id}`, {
-        headers: {
-          Authorization: `Bearer ${authToken}`,
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        // If the first attempt fails, try the alternative endpoint format
-        environmentSafeLog(
-          `Primary endpoint /api/asset/${id} failed, trying alternative endpoint`
-        );
-
-        const alternativeResponse = await fetch(`/api/assets/${id}`, {
+      // Use direct axios call like the working asset search
+      let response;
+      try {
+        response = await axios.get(`/api/asset/${id}`, {
+          timeout: 5000,
           headers: {
-            Authorization: `Bearer ${authToken}`,
-            'Content-Type': 'application/json',
+            'Authorization': localStorage.getItem('accessToken') ? `Bearer ${localStorage.getItem('accessToken')?.replace(/\s+/g, '')}` : 
+                            localStorage.getItem('testToken') ? `Bearer ${localStorage.getItem('testToken')?.replace(/\s+/g, '')}` : undefined,
           },
         });
-
-        if (!alternativeResponse.ok) {
-          throw new Error(
-            `Failed to fetch asset: ${alternativeResponse.statusText}`
-          );
+      } catch (proxyError) {
+        console.log('Asset detail proxy failed, trying direct backend connection...', proxyError instanceof Error ? proxyError.message : 'Unknown error');
+        // If proxy fails, try direct backend connection
+        try {
+          response = await axios.get(`https://registry.reviz.dev/api/assets/${id}`, {
+            timeout: 8000,
+            headers: {
+              'Authorization': localStorage.getItem('accessToken') ? `Bearer ${localStorage.getItem('accessToken')?.replace(/\s+/g, '')}` : 
+                              localStorage.getItem('testToken') ? `Bearer ${localStorage.getItem('testToken')?.replace(/\s+/g, '')}` : undefined,
+            },
+          });
+        } catch (directError) {
+          console.error('Direct backend connection failed:', directError instanceof Error ? directError.message : 'Unknown error');
+          throw new Error('Failed to load asset from both proxy and direct backend');
         }
+      }
 
-        const responseData = await alternativeResponse.json();
-        environmentSafeLog(
-          'Asset fetch response from alternative endpoint:',
-          responseData
-        );
-
-        if (!responseData.data && !responseData.success) {
-          throw new Error('Invalid API response format');
+      if (response && response.data) {
+        console.log(`✅ Successfully loaded asset details for ${id}`);
+        
+        let asset;
+        // Handle response format like working search
+        if (response.data.success && response.data.data) {
+          asset = response.data.data;
+        } else if (response.data && !response.data.success) {
+          // Direct response format
+          asset = response.data;
+        } else {
+          console.warn('Unexpected asset detail response format:', response.data);
+          asset = response.data;
         }
-
-        // Extract the asset data based on response format
-        const asset = responseData.data || responseData;
 
         // Normalize IDs
         if (asset._id && !asset.id) {
@@ -530,26 +530,10 @@ class AssetService {
         return asset as Asset;
       }
 
-      // Parse the response from primary endpoint
-      const responseData = await response.json();
-      environmentSafeLog('Asset fetch response:', responseData);
-
-      if (!responseData.data && !responseData.success) {
-        throw new Error('Invalid API response format');
-      }
-
-      // Extract the asset data based on response format
-      const asset = responseData.data || responseData;
-
-      // Normalize IDs
-      if (asset._id && !asset.id) {
-        asset.id = asset._id;
-      }
-
-      return asset as Asset;
+      throw new Error('Invalid response format');
     } catch (error) {
-      console.error(`Error fetching asset ${id}:`, error);
-      throw new Error('Failed to fetch asset');
+      console.error('Error fetching asset ' + id + ':', error);
+      throw new Error('Failed to fetch asset: ' + (error instanceof Error ? error.message : 'Unknown error'));
     }
   }
 
