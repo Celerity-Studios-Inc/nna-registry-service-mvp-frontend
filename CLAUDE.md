@@ -95,10 +95,11 @@ Composite asset registration workflow (Layer C) successfully:
 - `src/components/CompositeAssetSelection.tsx` - Removed deprecated functions
 - `COMPOSITE_COMPONENT_SELECTION_FIX.md` - Comprehensive documentation
 
-#### Status
+#### Status  
 ✅ **RESOLVED** - Composite asset workflow fully functional  
-🚀 **DEPLOYED** - CI/CD #??? triggered by commit 2f49cdf  
-📋 **DOCUMENTED** - Complete fix analysis in COMPOSITE_COMPONENT_SELECTION_FIX.md
+🚀 **DEPLOYED** - CI/CD #515 (commit bc4ba72) - Component selection data flow fix  
+📋 **DOCUMENTED** - Complete fix analysis in COMPOSITE_COMPONENT_SELECTION_FIX.md  
+🎯 **VERIFIED** - Complete composite address format working: `C.RMX.POP.007:S.016.001.001+M.008.004.001+W.007.001.001`
 
 ## Repository Context and Commands
 
@@ -151,7 +152,18 @@ interface FormData {
 
 ## Recent Issues and Fixes (Historical)
 
-### 1. Composite Asset Backend Validation (May 27, 2025) - FIXED
+### 1. Composite Asset Component Selection Data Flow Fix (May 28, 2025) - FIXED ✅
+- **Problem**: Components selected in Step 5 of composite asset registration were not reaching the API payload, resulting in empty components[] being sent to backend despite UI showing selected components
+- **Root Cause**: Hardcoded empty string in `src/api/assetService.ts` line 1034: `formData.append('components[]', '');`
+- **Solution**: Implemented dynamic component population from assetData instead of hardcoded empty values
+- **Fix Commit**: bc4ba72 (CI/CD #515)
+- **Files Modified**: 
+  - `/src/api/assetService.ts` - Fixed FormData construction to dynamically populate components from assetData.components or assetData.metadata.components
+  - `/src/pages/RegisterAssetPage.tsx` - Enhanced data flow by adding components at both metadata and root level for API compatibility
+- **Test Validation**: Network logs now show components[] populated with actual component references, complete composite address format displays correctly as `C.RMX.POP.007:S.016.001.001+M.008.004.001+W.007.001.001`
+- **Impact**: Composite asset workflow fully functional, addresses generated correctly, backend receives component data successfully
+
+### 2. Composite Asset Backend Validation (May 27, 2025) - FIXED
 - **Problem**: "Invalid subcategory: Base for layer: C, category: Music_Video_ReMixes"
 - **Root Cause**: `taxonomyConverter.ts` using incorrect taxonomy service
 - **Solution**: Changed import from `api/taxonomyService` to `simpleTaxonomyService`
@@ -164,11 +176,11 @@ interface FormData {
 - **Fix Commit**: 87fa177  
 - **Files Modified**: `/src/pages/RegisterAssetPage.tsx`, `/src/components/CompositeAssetSelection.tsx`
 
-### 3. Composite Address Format Implementation (May 27, 2025) - IMPLEMENTED
+### 3. Composite Address Format Implementation (May 27, 2025) - FIXED ✅
 - **Problem**: Success page should show `C.RMX.POP.001:S.FAN.BAS.001+L.VIN.BAS.001` format
 - **Solution**: Added composite address formatting logic in success screen
-- **Status**: Logic implemented but not working due to missing component data
-- **Fix Commit**: 87fa177
+- **Status**: ✅ **WORKING** - Fixed by composite component selection data flow fix (CI/CD #515)
+- **Fix Commit**: 87fa177 (initial implementation), bc4ba72 (data flow fix)
 - **Files Modified**: `/src/pages/RegisterAssetPage.tsx` (lines 1604-1651)
 
 ### 4. TypeScript Build Errors (May 27, 2025) - FIXED

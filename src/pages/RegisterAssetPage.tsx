@@ -45,7 +45,6 @@ import { runQuickTaxonomyTest } from '../utils/taxonomyQuickTest';
 import { validateTaxonomyFix } from '../utils/taxonomyFixValidator';
 import { taxonomyFormatter } from '../utils/taxonomyFormatter';
 import { SubcategoryPreserver } from '../utils/subcategoryPreserver';
-import SubcategoryDiscrepancyAlert from '../components/asset/SubcategoryDiscrepancyAlert';
 
 // Types
 import { LayerOption, CategoryOption, SubcategoryOption } from '../types/taxonomy.types';
@@ -1849,12 +1848,6 @@ const RegisterAssetPage: React.FC = () => {
             Asset Created Successfully!
           </Typography>
           
-          {/* Show the correct HFN from asset details metadata in the success title */}
-          {displayHfn && (
-            <Typography variant="h6" color="primary.main" sx={{ mb: 2, fontWeight: 'medium' }}>
-              {displayHfn}
-            </Typography>
-          )}
           
           {/* Force direct adjacency between the heading and content box */}
         </>
@@ -2106,15 +2099,6 @@ const RegisterAssetPage: React.FC = () => {
                           <InfoIcon color="info" fontSize="small" sx={{ ml: 1, width: 18, height: 18 }} />
                         </Tooltip>
                       </Box>
-                    </Grid>
-                    
-                    {/* Always show the discrepancy alert - it will only render if needed */}
-                    <Grid item xs={12}>
-                      <SubcategoryDiscrepancyAlert
-                        backendSubcategory={createdAsset.subcategory || ''}
-                        displayHfn={displayHfn}
-                        displayMfa={displayMfa}
-                      />
                     </Grid>
                     
                     <Grid item xs={12}>
