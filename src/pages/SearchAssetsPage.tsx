@@ -3,6 +3,7 @@ import { Typography, Box, CircularProgress } from '@mui/material';
 import AssetSearch from '../components/search/AssetSearch';
 import { Asset } from '../types/asset.types';
 import assetService from '../api/assetService';
+import axios from 'axios';
 
 const SearchAssetsPage: React.FC = () => {
   const [assets, setAssets] = useState<Asset[]>([]);
@@ -14,7 +15,41 @@ const SearchAssetsPage: React.FC = () => {
     const loadInitialAssets = async () => {
       try {
         setIsLoading(true);
-        const response = await assetService.getAssets();
+        // Use the same working pattern as AssetSearch.tsx
+        const searchParams = {
+          limit: 12,
+        };
+        
+        console.log('🔍 Loading initial assets with working pattern:', searchParams);
+        
+        // Use direct axios call like the working composite search
+        let response;
+        try {
+          response = await axios.get('/api/assets', {
+            params: searchParams,
+            timeout: 5000,
+            headers: {
+              'Authorization': localStorage.getItem('accessToken') ? `Bearer ${localStorage.getItem('accessToken')?.replace(/\s+/g, '')}` : 
+                              localStorage.getItem('testToken') ? `Bearer ${localStorage.getItem('testToken')?.replace(/\s+/g, '')}` : undefined,
+            },
+          });
+        } catch (proxyError) {
+          console.log('Proxy failed, trying direct backend connection...', proxyError instanceof Error ? proxyError.message : 'Unknown error');
+          // If proxy fails, try direct backend connection
+          try {
+            response = await axios.get('https://registry.reviz.dev/api/assets', {
+              params: searchParams,
+              timeout: 8000,
+              headers: {
+                'Authorization': localStorage.getItem('accessToken') ? `Bearer ${localStorage.getItem('accessToken')?.replace(/\s+/g, '')}` : 
+                                localStorage.getItem('testToken') ? `Bearer ${localStorage.getItem('testToken')?.replace(/\s+/g, '')}` : undefined,
+              },
+            });
+          } catch (directError) {
+            console.error('Direct backend connection failed:', directError instanceof Error ? directError.message : 'Unknown error');
+            throw new Error('Failed to load assets from both proxy and direct backend');
+          }
+        }
         if (response && response.data) {
           // Handle both API response formats
           if (Array.isArray(response.data)) {
