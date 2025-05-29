@@ -480,14 +480,18 @@ class AssetService {
         throw new Error('Asset identifier is required and cannot be empty');
       }
 
-      // CRITICAL FIX: Backend expects asset name, not MongoDB ID
-      // The /api/assets/{name} endpoint uses asset names like "S.JZZ.CON.001"
-      console.log(`🔍 Using asset name/identifier for backend: ${identifier}`);
+      // CRITICAL FIX: Use search endpoint to find specific asset by name
+      // The search endpoint works reliably, so let's use it with name filter
+      console.log(`🔍 Using search endpoint to find asset: ${identifier}`);
 
-      // Use direct axios call like the working asset search
+      // Use search endpoint with name filter (more reliable than /api/assets/{name})
       let response;
       try {
-        response = await axios.get(`/api/assets/${identifier}`, {
+        response = await axios.get(`/api/assets`, {
+          params: {
+            search: identifier,
+            limit: 1
+          },
           timeout: 5000,
           headers: {
             'Authorization': localStorage.getItem('accessToken') ? `Bearer ${localStorage.getItem('accessToken')?.replace(/\s+/g, '')}` : 
@@ -498,7 +502,11 @@ class AssetService {
         console.log('Asset detail proxy failed, trying direct backend connection...', proxyError instanceof Error ? proxyError.message : 'Unknown error');
         // If proxy fails, try direct backend connection
         try {
-          response = await axios.get(`https://registry.reviz.dev/api/assets/${identifier}`, {
+          response = await axios.get(`https://registry.reviz.dev/api/assets`, {
+            params: {
+              search: identifier,
+              limit: 1
+            },
             timeout: 8000,
             headers: {
               'Authorization': localStorage.getItem('accessToken') ? `Bearer ${localStorage.getItem('accessToken')?.replace(/\s+/g, '')}` : 
@@ -512,18 +520,23 @@ class AssetService {
       }
 
       if (response && response.data) {
-        console.log(`✅ Successfully loaded asset details for ${id}`);
+        console.log(`✅ Successfully loaded asset details for ${identifier}`);
         
         let asset;
-        // Handle response format like working search
-        if (response.data.success && response.data.data) {
+        // Handle search response format (items array)
+        if (response.data.success && response.data.data && response.data.data.items) {
+          const items = response.data.data.items;
+          if (items.length > 0) {
+            asset = items[0]; // Take the first (and should be only) result
+          } else {
+            throw new Error(`Asset not found: ${identifier}`);
+          }
+        } else if (response.data.success && response.data.data) {
+          // Fallback: single asset response
           asset = response.data.data;
-        } else if (response.data && !response.data.success) {
-          // Direct response format
-          asset = response.data;
         } else {
-          console.warn('Unexpected asset detail response format:', response.data);
-          asset = response.data;
+          console.warn('Unexpected asset search response format:', response.data);
+          throw new Error('Invalid response format from search');
         }
 
         // Normalize IDs
