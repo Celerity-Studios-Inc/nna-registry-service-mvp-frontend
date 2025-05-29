@@ -991,28 +991,29 @@ The following layers require datasets/collections and will use the composite wor
 
 The composite assets feature is ready for integration and will enable the creation of complex multi-layer assets as required by the NNA Framework specifications.
 
-## Current Status (May 26, 2025)
+## Current Status (May 28, 2025)
 
-**Final Stable Rollback - commit 1379b88**
-- **Problem**: Multiple attempted rollbacks had build errors or complexity issues
-- **Solution**: Rolled back to commit 1379b88 "Fix GitHub repository URLs in Claude analysis prompt"
+**Browse Assets Search Fixed - commit 7ebdd8b**
+- **Problem**: Browse Assets search was failing with 500 errors while composite asset search was working perfectly
+- **Root Cause**: Browse Assets used `assetService.getAssets()` with unsupported backend parameters (sortBy, sortOrder, page), while composite search used direct axios calls with simple parameters
+- **Solution**: Aligned Browse Assets search with the working composite search API pattern
+- **Technical Changes**:
+  - ✅ Replaced `assetService.getAssets()` with direct `axios.get('/api/assets')`
+  - ✅ Uses same simple parameters as working composite search: `search`, `layer`, `limit`
+  - ✅ Implements client-side sorting and pagination for full functionality
+  - ✅ Proper fallback: proxy → direct backend → error handling
+  - ✅ Normalizes asset data structure for consistent frontend display
 - **Verification**: ✅ `CI=false npm run build` succeeds with only warnings
-- **Why this commit works**:
-  - ✅ Clean build with no TypeScript errors
-  - ✅ M layer validation present (video/* + application/json support)
-  - ✅ Simple file preview without complex blob URL accessibility testing
-  - ✅ Pre-dates Task Group complexity that introduced recurring issues
-- **Timeline of Issues**:
-  - 1379b88 (current): Stable, builds successfully ✅
-  - ed3b670: Task Group 1 - had TypeScript errors in success page ❌
-  - 746b937: Task Group 2 - introduced complex blob URL handling ❌
-  - dce4157+: Multiple attempts to fix blob URL issues ❌
+- **Result**: Browse Assets now returns the same 213+ assets as composite search
+- **File Modified**: `/src/components/search/AssetSearch.tsx` - Complete API pattern alignment
+
+**Previous Stable State - commit 1379b88**
+- **Foundation**: Clean build with no TypeScript errors
 - **File Validation Status**:
   - **M Layer**: video/* + application/json ✅
   - **G Layer**: audio/* only ✅ 
   - **S/L Layers**: images only ✅
   - **V Layer**: video/* only ✅
-- **Key Lesson**: Found truly stable commit that builds without modifications
 
 ## Reminder
 When continuing work on this project, remember:
