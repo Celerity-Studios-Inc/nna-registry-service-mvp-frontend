@@ -43,13 +43,24 @@ const AssetCard: React.FC<AssetCardProps> = ({
   const navigate = useNavigate();
 
   // Handle double-click navigation to asset details
-  const handleDoubleClick = () => {
+  const handleDoubleClick = (event: React.MouseEvent) => {
+    event.preventDefault();
+    event.stopPropagation();
+    
     const assetId = asset._id || asset.id;
     if (assetId) {
-      console.log(`Double-click navigation to asset details: ${assetId}`);
+      console.log(`🖱️ Double-click detected on asset card: ${assetId}`);
       navigate(`/assets/${assetId}`);
     } else {
       console.error('Asset ID is undefined, cannot navigate to details page', asset);
+    }
+  };
+
+  // Enhanced click handler with debugging
+  const handleClick = (event: React.MouseEvent) => {
+    console.log(`🖱️ Single click detected on asset card: ${asset._id || asset.id}`);
+    if (onClick) {
+      onClick();
     }
   };
 
@@ -223,7 +234,7 @@ const AssetCard: React.FC<AssetCardProps> = ({
       }}
     >
       <CardActionArea 
-        onClick={onClick} 
+        onClick={handleClick} 
         onDoubleClick={handleDoubleClick}
         sx={{ flexGrow: 1 }}
       >
