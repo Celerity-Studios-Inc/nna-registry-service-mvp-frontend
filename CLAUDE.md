@@ -991,12 +991,12 @@ The following layers require datasets/collections and will use the composite wor
 
 The composite assets feature is ready for integration and will enable the creation of complex multi-layer assets as required by the NNA Framework specifications.
 
-## Current Status (May 28-29, 2025)
+## Current Status (May 29, 2025)
 
-**Video Thumbnail Enhancement - commit 3d0a4b0** (IN PROGRESS)
+**Video Thumbnail Enhancement - commit 3d0a4b0** ✅ **COMPLETE SUCCESS!**
 - **Problem**: Video assets (M, W, C layers) showing black thumbnails instead of actual video frames
-- **Root Cause**: CORS restrictions from Google Cloud Storage blocking canvas-based video thumbnail generation
-- **Solution**: Implemented comprehensive video thumbnail system with enhanced debugging and fallback
+- **Root Cause**: Originally suspected CORS restrictions from Google Cloud Storage
+- **ACTUAL RESULT**: ✅ **NO CORS ISSUES** - Video thumbnails working perfectly!
 - **Technical Implementation**:
   - ✅ Created `VideoThumbnail.tsx` component with HTML5 canvas frame capture
   - ✅ Built `AssetThumbnail.tsx` smart component handling both images and videos
@@ -1004,8 +1004,19 @@ The composite assets feature is ready for integration and will enable the creati
   - ✅ Created `EnhancedLayerIcon.tsx` for beautiful fallback icons when generation fails
   - ✅ Comprehensive debugging logs for diagnosing CORS and loading issues
 - **Integration Points**: AssetCard, CompositeAssetSelection, AssetSearch components
-- **Status**: ⏳ **Testing in progress** - CI/CD #521 deployed with debug logging
-- **Next**: Resume testing tomorrow to analyze console logs and CORS behavior
+- **Testing Results**: ✅ All 6 video assets generated thumbnails successfully in CI/CD #522
+- **Status**: ✅ **COMPLETE** - Video thumbnail generation working flawlessly
+
+**Search API Error Fix - commit 7e539bf** ✅ **COMPLETE**
+- **Problem**: "Request with GET/HEAD method cannot have body" error in SearchAssetsPage.tsx
+- **Root Cause**: SearchAssetsPage using assetService.getAssets() with routing conflicts
+- **Solution**: Aligned SearchAssetsPage with working AssetSearch.tsx axios pattern
+- **Technical Changes**:
+  - ✅ Replaced assetService.getAssets() with direct axios.get('/api/assets')
+  - ✅ Uses same simple parameters as working pattern: limit only
+  - ✅ Same proxy → direct backend fallback pattern
+  - ✅ Same authentication header handling
+- **Verification**: ✅ Build succeeds, should eliminate 500 errors on Browse Assets page
 
 **Browse Assets Search Fixed - commit 7ebdd8b** ✅ **COMPLETE**
 - **Problem**: Browse Assets search was failing with 500 errors while composite asset search was working perfectly

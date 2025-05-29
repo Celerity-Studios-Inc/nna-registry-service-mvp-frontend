@@ -62,6 +62,7 @@ const VideoThumbnail: React.FC<VideoThumbnailProps> = ({
       .then((dataUrl) => {
         console.log(`✅ Successfully generated thumbnail for ${asset.name}`);
         console.log(`📸 Thumbnail data URL length: ${dataUrl?.length || 0} chars`);
+        console.log(`📸 Data URL preview: ${dataUrl?.substring(0, 50)}...`);
         console.log(`📸 Setting thumbnail URL state for ${asset.name}`);
         
         // Cache the thumbnail
@@ -134,8 +135,10 @@ const VideoThumbnail: React.FC<VideoThumbnailProps> = ({
             objectFit: 'cover',
             borderRadius: '4px'
           }}
-          onError={() => {
-            console.warn(`Thumbnail image failed to load for ${asset.name}`);
+          onError={(e) => {
+            console.warn(`🚨 Thumbnail image failed to load for ${asset.name}:`, e);
+            console.warn(`🚨 Failed image src length: ${thumbnailUrl?.length || 0}`);
+            console.warn(`🚨 Failed image src preview: ${thumbnailUrl?.substring(0, 100)}...`);
             setHasError(true);
           }}
         />
