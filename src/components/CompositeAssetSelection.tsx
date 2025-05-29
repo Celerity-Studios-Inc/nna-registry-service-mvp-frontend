@@ -489,7 +489,21 @@ const CompositeAssetSelection: React.FC<CompositeAssetSelectionProps> = ({
                   <Typography variant="caption" gutterBottom>
                     Composite HFN Preview:
                   </Typography>
-                  <Typography variant="body2" fontFamily="monospace">
+                  <Typography 
+                    variant="body2" 
+                    fontFamily="monospace"
+                    sx={{
+                      wordBreak: 'break-all',
+                      whiteSpace: 'pre-wrap',
+                      fontSize: '0.75rem',
+                      lineHeight: 1.4,
+                      mt: 0.5,
+                      p: 1,
+                      backgroundColor: 'rgba(0,0,0,0.05)',
+                      borderRadius: 1,
+                      border: '1px dashed rgba(0,0,0,0.2)'
+                    }}
+                  >
                     {generateCompositeHFN(selectedComponents)}
                   </Typography>
                 </Alert>

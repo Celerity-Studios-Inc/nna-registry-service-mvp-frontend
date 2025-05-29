@@ -1472,7 +1472,7 @@ const RegisterAssetPage: React.FC = () => {
                   disabled={isSubmitting || loading}
                   startIcon={isSubmitting ? <CircularProgress size={20} /> : undefined}
                 >
-                  {isSubmitting ? 'Creating Asset...' : 'Create Composite Asset'}
+                  {isSubmitting ? 'SUBMITTING ASSET...' : 'SUBMIT ASSET'}
                 </Button>
               </Box>
             </Box>
@@ -1841,22 +1841,36 @@ const RegisterAssetPage: React.FC = () => {
     
     return (
       <Box sx={{ textAlign: 'center', py: 4 }}>
-        {/* CRITICAL FIX: Ensure there's absolutely nothing between the success heading and the content box */}
-        {/* This is done with a fragment wrapper to control exactly what renders */}
-        <>
-          <Typography variant="h4" gutterBottom color="success.main" sx={{ mb: 1 }}>
-            Asset Created Successfully!
+        {/* Success Header */}
+        <Box sx={{ mb: 4 }}>
+          <Typography variant="h4" gutterBottom color="success.main" sx={{ mb: 2 }}>
+            ✅ Asset Created Successfully!
           </Typography>
           
-          
-          {/* Force direct adjacency between the heading and content box */}
-        </>
+          {/* Display the formatted HFN prominently */}
+          <Typography 
+            variant="h5" 
+            fontFamily="monospace"
+            sx={{ 
+              color: 'text.primary',
+              wordBreak: 'break-all',
+              whiteSpace: 'pre-wrap',
+              lineHeight: 1.3,
+              p: 2,
+              bgcolor: 'grey.50',
+              borderRadius: 2,
+              border: '2px solid',
+              borderColor: 'success.main',
+              maxWidth: '600px',
+              mx: 'auto'
+            }}
+          >
+            {displayHfn || createdAsset.name}
+          </Typography>
+        </Box>
         
-        <Box sx={{ mt: 0, p: 3, border: '1px solid #e0e0e0', borderRadius: 2, maxWidth: '800px', mx: 'auto' }}>
-          {/* Asset name only - the HFN is now displayed in the title above */}
-          <Typography variant="h6" gutterBottom>
-            {createdAsset.name}
-          </Typography>
+        <Box sx={{ mt: 0, p: 3, border: '1px solid #e0e0e0', borderRadius: 2, maxWidth: '900px', mx: 'auto' }}>
+          {/* Remove redundant asset name since it's displayed above */}
 
           <Grid container spacing={3} sx={{ mt: 2 }}>
             {/* Asset Preview Column */}
@@ -2088,30 +2102,70 @@ const RegisterAssetPage: React.FC = () => {
                     </Grid>
                     
                     <Grid item xs={12}>
-                      <Typography variant="subtitle2" color="text.secondary" align="center">
+                      <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>
                         Human-Friendly Name (HFN)
                       </Typography>
-                      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <Typography variant="body1" fontWeight="bold">
+                      <Box sx={{ 
+                        p: 2, 
+                        bgcolor: 'success.light', 
+                        borderRadius: 2,
+                        border: '1px solid',
+                        borderColor: 'success.main',
+                        mb: 2
+                      }}>
+                        <Typography 
+                          variant="body1" 
+                          fontWeight="bold"
+                          fontFamily="monospace"
+                          sx={{
+                            wordBreak: 'break-all',
+                            whiteSpace: 'pre-wrap',
+                            fontSize: '0.9rem',
+                            lineHeight: 1.4,
+                            color: 'success.dark'
+                          }}
+                        >
                           {displayHfn || createdAsset.metadata?.hfn || createdAsset.metadata?.humanFriendlyName || ''}
                         </Typography>
-                        <Tooltip title="Using consistent NNA format from the unified formatter">
-                          <InfoIcon color="info" fontSize="small" sx={{ ml: 1, width: 18, height: 18 }} />
-                        </Tooltip>
+                        <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
+                          <Tooltip title="Using consistent NNA format from the unified formatter">
+                            <InfoIcon color="info" fontSize="small" sx={{ mr: 1, width: 16, height: 16 }} />
+                          </Tooltip>
+                        </Box>
                       </Box>
                     </Grid>
                     
                     <Grid item xs={12}>
-                      <Typography variant="subtitle2" color="text.secondary" align="center">
+                      <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>
                         Machine-Friendly Address (MFA)
                       </Typography>
-                      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <Typography variant="body1" fontFamily="monospace" fontWeight="medium" align="center">
+                      <Box sx={{ 
+                        p: 2, 
+                        bgcolor: 'info.light', 
+                        borderRadius: 2,
+                        border: '1px solid',
+                        borderColor: 'info.main',
+                        mb: 2
+                      }}>
+                        <Typography 
+                          variant="body1" 
+                          fontFamily="monospace" 
+                          fontWeight="medium"
+                          sx={{
+                            wordBreak: 'break-all',
+                            whiteSpace: 'pre-wrap',
+                            fontSize: '0.9rem',
+                            lineHeight: 1.4,
+                            color: 'info.dark'
+                          }}
+                        >
                           {displayMfa || createdAsset.nnaAddress || createdAsset.metadata?.machineFriendlyAddress || createdAsset.metadata?.mfa || ''}
                         </Typography>
-                        <Tooltip title="Using consistent NNA format from the unified formatter">
-                          <InfoIcon color="info" fontSize="small" sx={{ ml: 1, width: 18, height: 18 }} />
-                        </Tooltip>
+                        <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
+                          <Tooltip title="Using consistent NNA format from the unified formatter">
+                            <InfoIcon color="info" fontSize="small" sx={{ mr: 1, width: 16, height: 16 }} />
+                          </Tooltip>
+                        </Box>
                       </Box>
                     </Grid>
                     
