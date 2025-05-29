@@ -31,9 +31,11 @@ const VideoThumbnail: React.FC<VideoThumbnailProps> = ({
 }) => {
   // Initialize state from cache if available
   const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(() => {
-    return asset.gcpStorageUrl && isVideoUrl(asset.gcpStorageUrl) 
+    const cached = asset.gcpStorageUrl && isVideoUrl(asset.gcpStorageUrl) 
       ? thumbnailCache.get(asset.gcpStorageUrl) || null 
       : null;
+    console.log(`🔄 VideoThumbnail init for ${asset.name}, cached: ${cached ? 'YES' : 'NO'}, isVideo: ${isVideoUrl(asset.gcpStorageUrl || '')}`);
+    return cached;
   });
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [hasError, setHasError] = useState<boolean>(false);
@@ -124,6 +126,7 @@ const VideoThumbnail: React.FC<VideoThumbnailProps> = ({
   // Show generated thumbnail
   if (thumbnailUrl && !hasError) {
     console.log(`🖼️ Rendering thumbnail for ${asset.name}, URL length: ${thumbnailUrl.length}`);
+    console.log(`🖼️ Thumbnail src preview: ${thumbnailUrl.substring(0, 50)}...`);
     return (
       <Box sx={containerStyle}>
         <img
@@ -134,6 +137,9 @@ const VideoThumbnail: React.FC<VideoThumbnailProps> = ({
             height: '100%',
             objectFit: 'cover',
             borderRadius: '4px'
+          }}
+          onLoad={() => {
+            console.log(`✅ Thumbnail image loaded successfully for ${asset.name}`);
           }}
           onError={(e) => {
             console.warn(`🚨 Thumbnail image failed to load for ${asset.name}:`, e);

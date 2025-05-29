@@ -80,9 +80,10 @@ export const generateVideoThumbnail = (
     // Handle successful metadata load
     video.addEventListener('loadedmetadata', () => {
       console.log(`📹 Video metadata loaded for ${videoUrl}, duration: ${video.duration}s`);
-      // Ensure we don't seek beyond video duration
-      const seekTime = Math.min(timeOffset, video.duration * 0.1);
-      console.log(`⏰ Seeking to ${seekTime}s for thumbnail capture`);
+      // Seek to a better position in the video to avoid black frames
+      // Try 25% into the video, but not less than 0.5s and not more than 3s
+      const seekTime = Math.max(0.5, Math.min(3, video.duration * 0.25));
+      console.log(`⏰ Seeking to ${seekTime}s (25% of duration) for thumbnail capture`);
       video.currentTime = seekTime;
     });
 
