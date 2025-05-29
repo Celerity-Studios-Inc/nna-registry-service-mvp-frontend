@@ -26,6 +26,7 @@ import {
 import { Asset } from '../../types/asset.types';
 import { Link } from 'react-router-dom';
 import taxonomyService from '../../api/taxonomyService';
+import AssetThumbnail from '../common/AssetThumbnail';
 
 interface AssetCardProps {
   asset: Asset;
@@ -210,7 +211,7 @@ const AssetCard: React.FC<AssetCardProps> = ({
       }}
     >
       <CardActionArea onClick={onClick} sx={{ flexGrow: 1 }}>
-        {/* Media section */}
+        {/* Media section with smart thumbnail handling */}
         <Box
           sx={{
             height: 180,
@@ -222,29 +223,12 @@ const AssetCard: React.FC<AssetCardProps> = ({
             overflow: 'hidden',
           }}
         >
-          {previewUrl ? (
-            <CardMedia
-              component="img"
-              height="180"
-              image={previewUrl}
-              alt={asset.name}
-              sx={{ objectFit: 'cover' }}
-            />
-          ) : (
-            <Box
-              sx={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: color,
-                height: '100%',
-                width: '100%',
-              }}
-            >
-              {icon}
-            </Box>
-          )}
+          {/* Use AssetThumbnail component for smart video/image handling */}
+          <AssetThumbnail 
+            asset={asset} 
+            width={180} 
+            height={180} 
+          />
 
           {/* Layer badge */}
           <Chip

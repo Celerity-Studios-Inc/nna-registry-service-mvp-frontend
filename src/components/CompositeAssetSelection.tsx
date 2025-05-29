@@ -37,6 +37,7 @@ import axios from 'axios';
 import { toast } from 'react-toastify';
 import { Asset } from '../types/asset.types';
 import AssetSearch from './AssetSearch';
+import AssetThumbnail from './common/AssetThumbnail';
 
 // Component compatibility matrix per NNA Framework Section 1.3.2
 const COMPATIBLE_LAYERS = ['G', 'S', 'L', 'M', 'W', 'B', 'P'];
@@ -499,45 +500,12 @@ const CompositeAssetSelection: React.FC<CompositeAssetSelectionProps> = ({
                     return (
                       <ListItem key={asset.id} divider>
                         <ListItemIcon>
-                          {/* Show thumbnail if available, otherwise show layer icon */}
-                          {asset.gcpStorageUrl ? (
-                            <Box
-                              sx={{
-                                width: 40,
-                                height: 40,
-                                borderRadius: 1,
-                                overflow: 'hidden',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                backgroundColor: 'grey.100',
-                              }}
-                            >
-                              <img 
-                                src={asset.gcpStorageUrl} 
-                                alt={`${asset.friendlyName || asset.name} thumbnail`}
-                                style={{ 
-                                  width: '100%', 
-                                  height: '100%', 
-                                  objectFit: 'cover',
-                                  borderRadius: '4px'
-                                }}
-                                onError={(e) => {
-                                  // Fallback to layer icon if image fails to load
-                                  const target = e.target as HTMLImageElement;
-                                  target.style.display = 'none';
-                                  const parent = target.parentElement;
-                                  if (parent) {
-                                    const iconElement = document.createElement('div');
-                                    iconElement.innerHTML = getLayerIcon(asset.layer) as any;
-                                    parent.appendChild(iconElement);
-                                  }
-                                }}
-                              />
-                            </Box>
-                          ) : (
-                            getLayerIcon(asset.layer)
-                          )}
+                          {/* Use AssetThumbnail component for smart video/image handling */}
+                          <AssetThumbnail 
+                            asset={asset} 
+                            width={40} 
+                            height={40} 
+                          />
                         </ListItemIcon>
                         <ListItemText
                           primary={

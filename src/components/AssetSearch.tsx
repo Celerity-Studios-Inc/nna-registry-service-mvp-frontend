@@ -33,6 +33,7 @@ import {
 import { debounce } from 'lodash';
 import axios from 'axios';
 import { Asset } from '../types/asset.types';
+import AssetThumbnail from './common/AssetThumbnail';
 
 // Layer configuration for visual identification
 const LAYER_CONFIG = {
@@ -564,49 +565,12 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
           {searchResults.map(asset => (
             <ListItem key={asset.id} divider>
               <ListItemIcon>
-                {/* Show thumbnail if available, otherwise show layer icon */}
-                {asset.gcpStorageUrl ? (
-                  <Box
-                    sx={{
-                      width: 40,
-                      height: 40,
-                      borderRadius: 1,
-                      overflow: 'hidden',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      backgroundColor: 'grey.100',
-                    }}
-                  >
-                    <img 
-                      src={asset.gcpStorageUrl} 
-                      alt={`${asset.friendlyName || asset.name} thumbnail`}
-                      style={{ 
-                        width: '100%', 
-                        height: '100%', 
-                        objectFit: 'cover',
-                        borderRadius: '4px'
-                      }}
-                      onError={(e) => {
-                        // Fallback to layer icon if image fails to load
-                        e.currentTarget.style.display = 'none';
-                        const parent = e.currentTarget.parentElement;
-                        if (parent) {
-                          parent.innerHTML = '';
-                          const iconContainer = document.createElement('div');
-                          iconContainer.style.display = 'flex';
-                          iconContainer.style.alignItems = 'center';
-                          iconContainer.style.justifyContent = 'center';
-                          iconContainer.style.width = '100%';
-                          iconContainer.style.height = '100%';
-                          parent.appendChild(iconContainer);
-                        }
-                      }}
-                    />
-                  </Box>
-                ) : (
-                  getLayerIcon(asset.layer)
-                )}
+                {/* Use AssetThumbnail component for smart video/image handling */}
+                <AssetThumbnail 
+                  asset={asset} 
+                  width={40} 
+                  height={40} 
+                />
               </ListItemIcon>
               <ListItemText
                 primary={
