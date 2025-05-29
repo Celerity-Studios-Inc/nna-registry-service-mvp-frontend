@@ -66,8 +66,16 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [showSortControls, setShowSortControls] = useState<boolean>(false);
   
-  // Cache busting
+  // Enhanced cache busting
   const [lastSearchTime, setLastSearchTime] = useState<number>(0);
+  const [cacheVersion, setCacheVersion] = useState<number>(1);
+  const [isStaleData, setIsStaleData] = useState<boolean>(false);
+  
+  // Enhanced search features
+  const [searchTerms, setSearchTerms] = useState<string[]>([]);
+  const [recentSearches, setRecentSearches] = useState<string[]>([]);
+  const [searchSuggestions, setSearchSuggestions] = useState<string[]>([]);
+  const [isRealTimeSearch, setIsRealTimeSearch] = useState<boolean>(false);
 
   // Load layers for filtering
   useEffect(() => {
@@ -202,8 +210,12 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
         search: searchQuery || undefined,
         layer: selectedLayer || undefined,
         limit: itemsPerPage,
-        // Cache busting: add timestamp for force refresh or if data is stale
-        ...(forceRefresh || searchTime - lastSearchTime > 30000 ? { _t: searchTime } : {})
+        // Enhanced cache busting: add timestamp for force refresh, stale data, or version change
+        ...(forceRefresh || isStaleData || searchTime - lastSearchTime > 60000 ? { 
+          _t: searchTime, 
+          _v: cacheVersion,
+          _fresh: forceRefresh ? 'true' : undefined 
+        } : {})
       };
 
       console.log('🔍 Search parameters (using working pattern):', searchParams);
@@ -337,8 +349,17 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
     }
   };
 
-  // Wrapper function for backward compatibility
-  const handleSearch = () => performSearch(1);
+  // Enhanced search handler
+  const handleSearch = () => {
+    // Update search history
+    updateSearchHistory(searchQuery);
+    
+    // Clear suggestions
+    setSearchSuggestions([]);
+    
+    // Trigger search
+    performSearch(1);
+  };
 
   // Pagination handlers
   const handlePageChange = (page: number) => {
@@ -366,8 +387,9 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
     performSearch(1);
   };
 
-  // Force refresh handler for cache busting
+  // Enhanced force refresh handler for cache busting
   const handleForceRefresh = () => {
+    invalidateCache();
     performSearch(currentPage, true);
   };
 
@@ -404,6 +426,113 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
     setSelectedSubcategory(event.target.value);
   };
 
+  // Enhanced cache busting functions
+  const invalidateCache = () => {
+    setCacheVersion(prev => prev + 1);
+    setIsStaleData(false);
+  };
+
+  const checkDataFreshness = () => {
+    const currentTime = Date.now();
+    const dataAge = currentTime - lastSearchTime;
+    
+    // Data is considered stale after 2 minutes
+    if (dataAge > 120000) {
+      setIsStaleData(true);
+    }
+    
+    return dataAge < 120000;
+  };
+
+  // Enhanced search term processing
+  const processSearchTerms = (query: string): string[] => {
+    if (!query.trim()) return [];
+    
+    // Split by common delimiters and clean up
+    const terms = query
+      .split(/[\s,;|]+/)
+      .map(term => term.trim().toLowerCase())
+      .filter(term => term.length > 0);
+    
+    return Array.from(new Set(terms)); // Remove duplicates
+  };
+
+  const updateSearchHistory = (query: string) => {
+    if (!query.trim()) return;
+    
+    const newSearches = [query, ...recentSearches.filter(s => s !== query)].slice(0, 5);
+    setRecentSearches(newSearches);
+    
+    // Persist to localStorage
+    localStorage.setItem('nna-recent-searches', JSON.stringify(newSearches));
+  };
+
+  const generateSearchSuggestions = (query: string) => {
+    if (!query.trim() || query.length < 2) {
+      setSearchSuggestions([]);
+      return;
+    }
+
+    // Generate suggestions based on common search patterns
+    const suggestions = [
+      `${query} video`,
+      `${query} asset`,
+      `layer:${query}`,
+      `tag:${query}`,
+      `name:${query}`
+    ].filter(suggestion => 
+      suggestion.toLowerCase() !== query.toLowerCase()
+    ).slice(0, 3);
+
+    setSearchSuggestions(suggestions);
+  };
+
+  // Enhanced search with debouncing for real-time search
+  useEffect(() => {
+    if (!isRealTimeSearch || !searchQuery.trim()) return;
+
+    const timeoutId = setTimeout(() => {
+      handleSearch();
+    }, 500); // 500ms debounce
+
+    return () => clearTimeout(timeoutId);
+  }, [searchQuery, isRealTimeSearch]);
+
+  // Load recent searches from localStorage
+  useEffect(() => {
+    const stored = localStorage.getItem('nna-recent-searches');
+    if (stored) {
+      try {
+        setRecentSearches(JSON.parse(stored));
+      } catch (error) {
+        console.warn('Failed to load recent searches:', error);
+      }
+    }
+  }, []);
+
+  // Periodic data freshness check
+  useEffect(() => {
+    if (!lastSearchTime) return;
+
+    const interval = setInterval(() => {
+      checkDataFreshness();
+    }, 30000); // Check every 30 seconds
+
+    return () => clearInterval(interval);
+  }, [lastSearchTime]);
+
+  // Enhanced search query handler
+  const handleSearchQueryChange = (value: string) => {
+    setSearchQuery(value);
+    
+    // Process search terms
+    const terms = processSearchTerms(value);
+    setSearchTerms(terms);
+    
+    // Generate suggestions
+    generateSearchSuggestions(value);
+  };
+
   return (
     <Box sx={{ width: '100%' }}>
       <Paper elevation={3} sx={{ p: 3, mb: 4 }}>
@@ -411,47 +540,135 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
           Search NNA Assets
         </Typography>
 
-        <Box sx={{ display: 'flex', mb: 2 }}>
-          <TextField
-            fullWidth
-            placeholder="Search assets by name, description, tags..."
-            value={searchQuery}
-            onChange={e => setSearchQuery(e.target.value)}
-            onKeyPress={handleKeyPress}
-            aria-label="Search assets"
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon />
-                </InputAdornment>
-              ),
-              endAdornment: searchQuery && (
-                <InputAdornment position="end">
-                  <IconButton onClick={() => setSearchQuery('')} edge="end">
-                    <ClearIcon />
-                  </IconButton>
-                </InputAdornment>
-              ),
-            }}
-            variant="outlined"
-            size="medium"
-            sx={{ mr: 1 }}
-            disabled={isLoading}
-          />
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={handleSearch}
-            disabled={isLoading}
-            sx={{ minWidth: '120px' }}
-          >
-            {isLoading ? (
-              <CircularProgress size={24} color="inherit" />
-            ) : (
-              'Search'
-            )}
-          </Button>
+        <Box sx={{ position: 'relative', mb: 2 }}>
+          <Box sx={{ display: 'flex' }}>
+            <TextField
+              fullWidth
+              placeholder="Search assets by name, description, tags..."
+              value={searchQuery}
+              onChange={e => handleSearchQueryChange(e.target.value)}
+              onKeyPress={handleKeyPress}
+              aria-label="Search assets"
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon />
+                  </InputAdornment>
+                ),
+                endAdornment: searchQuery && (
+                  <InputAdornment position="end">
+                    <IconButton onClick={() => {
+                      setSearchQuery('');
+                      setSearchTerms([]);
+                      setSearchSuggestions([]);
+                    }} edge="end">
+                      <ClearIcon />
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              }}
+              variant="outlined"
+              size="medium"
+              sx={{ mr: 1 }}
+              disabled={isLoading}
+            />
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={handleSearch}
+              disabled={isLoading}
+              sx={{ minWidth: '120px' }}
+            >
+              {isLoading ? (
+                <CircularProgress size={24} color="inherit" />
+              ) : (
+                'Search'
+              )}
+            </Button>
+          </Box>
+
+          {/* Search Suggestions */}
+          {searchSuggestions.length > 0 && (
+            <Paper 
+              sx={{ 
+                position: 'absolute', 
+                top: '100%', 
+                left: 0, 
+                right: 0, 
+                zIndex: 1000,
+                mt: 0.5,
+                maxHeight: 200,
+                overflow: 'auto'
+              }}
+            >
+              {searchSuggestions.map((suggestion, index) => (
+                <Box
+                  key={index}
+                  sx={{
+                    p: 1.5,
+                    cursor: 'pointer',
+                    '&:hover': { bgcolor: 'action.hover' },
+                    borderBottom: index < searchSuggestions.length - 1 ? '1px solid' : 'none',
+                    borderColor: 'divider'
+                  }}
+                  onClick={() => {
+                    handleSearchQueryChange(suggestion);
+                    setSearchSuggestions([]);
+                    handleSearch();
+                  }}
+                >
+                  <Typography variant="body2">{suggestion}</Typography>
+                </Box>
+              ))}
+            </Paper>
+          )}
         </Box>
+
+        {/* Search Terms Display */}
+        {searchTerms.length > 0 && (
+          <Box sx={{ mb: 2 }}>
+            <Typography variant="caption" color="text.secondary" sx={{ mr: 1 }}>
+              Search terms:
+            </Typography>
+            {searchTerms.map((term, index) => (
+              <Chip
+                key={index}
+                label={term}
+                size="small"
+                variant="outlined"
+                sx={{ mr: 0.5, mb: 0.5 }}
+                onDelete={() => {
+                  const newTerms = searchTerms.filter((_, i) => i !== index);
+                  const newQuery = newTerms.join(' ');
+                  handleSearchQueryChange(newQuery);
+                }}
+              />
+            ))}
+          </Box>
+        )}
+
+        {/* Recent Searches */}
+        {recentSearches.length > 0 && !searchQuery && (
+          <Box sx={{ mb: 2 }}>
+            <Typography variant="caption" color="text.secondary" sx={{ mr: 1 }}>
+              Recent searches:
+            </Typography>
+            {recentSearches.slice(0, 3).map((search, index) => (
+              <Chip
+                key={index}
+                label={search}
+                size="small"
+                variant="outlined"
+                color="primary"
+                sx={{ mr: 0.5, mb: 0.5 }}
+                onClick={() => {
+                  handleSearchQueryChange(search);
+                  handleSearch();
+                }}
+              />
+            ))}
+          </Box>
+        )}
 
         <Box
           sx={{
@@ -480,18 +697,40 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
             </Button>
           </Box>
 
-          <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+          <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', flexWrap: 'wrap' }}>
+            {/* Stale Data Warning */}
+            {isStaleData && (
+              <Chip
+                label="⚠️ Data may be stale"
+                size="small"
+                color="warning"
+                variant="outlined"
+                sx={{ mb: 2 }}
+              />
+            )}
+
             {totalAssets > 0 && (
               <Button
-                variant="outlined"
+                variant={isStaleData ? "contained" : "outlined"}
+                color={isStaleData ? "warning" : "primary"}
                 size="small"
                 onClick={handleForceRefresh}
                 disabled={isLoading}
                 sx={{ mb: 2 }}
               >
-                Refresh
+                {isStaleData ? '🔄 Force Refresh' : 'Refresh'}
               </Button>
             )}
+
+            {/* Real-time Search Toggle */}
+            <Button
+              variant={isRealTimeSearch ? "contained" : "outlined"}
+              size="small"
+              onClick={() => setIsRealTimeSearch(!isRealTimeSearch)}
+              sx={{ mb: 2 }}
+            >
+              {isRealTimeSearch ? '⚡ Live Search' : 'Manual Search'}
+            </Button>
 
             {(searchQuery ||
               selectedLayer ||
