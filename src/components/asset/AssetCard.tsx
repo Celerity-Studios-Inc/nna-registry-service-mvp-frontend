@@ -49,16 +49,14 @@ const AssetCard: React.FC<AssetCardProps> = ({
     
     const assetId = asset._id || asset.id;
     if (assetId) {
-      console.log(`🖱️ Double-click detected on asset card: ${assetId}`);
       navigate(`/assets/${assetId}`);
     } else {
       console.error('Asset ID is undefined, cannot navigate to details page', asset);
     }
   };
 
-  // Enhanced click handler with debugging
+  // Enhanced click handler
   const handleClick = (event: React.MouseEvent) => {
-    console.log(`🖱️ Single click detected on asset card: ${asset._id || asset.id}`);
     if (onClick) {
       onClick();
     }
@@ -227,10 +225,13 @@ const AssetCard: React.FC<AssetCardProps> = ({
         display: 'flex',
         flexDirection: 'column',
         transition: 'transform 0.2s, box-shadow 0.2s',
+        minHeight: '420px', // Ensure consistent card height
         '&:hover': {
           transform: 'translateY(-4px)',
-          boxShadow: 4,
+          boxShadow: 6,
         },
+        borderRadius: 2,
+        overflow: 'hidden'
       }}
     >
       <CardActionArea 
@@ -241,72 +242,112 @@ const AssetCard: React.FC<AssetCardProps> = ({
         {/* Media section with smart thumbnail handling */}
         <Box
           sx={{
-            height: 180,
+            height: 200,
             display: 'flex',
             justifyContent: 'center',
             alignItems: 'center',
-            bgcolor: 'background.default',
+            bgcolor: 'grey.50',
             position: 'relative',
             overflow: 'hidden',
+            borderBottom: '1px solid #e0e0e0'
           }}
         >
           {/* Use AssetThumbnail component for smart video/image handling */}
           <AssetThumbnail 
             asset={asset} 
-            width={180} 
-            height={180} 
+            width={200} 
+            height={200} 
           />
 
-          {/* Layer badge */}
-          <Chip
-            label={asset.layer}
-            size="small"
-            color="primary"
-            sx={{
-              position: 'absolute',
-              top: 8,
-              right: 8,
-              fontWeight: 'bold',
-            }}
-          />
         </Box>
 
         {/* Content */}
-        <CardContent sx={{ flexGrow: 1 }}>
-          <Typography gutterBottom variant="h6" component="div" noWrap>
+        <CardContent sx={{ flexGrow: 1, p: 2 }}>
+          <Typography 
+            gutterBottom 
+            variant="h6" 
+            component="div" 
+            sx={{ 
+              fontSize: '1rem',
+              fontWeight: 600,
+              lineHeight: 1.3,
+              height: '2.6em', // Exactly 2 lines
+              overflow: 'hidden',
+              display: '-webkit-box',
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: 'vertical',
+              mb: 1
+            }}
+          >
             {asset.name}
           </Typography>
 
           <Typography
             variant="body2"
             color="text.secondary"
-            sx={{ mb: 1, fontSize: '0.75rem' }}
+            sx={{ 
+              mb: 1, 
+              fontSize: '0.75rem',
+              fontWeight: 500,
+              color: 'primary.main'
+            }}
           >
             {getTaxonomyLabel()}
           </Typography>
 
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            {truncateDescription(asset.description || '', 100)}
+          <Typography 
+            variant="body2" 
+            color="text.secondary" 
+            sx={{ 
+              mb: 2,
+              height: '3em', // Exactly 3 lines
+              overflow: 'hidden',
+              display: '-webkit-box',
+              WebkitLineClamp: 3,
+              WebkitBoxOrient: 'vertical',
+              lineHeight: 1.4
+            }}
+          >
+            {asset.description || 'No description provided'}
           </Typography>
 
           {/* Tags */}
           {asset.tags && asset.tags.length > 0 && (
-            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mb: 1 }}>
-              {asset.tags.slice(0, 3).map(tag => (
+            <Box sx={{ 
+              display: 'flex', 
+              flexWrap: 'wrap', 
+              gap: 0.5, 
+              mb: 1.5,
+              minHeight: '24px' // Consistent spacing even when no tags
+            }}>
+              {asset.tags.slice(0, 4).map(tag => (
                 <Chip
                   key={tag}
                   label={tag}
                   size="small"
                   variant="outlined"
-                  sx={{ fontSize: '0.7rem' }}
+                  sx={{ 
+                    fontSize: '0.7rem',
+                    height: '20px',
+                    '& .MuiChip-label': {
+                      px: 1
+                    }
+                  }}
                 />
               ))}
-              {asset.tags.length > 3 && (
-                <Tooltip title={asset.tags.slice(3).join(', ')}>
+              {asset.tags.length > 4 && (
+                <Tooltip title={asset.tags.slice(4).join(', ')} arrow>
                   <Chip
-                    label={`+${asset.tags.length - 3}`}
+                    label={`+${asset.tags.length - 4}`}
                     size="small"
-                    sx={{ fontSize: '0.7rem' }}
+                    color="primary"
+                    sx={{ 
+                      fontSize: '0.7rem',
+                      height: '20px',
+                      '& .MuiChip-label': {
+                        px: 1
+                      }
+                    }}
                   />
                 </Tooltip>
               )}
@@ -315,9 +356,21 @@ const AssetCard: React.FC<AssetCardProps> = ({
 
           <Divider sx={{ my: 1 }} />
 
-          <Typography variant="caption" color="text.secondary">
-            Created: {formatDate(asset.createdAt)}
-          </Typography>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Typography variant="caption" color="text.secondary">
+              Created: {formatDate(asset.createdAt)}
+            </Typography>
+            <Chip 
+              label={asset.layer} 
+              size="small" 
+              color="secondary"
+              sx={{ 
+                fontSize: '0.65rem',
+                height: '18px',
+                fontWeight: 'bold'
+              }}
+            />
+          </Box>
         </CardContent>
       </CardActionArea>
 
@@ -340,7 +393,6 @@ const AssetCard: React.FC<AssetCardProps> = ({
                 // Could add an error notification here
               } else {
                 const assetId = asset._id || asset.id;
-                console.log(`Navigating to asset details: ${assetId}`);
               }
             }}
           >

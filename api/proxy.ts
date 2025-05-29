@@ -264,10 +264,7 @@ async function handler(req: VercelRequest, res: VercelResponse) {
     res.status(500).json({ 
       error: 'Internal Server Error', 
       message: errorMessage,
-      stack: errorStack,
-      path: req.url,
-      method: req.method,
-      target: targetUrl
+      stack: errorStack
     });
   }
 };

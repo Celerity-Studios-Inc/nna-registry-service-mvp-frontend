@@ -12,7 +12,6 @@ import { logger } from './logger';
  * @param preserveItems Items to preserve (optional)
  */
 export const resetTaxonomyStorage = (preserveItems: string[] = []) => {
-  console.log('[TAXONOMY RECOVERY] Resetting taxonomy session storage');
   
   const keysToKeep = new Set(preserveItems);
   const keysToRemove: string[] = [];
@@ -40,7 +39,6 @@ export const resetTaxonomyStorage = (preserveItems: string[] = []) => {
   }
   
   // Remove the identified keys
-  console.log(`[TAXONOMY RECOVERY] Removing ${keysToRemove.length} session storage keys`);
   keysToRemove.forEach(key => {
     sessionStorage.removeItem(key);
   });
@@ -53,7 +51,6 @@ export const resetTaxonomyStorage = (preserveItems: string[] = []) => {
  * @param layer The layer code
  */
 export const resetLayerData = (layer: string) => {
-  console.log(`[TAXONOMY RECOVERY] Resetting data for layer: ${layer}`);
   
   const keysToRemove: string[] = [];
   
@@ -75,7 +72,6 @@ export const resetLayerData = (layer: string) => {
   }
   
   // Remove the identified keys
-  console.log(`[TAXONOMY RECOVERY] Removing ${keysToRemove.length} keys for layer ${layer}`);
   keysToRemove.forEach(key => {
     sessionStorage.removeItem(key);
   });
@@ -88,7 +84,6 @@ export const resetLayerData = (layer: string) => {
  * @param layer Optional layer to refresh
  */
 export const forceTaxonomyRefresh = (layer?: string) => {
-  console.log(`[TAXONOMY RECOVERY] Forcing taxonomy refresh${layer ? ` for layer ${layer}` : ''}`);
   
   // Create a unique operation ID for this recovery
   const recoveryId = `recovery_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
@@ -106,7 +101,6 @@ export const forceTaxonomyRefresh = (layer?: string) => {
     
     // Dispatch the event
     window.dispatchEvent(layerChangeEvent);
-    console.log(`[TAXONOMY RECOVERY ${recoveryId}] Dispatched layerChanged event for ${layer}`);
   } else {
     // Create a general taxonomy refresh event
     const refreshEvent = new CustomEvent('taxonomyEmergencyReload', {
@@ -119,7 +113,6 @@ export const forceTaxonomyRefresh = (layer?: string) => {
     
     // Dispatch the event
     window.dispatchEvent(refreshEvent);
-    console.log(`[TAXONOMY RECOVERY ${recoveryId}] Dispatched taxonomyEmergencyReload event`);
   }
   
   return recoveryId;
@@ -131,7 +124,6 @@ export const forceTaxonomyRefresh = (layer?: string) => {
  * @returns Promise that resolves when recovery is complete
  */
 export const performFullRecovery = async (layer?: string): Promise<boolean> => {
-  console.log(`[TAXONOMY RECOVERY] Starting full recovery${layer ? ` for layer ${layer}` : ''}`);
   
   // Step 1: Reset session storage
   if (layer) {

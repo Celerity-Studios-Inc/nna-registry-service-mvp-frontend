@@ -29,8 +29,6 @@ export const generateVideoThumbnail = (
     video.muted = true; // Required for autoplay policies
     video.preload = 'metadata';
     
-    console.log(`🎬 Starting thumbnail generation for: ${videoUrl}`);
-    
     // Set up canvas for thumbnail generation
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
@@ -57,13 +55,11 @@ export const generateVideoThumbnail = (
       hasResolved = true;
 
       try {
-        console.log(`🖼️ Drawing video frame to canvas for ${videoUrl}`);
         // Draw video frame to canvas
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
         
         // Convert to base64 data URL
         const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
-        console.log(`✅ Successfully generated thumbnail data URL (${dataUrl.length} chars)`);
         
         // Cache the result
         thumbnailCache.set(cacheKey, dataUrl);
@@ -71,7 +67,7 @@ export const generateVideoThumbnail = (
         cleanup();
         resolve(dataUrl);
       } catch (error) {
-        console.error(`❌ Canvas drawing failed for ${videoUrl}:`, error);
+        console.error(`Canvas drawing failed for video:`, error);
         cleanup();
         reject(error);
       }
@@ -79,11 +75,9 @@ export const generateVideoThumbnail = (
 
     // Handle successful metadata load
     video.addEventListener('loadedmetadata', () => {
-      console.log(`📹 Video metadata loaded for ${videoUrl}, duration: ${video.duration}s`);
       // Seek to a better position in the video to avoid black frames
       // Try 25% into the video, but not less than 0.5s and not more than 3s
       const seekTime = Math.max(0.5, Math.min(3, video.duration * 0.25));
-      console.log(`⏰ Seeking to ${seekTime}s (25% of duration) for thumbnail capture`);
       video.currentTime = seekTime;
     });
 

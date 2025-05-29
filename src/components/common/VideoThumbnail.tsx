@@ -31,11 +31,9 @@ const VideoThumbnail: React.FC<VideoThumbnailProps> = ({
 }) => {
   // Initialize state from cache if available
   const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(() => {
-    const cached = asset.gcpStorageUrl && isVideoUrl(asset.gcpStorageUrl) 
+    return asset.gcpStorageUrl && isVideoUrl(asset.gcpStorageUrl) 
       ? thumbnailCache.get(asset.gcpStorageUrl) || null 
       : null;
-    console.log(`🔄 VideoThumbnail init for ${asset.name}, cached: ${cached ? 'YES' : 'NO'}, isVideo: ${isVideoUrl(asset.gcpStorageUrl || '')}`);
-    return cached;
   });
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [hasError, setHasError] = useState<boolean>(false);
@@ -49,33 +47,24 @@ const VideoThumbnail: React.FC<VideoThumbnailProps> = ({
     // Check cache first
     const cachedThumbnail = thumbnailCache.get(asset.gcpStorageUrl);
     if (cachedThumbnail) {
-      console.log(`🏪 Using cached thumbnail for ${asset.name}`);
       setThumbnailUrl(cachedThumbnail);
       setIsLoading(false);
       setHasError(false);
       return;
     }
 
-    console.log(`🎬 Attempting to generate thumbnail for ${asset.name}:`, asset.gcpStorageUrl);
     setIsLoading(true);
     setHasError(false);
 
     generateVideoThumbnail(asset.gcpStorageUrl)
       .then((dataUrl) => {
-        console.log(`✅ Successfully generated thumbnail for ${asset.name}`);
-        console.log(`📸 Thumbnail data URL length: ${dataUrl?.length || 0} chars`);
-        console.log(`📸 Data URL preview: ${dataUrl?.substring(0, 50)}...`);
-        console.log(`📸 Setting thumbnail URL state for ${asset.name}`);
-        
         // Cache the thumbnail
         thumbnailCache.set(asset.gcpStorageUrl, dataUrl);
-        console.log(`💾 Cached thumbnail for ${asset.name}`);
-        
         setThumbnailUrl(dataUrl);
         setIsLoading(false);
       })
       .catch((error) => {
-        console.warn(`❌ Failed to generate thumbnail for ${asset.name}:`, error);
+        console.warn(`Failed to generate thumbnail for ${asset.name}:`, error);
         setHasError(true);
         setIsLoading(false);
       });
@@ -125,8 +114,6 @@ const VideoThumbnail: React.FC<VideoThumbnailProps> = ({
 
   // Show generated thumbnail
   if (thumbnailUrl && !hasError) {
-    console.log(`🖼️ Rendering thumbnail for ${asset.name}, URL length: ${thumbnailUrl.length}`);
-    console.log(`🖼️ Thumbnail src preview: ${thumbnailUrl.substring(0, 50)}...`);
     return (
       <Box sx={containerStyle}>
         <img
@@ -138,13 +125,8 @@ const VideoThumbnail: React.FC<VideoThumbnailProps> = ({
             objectFit: 'cover',
             borderRadius: '4px'
           }}
-          onLoad={() => {
-            console.log(`✅ Thumbnail image loaded successfully for ${asset.name}`);
-          }}
           onError={(e) => {
-            console.warn(`🚨 Thumbnail image failed to load for ${asset.name}:`, e);
-            console.warn(`🚨 Failed image src length: ${thumbnailUrl?.length || 0}`);
-            console.warn(`🚨 Failed image src preview: ${thumbnailUrl?.substring(0, 100)}...`);
+            console.warn(`Thumbnail failed to load for ${asset.name}`);
             setHasError(true);
           }}
         />
@@ -168,7 +150,6 @@ const VideoThumbnail: React.FC<VideoThumbnailProps> = ({
   // Show enhanced fallback icon ONLY for errors or non-video assets
   // Don't show fallback if we're still loading or if this is a video that should have a thumbnail
   if (showFallbackIcon && !isLoading && (!isVideoUrl(asset.gcpStorageUrl || '') || hasError)) {
-    console.log(`🔄 Showing EnhancedLayerIcon fallback for ${asset.name} - thumbnailUrl: ${thumbnailUrl ? 'exists' : 'null'}, hasError: ${hasError}, isLoading: ${isLoading}, isVideo: ${isVideoUrl(asset.gcpStorageUrl || '')}`);
     return (
       <EnhancedLayerIcon 
         layer={asset.layer}
@@ -181,7 +162,6 @@ const VideoThumbnail: React.FC<VideoThumbnailProps> = ({
 
   // Return a loading placeholder for video assets that are generating thumbnails
   if (isVideoUrl(asset.gcpStorageUrl || '') && !thumbnailUrl && !hasError) {
-    console.log(`⏳ Waiting for video thumbnail generation for ${asset.name}`);
     return (
       <Box sx={containerStyle}>
         <CircularProgress size={Math.min(width, height) * 0.4} />

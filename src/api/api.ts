@@ -36,15 +36,11 @@ try {
   const localStorageMockOverride = localStorage.getItem('forceMockApi');
   if (localStorageMockOverride !== null) {
     apiConfig.useMockApi = localStorageMockOverride === 'true';
-    environmentSafeLog(
-      `Using localStorage override for mock API: ${apiConfig.useMockApi}`
-    );
   }
 } catch (e) {
-  environmentSafeWarn('Unable to access localStorage for mock API setting');
+  // Unable to access localStorage for mock API setting
 }
 
-environmentSafeLog('API Configuration:', apiConfig);
 
 // Create an Axios instance
 const api = axios.create({
@@ -56,26 +52,7 @@ const api = axios.create({
   withCredentials: false,
 });
 
-// Log API configuration in a visible way
-environmentSafeLog(`🔄 API Client configured with baseURL: ${apiConfig.baseURL}`);
 
-// Add request logging to see all outgoing requests
-api.interceptors.request.use(request => {
-  if (isDebuggingAllowed()) {
-    environmentSafeLog(
-      `🔼 API Request: ${request.method?.toUpperCase()} ${request.baseURL}${
-        request.url
-      }`
-    );
-    environmentSafeLog(
-      'Full Request URL:',
-      `${window.location.origin}${request.baseURL}${request.url}`
-    );
-    environmentSafeLog('Request headers:', request.headers);
-    environmentSafeLog('Request data:', request.data);
-  }
-  return request;
-});
 
 // Add request interceptor to include auth token
 api.interceptors.request.use(
@@ -89,16 +66,12 @@ api.interceptors.request.use(
       // Clean any whitespace/newlines from the token
       const cleanToken = token.replace(/\s+/g, '');
       config.headers.Authorization = `Bearer ${cleanToken}`;
-      environmentSafeLog('🔑 Added auth token to request');
     } else {
-      environmentSafeWarn('⚠️ No auth token found in localStorage!');
-
       // For development/debugging in production environment
       // Create a test token if in development mode
       if (process.env.NODE_ENV === 'development') {
         // Only add this for certain endpoints where auth is required
         if (config.url?.includes('/assets')) {
-          environmentSafeLog('🔧 Adding test token for development');
           config.headers.Authorization = 'Bearer test-development-token';
         }
       }
@@ -106,7 +79,7 @@ api.interceptors.request.use(
     return config;
   },
   error => {
-    environmentSafeError('Error in request interceptor:', error);
+    console.error('Error in request interceptor:', error);
     return Promise.reject(error);
   }
 );
@@ -117,23 +90,12 @@ export let isBackendAvailable = true;
 // Add response interceptor to handle common error cases
 api.interceptors.response.use(
   response => {
-    if (isDebuggingAllowed()) {
-      environmentSafeLog(`🔽 API Response: ${response.status} ${response.statusText}`);
-      environmentSafeLog('Response headers:', response.headers);
-      environmentSafeLog(
-        'Response data preview:',
-        JSON.stringify(response.data).substring(0, 200) +
-          (JSON.stringify(response.data).length > 200 ? '...' : '')
-      );
-    }
-
     // If we get a successful response, the backend is available
     isBackendAvailable = true;
 
     return response;
   },
   error => {
-    environmentSafeError('❌ API Error:', error.message);
 
     // Extract useful error information
     let errorMessage = 'An unknown error occurred';
@@ -141,15 +103,9 @@ api.interceptors.response.use(
     let severity: 'error' | 'warning' | 'info' = 'error';
 
     if (error.response) {
-      environmentSafeLog(
-        `Error response status: ${error.response.status} ${error.response.statusText}`
-      );
-      environmentSafeLog('Error response headers:', error.response.headers);
-
       try {
         // Try to log response data if available
         if (error.response.data) {
-          environmentSafeLog('Error response data:', error.response.data);
 
           // Try to extract error message from various API formats
           if (typeof error.response.data === 'string') {
@@ -166,7 +122,7 @@ api.interceptors.response.use(
           }
         }
       } catch (e) {
-        environmentSafeError('Unable to log error response data:', e);
+        // Unable to log error response data
       }
 
       // Handle 401 Unauthorized errors
@@ -224,7 +180,7 @@ api.interceptors.response.use(
       errorMessage =
         'Unable to connect to the server. Please check your internet connection.';
       console.warn(
-        '⚠️ Backend appears to be unavailable. Falling back to mock data for future requests.'
+        'Backend appears to be unavailable. Falling back to mock data for future requests.'
       );
     }
 

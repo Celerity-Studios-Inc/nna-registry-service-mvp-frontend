@@ -645,9 +645,6 @@ const ReviewSubmit: React.FC<ReviewSubmitProps> = ({
                                   );
                                 if (storedSubcategory) {
                                   onEditStep(1); // Go back to taxonomy selection step
-                                  console.log(
-                                    'Found stored subcategory, redirecting to selection step'
-                                  );
                                 } else {
                                   onEditStep(1); // Go back to taxonomy selection step anyway
                                 }

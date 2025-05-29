@@ -46,9 +46,7 @@ const AssetDetail: React.FC = () => {
         setLoading(true);
         if (!id) throw new Error('Asset ID is required');
 
-        console.log(`Loading asset details for ID: ${id}`);
         const loadedAsset = await assetService.getAssetById(id);
-        console.log('Asset loaded successfully:', loadedAsset);
         setAsset(loadedAsset);
         setError(null);
       } catch (err) {
@@ -156,8 +154,6 @@ const AssetDetail: React.FC = () => {
     asset.metadata?.machineFriendlyAddress ||
     asset.metadata?.mfa;
 
-  console.log(`Asset detail showing HFN: ${hfn}, MFA: ${mfa}`);
-
   // If we don't have a valid MFA, log a warning
   if (!mfa) {
     console.warn(
@@ -264,42 +260,99 @@ const AssetDetail: React.FC = () => {
           {/* Right column with details */}
           <Grid item xs={12} md={7}>
             {/* NNA Address section */}
-            <Paper variant="outlined" sx={{ p: 2, mb: 3 }}>
-              <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
-                NNA Addressing
+            <Paper 
+              variant="outlined" 
+              sx={{ 
+                p: 3, 
+                mb: 3, 
+                background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
+                border: '1px solid #e0e7ff'
+              }}
+            >
+              <Typography 
+                variant="h6" 
+                fontWeight="bold" 
+                gutterBottom
+                sx={{ color: 'primary.main', mb: 2 }}
+              >
+                🔗 NNA Addressing
               </Typography>
-              <Grid container spacing={2}>
-                <Grid item xs={12} sm={6}>
-                  <Typography variant="body2" color="text.secondary">
-                    Human-Friendly Name (HFN)
-                  </Typography>
-                  <Typography
-                    variant="body1"
-                    fontWeight="medium"
-                    sx={{ wordBreak: 'break-all' }}
-                  >
-                    {hfn || 'Not available'}
-                  </Typography>
+              <Grid container spacing={3}>
+                <Grid item xs={12} lg={6}>
+                  <Box sx={{ 
+                    p: 2, 
+                    bgcolor: 'background.paper', 
+                    borderRadius: 2,
+                    border: '1px solid #e3f2fd'
+                  }}>
+                    <Typography 
+                      variant="body2" 
+                      color="text.secondary"
+                      sx={{ mb: 1, fontWeight: 600 }}
+                    >
+                      Human-Friendly Name (HFN)
+                    </Typography>
+                    <Typography
+                      variant="body1"
+                      fontWeight="medium"
+                      sx={{ 
+                        wordBreak: 'break-word',
+                        fontFamily: 'monospace',
+                        fontSize: '0.95rem',
+                        color: 'success.main',
+                        bgcolor: '#f8f9fa',
+                        p: 1.5,
+                        borderRadius: 1,
+                        border: '1px dashed #dee2e6'
+                      }}
+                    >
+                      {hfn || 'Not available'}
+                    </Typography>
+                  </Box>
                 </Grid>
-                <Grid item xs={12} sm={6}>
-                  <Typography variant="body2" color="text.secondary">
-                    Machine-Friendly Address (MFA)
-                  </Typography>
-                  <Typography
-                    variant="body1"
-                    fontFamily="monospace"
-                    sx={{ wordBreak: 'break-all' }}
-                  >
-                    {mfa || 'Not available'}
-                  </Typography>
+                <Grid item xs={12} lg={6}>
+                  <Box sx={{ 
+                    p: 2, 
+                    bgcolor: 'background.paper', 
+                    borderRadius: 2,
+                    border: '1px solid #e3f2fd'
+                  }}>
+                    <Typography 
+                      variant="body2" 
+                      color="text.secondary"
+                      sx={{ mb: 1, fontWeight: 600 }}
+                    >
+                      Machine-Friendly Address (MFA)
+                    </Typography>
+                    <Typography
+                      variant="body1"
+                      fontFamily="monospace"
+                      sx={{ 
+                        wordBreak: 'break-word',
+                        fontSize: '0.95rem',
+                        color: 'info.main',
+                        bgcolor: '#f8f9fa',
+                        p: 1.5,
+                        borderRadius: 1,
+                        border: '1px dashed #dee2e6'
+                      }}
+                    >
+                      {mfa || 'Not available'}
+                    </Typography>
+                  </Box>
                 </Grid>
               </Grid>
             </Paper>
 
             {/* Basic Details */}
-            <Paper variant="outlined" sx={{ p: 2, mb: 3 }}>
-              <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
-                Asset Details
+            <Paper variant="outlined" sx={{ p: 3, mb: 3 }}>
+              <Typography 
+                variant="h6" 
+                fontWeight="bold" 
+                gutterBottom
+                sx={{ color: 'text.primary', mb: 2 }}
+              >
+                📋 Asset Details
               </Typography>
               <List disablePadding>
                 <ListItem disablePadding sx={{ py: 1 }}>
@@ -441,19 +494,39 @@ const AssetDetail: React.FC = () => {
           {/* Metadata section at bottom */}
           {asset.metadata && Object.keys(asset.metadata).length > 0 && (
             <Grid item xs={12}>
-              <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
-                Additional Metadata
-              </Typography>
-              <Paper variant="outlined" sx={{ p: 2 }}>
-                <pre
-                  style={{
-                    margin: 0,
-                    whiteSpace: 'pre-wrap',
-                    overflowX: 'auto',
+              <Paper variant="outlined" sx={{ p: 3 }}>
+                <Typography 
+                  variant="h6" 
+                  fontWeight="bold" 
+                  gutterBottom
+                  sx={{ color: 'text.primary', mb: 2 }}
+                >
+                  🔧 Additional Metadata
+                </Typography>
+                <Box
+                  sx={{
+                    bgcolor: '#f8f9fa',
+                    borderRadius: 2,
+                    border: '1px solid #e9ecef',
+                    overflow: 'hidden'
                   }}
                 >
-                  {JSON.stringify(asset.metadata, null, 2)}
-                </pre>
+                  <pre
+                    style={{
+                      margin: 0,
+                      padding: '16px',
+                      whiteSpace: 'pre-wrap',
+                      overflowX: 'auto',
+                      fontFamily: 'Monaco, "Roboto Mono", monospace',
+                      fontSize: '0.875rem',
+                      lineHeight: 1.6,
+                      color: '#495057',
+                      background: 'transparent'
+                    }}
+                  >
+                    {JSON.stringify(asset.metadata, null, 2)}
+                  </pre>
+                </Box>
               </Paper>
             </Grid>
           )}

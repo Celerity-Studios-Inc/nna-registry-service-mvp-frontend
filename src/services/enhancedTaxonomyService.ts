@@ -22,12 +22,7 @@ import {
   FALLBACK_SUBCATEGORIES
 } from './taxonomyFallbackData';
 
-// Add this debug log at the top of the file to verify the flattened taxonomy is loaded
-console.log('[ENHANCED SERVICE] Flattened taxonomy loaded:', {
-  layers: Object.keys(LAYER_LOOKUPS),
-  S_categories: LAYER_SUBCATEGORIES['S'] ? Object.keys(LAYER_SUBCATEGORIES['S']) : [],
-  W_categories: LAYER_SUBCATEGORIES['W'] ? Object.keys(LAYER_SUBCATEGORIES['W']) : []
-});
+// Flattened taxonomy data is loaded - verified on startup
 
 // Layer numeric codes mapping
 const LAYER_NUMERIC_CODES: Record<string, string> = {

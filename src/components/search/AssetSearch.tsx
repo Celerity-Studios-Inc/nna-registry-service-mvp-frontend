@@ -512,9 +512,24 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
         {showSortControls && (
           <Box sx={{ mb: 3 }}>
             <Divider sx={{ mb: 2 }} />
-            <Typography variant="subtitle2" gutterBottom>
-              Sort Results
-            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+              <Typography variant="subtitle2" sx={{ mr: 2 }}>
+                🔄 Sort Results
+              </Typography>
+              <Chip 
+                label={sortBy === 'createdAt' ? 'By Date' : sortBy === 'name' ? 'By Name' : `By ${sortBy}`} 
+                size="small" 
+                color="primary"
+                variant="filled"
+              />
+              <Chip 
+                label={sortOrder === 'asc' ? '⬆️ Ascending' : '⬇️ Descending'} 
+                size="small" 
+                color="secondary"
+                variant="outlined"
+                sx={{ ml: 1 }}
+              />
+            </Box>
             <Grid container spacing={2}>
               <Grid item xs={12} sm={6}>
                 <FormControl fullWidth>
@@ -523,12 +538,18 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
                     value={sortBy}
                     label="Sort By"
                     onChange={(e) => handleSortChange(e.target.value)}
+                    sx={{
+                      '& .MuiSelect-select': {
+                        display: 'flex',
+                        alignItems: 'center'
+                      }
+                    }}
                   >
-                    <MenuItem value="createdAt">Creation Date</MenuItem>
-                    <MenuItem value="name">Asset Name</MenuItem>
-                    <MenuItem value="layer">Layer</MenuItem>
-                    <MenuItem value="category">Category</MenuItem>
-                    <MenuItem value="updatedAt">Last Modified</MenuItem>
+                    <MenuItem value="createdAt">📅 Creation Date</MenuItem>
+                    <MenuItem value="name">🔤 Asset Name</MenuItem>
+                    <MenuItem value="layer">🏷️ Layer</MenuItem>
+                    <MenuItem value="category">📂 Category</MenuItem>
+                    <MenuItem value="updatedAt">⏰ Last Modified</MenuItem>
                   </Select>
                 </FormControl>
               </Grid>
@@ -657,9 +678,27 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
               variant="outlined"
             />
           </Box>
-          <Grid container spacing={3}>
+          <Grid 
+            container 
+            spacing={{ xs: 2, sm: 3, md: 3 }} 
+            sx={{ mt: 2 }}
+          >
             {searchResults.map(asset => (
-              <Grid item xs={12} sm={6} md={4} key={asset.id}>
+              <Grid 
+                item 
+                xs={12} 
+                sm={6} 
+                md={4} 
+                lg={3} 
+                xl={3}
+                key={asset.id}
+                sx={{
+                  display: 'flex',
+                  '& > *': {
+                    width: '100%'
+                  }
+                }}
+              >
                 <AssetCard asset={asset} />
               </Grid>
             ))}
