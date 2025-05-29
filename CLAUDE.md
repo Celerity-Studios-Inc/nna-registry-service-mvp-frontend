@@ -991,9 +991,23 @@ The following layers require datasets/collections and will use the composite wor
 
 The composite assets feature is ready for integration and will enable the creation of complex multi-layer assets as required by the NNA Framework specifications.
 
-## Current Status (May 28, 2025)
+## Current Status (May 28-29, 2025)
 
-**Browse Assets Search Fixed - commit 7ebdd8b**
+**Video Thumbnail Enhancement - commit 3d0a4b0** (IN PROGRESS)
+- **Problem**: Video assets (M, W, C layers) showing black thumbnails instead of actual video frames
+- **Root Cause**: CORS restrictions from Google Cloud Storage blocking canvas-based video thumbnail generation
+- **Solution**: Implemented comprehensive video thumbnail system with enhanced debugging and fallback
+- **Technical Implementation**:
+  - ✅ Created `VideoThumbnail.tsx` component with HTML5 canvas frame capture
+  - ✅ Built `AssetThumbnail.tsx` smart component handling both images and videos
+  - ✅ Added `videoThumbnail.ts` utility with caching and error handling
+  - ✅ Created `EnhancedLayerIcon.tsx` for beautiful fallback icons when generation fails
+  - ✅ Comprehensive debugging logs for diagnosing CORS and loading issues
+- **Integration Points**: AssetCard, CompositeAssetSelection, AssetSearch components
+- **Status**: ⏳ **Testing in progress** - CI/CD #521 deployed with debug logging
+- **Next**: Resume testing tomorrow to analyze console logs and CORS behavior
+
+**Browse Assets Search Fixed - commit 7ebdd8b** ✅ **COMPLETE**
 - **Problem**: Browse Assets search was failing with 500 errors while composite asset search was working perfectly
 - **Root Cause**: Browse Assets used `assetService.getAssets()` with unsupported backend parameters (sortBy, sortOrder, page), while composite search used direct axios calls with simple parameters
 - **Solution**: Aligned Browse Assets search with the working composite search API pattern
@@ -1004,7 +1018,7 @@ The composite assets feature is ready for integration and will enable the creati
   - ✅ Proper fallback: proxy → direct backend → error handling
   - ✅ Normalizes asset data structure for consistent frontend display
 - **Verification**: ✅ `CI=false npm run build` succeeds with only warnings
-- **Result**: Browse Assets now returns the same 213+ assets as composite search
+- **Result**: ✅ Browse Assets now returns the same 213+ assets as composite search
 - **File Modified**: `/src/components/search/AssetSearch.tsx` - Complete API pattern alignment
 
 **Previous Stable State - commit 1379b88**
