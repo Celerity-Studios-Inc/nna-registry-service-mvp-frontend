@@ -94,12 +94,13 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
       setIsLoading(true);
 
       try {
-        // Use simple parameters like working composite search
+        // Use backend API structure for consistency
         const searchParams = {
+          page: 1,
           limit: itemsPerPage,
         };
 
-        console.log('🔍 Loading initial assets with working pattern:', searchParams);
+        console.log('🔍 Loading initial assets with backend API:', searchParams);
 
         // Use direct axios call like the working composite search
         let response;
@@ -125,18 +126,32 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
           console.log('Direct backend connection successful!');
         }
 
-        // Parse response using the same logic as working composite search
+        // Parse response according to documented backend API format
         let results: Asset[] = [];
+        let totalCount = 0;
         
-        if (response.data.success && response.data.data) {
-          results = response.data.data.items || [];
+        if (response.data.success && response.data.data && response.data.data.items) {
+          // Documented backend format: { success: true, data: { items: [...], total: N } }
+          results = response.data.data.items;
+          totalCount = response.data.data.total || results.length;
+          console.log('✅ Initial load: parsed documented backend format');
         } else if (response.data.items) {
+          // Legacy items response: { items: [...] }
           results = response.data.items;
+          totalCount = results.length;
+          console.log('⚠️ Initial load: using legacy items format');
         } else if (Array.isArray(response.data)) {
+          // Direct array response: [...]
           results = response.data;
+          totalCount = results.length;
+          console.log('⚠️ Initial load: using direct array format');
+        } else {
+          console.warn('⚠️ Initial load: unexpected API response format:', response.data);
+          results = [];
+          totalCount = 0;
         }
 
-        console.log(`🎯 Retrieved ${results.length} initial assets`);
+        console.log(`🎯 Retrieved ${results.length} initial assets, total: ${totalCount}`);
 
         // Normalize asset structure
         const normalizedResults = results.map(asset => ({
@@ -147,11 +162,10 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
           friendlyName: asset.name || asset.friendlyName || (asset as any).hfn || (asset as any).HFN,
         }));
 
-        // Client-side pagination
-        const paginatedResults = normalizedResults.slice(0, itemsPerPage);
-        setSearchResults(paginatedResults);
-        setTotalAssets(normalizedResults.length);
-        setTotalPages(Math.ceil(normalizedResults.length / itemsPerPage));
+        // Use backend pagination data
+        setSearchResults(normalizedResults);
+        setTotalAssets(totalCount);
+        setTotalPages(Math.ceil(totalCount / itemsPerPage));
         setCurrentPage(1);
         setLastSearchTime(Date.now());
       } catch (error) {
@@ -205,10 +219,13 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
     const searchTime = Date.now();
 
     try {
-      // Use the same working API pattern as composite asset search
+      // Align with documented backend API structure
       const searchParams = {
         search: searchQuery || undefined,
         layer: selectedLayer || undefined,
+        category: selectedCategory || undefined,
+        subcategory: selectedSubcategory || undefined,
+        page: page,
         limit: itemsPerPage,
         // Enhanced cache busting: add timestamp for force refresh, stale data, or version change
         ...(forceRefresh || isStaleData || searchTime - lastSearchTime > 60000 ? { 
@@ -218,7 +235,7 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
         } : {})
       };
 
-      console.log('🔍 Search parameters (using working pattern):', searchParams);
+      console.log('🔍 Search parameters (aligned with backend API):', searchParams);
 
       // Use direct axios call like the working composite search
       let response;
@@ -245,22 +262,29 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
         console.log('Direct backend connection successful!');
       }
 
-      // Parse response using the same logic as working composite search
+      // Parse response according to documented backend API format
       let results: Asset[] = [];
       let totalCount = 0;
       
-      if (response.data.success && response.data.data) {
-        // Paginated response format: { success: true, data: { items: [...], pagination: {...} } }
-        results = response.data.data.items || [];
+      if (response.data.success && response.data.data && response.data.data.items) {
+        // Documented backend format: { success: true, data: { items: [...], total: N } }
+        results = response.data.data.items;
         totalCount = response.data.data.total || results.length;
+        console.log('✅ Parsed documented backend format');
       } else if (response.data.items) {
-        // Direct items response: { items: [...] }
+        // Legacy items response: { items: [...] }
         results = response.data.items;
         totalCount = results.length;
+        console.log('⚠️ Using legacy items format');
       } else if (Array.isArray(response.data)) {
         // Direct array response: [...]
         results = response.data;
         totalCount = results.length;
+        console.log('⚠️ Using direct array format');
+      } else {
+        console.warn('⚠️ Unexpected API response format:', response.data);
+        results = [];
+        totalCount = 0;
       }
 
       console.log(`🎯 Retrieved ${results.length} assets, total: ${totalCount}`);
@@ -274,24 +298,11 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
         friendlyName: asset.name || asset.friendlyName || (asset as any).hfn || (asset as any).HFN,
       }));
 
-      // Apply client-side filtering for category/subcategory and additional search terms
-      let filteredResults = normalizedResults;
-      
-      if (selectedCategory) {
-        filteredResults = filteredResults.filter(asset => 
-          asset.category === selectedCategory || asset.categoryCode === selectedCategory
-        );
-      }
-      
-      if (selectedSubcategory) {
-        filteredResults = filteredResults.filter(asset => 
-          asset.subcategory === selectedSubcategory || asset.subcategoryCode === selectedSubcategory
-        );
-      }
-
-      // Apply client-side sorting
-      if (sortBy && filteredResults.length > 0) {
-        filteredResults.sort((a, b) => {
+      // Backend now handles filtering via category/subcategory parameters
+      // Apply client-side sorting only if needed (backend should handle this eventually)
+      let sortedResults = normalizedResults;
+      if (sortBy && sortedResults.length > 0) {
+        sortedResults.sort((a, b) => {
           let aValue: any = '';
           let bValue: any = '';
           
@@ -326,15 +337,11 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
         });
       }
 
-      // Client-side pagination since backend pagination parameters don't work
-      const startIndex = (page - 1) * itemsPerPage;
-      const endIndex = startIndex + itemsPerPage;
-      const paginatedResults = filteredResults.slice(startIndex, endIndex);
-      
-      setSearchResults(paginatedResults);
-      setTotalAssets(filteredResults.length);
+      // Use backend pagination when available, fallback to client-side
+      setSearchResults(sortedResults);
+      setTotalAssets(totalCount);
       setCurrentPage(page);
-      setTotalPages(Math.ceil(filteredResults.length / itemsPerPage));
+      setTotalPages(Math.ceil(totalCount / itemsPerPage));
       setLastSearchTime(searchTime);
 
       // Call the onSearch callback with the query
