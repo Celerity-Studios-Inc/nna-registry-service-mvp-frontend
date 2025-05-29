@@ -10,6 +10,9 @@ import { generateVideoThumbnail, isVideoUrl } from '../../utils/videoThumbnail';
 import { Asset } from '../../types/asset.types';
 import EnhancedLayerIcon from './EnhancedLayerIcon';
 
+// Global cache for video thumbnails to persist across re-renders
+const thumbnailCache = new Map<string, string>();
+
 interface VideoThumbnailProps {
   asset: Asset;
   width?: number;
@@ -26,13 +29,28 @@ const VideoThumbnail: React.FC<VideoThumbnailProps> = ({
   height = 40,
   showFallbackIcon = true,
 }) => {
-  const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(null);
+  // Initialize state from cache if available
+  const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(() => {
+    return asset.gcpStorageUrl && isVideoUrl(asset.gcpStorageUrl) 
+      ? thumbnailCache.get(asset.gcpStorageUrl) || null 
+      : null;
+  });
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [hasError, setHasError] = useState<boolean>(false);
 
   // Generate thumbnail when component mounts
   useEffect(() => {
     if (!asset.gcpStorageUrl || !isVideoUrl(asset.gcpStorageUrl)) {
+      return;
+    }
+
+    // Check cache first
+    const cachedThumbnail = thumbnailCache.get(asset.gcpStorageUrl);
+    if (cachedThumbnail) {
+      console.log(`🏪 Using cached thumbnail for ${asset.name}`);
+      setThumbnailUrl(cachedThumbnail);
+      setIsLoading(false);
+      setHasError(false);
       return;
     }
 
@@ -45,6 +63,11 @@ const VideoThumbnail: React.FC<VideoThumbnailProps> = ({
         console.log(`✅ Successfully generated thumbnail for ${asset.name}`);
         console.log(`📸 Thumbnail data URL length: ${dataUrl?.length || 0} chars`);
         console.log(`📸 Setting thumbnail URL state for ${asset.name}`);
+        
+        // Cache the thumbnail
+        thumbnailCache.set(asset.gcpStorageUrl, dataUrl);
+        console.log(`💾 Cached thumbnail for ${asset.name}`);
+        
         setThumbnailUrl(dataUrl);
         setIsLoading(false);
       })
