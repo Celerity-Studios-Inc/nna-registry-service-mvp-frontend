@@ -80,21 +80,29 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
 
   // Load initial assets when component mounts
   useEffect(() => {
-    // Load initial assets using the enhanced search function
+    // Perform initial load with backward compatibility
     const loadInitialAssets = async () => {
       setIsLoading(true);
       const searchTime = Date.now();
 
       try {
-        const searchParams: AssetSearchParams = {
+        // Try enhanced parameters first
+        let searchParams: AssetSearchParams = {
           page: 1,
           limit: itemsPerPage,
           sort: sortBy,
           order: sortOrder,
         };
 
-        console.log('🔍 Loading initial assets with params:', searchParams);
-        const results = await assetService.getAssets(searchParams);
+        console.log('🔍 Loading initial assets with enhanced params:', searchParams);
+        let results = await assetService.getAssets(searchParams);
+        
+        // If enhanced search failed, try basic search (no parameters)
+        if (!results || !results.data || (results as any).error === '500_UNSUPPORTED_PARAMS') {
+          console.log('⚠️ Enhanced initial load failed, falling back to basic...');
+          results = await assetService.getAssets({});
+          searchParams = {}; // Update for pagination logic
+        }
 
         if (results && results.data) {
           let assetResults: Asset[] = [];
@@ -117,10 +125,22 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
             totalCount = dataWithItems.total || dataWithItems.items.length;
           }
 
-          setSearchResults(assetResults);
-          setTotalAssets(totalCount);
+          // Apply client-side pagination if backend doesn't support it
+          const usedPagination = searchParams.page !== undefined;
+          if (usedPagination && totalCount > 0) {
+            // Backend pagination working
+            setSearchResults(assetResults);
+            setTotalAssets(totalCount);
+            setTotalPages(Math.ceil(totalCount / itemsPerPage));
+          } else {
+            // Client-side pagination
+            const paginatedResults = assetResults.slice(0, itemsPerPage);
+            setSearchResults(paginatedResults);
+            setTotalAssets(assetResults.length);
+            setTotalPages(Math.ceil(assetResults.length / itemsPerPage));
+          }
+          
           setCurrentPage(1);
-          setTotalPages(Math.ceil(totalCount / itemsPerPage));
           setLastSearchTime(searchTime);
         }
       } catch (error) {
@@ -134,7 +154,7 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
     };
 
     loadInitialAssets();
-  }, [itemsPerPage, sortBy, sortOrder]);
+  }, []);
 
   // Load categories when layer changes
   useEffect(() => {
@@ -174,8 +194,8 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
     const searchTime = Date.now();
 
     try {
-      // Enhanced search with pagination, sorting, and cache-busting
-      const searchParams: AssetSearchParams = {
+      // Try enhanced search first, fall back to basic on failure
+      let searchParams: AssetSearchParams = {
         search: searchQuery || undefined,
         layer: selectedLayer || undefined,
         category: selectedCategory || undefined,
@@ -188,10 +208,30 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
         ...(forceRefresh || searchTime - lastSearchTime > 30000 ? { _t: searchTime } : {})
       };
 
-      console.log('🔍 Search parameters:', searchParams);
+      console.log('🔍 Enhanced search parameters:', searchParams);
 
       // Call the search API with enhanced parameters
-      const results = await assetService.getAssets(searchParams);
+      let results = await assetService.getAssets(searchParams);
+      
+      // If enhanced search failed with 500 error, try basic search
+      if (!results || !results.data || (results as any).error === '500_UNSUPPORTED_PARAMS') {
+        console.log('⚠️ Enhanced search failed, falling back to basic search...');
+        
+        // Basic search parameters (backward compatible)
+        const basicParams: AssetSearchParams = {
+          // Only include basic parameters that backend supports
+          ...(searchQuery && { search: searchQuery }),
+          ...(selectedLayer && { layer: selectedLayer }),
+          ...(selectedCategory && { category: selectedCategory }),
+          ...(selectedSubcategory && { subcategory: selectedSubcategory })
+        };
+        
+        console.log('🔄 Basic search parameters:', basicParams);
+        results = await assetService.getAssets(basicParams);
+        
+        // Update searchParams to reflect the fallback (for pagination logic)
+        searchParams = basicParams;
+      }
 
       // Update state with results
       if (results && results.data) {
@@ -228,15 +268,37 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
           return;
         }
 
-        // Enhanced result processing with pagination
+        // Enhanced result processing with backward compatibility
         console.log(`📊 Received ${assetResults.length} assets from backend search`);
         console.log(`📄 Total count: ${totalCount}, Current page: ${page}`);
         
-        // Set results directly from backend (backend handles filtering)
-        setSearchResults(assetResults);
-        setTotalAssets(totalCount);
-        setCurrentPage(page);
-        setTotalPages(Math.ceil(totalCount / itemsPerPage));
+        // Check if pagination was used in request (enhanced backend support)
+        const usedPagination = searchParams.page !== undefined;
+        
+        if (usedPagination && totalCount > 0) {
+          // Backend supports pagination - use server-side pagination
+          setSearchResults(assetResults);
+          setTotalAssets(totalCount);
+          setCurrentPage(page);
+          setTotalPages(Math.ceil(totalCount / itemsPerPage));
+          console.log('✅ Using server-side pagination');
+        } else {
+          // Backend doesn't support pagination - implement client-side pagination
+          const startIndex = (page - 1) * itemsPerPage;
+          const endIndex = startIndex + itemsPerPage;
+          const paginatedResults = assetResults.slice(startIndex, endIndex);
+          
+          setSearchResults(paginatedResults);
+          setTotalAssets(assetResults.length);
+          setCurrentPage(page);
+          setTotalPages(Math.ceil(assetResults.length / itemsPerPage));
+          console.log('⚙️ Using client-side pagination:', {
+            total: assetResults.length,
+            page: page,
+            showing: paginatedResults.length
+          });
+        }
+        
         setLastSearchTime(searchTime);
       } else {
         console.warn('Received empty or invalid results from assets search');

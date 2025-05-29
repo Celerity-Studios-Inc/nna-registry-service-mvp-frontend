@@ -334,6 +334,24 @@ class AssetService {
       });
 
       if (!response.ok) {
+        // Check if this is a 500 error that might indicate unsupported parameters
+        if (response.status === 500) {
+          const errorText = await response.text();
+          environmentSafeLog('500 Error response:', errorText);
+          
+          // Return empty result to trigger fallback in calling code
+          return {
+            data: [],
+            pagination: {
+              total: 0,
+              page: 1,
+              limit: 10,
+              pages: 1,
+            },
+            error: '500_UNSUPPORTED_PARAMS'
+          } as PaginatedResponse<Asset> & { error: string };
+        }
+        
         throw new Error(`Failed to fetch assets: ${response.statusText}`);
       }
 

@@ -132,6 +132,7 @@ export interface PaginatedResponse<T> {
     limit: number;
     pages: number;
   };
+  error?: string; // Optional error field for compatibility detection
 }
 
 export interface VersionInfo {
