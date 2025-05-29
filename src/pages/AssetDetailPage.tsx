@@ -149,8 +149,10 @@ const AssetDetail: React.FC = () => {
 
   // For MFA, use the nnaAddress field (primary field) or check metadata properties
   // Using consistent fallback pattern across all components
+  // CRITICAL FIX: Backend returns "nna_address" (with underscore), not "nnaAddress"
   const mfa =
-    asset.nnaAddress ||
+    (asset as any).nna_address ||  // Backend field format with underscore
+    asset.nnaAddress ||           // Frontend field format (if normalized)
     asset.metadata?.machineFriendlyAddress ||
     asset.metadata?.mfa;
 

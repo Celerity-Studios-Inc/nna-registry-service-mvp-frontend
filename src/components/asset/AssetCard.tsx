@@ -24,7 +24,7 @@ import {
   TextSnippet as TextIcon,
 } from '@mui/icons-material';
 import { Asset } from '../../types/asset.types';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import taxonomyService from '../../api/taxonomyService';
 import AssetThumbnail from '../common/AssetThumbnail';
 
@@ -40,6 +40,18 @@ const AssetCard: React.FC<AssetCardProps> = ({
   showActions = true,
 }) => {
   const theme = useTheme();
+  const navigate = useNavigate();
+
+  // Handle double-click navigation to asset details
+  const handleDoubleClick = () => {
+    const assetId = asset._id || asset.id;
+    if (assetId) {
+      console.log(`Double-click navigation to asset details: ${assetId}`);
+      navigate(`/assets/${assetId}`);
+    } else {
+      console.error('Asset ID is undefined, cannot navigate to details page', asset);
+    }
+  };
 
   // Determine file type for preview
   const getFileTypeInfo = () => {
@@ -210,7 +222,11 @@ const AssetCard: React.FC<AssetCardProps> = ({
         },
       }}
     >
-      <CardActionArea onClick={onClick} sx={{ flexGrow: 1 }}>
+      <CardActionArea 
+        onClick={onClick} 
+        onDoubleClick={handleDoubleClick}
+        sx={{ flexGrow: 1 }}
+      >
         {/* Media section with smart thumbnail handling */}
         <Box
           sx={{
