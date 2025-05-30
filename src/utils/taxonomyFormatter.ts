@@ -285,6 +285,17 @@ class TaxonomyFormatter {
     try {
       debugLog(`[taxonomyFormatter] Converting HFN to MFA: ${hfn}`);
       
+      // Check if the HFN is already in numeric MFA format (common in composite components)
+      const initialParts = hfn.split('.');
+      if (initialParts.length >= 4) {
+        const [layer, part2, part3, part4] = initialParts;
+        // If parts 2, 3, 4 are numeric, this is likely already an MFA
+        if (/^\d{3}$/.test(part2) && /^\d{3}$/.test(part3) && /^\d{3}$/.test(part4)) {
+          debugLog(`[taxonomyFormatter] Input appears to be MFA format, returning formatted version: ${hfn}`);
+          return this.formatMFA(hfn);
+        }
+      }
+      
       // First, ensure HFN has consistent format with canonical codes
       const formattedHFN = this.formatHFN(hfn);
 
