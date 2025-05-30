@@ -47,6 +47,14 @@ async function handler(req: VercelRequest, res: VercelResponse) {
       }
     }
     
+    // CRITICAL FIX: Forward query parameters to backend
+    // This was the missing piece causing search filtering to fail
+    if (req.url && req.url.includes('?')) {
+      const queryString = req.url.split('?')[1];
+      finalUrl = `${finalUrl}?${queryString}`;
+      console.log(`🔧 PROXY FIX: Added query parameters: ${queryString}`);
+    }
+    
     console.log(`Final URL decision:
     - Original URL: ${url}
     - Backend root: ${backendUrl}
