@@ -219,9 +219,7 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
     const searchTime = Date.now();
 
     try {
-      // Align with documented backend API structure
-      const hasSearchCriteria = searchQuery || selectedLayer || selectedCategory || selectedSubcategory;
-      
+      // Simplified search parameters - backend doesn't support cache busting parameters
       const searchParams = {
         search: searchQuery || undefined,
         layer: selectedLayer || undefined,
@@ -229,13 +227,8 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
         subcategory: selectedSubcategory || undefined,
         page: page,
         limit: itemsPerPage,
-        // CRITICAL FIX: Only add cache busting for initial loads, NOT for search requests
-        // Backend rejects _t and _v parameters as "property should not exist"
-        ...(!hasSearchCriteria && (forceRefresh || isStaleData || searchTime - lastSearchTime > 60000) ? { 
-          _t: searchTime, 
-          _v: cacheVersion,
-          _fresh: forceRefresh ? 'true' : undefined 
-        } : {})
+        // STEP 1.6 FIX: Removed all cache busting parameters (_t, _v, _fresh)
+        // Backend rejects these with "property should not exist" errors
       };
 
       console.log('🔍 Search parameters (aligned with backend API):', searchParams);
