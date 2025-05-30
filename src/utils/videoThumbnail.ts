@@ -52,7 +52,9 @@ export const generateVideoThumbnail = (
 
     let hasResolved = false;
     let attemptCount = 0;
+    let readyStateAttempts = 0;
     const maxAttempts = 3;
+    const maxReadyStateAttempts = 5;
 
     const cleanup = () => {
       // Remove all event listeners to prevent memory leaks
@@ -81,9 +83,17 @@ export const generateVideoThumbnail = (
 
         // CRITICAL FIX: Check if video is actually ready for drawing
         if (video.readyState < 2) { // HAVE_CURRENT_DATA
-          console.log(`⏳ Video not ready (readyState: ${video.readyState}), waiting...`);
-          setTimeout(resolveWithThumbnail, 200);
-          return;
+          console.log(`⏳ Video not ready (readyState: ${video.readyState}), waiting... (attempt ${readyStateAttempts + 1}/${maxReadyStateAttempts})`);
+          
+          // Increment readyState attempt counter to prevent infinite loops
+          readyStateAttempts++;
+          if (readyStateAttempts <= maxReadyStateAttempts) {
+            setTimeout(resolveWithThumbnail, 800); // Increased wait time for slow networks
+            return;
+          } else {
+            console.warn(`⚠️ Video readyState timeout after ${maxReadyStateAttempts} attempts, proceeding anyway`);
+            // Continue anyway - sometimes we can still get a frame even with low readyState
+          }
         }
 
         // Verify video dimensions are loaded
@@ -236,14 +246,14 @@ export const generateVideoThumbnail = (
     video.addEventListener('canplay', onCanPlay);
     video.addEventListener('error', onError);
 
-    // Timeout after 15 seconds
+    // Timeout after 25 seconds (increased for slow networks)
     const timeout = setTimeout(() => {
       if (!hasResolved) {
         console.warn(`⏰ Video thumbnail generation timed out for ${videoUrl}`);
         cleanup();
         reject(new Error('Video thumbnail generation timed out'));
       }
-    }, 15000);
+    }, 25000);
 
     // Start loading the video
     console.log(`🚀 Loading video: ${videoUrl}`);
