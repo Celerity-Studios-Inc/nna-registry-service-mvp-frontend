@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Box, CircularProgress } from '@mui/material';
+import React, { useState, useEffect, useRef } from 'react';
+import { Box, CircularProgress, Typography } from '@mui/material';
 import {
   VideoFile as VideoIcon,
   Movie as MovieIcon,
@@ -21,7 +21,7 @@ interface VideoThumbnailProps {
 }
 
 /**
- * Component that displays video thumbnails with fallback to layer icons
+ * Enhanced component that displays video thumbnails with robust error handling
  */
 const VideoThumbnail: React.FC<VideoThumbnailProps> = ({
   asset,
@@ -29,6 +29,9 @@ const VideoThumbnail: React.FC<VideoThumbnailProps> = ({
   height = 40,
   showFallbackIcon = true,
 }) => {
+  // Use ref to track if component is mounted to prevent state updates after unmount
+  const isMountedRef = useRef(true);
+  
   // Initialize state from cache if available
   const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(() => {
     return asset.gcpStorageUrl && isVideoUrl(asset.gcpStorageUrl) 
@@ -37,6 +40,14 @@ const VideoThumbnail: React.FC<VideoThumbnailProps> = ({
   });
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [hasError, setHasError] = useState<boolean>(false);
+  const [loadingProgress, setLoadingProgress] = useState<string>('');
+
+  // Clean up on unmount
+  useEffect(() => {
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
 
   // Generate thumbnail when component mounts
   useEffect(() => {
@@ -47,26 +58,45 @@ const VideoThumbnail: React.FC<VideoThumbnailProps> = ({
     // Check cache first
     const cachedThumbnail = thumbnailCache.get(asset.gcpStorageUrl);
     if (cachedThumbnail) {
-      setThumbnailUrl(cachedThumbnail);
-      setIsLoading(false);
-      setHasError(false);
+      console.log(`✅ Using cached thumbnail for ${asset.name}`);
+      if (isMountedRef.current) {
+        setThumbnailUrl(cachedThumbnail);
+        setIsLoading(false);
+        setHasError(false);
+      }
       return;
     }
 
-    setIsLoading(true);
-    setHasError(false);
+    // Start thumbnail generation
+    console.log(`🎬 Starting thumbnail generation for ${asset.name}: ${asset.gcpStorageUrl}`);
+    
+    if (isMountedRef.current) {
+      setIsLoading(true);
+      setHasError(false);
+      setLoadingProgress('Loading video...');
+    }
 
     generateVideoThumbnail(asset.gcpStorageUrl)
       .then((dataUrl) => {
-        // Cache the thumbnail
+        console.log(`✅ Successfully generated thumbnail for ${asset.name}`);
+        
+        // Cache the thumbnail globally
         thumbnailCache.set(asset.gcpStorageUrl, dataUrl);
-        setThumbnailUrl(dataUrl);
-        setIsLoading(false);
+        
+        if (isMountedRef.current) {
+          setThumbnailUrl(dataUrl);
+          setIsLoading(false);
+          setLoadingProgress('');
+        }
       })
       .catch((error) => {
-        console.warn(`Failed to generate thumbnail for ${asset.name}:`, error);
-        setHasError(true);
-        setIsLoading(false);
+        console.warn(`❌ Failed to generate thumbnail for ${asset.name}:`, error.message);
+        
+        if (isMountedRef.current) {
+          setHasError(true);
+          setIsLoading(false);
+          setLoadingProgress('');
+        }
       });
   }, [asset.gcpStorageUrl, asset.name]);
 
@@ -103,11 +133,28 @@ const VideoThumbnail: React.FC<VideoThumbnailProps> = ({
     position: 'relative' as const,
   };
 
-  // Show loading state
+  // Show loading state with progress indicator
   if (isLoading) {
     return (
       <Box sx={containerStyle}>
-        <CircularProgress size={Math.min(width, height) * 0.4} />
+        <Box sx={{ 
+          display: 'flex', 
+          flexDirection: 'column', 
+          alignItems: 'center', 
+          justifyContent: 'center',
+          gap: 0.5
+        }}>
+          <CircularProgress size={Math.min(width, height) * 0.4} />
+          {width >= 80 && loadingProgress && (
+            <Typography variant="caption" sx={{ 
+              fontSize: '0.6rem', 
+              color: 'text.secondary',
+              textAlign: 'center'
+            }}>
+              {loadingProgress}
+            </Typography>
+          )}
+        </Box>
       </Box>
     );
   }

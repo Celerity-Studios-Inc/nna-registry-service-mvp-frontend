@@ -1,13 +1,13 @@
 /**
- * Video thumbnail generation utility for asset cards
- * Generates thumbnail images from video URLs for better UI display
+ * Enhanced video thumbnail generation utility for asset cards
+ * Generates thumbnail images from video URLs with improved CORS handling and error recovery
  */
 
-// Cache for generated thumbnails to avoid regenerating
+// Global cache for generated thumbnails to persist across component re-renders
 const thumbnailCache = new Map<string, string>();
 
 /**
- * Generate a thumbnail from a video URL
+ * Generate a thumbnail from a video URL with enhanced error handling
  * @param videoUrl The URL of the video
  * @param timeOffset Time in seconds to capture frame (default: 1 second)
  * @returns Promise resolving to base64 data URL of thumbnail
@@ -17,37 +17,54 @@ export const generateVideoThumbnail = (
   timeOffset: number = 1
 ): Promise<string> => {
   return new Promise((resolve, reject) => {
+    console.log(`🎬 Starting thumbnail generation for: ${videoUrl}`);
+    
     // Check cache first
     const cacheKey = `${videoUrl}-${timeOffset}`;
     if (thumbnailCache.has(cacheKey)) {
-      resolve(thumbnailCache.get(cacheKey)!);
+      const cachedUrl = thumbnailCache.get(cacheKey)!;
+      console.log(`✅ Using cached thumbnail (${cachedUrl.length} chars)`);
+      resolve(cachedUrl);
       return;
     }
 
     const video = document.createElement('video');
+    
+    // Enhanced CORS and security settings
     video.crossOrigin = 'anonymous';
     video.muted = true; // Required for autoplay policies
     video.preload = 'metadata';
+    video.playsInline = true; // Important for mobile
+    video.autoplay = false; // Prevent autoplay
     
     // Set up canvas for thumbnail generation
     const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext('2d', { willReadFrequently: false });
     
     if (!ctx) {
       reject(new Error('Canvas context not available'));
       return;
     }
 
-    // Set thumbnail dimensions (16:9 aspect ratio)
-    canvas.width = 160;
-    canvas.height = 90;
+    // Set thumbnail dimensions (16:9 aspect ratio, higher resolution)
+    canvas.width = 320;
+    canvas.height = 180;
 
     let hasResolved = false;
+    let attemptCount = 0;
+    const maxAttempts = 3;
 
     const cleanup = () => {
-      if (video.parentNode) {
-        video.parentNode.removeChild(video);
-      }
+      // Remove all event listeners to prevent memory leaks
+      video.removeEventListener('loadedmetadata', onLoadedMetadata);
+      video.removeEventListener('seeked', onSeeked);
+      video.removeEventListener('loadeddata', onLoadedData);
+      video.removeEventListener('canplay', onCanPlay);
+      video.removeEventListener('error', onError);
+      
+      // Clean up video element
+      video.src = '';
+      video.load();
     };
 
     const resolveWithThumbnail = () => {
@@ -55,11 +72,40 @@ export const generateVideoThumbnail = (
       hasResolved = true;
 
       try {
-        // Draw video frame to canvas
-        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        console.log(`🎯 Capturing frame at time ${video.currentTime}s (video duration: ${video.duration}s)`);
         
-        // Convert to base64 data URL
-        const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+        // Ensure video has valid dimensions
+        if (video.videoWidth === 0 || video.videoHeight === 0) {
+          throw new Error('Video has no valid dimensions');
+        }
+
+        // Clear canvas with white background first
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        // Draw video frame to canvas with proper scaling
+        const aspectRatio = video.videoWidth / video.videoHeight;
+        let drawWidth = canvas.width;
+        let drawHeight = canvas.height;
+        let offsetX = 0;
+        let offsetY = 0;
+
+        if (aspectRatio > canvas.width / canvas.height) {
+          // Video is wider than canvas
+          drawHeight = canvas.width / aspectRatio;
+          offsetY = (canvas.height - drawHeight) / 2;
+        } else {
+          // Video is taller than canvas
+          drawWidth = canvas.height * aspectRatio;
+          offsetX = (canvas.width - drawWidth) / 2;
+        }
+
+        ctx.drawImage(video, offsetX, offsetY, drawWidth, drawHeight);
+        
+        // Convert to base64 data URL with higher quality
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+        
+        console.log(`✅ Successfully generated thumbnail data URL (${dataUrl.length} chars)`);
         
         // Cache the result
         thumbnailCache.set(cacheKey, dataUrl);
@@ -67,48 +113,107 @@ export const generateVideoThumbnail = (
         cleanup();
         resolve(dataUrl);
       } catch (error) {
-        console.error(`Canvas drawing failed for video:`, error);
+        console.error(`❌ Canvas drawing failed:`, error);
         cleanup();
         reject(error);
       }
     };
 
-    // Handle successful metadata load
-    video.addEventListener('loadedmetadata', () => {
-      // Seek to a better position in the video to avoid black frames
-      // Try 25% into the video, but not less than 0.5s and not more than 3s
-      const seekTime = Math.max(0.5, Math.min(3, video.duration * 0.25));
-      video.currentTime = seekTime;
-    });
-
-    // Handle successful seek - capture frame
-    video.addEventListener('seeked', resolveWithThumbnail);
-
-    // Handle successful frame load (for some browsers)
-    video.addEventListener('loadeddata', () => {
-      if (video.currentTime > 0) {
-        resolveWithThumbnail();
+    const trySeekAndCapture = () => {
+      attemptCount++;
+      console.log(`🔍 Seek attempt ${attemptCount}/${maxAttempts}`);
+      
+      if (video.duration && video.duration > 0) {
+        // Try different time positions for better frame capture
+        let seekTime;
+        switch (attemptCount) {
+          case 1:
+            // First attempt: 25% into video
+            seekTime = Math.min(video.duration * 0.25, 3);
+            break;
+          case 2:
+            // Second attempt: 10% into video
+            seekTime = Math.min(video.duration * 0.1, 1);
+            break;
+          case 3:
+            // Third attempt: 50% into video
+            seekTime = Math.min(video.duration * 0.5, 5);
+            break;
+          default:
+            seekTime = 1;
+        }
+        
+        console.log(`⏱️ Seeking to ${seekTime}s (attempt ${attemptCount})`);
+        video.currentTime = seekTime;
+      } else {
+        // If duration is not available, try a fixed time
+        console.log(`⏱️ Duration unknown, seeking to ${timeOffset}s`);
+        video.currentTime = timeOffset;
       }
-    });
+    };
 
-    // Handle errors
-    video.addEventListener('error', (e) => {
-      console.error(`❌ Video error for ${videoUrl}:`, e);
+    // Event handlers
+    const onLoadedMetadata = () => {
+      console.log(`📊 Video metadata loaded: ${video.videoWidth}x${video.videoHeight}, duration: ${video.duration}s`);
+      trySeekAndCapture();
+    };
+
+    const onSeeked = () => {
+      console.log(`✅ Seek completed to ${video.currentTime}s`);
+      // Small delay to ensure frame is rendered
+      setTimeout(resolveWithThumbnail, 100);
+    };
+
+    const onLoadedData = () => {
+      console.log(`📝 Video data loaded at time ${video.currentTime}s`);
+      if (video.currentTime > 0) {
+        setTimeout(resolveWithThumbnail, 100);
+      }
+    };
+
+    const onCanPlay = () => {
+      console.log(`▶️ Video can play, current time: ${video.currentTime}s`);
+      if (video.currentTime > 0) {
+        setTimeout(resolveWithThumbnail, 100);
+      }
+    };
+
+    const onError = (e: Event) => {
+      console.error(`❌ Video error:`, e);
       console.error('Video error details:', video.error);
-      cleanup();
-      reject(new Error(`Failed to load video: ${video.error?.message || 'Unknown error'}`));
-    });
+      
+      if (attemptCount < maxAttempts) {
+        console.log(`🔄 Retrying with different approach (attempt ${attemptCount + 1})`);
+        setTimeout(() => {
+          // Try different CORS settings on retry
+          video.crossOrigin = attemptCount === 1 ? 'use-credentials' : null;
+          video.src = videoUrl;
+          video.load();
+        }, 1000);
+      } else {
+        cleanup();
+        reject(new Error(`Failed to load video after ${maxAttempts} attempts: ${video.error?.message || 'Unknown error'}`));
+      }
+    };
 
-    // Timeout after 10 seconds
+    // Add event listeners
+    video.addEventListener('loadedmetadata', onLoadedMetadata);
+    video.addEventListener('seeked', onSeeked);
+    video.addEventListener('loadeddata', onLoadedData);
+    video.addEventListener('canplay', onCanPlay);
+    video.addEventListener('error', onError);
+
+    // Timeout after 15 seconds
     const timeout = setTimeout(() => {
       if (!hasResolved) {
-        console.warn('Video thumbnail generation timed out');
+        console.warn(`⏰ Video thumbnail generation timed out for ${videoUrl}`);
         cleanup();
         reject(new Error('Video thumbnail generation timed out'));
       }
-    }, 10000);
+    }, 15000);
 
     // Start loading the video
+    console.log(`🚀 Loading video: ${videoUrl}`);
     video.src = videoUrl;
     video.load();
 
