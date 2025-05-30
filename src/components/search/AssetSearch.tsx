@@ -219,12 +219,25 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
     const searchTime = Date.now();
 
     try {
-      // Simplified search parameters - backend doesn't support cache busting parameters
+      // STEP 2A FIX: Convert codes to full names for backend compatibility
+      // Backend expects full names like "Casual", "Athleisure" not codes like "CAS", "ATL"
+      const getCategoryName = (categoryCode: string | undefined): string | undefined => {
+        if (!categoryCode) return undefined;
+        const category = categories.find(cat => cat.code === categoryCode);
+        return category?.name || categoryCode;
+      };
+
+      const getSubcategoryName = (subcategoryCode: string | undefined): string | undefined => {
+        if (!subcategoryCode) return undefined;
+        const subcategory = subcategories.find(subcat => subcat.code === subcategoryCode);
+        return subcategory?.name || subcategoryCode;
+      };
+
       const searchParams = {
         search: searchQuery || undefined,
         layer: selectedLayer || undefined,
-        category: selectedCategory || undefined,
-        subcategory: selectedSubcategory || undefined,
+        category: getCategoryName(selectedCategory),
+        subcategory: getSubcategoryName(selectedSubcategory),
         page: page,
         limit: itemsPerPage,
         // STEP 1.6 FIX: Removed all cache busting parameters (_t, _v, _fresh)
@@ -401,11 +414,10 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
     setSelectedLayer('');
     setSelectedCategory('');
     setSelectedSubcategory('');
-    setSearchResults([]);
     setShowAdvancedFilters(false);
     setCurrentPage(1);
-    setTotalAssets(0);
-    setTotalPages(1);
+    // STEP 2C FIX: Auto-trigger search to show all assets when clearing
+    setTimeout(() => performSearch(1), 100);
   };
 
   const handleKeyPress = (event: React.KeyboardEvent) => {
@@ -418,15 +430,21 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
     setSelectedLayer(event.target.value);
     setSelectedCategory('');
     setSelectedSubcategory('');
+    // STEP 2B FIX: Auto-trigger search when layer changes
+    setTimeout(() => performSearch(1), 100);
   };
 
   const handleCategoryChange = (event: SelectChangeEvent<string>) => {
     setSelectedCategory(event.target.value);
     setSelectedSubcategory('');
+    // STEP 2B FIX: Auto-trigger search when category changes
+    setTimeout(() => performSearch(1), 100);
   };
 
   const handleSubcategoryChange = (event: SelectChangeEvent<string>) => {
     setSelectedSubcategory(event.target.value);
+    // STEP 2B FIX: Auto-trigger search when subcategory changes
+    setTimeout(() => performSearch(1), 100);
   };
 
   // Enhanced cache busting functions
