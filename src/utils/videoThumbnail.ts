@@ -33,9 +33,11 @@ export const generateVideoThumbnail = (
     // Enhanced CORS and security settings
     video.crossOrigin = 'anonymous';
     video.muted = true; // Required for autoplay policies
-    video.preload = 'metadata';
+    video.preload = 'auto'; // Changed from 'metadata' to 'auto' for more aggressive loading
     video.playsInline = true; // Important for mobile
     video.autoplay = false; // Prevent autoplay
+    video.controls = false; // Ensure no controls
+    video.volume = 0; // Ensure completely muted
     
     // Set up canvas for thumbnail generation
     const canvas = document.createElement('canvas');
@@ -88,6 +90,22 @@ export const generateVideoThumbnail = (
           // Increment readyState attempt counter to prevent infinite loops
           readyStateAttempts++;
           if (readyStateAttempts <= maxReadyStateAttempts) {
+            // AGGRESSIVE: Try to force load data by briefly playing the video
+            if (readyStateAttempts === 2) {
+              console.log(`🚀 Attempting to force video data loading with brief play`);
+              const playPromise = video.play();
+              if (playPromise) {
+                playPromise.then(() => {
+                  video.pause();
+                  video.currentTime = video.currentTime; // Force frame refresh
+                  setTimeout(resolveWithThumbnail, 1000);
+                }).catch(() => {
+                  setTimeout(resolveWithThumbnail, 800);
+                });
+                return;
+              }
+            }
+            
             setTimeout(resolveWithThumbnail, 800); // Increased wait time for slow networks
             return;
           } else {
@@ -203,8 +221,28 @@ export const generateVideoThumbnail = (
 
     const onSeeked = () => {
       console.log(`✅ Seek completed to ${video.currentTime}s`);
-      // Small delay to ensure frame is rendered
-      setTimeout(resolveWithThumbnail, 100);
+      // Wait for readyState to improve before capturing
+      const waitForReadyState = () => {
+        if (video.readyState >= 2) {
+          setTimeout(resolveWithThumbnail, 100);
+        } else {
+          // Force load more data by trying to play briefly
+          const playPromise = video.play();
+          if (playPromise) {
+            playPromise.then(() => {
+              video.pause();
+              setTimeout(resolveWithThumbnail, 200);
+            }).catch(() => {
+              // Play failed, just try to capture anyway
+              setTimeout(resolveWithThumbnail, 100);
+            });
+          } else {
+            setTimeout(resolveWithThumbnail, 100);
+          }
+        }
+      };
+      
+      waitForReadyState();
     };
 
     const onLoadedData = () => {
