@@ -79,8 +79,18 @@ export const generateVideoThumbnail = (
           throw new Error('Video has no valid dimensions');
         }
 
-        // Clear canvas with white background first
-        ctx.fillStyle = '#ffffff';
+        // CRITICAL FIX: Check if video is actually ready for drawing
+        if (video.readyState < 2) { // HAVE_CURRENT_DATA
+          console.log(`⏳ Video not ready (readyState: ${video.readyState}), waiting...`);
+          setTimeout(resolveWithThumbnail, 200);
+          return;
+        }
+
+        // Verify video dimensions are loaded
+        console.log(`📐 Video dimensions: ${video.videoWidth}x${video.videoHeight}, readyState: ${video.readyState}`);
+        
+        // Clear canvas with black background (not white) to detect if frame is captured
+        ctx.fillStyle = '#000000';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         
         // Draw video frame to canvas with proper scaling
@@ -100,12 +110,35 @@ export const generateVideoThumbnail = (
           offsetX = (canvas.width - drawWidth) / 2;
         }
 
+        // ENHANCED: Draw the video frame
         ctx.drawImage(video, offsetX, offsetY, drawWidth, drawHeight);
+        
+        // VALIDATION: Check if canvas actually has content (not just black)
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const pixels = imageData.data;
+        let hasContent = false;
+        
+        // Sample pixels to see if there's actual content (not all black)
+        for (let i = 0; i < pixels.length; i += 4) {
+          const r = pixels[i];
+          const g = pixels[i + 1]; 
+          const b = pixels[i + 2];
+          // If we find any non-black pixel, we have content
+          if (r > 10 || g > 10 || b > 10) {
+            hasContent = true;
+            break;
+          }
+        }
+
+        if (!hasContent) {
+          console.warn(`⚠️ Canvas appears to be empty/black, video may not be ready`);
+          // Don't fail, but log this for debugging
+        }
         
         // Convert to base64 data URL with higher quality
         const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
         
-        console.log(`✅ Successfully generated thumbnail data URL (${dataUrl.length} chars)`);
+        console.log(`✅ Successfully generated thumbnail data URL (${dataUrl.length} chars)${hasContent ? ' with content' : ' - may be empty'}`);
         
         // Cache the result
         thumbnailCache.set(cacheKey, dataUrl);

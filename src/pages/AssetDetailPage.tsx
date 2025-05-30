@@ -29,6 +29,8 @@ import {
 import { Asset, AssetFile } from '../types/asset.types';
 import assetService from '../api/assetService';
 import taxonomyService from '../api/taxonomyService';
+import AssetThumbnail from '../components/common/AssetThumbnail';
+import { isVideoUrl } from '../utils/videoThumbnail';
 
 const AssetDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -200,27 +202,62 @@ const AssetDetail: React.FC = () => {
           {/* Left column with preview */}
           <Grid item xs={12} md={5}>
             <Card>
-              {previewUrl ? (
-                <CardMedia
-                  component="img"
-                  height={300}
-                  image={previewUrl}
-                  alt={asset.name}
-                  sx={{ objectFit: 'contain', bgcolor: 'background.default' }}
-                />
-              ) : (
-                <Box
-                  sx={{
-                    height: 300,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    bgcolor: 'background.default',
-                  }}
-                >
-                  <ImageIcon sx={{ fontSize: 100, color: 'text.disabled' }} />
-                </Box>
-              )}
+              {/* Enhanced preview that handles both images and videos properly */}
+              <Box
+                sx={{
+                  height: 300,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  bgcolor: 'background.default',
+                  p: 2,
+                }}
+              >
+                {previewUrl ? (
+                  // Use smart AssetThumbnail component for proper video/image handling
+                  isVideoUrl(previewUrl) ? (
+                    <AssetThumbnail 
+                      asset={asset} 
+                      width={280} 
+                      height={280} 
+                    />
+                  ) : (
+                    <img
+                      src={previewUrl}
+                      alt={asset.name}
+                      style={{
+                        maxWidth: '100%',
+                        maxHeight: '100%',
+                        objectFit: 'contain',
+                        borderRadius: '4px'
+                      }}
+                      onError={(e) => {
+                        console.warn(`Image failed to load: ${previewUrl}`);
+                        // Fallback to AssetThumbnail on image load error
+                        const target = e.target as HTMLImageElement;
+                        const parent = target.parentElement;
+                        if (parent) {
+                          target.style.display = 'none';
+                          // Create fallback thumbnail
+                          const fallback = document.createElement('div');
+                          fallback.style.display = 'flex';
+                          fallback.style.alignItems = 'center';
+                          fallback.style.justifyContent = 'center';
+                          fallback.innerHTML = `<span style="color: #666; font-size: 14px;">Preview not available</span>`;
+                          parent.appendChild(fallback);
+                        }
+                      }}
+                    />
+                  )
+                ) : (
+                  // Use AssetThumbnail as fallback for assets without preview URL
+                  <AssetThumbnail 
+                    asset={asset} 
+                    width={280} 
+                    height={280} 
+                  />
+                )}
+              </Box>
               <CardContent>
                 <Typography variant="body1" gutterBottom>
                   <strong>Description:</strong>
