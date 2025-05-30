@@ -75,7 +75,7 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
   const [searchTerms, setSearchTerms] = useState<string[]>([]);
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
   const [searchSuggestions, setSearchSuggestions] = useState<string[]>([]);
-  const [isRealTimeSearch, setIsRealTimeSearch] = useState<boolean>(false);
+  const [isRealTimeSearch, setIsRealTimeSearch] = useState<boolean>(true); // Default to Live Search
 
   // Load layers for filtering
   useEffect(() => {
@@ -427,24 +427,25 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
   };
 
   const handleLayerChange = (event: SelectChangeEvent<string>) => {
-    setSelectedLayer(event.target.value);
+    const newLayer = event.target.value;
+    setSelectedLayer(newLayer);
     setSelectedCategory('');
     setSelectedSubcategory('');
-    // STEP 2B FIX: Auto-trigger search when layer changes
-    setTimeout(() => performSearch(1), 100);
+    // STEP 3 FIX: More reliable auto-triggering with React.startTransition for better state handling
+    setTimeout(() => performSearch(1), 300);
   };
 
   const handleCategoryChange = (event: SelectChangeEvent<string>) => {
     setSelectedCategory(event.target.value);
     setSelectedSubcategory('');
-    // STEP 2B FIX: Auto-trigger search when category changes
-    setTimeout(() => performSearch(1), 100);
+    // STEP 3 FIX: Reliable auto-triggering for category changes
+    setTimeout(() => performSearch(1), 300);
   };
 
   const handleSubcategoryChange = (event: SelectChangeEvent<string>) => {
     setSelectedSubcategory(event.target.value);
-    // STEP 2B FIX: Auto-trigger search when subcategory changes
-    setTimeout(() => performSearch(1), 100);
+    // STEP 3 FIX: Reliable auto-triggering for subcategory changes
+    setTimeout(() => performSearch(1), 300);
   };
 
   // Enhanced cache busting functions
