@@ -220,6 +220,8 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
 
     try {
       // Align with documented backend API structure
+      const hasSearchCriteria = searchQuery || selectedLayer || selectedCategory || selectedSubcategory;
+      
       const searchParams = {
         search: searchQuery || undefined,
         layer: selectedLayer || undefined,
@@ -227,8 +229,9 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
         subcategory: selectedSubcategory || undefined,
         page: page,
         limit: itemsPerPage,
-        // Enhanced cache busting: add timestamp for force refresh, stale data, or version change
-        ...(forceRefresh || isStaleData || searchTime - lastSearchTime > 60000 ? { 
+        // CRITICAL FIX: Only add cache busting for initial loads, NOT for search requests
+        // Backend rejects _t and _v parameters as "property should not exist"
+        ...(!hasSearchCriteria && (forceRefresh || isStaleData || searchTime - lastSearchTime > 60000) ? { 
           _t: searchTime, 
           _v: cacheVersion,
           _fresh: forceRefresh ? 'true' : undefined 
