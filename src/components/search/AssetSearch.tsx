@@ -100,7 +100,10 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
           limit: itemsPerPage,
         };
 
-        console.log('🔍 Loading initial assets with backend API:', searchParams);
+        // Log initial load only in development for debugging
+        if (process.env.NODE_ENV === 'development') {
+          console.log('🔍 Loading initial assets with backend API:', searchParams);
+        }
 
         // Use direct axios call like the working composite search
         let response;
@@ -123,6 +126,7 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
                               localStorage.getItem('testToken') ? `Bearer ${localStorage.getItem('testToken')?.replace(/\s+/g, '')}` : undefined,
             },
           });
+          // Always log successful direct backend connections for production monitoring
           console.log('Direct backend connection successful!');
         }
 
@@ -134,23 +138,30 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
           // Documented backend format: { success: true, data: { items: [...], total: N } }
           results = response.data.data.items;
           totalCount = response.data.data.total || results.length;
-          console.log('✅ Initial load: parsed documented backend format');
+          if (process.env.NODE_ENV === 'development') {
+            console.log('✅ Initial load: parsed documented backend format');
+          }
         } else if (response.data.items) {
           // Legacy items response: { items: [...] }
           results = response.data.items;
           totalCount = results.length;
-          console.log('⚠️ Initial load: using legacy items format');
+          if (process.env.NODE_ENV === 'development') {
+            console.log('⚠️ Initial load: using legacy items format');
+          }
         } else if (Array.isArray(response.data)) {
           // Direct array response: [...]
           results = response.data;
           totalCount = results.length;
-          console.log('⚠️ Initial load: using direct array format');
+          if (process.env.NODE_ENV === 'development') {
+            console.log('⚠️ Initial load: using direct array format');
+          }
         } else {
           console.warn('⚠️ Initial load: unexpected API response format:', response.data);
           results = [];
           totalCount = 0;
         }
 
+        // Log asset count for debugging (always show for initial load)
         console.log(`🎯 Retrieved ${results.length} initial assets, total: ${totalCount}`);
 
         // Normalize asset structure
@@ -244,7 +255,10 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
         // Backend rejects these with "property should not exist" errors
       };
 
-      console.log('🔍 Search parameters (aligned with backend API):', searchParams);
+      // Log search parameters only in development for debugging
+      if (process.env.NODE_ENV === 'development') {
+        console.log('🔍 Search parameters (aligned with backend API):', searchParams);
+      }
 
       // Use direct axios call like the working composite search
       let response;
@@ -262,6 +276,7 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
           },
         });
       } catch (proxyError) {
+        // Always log proxy failures as these are important for production monitoring
         console.log('Proxy failed, trying direct backend connection...', proxyError instanceof Error ? proxyError.message : 'Unknown error');
         // If proxy fails, try direct backend connection
         response = await axios.get('https://registry.reviz.dev/api/assets', {
@@ -276,6 +291,7 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
             'X-Requested-At': Date.now().toString(),
           },
         });
+        // Always log successful direct backend connections for production monitoring
         console.log('Direct backend connection successful!');
       }
 
@@ -287,23 +303,30 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
         // Documented backend format: { success: true, data: { items: [...], total: N } }
         results = response.data.data.items;
         totalCount = response.data.data.total || results.length;
-        console.log('✅ Parsed documented backend format');
+        if (process.env.NODE_ENV === 'development') {
+          console.log('✅ Parsed documented backend format');
+        }
       } else if (response.data.items) {
         // Legacy items response: { items: [...] }
         results = response.data.items;
         totalCount = results.length;
-        console.log('⚠️ Using legacy items format');
+        if (process.env.NODE_ENV === 'development') {
+          console.log('⚠️ Using legacy items format');
+        }
       } else if (Array.isArray(response.data)) {
         // Direct array response: [...]
         results = response.data;
         totalCount = results.length;
-        console.log('⚠️ Using direct array format');
+        if (process.env.NODE_ENV === 'development') {
+          console.log('⚠️ Using direct array format');
+        }
       } else {
         console.warn('⚠️ Unexpected API response format:', response.data);
         results = [];
         totalCount = 0;
       }
 
+      // Always log asset count for search results as this is useful for production monitoring
       console.log(`🎯 Retrieved ${results.length} assets, total: ${totalCount}`);
 
       // Check for potentially stale data (e.g., unexpected zero results for broad searches)
