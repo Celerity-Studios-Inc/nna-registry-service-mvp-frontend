@@ -11,7 +11,7 @@ import {
   VideoFile as VideoIcon,
 } from '@mui/icons-material';
 import VideoThumbnail from './VideoThumbnail';
-import { isVideoUrl } from '../../utils/videoThumbnail';
+import { isVideoUrl, isAudioUrl } from '../../utils/videoThumbnail';
 import { Asset } from '../../types/asset.types';
 
 interface AssetThumbnailProps {
@@ -78,8 +78,17 @@ const AssetThumbnail: React.FC<AssetThumbnailProps> = ({
     );
   }
 
+  // Handle audio assets with layer icon fallback
+  if (asset.gcpStorageUrl && isAudioUrl(asset.gcpStorageUrl)) {
+    return (
+      <Box sx={containerStyle}>
+        {getLayerIcon(asset.layer)}
+      </Box>
+    );
+  }
+
   // Handle image assets with direct image display
-  if (asset.gcpStorageUrl && !isVideoUrl(asset.gcpStorageUrl)) {
+  if (asset.gcpStorageUrl && !isVideoUrl(asset.gcpStorageUrl) && !isAudioUrl(asset.gcpStorageUrl)) {
     return (
       <Box sx={containerStyle}>
         <img

@@ -327,6 +327,20 @@ export const isVideoUrl = (url: string): boolean => {
 };
 
 /**
+ * Check if a URL points to an audio file
+ * @param url The URL to check
+ * @returns True if the URL appears to be an audio file
+ */
+export const isAudioUrl = (url: string): boolean => {
+  if (!url) return false;
+  
+  const audioExtensions = ['.mp3', '.wav', '.flac', '.aac', '.ogg', '.m4a', '.wma'];
+  const lowerUrl = url.toLowerCase();
+  
+  return audioExtensions.some(ext => lowerUrl.includes(ext));
+};
+
+/**
  * Clear the thumbnail cache (useful for memory management)
  */
 export const clearThumbnailCache = (): void => {
