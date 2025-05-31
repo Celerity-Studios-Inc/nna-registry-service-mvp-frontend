@@ -2,9 +2,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Box, CircularProgress, Typography } from '@mui/material';
 import {
   VideoFile as VideoIcon,
-  Movie as MovieIcon,
-  DirectionsRun as MovesIcon,
-  Public as WorldIcon,
 } from '@mui/icons-material';
 import { generateVideoThumbnail, isVideoUrl } from '../../utils/videoThumbnail';
 import { Asset } from '../../types/asset.types';
@@ -100,26 +97,6 @@ const VideoThumbnail: React.FC<VideoThumbnailProps> = ({
       });
   }, [asset.gcpStorageUrl, asset.name]);
 
-  // Get appropriate fallback icon based on layer
-  const getFallbackIcon = () => {
-    const iconProps = {
-      sx: { 
-        fontSize: Math.min(width, height) * 0.6,
-        color: 'action.active'
-      }
-    };
-
-    switch (asset.layer) {
-      case 'M': // Moves
-        return <MovesIcon {...iconProps} />;
-      case 'W': // Worlds  
-        return <WorldIcon {...iconProps} />;
-      case 'C': // Composites (usually videos)
-        return <MovieIcon {...iconProps} />;
-      default:
-        return <VideoIcon {...iconProps} />;
-    }
-  };
 
   const containerStyle = {
     width,

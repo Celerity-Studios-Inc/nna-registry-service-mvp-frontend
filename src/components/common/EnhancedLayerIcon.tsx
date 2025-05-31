@@ -5,6 +5,7 @@ import {
   DirectionsRun as MovesIcon,
   Public as WorldIcon,
   Movie as MovieIcon,
+  MusicNote as MusicNoteIcon,
 } from '@mui/icons-material';
 
 interface EnhancedLayerIconProps {
@@ -25,6 +26,14 @@ const EnhancedLayerIcon: React.FC<EnhancedLayerIconProps> = ({
 }) => {
   const getLayerConfig = (layer: string) => {
     switch (layer) {
+      case 'G': // Songs (audio files)
+        return {
+          icon: MusicNoteIcon,
+          color: '#1976d2',
+          bgColor: '#e3f2fd',
+          label: 'Songs',
+          description: 'Audio'
+        };
       case 'M': // Moves
         return {
           icon: MovesIcon,

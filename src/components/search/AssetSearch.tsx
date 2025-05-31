@@ -348,30 +348,48 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
       // Apply client-side sorting only if needed (backend should handle this eventually)
       let sortedResults = normalizedResults;
       if (sortBy && sortedResults.length > 0) {
+        // Define layer order for proper sorting (descending priority: W > S > M > L > G > C)
+        const LAYER_ORDER: Record<string, number> = {
+          'W': 1, // Worlds
+          'S': 2, // Stars  
+          'M': 3, // Moves
+          'L': 4, // Looks
+          'G': 5, // Songs
+          'C': 6, // Composites
+          'B': 7, // Branded
+          'P': 8, // Personalize
+          'T': 9, // Training_Data
+          'R': 10 // Rights
+        };
+
         sortedResults.sort((a, b) => {
           let aValue: any = '';
           let bValue: any = '';
           
           switch (sortBy) {
             case 'createdAt':
-              aValue = new Date(a.createdAt || 0).getTime();
-              bValue = new Date(b.createdAt || 0).getTime();
+              // Enhanced date parsing with proper validation
+              const aDate = a.createdAt ? new Date(a.createdAt) : new Date(0);
+              const bDate = b.createdAt ? new Date(b.createdAt) : new Date(0);
+              // Check for invalid dates
+              aValue = isNaN(aDate.getTime()) ? 0 : aDate.getTime();
+              bValue = isNaN(bDate.getTime()) ? 0 : bDate.getTime();
               break;
             case 'updatedAt':
-              aValue = new Date(a.updatedAt || 0).getTime();
-              bValue = new Date(b.updatedAt || 0).getTime();
+              // Enhanced date parsing for updatedAt
+              const aUpdateDate = a.updatedAt ? new Date(a.updatedAt) : new Date(0);
+              const bUpdateDate = b.updatedAt ? new Date(b.updatedAt) : new Date(0);
+              aValue = isNaN(aUpdateDate.getTime()) ? 0 : aUpdateDate.getTime();
+              bValue = isNaN(bUpdateDate.getTime()) ? 0 : bUpdateDate.getTime();
               break;
             case 'name':
               aValue = (a.name || a.friendlyName || '').toLowerCase();
               bValue = (b.name || b.friendlyName || '').toLowerCase();
               break;
             case 'layer':
-              aValue = a.layer || '';
-              bValue = b.layer || '';
-              break;
-            case 'category':
-              aValue = a.category || '';
-              bValue = b.category || '';
+              // Use layer order mapping for proper grouping
+              aValue = LAYER_ORDER[a.layer] || 999;
+              bValue = LAYER_ORDER[b.layer] || 999;
               break;
             default:
               return 0;
@@ -842,11 +860,10 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
                       }
                     }}
                   >
-                    <MenuItem value="createdAt">📅 Creation Date</MenuItem>
-                    <MenuItem value="name">🔤 Asset Name</MenuItem>
-                    <MenuItem value="layer">🏷️ Layer</MenuItem>
-                    <MenuItem value="category">📂 Category</MenuItem>
                     <MenuItem value="updatedAt">⏰ Last Modified</MenuItem>
+                    <MenuItem value="createdAt">📅 Creation Date</MenuItem>
+                    <MenuItem value="layer">🏷️ Layer</MenuItem>
+                    <MenuItem value="name">🔤 Asset Name</MenuItem>
                   </Select>
                 </FormControl>
               </Grid>
