@@ -255,6 +255,10 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
           headers: {
             'Authorization': localStorage.getItem('accessToken') ? `Bearer ${localStorage.getItem('accessToken')?.replace(/\s+/g, '')}` : 
                             localStorage.getItem('testToken') ? `Bearer ${localStorage.getItem('testToken')?.replace(/\s+/g, '')}` : undefined,
+            // Cache busting via headers instead of query params
+            'Cache-Control': forceRefresh ? 'no-cache, no-store, must-revalidate' : 'max-age=30',
+            'Pragma': forceRefresh ? 'no-cache' : undefined,
+            'X-Requested-At': Date.now().toString(),
           },
         });
       } catch (proxyError) {
@@ -266,6 +270,10 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
           headers: {
             'Authorization': localStorage.getItem('accessToken') ? `Bearer ${localStorage.getItem('accessToken')?.replace(/\s+/g, '')}` : 
                             localStorage.getItem('testToken') ? `Bearer ${localStorage.getItem('testToken')?.replace(/\s+/g, '')}` : undefined,
+            // Cache busting via headers instead of query params
+            'Cache-Control': forceRefresh ? 'no-cache, no-store, must-revalidate' : 'max-age=30',
+            'Pragma': forceRefresh ? 'no-cache' : undefined,
+            'X-Requested-At': Date.now().toString(),
           },
         });
         console.log('Direct backend connection successful!');
@@ -297,6 +305,12 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
       }
 
       console.log(`🎯 Retrieved ${results.length} assets, total: ${totalCount}`);
+
+      // Check for potentially stale data (e.g., unexpected zero results for broad searches)
+      if (results.length === 0 && searchQuery.trim() && !selectedLayer && !selectedCategory && !selectedSubcategory) {
+        console.warn(`⚠️ Potentially stale data: Search for "${searchQuery}" returned 0 results`);
+        setIsStaleData(true);
+      }
 
       // Normalize asset structure for frontend use
       const normalizedResults = results.map(asset => ({
@@ -416,8 +430,8 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
     setSelectedSubcategory('');
     setShowAdvancedFilters(false);
     setCurrentPage(1);
-    // STEP 2C FIX: Auto-trigger search to show all assets when clearing
-    setTimeout(() => performSearch(1), 100);
+    // Immediate search to show all assets when clearing filters
+    performSearch(1);
   };
 
   const handleKeyPress = (event: React.KeyboardEvent) => {
@@ -431,21 +445,18 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
     setSelectedLayer(newLayer);
     setSelectedCategory('');
     setSelectedSubcategory('');
-    // STEP 3 FIX: More reliable auto-triggering with React.startTransition for better state handling
-    setTimeout(() => performSearch(1), 300);
+    // Auto-trigger handled by useEffect
   };
 
   const handleCategoryChange = (event: SelectChangeEvent<string>) => {
     setSelectedCategory(event.target.value);
     setSelectedSubcategory('');
-    // STEP 3 FIX: Reliable auto-triggering for category changes
-    setTimeout(() => performSearch(1), 300);
+    // Auto-trigger handled by useEffect
   };
 
   const handleSubcategoryChange = (event: SelectChangeEvent<string>) => {
     setSelectedSubcategory(event.target.value);
-    // STEP 3 FIX: Reliable auto-triggering for subcategory changes
-    setTimeout(() => performSearch(1), 300);
+    // Auto-trigger handled by useEffect
   };
 
   // Enhanced cache busting functions
@@ -511,14 +522,16 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
 
   // Enhanced search with debouncing for real-time search
   useEffect(() => {
-    if (!isRealTimeSearch || !searchQuery.trim()) return;
-
+    if (!isRealTimeSearch) return;
+    
+    // Auto-trigger search when taxonomy dropdowns change OR when search query changes
+    // Also trigger when search is cleared to show recent assets
     const timeoutId = setTimeout(() => {
       handleSearch();
     }, 500); // 500ms debounce
 
     return () => clearTimeout(timeoutId);
-  }, [searchQuery, isRealTimeSearch]);
+  }, [searchQuery, selectedLayer, selectedCategory, selectedSubcategory, isRealTimeSearch]);
 
   // Load recent searches from localStorage
   useEffect(() => {
@@ -988,15 +1001,33 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
         </Box>
       )}
 
-      {/* Task 9: Enhanced no results message with Material-UI Alert */}
+      {/* Enhanced no results message with stale data detection */}
       {searchResults.length === 0 &&
         (searchQuery ||
           selectedLayer ||
           selectedCategory ||
           selectedSubcategory) &&
         !isLoading && (
-          <Alert severity="info" sx={{ mt: 4 }}>
-            No assets found for your search criteria.
+          <Alert 
+            severity={isStaleData ? "warning" : "info"} 
+            sx={{ mt: 4 }}
+            action={
+              isStaleData && (
+                <Button 
+                  color="inherit" 
+                  size="small" 
+                  onClick={handleForceRefresh}
+                  disabled={isLoading}
+                >
+                  🔄 Force Refresh
+                </Button>
+              )
+            }
+          >
+            {isStaleData 
+              ? `No assets found for "${searchQuery}". This might be due to stale data - try forcing a refresh.`
+              : "No assets found for your search criteria."
+            }
           </Alert>
         )}
     </Box>
