@@ -374,13 +374,6 @@ export const isAudioUrl = (url: string): boolean => {
 };
 
 /**
- * Clear the thumbnail cache (useful for memory management)
- */
-export const clearThumbnailCache = (): void => {
-  thumbnailCache.clear();
-};
-
-/**
  * Get cache size for debugging
  */
 export const getThumbnailCacheSize = (): number => {
