@@ -354,7 +354,7 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
         const cutoffDate = new Date('2025-05-15T00:00:00Z'); // Filter out assets before this date
         filteredResults = normalizedResults.filter(asset => {
           try {
-            const createdAt = new Date(asset.createdAt || asset.metadata?.createdAt || asset.created_at);
+            const createdAt = new Date(asset.createdAt || asset.metadata?.createdAt || (asset as any).created_at);
             return createdAt >= cutoffDate;
           } catch (error) {
             // If date parsing fails, keep the asset (fail open)
