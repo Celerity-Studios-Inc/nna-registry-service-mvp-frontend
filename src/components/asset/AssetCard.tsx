@@ -374,13 +374,13 @@ const AssetCard: React.FC<AssetCardProps> = ({
           </Box>
 
           {/* Created By Row */}
-          {((asset as any).createdBy || (asset as any).author || (asset as any).creator) && (
+          {(asset as any).registeredBy && (
             <Typography 
               variant="caption" 
               color="text.secondary" 
               sx={{ mt: 0.5, fontSize: '0.65rem' }}
             >
-              Created by: {(asset as any).createdBy || (asset as any).author || (asset as any).creator}
+              Created by: {(asset as any).registeredBy}
             </Typography>
           )}
         </CardContent>

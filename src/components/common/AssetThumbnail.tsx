@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Box } from '@mui/material';
 import {
   AudioFile as AudioIcon,
@@ -28,6 +28,13 @@ const AssetThumbnail: React.FC<AssetThumbnailProps> = ({
   width = 40,
   height = 40,
 }) => {
+  // State to track image loading errors
+  const [imageError, setImageError] = useState(false);
+
+  // Reset error state when asset URL changes (e.g., when search results change)
+  useEffect(() => {
+    setImageError(false);
+  }, [asset.gcpStorageUrl, asset.id]);
   // Layer configuration for icons and colors
   const LAYER_CONFIG = {
     G: { icon: AudioIcon, color: '#1976d2', name: 'Songs' },
@@ -87,39 +94,33 @@ const AssetThumbnail: React.FC<AssetThumbnailProps> = ({
     );
   }
 
-  // Handle image assets with direct image display
+  // Handle image assets with proper React error handling
   if (asset.gcpStorageUrl && !isVideoUrl(asset.gcpStorageUrl) && !isAudioUrl(asset.gcpStorageUrl)) {
     return (
       <Box sx={containerStyle}>
-        <img
-          src={asset.gcpStorageUrl}
-          alt={`${asset.friendlyName || asset.name} thumbnail`}
-          style={{
-            width: '100%',
-            height: '100%',
-            objectFit: 'cover',
-            borderRadius: '4px'
-          }}
-          onError={(e) => {
-            // Fallback to layer icon if image fails to load
-            const target = e.target as HTMLImageElement;
-            const parent = target.parentElement;
-            if (parent) {
-              parent.innerHTML = '';
-              parent.style.display = 'flex';
-              parent.style.alignItems = 'center';
-              parent.style.justifyContent = 'center';
-              
-              // Create icon element (simplified fallback)
-              const iconDiv = document.createElement('div');
-              iconDiv.style.display = 'flex';
-              iconDiv.style.alignItems = 'center';
-              iconDiv.style.justifyContent = 'center';
-              iconDiv.innerHTML = '📄'; // Simple emoji fallback
-              parent.appendChild(iconDiv);
-            }
-          }}
-        />
+        {imageError ? (
+          // Show layer icon fallback when image fails to load
+          getLayerIcon(asset.layer)
+        ) : (
+          <img
+            src={asset.gcpStorageUrl}
+            alt={`${asset.friendlyName || asset.name} thumbnail`}
+            style={{
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover',
+              borderRadius: '4px'
+            }}
+            onError={() => {
+              // Set error state to trigger layer icon fallback
+              setImageError(true);
+            }}
+            onLoad={() => {
+              // Reset error state when image loads successfully
+              setImageError(false);
+            }}
+          />
+        )}
       </Box>
     );
   }

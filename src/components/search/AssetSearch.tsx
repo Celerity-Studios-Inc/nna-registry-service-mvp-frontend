@@ -916,7 +916,7 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
             <Divider sx={{ mb: 2 }} />
             <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
               <Typography variant="subtitle2" sx={{ mr: 2 }}>
-                📊 Sort Results
+                🔄 Sort Results
               </Typography>
               <Chip 
                 label={sortBy === 'createdAt' ? 'By Date' : sortBy === 'name' ? 'By Name' : `By ${sortBy}`} 
