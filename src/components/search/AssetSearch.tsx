@@ -833,7 +833,7 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
           <Box sx={{ mb: 3 }}>
             <Divider sx={{ mb: 2 }} />
             <Typography variant="subtitle2" gutterBottom>
-              Filter by Taxonomy
+              🔍 Filter by Taxonomy
             </Typography>
             <Grid container spacing={2}>
               <Grid item xs={12} sm={4}>
@@ -916,7 +916,7 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
             <Divider sx={{ mb: 2 }} />
             <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
               <Typography variant="subtitle2" sx={{ mr: 2 }}>
-                🔄 Sort Results
+                📊 Sort Results
               </Typography>
               <Chip 
                 label={sortBy === 'createdAt' ? 'By Date' : sortBy === 'name' ? 'By Name' : `By ${sortBy}`} 
@@ -955,7 +955,7 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
                   >
                     <MenuItem value="updatedAt">⏰ Last Modified</MenuItem>
                     <MenuItem value="createdAt">📅 Creation Date</MenuItem>
-                    <MenuItem value="layer">🏷️ Layer</MenuItem>
+                    <MenuItem value="layer">☰ Layer</MenuItem>
                     <MenuItem value="name">🔤 Asset Name</MenuItem>
                     <MenuItem value="createdBy">👤 Created By</MenuItem>
                   </Select>

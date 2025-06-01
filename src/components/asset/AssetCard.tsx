@@ -356,6 +356,7 @@ const AssetCard: React.FC<AssetCardProps> = ({
 
           <Divider sx={{ my: 1 }} />
 
+          {/* Date and Layer Row */}
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <Typography variant="caption" color="text.secondary">
               Created: {formatDate(asset.createdAt)}
@@ -371,6 +372,17 @@ const AssetCard: React.FC<AssetCardProps> = ({
               }}
             />
           </Box>
+
+          {/* Created By Row */}
+          {((asset as any).createdBy || (asset as any).author || (asset as any).creator) && (
+            <Typography 
+              variant="caption" 
+              color="text.secondary" 
+              sx={{ mt: 0.5, fontSize: '0.65rem' }}
+            >
+              Created by: {(asset as any).createdBy || (asset as any).author || (asset as any).creator}
+            </Typography>
+          )}
         </CardContent>
       </CardActionArea>
 

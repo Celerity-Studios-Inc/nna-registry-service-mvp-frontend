@@ -223,6 +223,20 @@ const MainLayout: React.FC = () => {
           </IconButton>
           <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
             NNA Registry Service
+            {authContext?.user && (
+              <Typography 
+                variant="body2" 
+                component="span" 
+                sx={{ 
+                  ml: 2, 
+                  opacity: 0.9, 
+                  fontSize: '0.9rem',
+                  fontWeight: 400 
+                }}
+              >
+                • {authContext.user.username || authContext.user.email || 'User'}
+              </Typography>
+            )}
           </Typography>
           <Tooltip title="Notifications">
             <IconButton color="inherit">
