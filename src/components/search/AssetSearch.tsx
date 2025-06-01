@@ -391,6 +391,11 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
               aValue = LAYER_ORDER[a.layer] || 999;
               bValue = LAYER_ORDER[b.layer] || 999;
               break;
+            case 'createdBy':
+              // Sort by creator/author name
+              aValue = ((a as any).createdBy || (a as any).author || (a as any).creator || '').toLowerCase();
+              bValue = ((b as any).createdBy || (b as any).author || (b as any).creator || '').toLowerCase();
+              break;
             default:
               return 0;
           }
@@ -823,67 +828,7 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
           </Box>
         </Box>
 
-        {/* Sorting Controls */}
-        {showSortControls && (
-          <Box sx={{ mb: 3 }}>
-            <Divider sx={{ mb: 2 }} />
-            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-              <Typography variant="subtitle2" sx={{ mr: 2 }}>
-                🔄 Sort Results
-              </Typography>
-              <Chip 
-                label={sortBy === 'createdAt' ? 'By Date' : sortBy === 'name' ? 'By Name' : `By ${sortBy}`} 
-                size="small" 
-                color="primary"
-                variant="filled"
-              />
-              <Chip 
-                label={sortOrder === 'asc' ? '⬆️ Ascending' : '⬇️ Descending'} 
-                size="small" 
-                color="secondary"
-                variant="outlined"
-                sx={{ ml: 1 }}
-              />
-            </Box>
-            <Grid container spacing={2}>
-              <Grid item xs={12} sm={6}>
-                <FormControl fullWidth>
-                  <InputLabel>Sort By</InputLabel>
-                  <Select
-                    value={sortBy}
-                    label="Sort By"
-                    onChange={(e) => handleSortChange(e.target.value)}
-                    sx={{
-                      '& .MuiSelect-select': {
-                        display: 'flex',
-                        alignItems: 'center'
-                      }
-                    }}
-                  >
-                    <MenuItem value="updatedAt">⏰ Last Modified</MenuItem>
-                    <MenuItem value="createdAt">📅 Creation Date</MenuItem>
-                    <MenuItem value="layer">🏷️ Layer</MenuItem>
-                    <MenuItem value="name">🔤 Asset Name</MenuItem>
-                  </Select>
-                </FormControl>
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <FormControl fullWidth>
-                  <InputLabel>Order</InputLabel>
-                  <Select
-                    value={sortOrder}
-                    label="Order"
-                    onChange={(e) => handleSortOrderChange(e.target.value as 'asc' | 'desc')}
-                  >
-                    <MenuItem value="desc">Newest First</MenuItem>
-                    <MenuItem value="asc">Oldest First</MenuItem>
-                  </Select>
-                </FormControl>
-              </Grid>
-            </Grid>
-          </Box>
-        )}
-
+        {/* Filter by Taxonomy */}
         {showAdvancedFilters && (
           <Box sx={{ mb: 3 }}>
             <Divider sx={{ mb: 2 }} />
@@ -958,6 +903,74 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
                         {subcategory.name}
                       </MenuItem>
                     ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+            </Grid>
+          </Box>
+        )}
+
+        {/* Sorting Controls */}
+        {showSortControls && (
+          <Box sx={{ mb: 3 }}>
+            <Divider sx={{ mb: 2 }} />
+            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+              <Typography variant="subtitle2" sx={{ mr: 2 }}>
+                🔄 Sort Results
+              </Typography>
+              <Chip 
+                label={sortBy === 'createdAt' ? 'By Date' : sortBy === 'name' ? 'By Name' : `By ${sortBy}`} 
+                size="small" 
+                color="primary"
+                variant="filled"
+              />
+              <Chip 
+                label={
+                  sortBy === 'layer' 
+                    ? '🔤 Alphabetical' 
+                    : sortOrder === 'asc' 
+                      ? '⬆️ Ascending' 
+                      : '⬇️ Descending'
+                } 
+                size="small" 
+                color="secondary"
+                variant="outlined"
+                sx={{ ml: 1 }}
+              />
+            </Box>
+            <Grid container spacing={2}>
+              <Grid item xs={12} sm={6}>
+                <FormControl fullWidth>
+                  <InputLabel>Sort By</InputLabel>
+                  <Select
+                    value={sortBy}
+                    label="Sort By"
+                    onChange={(e) => handleSortChange(e.target.value)}
+                    sx={{
+                      '& .MuiSelect-select': {
+                        display: 'flex',
+                        alignItems: 'center'
+                      }
+                    }}
+                  >
+                    <MenuItem value="updatedAt">⏰ Last Modified</MenuItem>
+                    <MenuItem value="createdAt">📅 Creation Date</MenuItem>
+                    <MenuItem value="layer">🏷️ Layer</MenuItem>
+                    <MenuItem value="name">🔤 Asset Name</MenuItem>
+                    <MenuItem value="createdBy">👤 Created By</MenuItem>
+                  </Select>
+                </FormControl>
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <FormControl fullWidth>
+                  <InputLabel>Order</InputLabel>
+                  <Select
+                    value={sortOrder}
+                    label="Order"
+                    onChange={(e) => handleSortOrderChange(e.target.value as 'asc' | 'desc')}
+                  >
+                    <MenuItem value="desc">Newest First</MenuItem>
+                    <MenuItem value="asc">Oldest First</MenuItem>
                   </Select>
                 </FormControl>
               </Grid>
