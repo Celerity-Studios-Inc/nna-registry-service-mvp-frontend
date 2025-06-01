@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Box,
   TextField,
@@ -76,6 +76,9 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
   const [searchSuggestions, setSearchSuggestions] = useState<string[]>([]);
   const [isRealTimeSearch, setIsRealTimeSearch] = useState<boolean>(true); // Default to Live Search
+  
+  // Debounce timeout ref for search input performance
+  const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Load layers for filtering
   useEffect(() => {
@@ -602,16 +605,25 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
     return () => clearInterval(interval);
   }, [lastSearchTime]);
 
-  // Enhanced search query handler
+  // Enhanced search query handler with debouncing for performance
   const handleSearchQueryChange = (value: string) => {
+    // Update search query immediately for responsive UI
     setSearchQuery(value);
     
-    // Process search terms
-    const terms = processSearchTerms(value);
-    setSearchTerms(terms);
+    // Clear previous timeout to prevent multiple executions
+    if (debounceTimeoutRef.current) {
+      clearTimeout(debounceTimeoutRef.current);
+    }
     
-    // Generate suggestions
-    generateSearchSuggestions(value);
+    // Debounce expensive operations (search terms processing and suggestions)
+    debounceTimeoutRef.current = setTimeout(() => {
+      // Process search terms
+      const terms = processSearchTerms(value);
+      setSearchTerms(terms);
+      
+      // Generate suggestions
+      generateSearchSuggestions(value);
+    }, 300); // 300ms debounce for performance
   };
 
   return (

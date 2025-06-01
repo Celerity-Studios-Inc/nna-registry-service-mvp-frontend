@@ -1249,7 +1249,11 @@ const RegisterAssetPage: React.FC = () => {
                       Name
                     </Typography>
                     <input
-                      {...register('name')}
+                      {...register('name', { 
+                        required: 'Asset name is required',
+                        maxLength: { value: 100, message: 'Asset name must not exceed 100 characters' },
+                        minLength: { value: 3, message: 'Asset name must be at least 3 characters' }
+                      })}
                       placeholder="Asset Name"
                       style={{
                         width: '100%',
@@ -1272,7 +1276,9 @@ const RegisterAssetPage: React.FC = () => {
                       Description
                     </Typography>
                     <textarea
-                      {...register('description')}
+                      {...register('description', {
+                        maxLength: { value: 1000, message: 'Description must not exceed 1000 characters' }
+                      })}
                       placeholder="Asset Description"
                       rows={4}
                       style={{

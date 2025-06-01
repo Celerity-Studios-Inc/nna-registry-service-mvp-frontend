@@ -3,8 +3,23 @@
  * Generates thumbnail images from video URLs with improved CORS handling and error recovery
  */
 
-// Global cache for generated thumbnails to persist across component re-renders
+import { debugLog } from './logger';
+
+// Global cache for generated thumbnails with memory management
+const MAX_CACHE_SIZE = 50; // Limit to 50 thumbnails to prevent memory leaks
 const thumbnailCache = new Map<string, string>();
+
+// Simple LRU cache management to prevent memory exhaustion
+const manageCacheSize = () => {
+  if (thumbnailCache.size > MAX_CACHE_SIZE) {
+    // Remove oldest entries (first entries in Map maintain insertion order)
+    const keysToDelete = Array.from(thumbnailCache.keys()).slice(0, thumbnailCache.size - MAX_CACHE_SIZE);
+    keysToDelete.forEach(key => {
+      debugLog(`🗑️ Removing old thumbnail from cache: ${key}`);
+      thumbnailCache.delete(key);
+    });
+  }
+};
 
 /**
  * Generate a thumbnail from a video URL with enhanced error handling
@@ -17,13 +32,13 @@ export const generateVideoThumbnail = (
   timeOffset: number = 1
 ): Promise<string> => {
   return new Promise((resolve, reject) => {
-    console.log(`🎬 Starting thumbnail generation for: ${videoUrl}`);
+    debugLog(`🎬 Starting thumbnail generation for: ${videoUrl}`);
     
     // Check cache first
     const cacheKey = `${videoUrl}-${timeOffset}`;
     if (thumbnailCache.has(cacheKey)) {
       const cachedUrl = thumbnailCache.get(cacheKey)!;
-      console.log(`✅ Using cached thumbnail (${cachedUrl.length} chars)`);
+      debugLog(`✅ Using cached thumbnail (${cachedUrl.length} chars)`);
       resolve(cachedUrl);
       return;
     }
@@ -76,7 +91,7 @@ export const generateVideoThumbnail = (
       hasResolved = true;
 
       try {
-        console.log(`🎯 Capturing frame at time ${video.currentTime}s (video duration: ${video.duration}s)`);
+        debugLog(`🎯 Capturing frame at time ${video.currentTime}s (video duration: ${video.duration}s)`);
         
         // Ensure video has valid dimensions
         if (video.videoWidth === 0 || video.videoHeight === 0) {
@@ -85,14 +100,14 @@ export const generateVideoThumbnail = (
 
         // CRITICAL FIX: Check if video is actually ready for drawing
         if (video.readyState < 2) { // HAVE_CURRENT_DATA
-          console.log(`⏳ Video not ready (readyState: ${video.readyState}), waiting... (attempt ${readyStateAttempts + 1}/${maxReadyStateAttempts})`);
+          debugLog(`⏳ Video not ready (readyState: ${video.readyState}), waiting... (attempt ${readyStateAttempts + 1}/${maxReadyStateAttempts})`);
           
           // Increment readyState attempt counter to prevent infinite loops
           readyStateAttempts++;
           if (readyStateAttempts <= maxReadyStateAttempts) {
             // AGGRESSIVE: Try to force load data by briefly playing the video
             if (readyStateAttempts === 2) {
-              console.log(`🚀 Attempting to force video data loading with brief play`);
+              debugLog(`🚀 Attempting to force video data loading with brief play`);
               const playPromise = video.play();
               if (playPromise) {
                 playPromise.then(() => {
@@ -115,7 +130,7 @@ export const generateVideoThumbnail = (
         }
 
         // Verify video dimensions are loaded
-        console.log(`📐 Video dimensions: ${video.videoWidth}x${video.videoHeight}, readyState: ${video.readyState}`);
+        debugLog(`📐 Video dimensions: ${video.videoWidth}x${video.videoHeight}, readyState: ${video.readyState}`);
         
         // Clear canvas with black background (not white) to detect if frame is captured
         ctx.fillStyle = '#000000';
@@ -166,10 +181,11 @@ export const generateVideoThumbnail = (
         // Convert to base64 data URL with higher quality
         const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
         
-        console.log(`✅ Successfully generated thumbnail data URL (${dataUrl.length} chars)${hasContent ? ' with content' : ' - may be empty'}`);
+        debugLog(`✅ Successfully generated thumbnail data URL (${dataUrl.length} chars)${hasContent ? ' with content' : ' - may be empty'}`);
         
-        // Cache the result
+        // Cache the result with memory management
         thumbnailCache.set(cacheKey, dataUrl);
+        manageCacheSize();
         
         cleanup();
         resolve(dataUrl);
@@ -182,7 +198,7 @@ export const generateVideoThumbnail = (
 
     const trySeekAndCapture = () => {
       attemptCount++;
-      console.log(`🔍 Seek attempt ${attemptCount}/${maxAttempts}`);
+      debugLog(`🔍 Seek attempt ${attemptCount}/${maxAttempts}`);
       
       if (video.duration && video.duration > 0) {
         // Try different time positions for better frame capture
@@ -204,23 +220,23 @@ export const generateVideoThumbnail = (
             seekTime = 1;
         }
         
-        console.log(`⏱️ Seeking to ${seekTime}s (attempt ${attemptCount})`);
+        debugLog(`⏱️ Seeking to ${seekTime}s (attempt ${attemptCount})`);
         video.currentTime = seekTime;
       } else {
         // If duration is not available, try a fixed time
-        console.log(`⏱️ Duration unknown, seeking to ${timeOffset}s`);
+        debugLog(`⏱️ Duration unknown, seeking to ${timeOffset}s`);
         video.currentTime = timeOffset;
       }
     };
 
     // Event handlers
     const onLoadedMetadata = () => {
-      console.log(`📊 Video metadata loaded: ${video.videoWidth}x${video.videoHeight}, duration: ${video.duration}s`);
+      debugLog(`📊 Video metadata loaded: ${video.videoWidth}x${video.videoHeight}, duration: ${video.duration}s`);
       trySeekAndCapture();
     };
 
     const onSeeked = () => {
-      console.log(`✅ Seek completed to ${video.currentTime}s`);
+      debugLog(`✅ Seek completed to ${video.currentTime}s`);
       // Wait for readyState to improve before capturing
       const waitForReadyState = () => {
         if (video.readyState >= 2) {
@@ -246,14 +262,14 @@ export const generateVideoThumbnail = (
     };
 
     const onLoadedData = () => {
-      console.log(`📝 Video data loaded at time ${video.currentTime}s`);
+      debugLog(`📝 Video data loaded at time ${video.currentTime}s`);
       if (video.currentTime > 0) {
         setTimeout(resolveWithThumbnail, 100);
       }
     };
 
     const onCanPlay = () => {
-      console.log(`▶️ Video can play, current time: ${video.currentTime}s`);
+      debugLog(`▶️ Video can play, current time: ${video.currentTime}s`);
       if (video.currentTime > 0) {
         setTimeout(resolveWithThumbnail, 100);
       }
@@ -264,7 +280,7 @@ export const generateVideoThumbnail = (
       console.error('Video error details:', video.error);
       
       if (attemptCount < maxAttempts) {
-        console.log(`🔄 Retrying with different approach (attempt ${attemptCount + 1})`);
+        debugLog(`🔄 Retrying with different approach (attempt ${attemptCount + 1})`);
         setTimeout(() => {
           // Try different CORS settings on retry
           video.crossOrigin = attemptCount === 1 ? 'use-credentials' : null;
@@ -294,7 +310,7 @@ export const generateVideoThumbnail = (
     }, 25000);
 
     // Start loading the video
-    console.log(`🚀 Loading video: ${videoUrl}`);
+    debugLog(`🚀 Loading video: ${videoUrl}`);
     video.src = videoUrl;
     video.load();
 
@@ -310,6 +326,23 @@ export const generateVideoThumbnail = (
       originalReject(error);
     };
   });
+};
+
+/**
+ * Get cache statistics for debugging
+ */
+export const getThumbnailCacheStats = () => ({
+  size: thumbnailCache.size,
+  maxSize: MAX_CACHE_SIZE,
+  keys: Array.from(thumbnailCache.keys())
+});
+
+/**
+ * Clear thumbnail cache (useful for testing or memory cleanup)
+ */
+export const clearThumbnailCache = () => {
+  debugLog(`🧹 Clearing thumbnail cache (${thumbnailCache.size} items)`);
+  thumbnailCache.clear();
 };
 
 /**
