@@ -76,7 +76,9 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
   const [searchSuggestions, setSearchSuggestions] = useState<string[]>([]);
   const [isRealTimeSearch, setIsRealTimeSearch] = useState<boolean>(true); // Default to Live Search
-  const [hideTestAssets, setHideTestAssets] = useState<boolean>(true); // Default to hiding test assets for cleaner UX
+  // Settings-based filtering (moved from toggle to Settings page)
+  const [hideAssetsBeforeDate, setHideAssetsBeforeDate] = useState<string>('2025-05-15');
+  const [isFilterEnabled, setIsFilterEnabled] = useState<boolean>(true);
   
   // Debounce timeout ref for search input performance
   const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -348,10 +350,10 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
         friendlyName: asset.name || asset.friendlyName || (asset as any).hfn || (asset as any).HFN,
       }));
 
-      // Apply test asset filtering if enabled (hide assets created before May 15, 2025)
+      // Apply settings-based asset filtering
       let filteredResults = normalizedResults;
-      if (hideTestAssets) {
-        const cutoffDate = new Date('2025-05-15T00:00:00Z'); // Filter out assets before this date
+      if (isFilterEnabled && hideAssetsBeforeDate) {
+        const cutoffDate = new Date(`${hideAssetsBeforeDate}T00:00:00Z`);
         filteredResults = normalizedResults.filter(asset => {
           try {
             const createdAt = new Date(asset.createdAt || asset.metadata?.createdAt || (asset as any).created_at);
@@ -363,7 +365,7 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
         });
         
         if (process.env.NODE_ENV === 'development') {
-          console.log(`🧹 Test asset filter: ${normalizedResults.length} → ${filteredResults.length} assets (${normalizedResults.length - filteredResults.length} test assets hidden)`);
+          console.log(`🧹 Settings-based filter: ${normalizedResults.length} → ${filteredResults.length} assets (hiding assets before ${hideAssetsBeforeDate})`);
         }
       }
 
@@ -600,7 +602,7 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
     }, 500); // 500ms debounce
 
     return () => clearTimeout(timeoutId);
-  }, [searchQuery, selectedLayer, selectedCategory, selectedSubcategory, isRealTimeSearch, hideTestAssets]);
+  }, [searchQuery, selectedLayer, selectedCategory, selectedSubcategory, isRealTimeSearch, isFilterEnabled, hideAssetsBeforeDate]);
 
   // Load recent searches from localStorage
   useEffect(() => {
@@ -614,22 +616,41 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
     }
   }, []);
 
-  // Load and persist hideTestAssets setting
+  // Load settings from localStorage on component mount
   useEffect(() => {
-    const stored = localStorage.getItem('nna-hide-test-assets');
-    if (stored !== null) {
-      try {
-        setHideTestAssets(JSON.parse(stored));
-      } catch (error) {
-        console.warn('Failed to load hide test assets setting:', error);
+    try {
+      const savedDate = localStorage.getItem('nna-hide-assets-before-date');
+      const savedEnabled = localStorage.getItem('nna-hide-test-assets');
+      
+      if (savedDate) {
+        setHideAssetsBeforeDate(savedDate);
       }
+      
+      if (savedEnabled !== null) {
+        setIsFilterEnabled(JSON.parse(savedEnabled));
+      }
+    } catch (error) {
+      console.warn('Failed to load settings:', error);
     }
   }, []);
 
-  // Save hideTestAssets setting when it changes
+  // Listen for settings changes from Settings page
   useEffect(() => {
-    localStorage.setItem('nna-hide-test-assets', JSON.stringify(hideTestAssets));
-  }, [hideTestAssets]);
+    const handleSettingsChange = (event: CustomEvent) => {
+      const { hideAssetsBeforeDate, isEnabled } = event.detail;
+      setHideAssetsBeforeDate(hideAssetsBeforeDate);
+      setIsFilterEnabled(isEnabled);
+      
+      // Automatically refresh search results when settings change
+      performSearch(currentPage);
+    };
+
+    window.addEventListener('nna-settings-changed', handleSettingsChange as EventListener);
+    
+    return () => {
+      window.removeEventListener('nna-settings-changed', handleSettingsChange as EventListener);
+    };
+  }, [currentPage]);
 
   // Periodic data freshness check
   useEffect(() => {
@@ -862,16 +883,16 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
               {isRealTimeSearch ? '⚡ Live Search' : 'Manual Search'}
             </Button>
             
-            {/* Hide Test Assets Toggle */}
-            <Button
-              variant={hideTestAssets ? "contained" : "outlined"}
-              size="small"
-              color={hideTestAssets ? "success" : "primary"}
-              onClick={() => setHideTestAssets(!hideTestAssets)}
-              sx={{ mb: 2 }}
-            >
-              {hideTestAssets ? '🧹 Hide Test Data' : '📊 Show All Data'}
-            </Button>
+            {/* Settings-based Filter Status */}
+            {isFilterEnabled && (
+              <Chip
+                label={`🧹 Filtered (after ${new Date(hideAssetsBeforeDate).toLocaleDateString()})`}
+                size="small"
+                color="success"
+                variant="outlined"
+                sx={{ mb: 2, mr: 1 }}
+              />
+            )}
 
             {(searchQuery ||
               selectedLayer ||

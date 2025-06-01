@@ -190,7 +190,7 @@ const MainLayout: React.FC = () => {
       </Divider>
       <List>
         <ListItem disablePadding>
-          <ListItemButton>
+          <ListItemButton onClick={() => navigate('/settings')}>
             <ListItemIcon>
               <SettingsIcon />
             </ListItemIcon>

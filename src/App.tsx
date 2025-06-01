@@ -32,6 +32,7 @@ import TaxonomySelectorTestPage from './pages/TaxonomySelectorTestPage';
 import TaxonomyComparisonTest from './pages/TaxonomyComparisonTest';
 import CompositeAssetsTestPage from './pages/CompositeAssetsTestPage';
 import CompositeRegisterAssetPage from './pages/CompositeRegisterAssetPage';
+import SettingsPage from './pages/SettingsPage';
 import AssetRegistration from './pages/AssetRegistration';
 import EmergencyAssetRegistrationPage from './pages/EmergencyAssetRegistrationPage';
 import UltraSimpleAssetRegistrationPage from './pages/UltraSimpleAssetRegistrationPage';
@@ -276,6 +277,14 @@ const App: React.FC = () => {
                             element={
                               <ProtectedRoute>
                                 <AssetDetailPage />
+                              </ProtectedRoute>
+                            }
+                          />
+                          <Route
+                            path="/settings"
+                            element={
+                              <ProtectedRoute>
+                                <SettingsPage />
                               </ProtectedRoute>
                             }
                           />
