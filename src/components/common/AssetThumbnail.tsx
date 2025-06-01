@@ -1,16 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Box } from '@mui/material';
-import {
-  AudioFile as AudioIcon,
-  Person as PersonIcon,
-  Palette as PaletteIcon,
-  DirectionsRun as MovesIcon,
-  Public as WorldIcon,
-  WorkspacePremium as CrownIcon,
-  Lock as LockIcon,
-  VideoFile as VideoIcon,
-} from '@mui/icons-material';
 import VideoThumbnail from './VideoThumbnail';
+import EnhancedLayerIcon from './EnhancedLayerIcon';
 import { isVideoUrl, isAudioUrl } from '../../utils/videoThumbnail';
 import { Asset } from '../../types/asset.types';
 
@@ -35,29 +26,15 @@ const AssetThumbnail: React.FC<AssetThumbnailProps> = ({
   useEffect(() => {
     setImageError(false);
   }, [asset.gcpStorageUrl, asset.id]);
-  // Layer configuration for icons and colors
-  const LAYER_CONFIG = {
-    G: { icon: AudioIcon, color: '#1976d2', name: 'Songs' },
-    S: { icon: PersonIcon, color: '#9c27b0', name: 'Stars' },
-    L: { icon: PaletteIcon, color: '#f57c00', name: 'Looks' },
-    M: { icon: MovesIcon, color: '#388e3c', name: 'Moves' },
-    W: { icon: WorldIcon, color: '#00796b', name: 'Worlds' },
-    B: { icon: CrownIcon, color: '#d32f2f', name: 'Branded' },
-    P: { icon: LockIcon, color: '#7b1fa2', name: 'Personalize' },
-    C: { icon: VideoIcon, color: '#ff5722', name: 'Composites' },
-  };
 
   const getLayerIcon = (layer: string) => {
-    const config = LAYER_CONFIG[layer as keyof typeof LAYER_CONFIG];
-    if (!config) return null;
-    
-    const IconComponent = config.icon;
     return (
-      <IconComponent 
-        sx={{ 
-          color: config.color, 
-          fontSize: Math.min(width, height) * 0.6 
-        }} 
+      <EnhancedLayerIcon 
+        layer={layer} 
+        width={Math.min(width, height) * 0.8}
+        height={Math.min(width, height) * 0.8}
+        showLabel={false}
+        showBadge={false}
       />
     );
   };
