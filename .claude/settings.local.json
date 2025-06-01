@@ -71,7 +71,8 @@
       "Bash(npm ls:*)",
       "Bash(./kill-port-3000.sh:*)",
       "Bash(awk:*)",
-      "Bash(git tag:*)"
+      "Bash(git tag:*)",
+      "Bash(git reset:*)"
     ],
     "deny": []
   }

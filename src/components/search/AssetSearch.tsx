@@ -76,6 +76,7 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
   const [searchSuggestions, setSearchSuggestions] = useState<string[]>([]);
   const [isRealTimeSearch, setIsRealTimeSearch] = useState<boolean>(true); // Default to Live Search
+  const [hideTestAssets, setHideTestAssets] = useState<boolean>(true); // Default to hiding test assets for cleaner UX
   
   // Debounce timeout ref for search input performance
   const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -347,9 +348,28 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
         friendlyName: asset.name || asset.friendlyName || (asset as any).hfn || (asset as any).HFN,
       }));
 
+      // Apply test asset filtering if enabled (hide assets created before May 15, 2025)
+      let filteredResults = normalizedResults;
+      if (hideTestAssets) {
+        const cutoffDate = new Date('2025-05-15T00:00:00Z'); // Filter out assets before this date
+        filteredResults = normalizedResults.filter(asset => {
+          try {
+            const createdAt = new Date(asset.createdAt || asset.metadata?.createdAt || asset.created_at);
+            return createdAt >= cutoffDate;
+          } catch (error) {
+            // If date parsing fails, keep the asset (fail open)
+            return true;
+          }
+        });
+        
+        if (process.env.NODE_ENV === 'development') {
+          console.log(`🧹 Test asset filter: ${normalizedResults.length} → ${filteredResults.length} assets (${normalizedResults.length - filteredResults.length} test assets hidden)`);
+        }
+      }
+
       // Backend now handles filtering via category/subcategory parameters
       // Apply client-side sorting only if needed (backend should handle this eventually)
-      let sortedResults = normalizedResults;
+      let sortedResults = filteredResults;
       if (sortBy && sortedResults.length > 0) {
         // Define layer order for proper sorting (descending priority: W > S > M > L > G > C)
         const LAYER_ORDER: Record<string, number> = {
@@ -580,7 +600,7 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
     }, 500); // 500ms debounce
 
     return () => clearTimeout(timeoutId);
-  }, [searchQuery, selectedLayer, selectedCategory, selectedSubcategory, isRealTimeSearch]);
+  }, [searchQuery, selectedLayer, selectedCategory, selectedSubcategory, isRealTimeSearch, hideTestAssets]);
 
   // Load recent searches from localStorage
   useEffect(() => {
@@ -593,6 +613,23 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
       }
     }
   }, []);
+
+  // Load and persist hideTestAssets setting
+  useEffect(() => {
+    const stored = localStorage.getItem('nna-hide-test-assets');
+    if (stored !== null) {
+      try {
+        setHideTestAssets(JSON.parse(stored));
+      } catch (error) {
+        console.warn('Failed to load hide test assets setting:', error);
+      }
+    }
+  }, []);
+
+  // Save hideTestAssets setting when it changes
+  useEffect(() => {
+    localStorage.setItem('nna-hide-test-assets', JSON.stringify(hideTestAssets));
+  }, [hideTestAssets]);
 
   // Periodic data freshness check
   useEffect(() => {
@@ -820,9 +857,20 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
               variant={isRealTimeSearch ? "contained" : "outlined"}
               size="small"
               onClick={() => setIsRealTimeSearch(!isRealTimeSearch)}
-              sx={{ mb: 2 }}
+              sx={{ mb: 2, mr: 1 }}
             >
               {isRealTimeSearch ? '⚡ Live Search' : 'Manual Search'}
+            </Button>
+            
+            {/* Hide Test Assets Toggle */}
+            <Button
+              variant={hideTestAssets ? "contained" : "outlined"}
+              size="small"
+              color={hideTestAssets ? "success" : "primary"}
+              onClick={() => setHideTestAssets(!hideTestAssets)}
+              sx={{ mb: 2 }}
+            >
+              {hideTestAssets ? '🧹 Hide Test Data' : '📊 Show All Data'}
             </Button>
 
             {(searchQuery ||
