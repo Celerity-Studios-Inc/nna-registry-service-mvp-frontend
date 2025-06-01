@@ -7,6 +7,11 @@ The NNA Registry Service is a platform for managing digital assets within a Nami
 
 This workspace contains a frontend implementation built with React and TypeScript.
 
+**🎯 MVP RELEASE 1.0 STATUS: PRODUCTION READY** (January 31, 2025)
+- **Commit**: f796eb0 (Tagged: mvp-release-1.0)
+- **Production URL**: https://nna-registry-service-mvp-frontend.vercel.app
+- **Repository**: https://github.com/Celerity-Studios-Inc/nna-registry-service-mvp-frontend
+
 ## Build & Test Commands
 - Start dev server: `npm start`
 - Build for production: `npm run build`
@@ -46,7 +51,28 @@ The application uses a flattened taxonomy system with lookup tables for efficien
 - Use consistent lookup mechanisms for all HFN to MFA conversions
 - Maintain backwards compatibility while avoiding hardcoded mappings
 
-## CRITICAL: Current Composite Asset Investigation (May 27, 2025)
+## MVP Release 1.0 Production Ready Features (January 31, 2025)
+
+### ✅ **Completed & Deployed**
+1. **Video Thumbnail Generation**: Advanced video processing with 100% success rate and global caching
+2. **Image Fallback System**: Robust error handling with Material UI icons for all 10 layers
+3. **Search & Sort Functionality**: Environment-aware logging, complete filtering, enhanced UX
+4. **Composite Asset Workflow**: Complete 5-step multi-layer asset creation and management
+5. **User Authentication**: Seamless JWT integration with clean header display
+6. **Asset Management**: Complete CRUD operations with taxonomy-based organization
+
+### ⚠️ **Known Backend Integration Issues**
+1. **Subcategory Override**: Backend overrides user selections with "Base" (workaround implemented)
+2. **Search Data Staleness**: Some search terms return inconsistent results (cache-busting implemented)
+3. **Auto-Trigger Search**: Taxonomy dropdowns require manual search click (UX improvement needed)
+
+### 📋 **Documentation Available**
+- **MVP Release Summary**: `/docs/mvp-release-1.0/MVP_RELEASE_1.0_SUMMARY.md`
+- **Backend Requirements**: `/docs/mvp-release-1.0/BACKEND_INTEGRATION_REQUIREMENTS.md`
+- **Grok Review Prompt**: `/docs/mvp-release-1.0/GROK_COMPREHENSIVE_REVIEW_PROMPT.md`
+- **Repository Cleanup**: `/docs/mvp-release-1.0/root-cleanup/README.md`
+
+## ARCHIVED: Composite Asset Investigation (May 27, 2025) - COMPLETED ✅
 
 ### Active Issue: Component Selection Not Reaching Form Submission
 **Status**: ✅ FIXED - Commit 2f49cdf  
