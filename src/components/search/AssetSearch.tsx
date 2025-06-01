@@ -198,11 +198,18 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
           }
         }
 
-        // Use filtered count for accurate pagination and display
-        const finalCount = isFilterEnabled && hideAssetsBeforeDate ? filteredResults.length : totalCount;
+        // Handle initial load pagination and filtering
+        let displayCount = totalCount;
+        
+        if (isFilterEnabled && hideAssetsBeforeDate && filteredResults.length < normalizedResults.length) {
+          if (process.env.NODE_ENV === 'development') {
+            console.log(`📊 Initial load filtering: ${normalizedResults.length} → ${filteredResults.length} (backend total: ${totalCount})`);
+          }
+        }
+        
         setSearchResults(filteredResults);
-        setTotalAssets(finalCount);
-        setTotalPages(Math.ceil(finalCount / itemsPerPage));
+        setTotalAssets(displayCount); // Use backend total for pagination
+        setTotalPages(Math.ceil(displayCount / itemsPerPage));
         setCurrentPage(1);
         setLastSearchTime(Date.now());
       } catch (error) {
@@ -451,12 +458,24 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
         });
       }
 
-      // Use filtered count for accurate pagination and display
-      const finalCount = isFilterEnabled && hideAssetsBeforeDate ? filteredResults.length : totalCount;
+      // Handle pagination and filtering transparently
+      // When client-side filtering is active, show backend totals with filtering note
+      let displayCount = totalCount;
+      let showFilteringNote = false;
+      
+      if (isFilterEnabled && hideAssetsBeforeDate && filteredResults.length < normalizedResults.length) {
+        // We filtered some results on this page, note this to user
+        showFilteringNote = true;
+        
+        if (process.env.NODE_ENV === 'development') {
+          console.log(`📊 Page filtering: ${normalizedResults.length} → ${filteredResults.length} (backend total: ${totalCount})`);
+        }
+      }
+      
       setSearchResults(sortedResults);
-      setTotalAssets(finalCount);
+      setTotalAssets(displayCount); // Use backend total for pagination
       setCurrentPage(page);
-      setTotalPages(Math.ceil(finalCount / itemsPerPage));
+      setTotalPages(Math.ceil(displayCount / itemsPerPage));
       setLastSearchTime(searchTime);
 
       // Call the onSearch callback with the query
@@ -1133,8 +1152,8 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
             ))}
           </Grid>
 
-          {/* Pagination Controls */}
-          {totalPages > 1 && (
+          {/* Pagination Controls - Show when we have results */}
+          {totalAssets > 0 && (
             <PaginationControls
               page={currentPage}
               totalPages={totalPages}
