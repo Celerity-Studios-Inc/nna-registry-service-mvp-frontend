@@ -179,10 +179,30 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
           friendlyName: asset.name || asset.friendlyName || (asset as any).hfn || (asset as any).HFN,
         }));
 
-        // Use backend pagination data
-        setSearchResults(normalizedResults);
-        setTotalAssets(totalCount);
-        setTotalPages(Math.ceil(totalCount / itemsPerPage));
+        // Apply settings-based asset filtering to initial load as well
+        let filteredResults = normalizedResults;
+        if (isFilterEnabled && hideAssetsBeforeDate) {
+          const cutoffDate = new Date(`${hideAssetsBeforeDate}T00:00:00Z`);
+          filteredResults = normalizedResults.filter(asset => {
+            try {
+              const createdAt = new Date(asset.createdAt || asset.metadata?.createdAt || (asset as any).created_at);
+              return createdAt >= cutoffDate;
+            } catch (error) {
+              // If date parsing fails, keep the asset (fail open)
+              return true;
+            }
+          });
+          
+          if (process.env.NODE_ENV === 'development') {
+            console.log(`🧹 Initial load settings filter: ${normalizedResults.length} → ${filteredResults.length} assets (hiding assets before ${hideAssetsBeforeDate})`);
+          }
+        }
+
+        // Use filtered count for accurate pagination and display
+        const finalCount = isFilterEnabled && hideAssetsBeforeDate ? filteredResults.length : totalCount;
+        setSearchResults(filteredResults);
+        setTotalAssets(finalCount);
+        setTotalPages(Math.ceil(finalCount / itemsPerPage));
         setCurrentPage(1);
         setLastSearchTime(Date.now());
       } catch (error) {
@@ -431,11 +451,12 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
         });
       }
 
-      // Use backend pagination when available, fallback to client-side
+      // Use filtered count for accurate pagination and display
+      const finalCount = isFilterEnabled && hideAssetsBeforeDate ? filteredResults.length : totalCount;
       setSearchResults(sortedResults);
-      setTotalAssets(totalCount);
+      setTotalAssets(finalCount);
       setCurrentPage(page);
-      setTotalPages(Math.ceil(totalCount / itemsPerPage));
+      setTotalPages(Math.ceil(finalCount / itemsPerPage));
       setLastSearchTime(searchTime);
 
       // Call the onSearch callback with the query
