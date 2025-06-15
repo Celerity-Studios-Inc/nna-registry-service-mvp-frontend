@@ -256,8 +256,19 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
       // Debug subcategory loading in development
       if (process.env.NODE_ENV === 'development') {
         console.log(`🔍 Loading subcategories for ${selectedLayer} > ${selectedCategory}: found ${availableSubcategories?.length || 0} items`);
-        if (selectedCategory === 'RCK' || selectedCategory === 'Rock') {
-          console.log('🔍 Rock subcategories:', availableSubcategories);
+        if (selectedCategory?.includes('Rock') || selectedCategory?.includes('RCK') || selectedCategory?.includes('Rock_Dance')) {
+          console.log('🔍 Rock-related subcategories:', {
+            layer: selectedLayer,
+            category: selectedCategory,
+            subcategories: availableSubcategories
+          });
+        }
+        if (selectedLayer === 'M' || selectedLayer === 'Moves') {
+          console.log('🔍 Moves layer subcategories:', {
+            layer: selectedLayer,
+            category: selectedCategory,
+            subcategories: availableSubcategories
+          });
         }
       }
       
@@ -265,6 +276,15 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
     } catch (error) {
       console.error('Error loading subcategories:', error);
       console.error(`Failed to load subcategories for layer: ${selectedLayer}, category: ${selectedCategory}`);
+      
+      // Enhanced debug information for troubleshooting
+      if (process.env.NODE_ENV === 'development') {
+        console.log('🔍 Subcategory loading failed - Debug info:', {
+          layer: selectedLayer,
+          category: selectedCategory,
+          errorDetails: error instanceof Error ? error.message : 'Unknown error'
+        });
+      }
     }
   }, [selectedLayer, selectedCategory]);
 
@@ -549,19 +569,15 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
   const handleSortChange = (newSortBy: string) => {
     setSortBy(newSortBy);
     setCurrentPage(1);
-    // Trigger search with current results to apply new sorting
-    if (searchResults.length > 0) {
-      performSearch(1);
-    }
+    // Always trigger search to apply new sorting, regardless of current results
+    performSearch(1);
   };
 
   const handleSortOrderChange = (newOrder: 'asc' | 'desc') => {
     setSortOrder(newOrder);
     setCurrentPage(1);
-    // Trigger search with current results to apply new sort order
-    if (searchResults.length > 0) {
-      performSearch(1);
-    }
+    // Always trigger search to apply new sort order, regardless of current results
+    performSearch(1);
   };
 
   // Enhanced force refresh handler for cache busting
@@ -1132,8 +1148,23 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
                     label="Order"
                     onChange={(e) => handleSortOrderChange(e.target.value as 'asc' | 'desc')}
                   >
-                    <MenuItem value="desc">Newest First</MenuItem>
-                    <MenuItem value="asc">Oldest First</MenuItem>
+                    {/* Dynamic labels based on Sort By selection */}
+                    {sortBy === 'name' ? (
+                      <>
+                        <MenuItem value="asc">A → Z</MenuItem>
+                        <MenuItem value="desc">Z → A</MenuItem>
+                      </>
+                    ) : sortBy === 'layer' ? (
+                      <>
+                        <MenuItem value="asc">Alphabetical</MenuItem>
+                        <MenuItem value="desc">Alphabetical</MenuItem>
+                      </>
+                    ) : (
+                      <>
+                        <MenuItem value="desc">Newest First</MenuItem>
+                        <MenuItem value="asc">Oldest First</MenuItem>
+                      </>
+                    )}
                   </Select>
                 </FormControl>
               </Grid>
