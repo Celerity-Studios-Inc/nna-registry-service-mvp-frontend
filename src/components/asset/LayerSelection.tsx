@@ -17,7 +17,7 @@ import {
 import { CheckCircle as CheckCircleIcon } from '@mui/icons-material';
 import { LayerOption } from '../../types/taxonomy.types';
 import layerConfig from '../../api/layerConfig';
-import taxonomyService from '../../api/taxonomyService';
+import { getLayers } from '../../services/enhancedTaxonomyService';
 
 interface LayerSelectionProps {
   onLayerSelect: (layer: LayerOption, isDoubleClick?: boolean) => void;
@@ -51,8 +51,29 @@ const LayerSelection: React.FC<LayerSelectionProps> = ({
     const fetchLayers = async () => {
       try {
         setLoading(true);
-        // Use taxonomyService to get layers
-        const allLayerOptions = taxonomyService.getLayers();
+        // Use enhancedTaxonomyService to get layers
+        const layerCodes = getLayers();
+        
+        // Layer names mapping
+        const layerNames: Record<string, string> = {
+          G: 'Songs',
+          S: 'Stars', 
+          L: 'Looks',
+          M: 'Moves',
+          W: 'Worlds',
+          B: 'Branded',
+          P: 'Personalize',
+          T: 'Training_Data',
+          C: 'Composites',
+          R: 'Rights'
+        };
+        
+        // Transform to LayerOption format
+        const allLayerOptions = layerCodes.map(layerCode => ({
+          id: layerCode,
+          code: layerCode,
+          name: layerNames[layerCode] || layerCode
+        }));
 
         // If taxonomyService didn't return all layers, create mock data
         let layersToUse = allLayerOptions;
