@@ -7,32 +7,19 @@ The NNA Registry Service is a platform for managing digital assets within a Nami
 
 This workspace contains a frontend implementation built with React and TypeScript.
 
-**🎯 CURRENT STATUS: MVP RELEASE 1.0.1 + PENDING SEARCH FIXES** (January 2025)
-- **Production Commit**: `1acf7c9` - MVP Release 1.0.1 Documentation (Successfully deployed)
-- **Pending Changes**: Search Sort & Filter regression fixes implemented but NOT committed
+**🎯 CURRENT STATUS: MVP RELEASE 1.0.1 + TAXONOMY SERVICE FIX DEPLOYED** (June 2025)
+- **Latest Commit**: `d172939` - Taxonomy Service Fix (CI/CD #582 - Successfully deployed)
 - **Production URL**: https://nna-registry-service-mvp-frontend.vercel.app
 - **Repository**: https://github.com/Celerity-Studios-Inc/nna-registry-service-mvp-frontend
 
-## 🚨 IMMEDIATE ACTION REQUIRED FOR NEXT SESSION
+## ✅ **RECENT SUCCESS: Subcategory Dropdown Fix**
 
-**Critical Issue**: Search Sort & Filter regression fixes are implemented in the codebase but have NOT been committed to git or deployed to production.
+**Issue Resolved**: AssetSearch was using incorrect taxonomy service causing subcategory dropdowns to be empty for all layer combinations (S.RCK, C.RMX, W.STG, etc.)
 
-**Next Session Must**:
-1. **Commit Pending Changes**: Run git commands to commit search fixes
-2. **Verify Deployment**: Ensure GitHub Actions build triggers successfully  
-3. **Test Production**: Verify Browse Assets functionality is restored
-
-**Files Ready for Commit**:
-- **Modified**: `/src/components/search/AssetSearch.tsx` (7 critical fixes applied)
-- **New**: `SEARCH_SORT_FILTER_FIXES.md` (comprehensive documentation)
-
-**Git Commands to Execute**:
-```bash
-git status                    # Verify modified files
-git add .                     # Stage all changes
-git commit -m "[SEARCH FIXES MESSAGE]"  # Commit with proper message
-git push origin main          # Deploy to production
-```
+**Solution Applied**: Updated AssetSearch to use correct `enhancedTaxonomyService` with proper data transformations
+- **Fixed File**: `/src/components/search/AssetSearch.tsx` (commit d172939)
+- **Verification**: All layer → category → subcategory combinations now working in production
+- **Impact**: Complete Browse Assets functionality restored across all layers
 
 ## Build & Test Commands
 - Start dev server: `npm start`
@@ -62,6 +49,62 @@ The application uses a flattened taxonomy system with lookup tables for efficien
 3. **SimpleTaxonomySelectionV3**: Current active component for selecting categories and subcategories (latest version)
 4. **LayerSelectorV2**: Component for selecting layers
 5. **FeedbackContext**: Provides user feedback during taxonomy operations
+
+## 🚨 **CRITICAL: Always Use Correct Taxonomy Service**
+
+**⚠️ DO NOT USE** - Old taxonomy service (causes subcategory dropdown failures):
+```typescript
+// ❌ WRONG - Will cause dropdowns to be empty
+import taxonomyService from '../../api/taxonomyService';
+```
+
+**✅ USE CORRECT SERVICES** - Enhanced services (tested and reliable):
+
+**For core taxonomy data operations (layers, categories, subcategories):**
+```typescript
+// ✅ CORRECT - Use for dropdown population
+import {
+  getLayers,
+  getCategories,
+  getSubcategories
+} from '../../services/enhancedTaxonomyService';
+```
+
+**For taxonomy formatting and conversion operations:**
+```typescript
+// ✅ CORRECT - Use for display formatting
+import { taxonomyService } from '../../services/simpleTaxonomyService';
+```
+
+### Known Files Needing Update (As of June 2025)
+The following files still use the old service and should be updated:
+- `/src/components/asset/AssetCard.tsx` - Line 28
+- `/src/pages/AssetDetailPage.tsx` - Line 31  
+- `/src/components/asset/TaxonomySelection.tsx` - Line 19
+- `/src/components/asset/LayerSelection.tsx` - Line 20
+- Test files in `/src/services/` and `/src/pages/`
+
+### Data Transformation Required
+When using `enhancedTaxonomyService`, transform data to match expected interfaces:
+
+```typescript
+// Transform layers: string[] → LayerOption[]
+const layerCodes = getLayers();
+const layers = layerCodes.map(code => ({
+  id: code,
+  code: code,
+  name: LAYER_NAMES[code] || code
+}));
+
+// Transform categories/subcategories: TaxonomyItem[] → CategoryOption[]
+const taxonomyItems = getCategories(layer);
+const categories = taxonomyItems.map(item => ({
+  id: item.code,
+  code: item.code,
+  name: item.name,
+  numericCode: item.numericCode
+}));
+```
 
 ### Current Active Implementation
 - **Primary Registration Flow**: Uses `RegisterAssetPage.tsx` with `SimpleTaxonomySelectionV3`
@@ -93,6 +136,7 @@ The application uses a flattened taxonomy system with lookup tables for efficien
 - **Backend Requirements**: `/docs/mvp-release-1.0/BACKEND_INTEGRATION_REQUIREMENTS.md`
 - **Grok Review Prompt**: `/docs/mvp-release-1.0/GROK_COMPREHENSIVE_REVIEW_PROMPT.md`
 - **Repository Cleanup**: `/docs/mvp-release-1.0/root-cleanup/README.md`
+- **🚨 TAXONOMY SERVICE GUIDELINES**: `/TAXONOMY_SERVICE_GUIDELINES.md` - **CRITICAL REFERENCE**
 
 ## ARCHIVED: Composite Asset Investigation (May 27, 2025) - COMPLETED ✅
 
