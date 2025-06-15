@@ -472,76 +472,10 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
       }
 
       // Backend now handles filtering via category/subcategory parameters
-      // Apply client-side sorting only if needed (backend should handle this eventually)
+      // Apply client-side sorting using shared sort function
       let sortedResults = filteredResults;
       if (sortBy && sortedResults.length > 0) {
-        // Define layer order for alphabetical sorting (B > C > G > L > M > P > R > S > T > W)
-        const LAYER_ORDER: Record<string, number> = {
-          'B': 1, // Branded
-          'C': 2, // Composites
-          'G': 3, // Songs
-          'L': 4, // Looks
-          'M': 5, // Moves
-          'P': 6, // Personalize
-          'R': 7, // Rights
-          'S': 8, // Stars
-          'T': 9, // Training_Data
-          'W': 10 // Worlds
-        };
-
-        sortedResults.sort((a, b) => {
-          let aValue: any = '';
-          let bValue: any = '';
-          
-          switch (sortBy) {
-            case 'createdAt':
-              // Enhanced date parsing with proper validation
-              try {
-                const aDate = a.createdAt ? new Date(a.createdAt) : new Date(0);
-                const bDate = b.createdAt ? new Date(b.createdAt) : new Date(0);
-                // Check for invalid dates
-                aValue = isNaN(aDate.getTime()) ? 0 : aDate.getTime();
-                bValue = isNaN(bDate.getTime()) ? 0 : bDate.getTime();
-              } catch (error) {
-                aValue = 0;
-                bValue = 0;
-              }
-              break;
-            case 'updatedAt':
-              // Enhanced date parsing for updatedAt
-              try {
-                const aUpdateDate = a.updatedAt ? new Date(a.updatedAt) : new Date(0);
-                const bUpdateDate = b.updatedAt ? new Date(b.updatedAt) : new Date(0);
-                aValue = isNaN(aUpdateDate.getTime()) ? 0 : aUpdateDate.getTime();
-                bValue = isNaN(bUpdateDate.getTime()) ? 0 : bUpdateDate.getTime();
-              } catch (error) {
-                aValue = 0;
-                bValue = 0;
-              }
-              break;
-            case 'name':
-              aValue = (a.name || a.friendlyName || '').toLowerCase();
-              bValue = (b.name || b.friendlyName || '').toLowerCase();
-              break;
-            case 'layer':
-              // Use layer order mapping for proper grouping - respect sortOrder
-              aValue = LAYER_ORDER[a.layer || ''] || 999;
-              bValue = LAYER_ORDER[b.layer || ''] || 999;
-              break;
-              
-            case 'createdBy':
-              // Sort by creator email or name from metadata
-              aValue = (a.createdBy || a.metadata?.createdBy || '').toLowerCase();
-              bValue = (b.createdBy || b.metadata?.createdBy || '').toLowerCase();
-              break;
-            default:
-              return 0;
-          }
-          
-          if (aValue < bValue) return sortOrder === 'asc' ? -1 : 1;
-          if (aValue > bValue) return sortOrder === 'asc' ? 1 : -1;
-          return 0;
-        });
+        sortedResults = applySortToResults(sortedResults, sortBy, sortOrder);
       }
 
       // Handle pagination and filtering transparently
@@ -588,6 +522,72 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
     performSearch(1);
   };
 
+  // Shared sort function that can be used without re-fetching data
+  const applySortToResults = (results: Asset[], currentSortBy: string, currentSortOrder: 'asc' | 'desc'): Asset[] => {
+    if (!currentSortBy || results.length === 0) return results;
+    
+    const LAYER_ORDER: Record<string, number> = {
+      'B': 1, // Branded
+      'C': 2, // Composites
+      'G': 3, // Songs
+      'L': 4, // Looks
+      'M': 5, // Moves
+      'P': 6, // Personalize
+      'R': 7, // Rights
+      'S': 8, // Stars
+      'T': 9, // Training_Data
+      'W': 10 // Worlds
+    };
+
+    return [...results].sort((a, b) => {
+      let aValue: any = '';
+      let bValue: any = '';
+      
+      switch (currentSortBy) {
+        case 'createdAt':
+          try {
+            const aDate = a.createdAt ? new Date(a.createdAt) : new Date(0);
+            const bDate = b.createdAt ? new Date(b.createdAt) : new Date(0);
+            aValue = isNaN(aDate.getTime()) ? 0 : aDate.getTime();
+            bValue = isNaN(bDate.getTime()) ? 0 : bDate.getTime();
+          } catch (error) {
+            aValue = 0;
+            bValue = 0;
+          }
+          break;
+        case 'updatedAt':
+          try {
+            const aUpdateDate = a.updatedAt ? new Date(a.updatedAt) : new Date(0);
+            const bUpdateDate = b.updatedAt ? new Date(b.updatedAt) : new Date(0);
+            aValue = isNaN(aUpdateDate.getTime()) ? 0 : aUpdateDate.getTime();
+            bValue = isNaN(bUpdateDate.getTime()) ? 0 : bUpdateDate.getTime();
+          } catch (error) {
+            aValue = 0;
+            bValue = 0;
+          }
+          break;
+        case 'name':
+          aValue = (a.name || a.friendlyName || '').toLowerCase();
+          bValue = (b.name || b.friendlyName || '').toLowerCase();
+          break;
+        case 'layer':
+          aValue = LAYER_ORDER[a.layer || ''] || 999;
+          bValue = LAYER_ORDER[b.layer || ''] || 999;
+          break;
+        case 'createdBy':
+          aValue = (a.createdBy || a.metadata?.createdBy || '').toLowerCase();
+          bValue = (b.createdBy || b.metadata?.createdBy || '').toLowerCase();
+          break;
+        default:
+          return 0;
+      }
+      
+      if (aValue < bValue) return currentSortOrder === 'asc' ? -1 : 1;
+      if (aValue > bValue) return currentSortOrder === 'asc' ? 1 : -1;
+      return 0;
+    });
+  };
+
   // Pagination handlers
   const handlePageChange = (page: number) => {
     performSearch(page);
@@ -604,22 +604,33 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
     setSortBy(newSortBy);
     
     // Set logical defaults for sort order based on sort type
+    let newSortOrder: 'asc' | 'desc';
     if (newSortBy === 'createdAt' || newSortBy === 'updatedAt') {
-      setSortOrder('desc'); // Newest first for dates
+      newSortOrder = 'desc'; // Newest first for dates
     } else {
-      setSortOrder('asc');  // A→Z for names, layers, created by
+      newSortOrder = 'asc';  // A→Z for names, layers, created by
+    }
+    setSortOrder(newSortOrder);
+    
+    // Apply sort immediately to existing results
+    if (searchResults.length > 0) {
+      const sortedResults = applySortToResults(searchResults, newSortBy, newSortOrder);
+      setSearchResults(sortedResults);
     }
     
     setCurrentPage(1);
-    // Always trigger search to apply new sorting, regardless of current results
-    performSearch(1);
   };
 
   const handleSortOrderChange = (newOrder: 'asc' | 'desc') => {
     setSortOrder(newOrder);
+    
+    // Apply sort immediately to existing results
+    if (searchResults.length > 0) {
+      const sortedResults = applySortToResults(searchResults, sortBy, newOrder);
+      setSearchResults(sortedResults);
+    }
+    
     setCurrentPage(1);
-    // Always trigger search to apply new sort order, regardless of current results
-    performSearch(1);
   };
 
   // Enhanced force refresh handler for cache busting
@@ -1189,6 +1200,14 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
                     value={sortOrder}
                     label="Order"
                     onChange={(e) => handleSortOrderChange(e.target.value as 'asc' | 'desc')}
+                    displayEmpty
+                    renderValue={(value) => {
+                      if (!value) return 'Select Order';
+                      if (sortBy === 'name' || sortBy === 'layer' || sortBy === 'createdBy') {
+                        return value === 'asc' ? 'A → Z' : 'Z → A';
+                      }
+                      return value === 'desc' ? 'Newest First' : 'Oldest First';
+                    }}
                   >
                     {/* Dynamic labels based on Sort By selection */}
                     {sortBy === 'name' ? (

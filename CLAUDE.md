@@ -198,8 +198,8 @@ Composite asset registration workflow (Layer C) successfully:
 ### GitHub Repository
 - **URL**: https://github.com/Celerity-Studios-Inc/nna-registry-service-mvp-frontend
 - **Current Branch**: main
-- **Latest Commit**: 9f11250 (MINOR POLISH: UI cleanup and taxonomy warnings fix)
-- **Current Session**: Search functionality enhancements and environment-aware logging implementation
+- **Latest Commit**: a3931b3 (TAXONOMY SERVICE FIX: LayerSelection component uses enhancedTaxonomyService)
+- **Current Session**: Fixing critical sort functionality issues that have persisted since Friday June 15, 2025
 
 ### Build Commands
 - Build for production: `CI=false npm run build` (CI=false prevents test failures from blocking build)
@@ -243,6 +243,19 @@ interface FormData {
   components: data.layerSpecificData.components
 }),
 ```
+
+## Current Critical Issue (June 15, 2025)
+
+### Sort Functionality Broken - Multiple Failed Fix Attempts
+- **Problem**: Sort functionality in AssetSearch.tsx not working properly despite 4+ commits attempting fixes
+- **Symptoms**: 
+  - Sort By dropdown changes don't trigger re-sort of existing results
+  - Order dropdown (A→Z/Z→A) selections have no effect
+  - Order dropdown shows blank instead of current selection
+  - Only workaround: Click "Clear All" and search again to see sorted results
+- **Root Cause**: Sort logic tightly coupled with performSearch(), no mechanism for immediate re-sort
+- **Documentation**: See SORT_FUNCTIONALITY_ISSUES.md for detailed analysis
+- **Fix Plan**: Decouple sort logic from search, implement immediate re-sort capability
 
 ## Recent Issues and Fixes (Historical)
 
