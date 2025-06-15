@@ -26,7 +26,7 @@ import AssetCard from '../asset/AssetCard';
 import PaginationControls from '../common/PaginationControls';
 import { Asset, AssetSearchParams } from '../../types/asset.types';
 import assetService from '../../api/assetService';
-import taxonomyService from '../../api/taxonomyService';
+import { getLayers, getCategories, getSubcategories } from '../../services/enhancedTaxonomyService';
 import axios from 'axios';
 import {
   LayerOption,
@@ -86,7 +86,29 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
   // Load layers for filtering
   useEffect(() => {
     try {
-      const availableLayers = taxonomyService.getLayers();
+      const layerCodes = getLayers();
+      
+      // Layer names mapping
+      const layerNames: Record<string, string> = {
+        G: 'Songs',
+        S: 'Stars', 
+        L: 'Looks',
+        M: 'Moves',
+        W: 'Worlds',
+        B: 'Branded',
+        P: 'Personalize',
+        T: 'Training_Data',
+        C: 'Composites',
+        R: 'Rights'
+      };
+      
+      // Transform to LayerOption format expected by AssetSearch
+      const availableLayers = layerCodes.map(layerCode => ({
+        id: layerCode,
+        code: layerCode,
+        name: layerNames[layerCode] || layerCode
+      }));
+      
       setLayers(availableLayers);
     } catch (error) {
       console.error('Error loading layers:', error);
@@ -233,7 +255,16 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
     }
 
     try {
-      const availableCategories = taxonomyService.getCategories(selectedLayer);
+      const taxonomyCategories = getCategories(selectedLayer);
+      
+      // Transform TaxonomyItem[] to CategoryOption[] format expected by AssetSearch
+      const availableCategories = taxonomyCategories.map(category => ({
+        id: category.code,
+        code: category.code,
+        name: category.name,
+        numericCode: category.numericCode
+      }));
+      
       setCategories(availableCategories);
     } catch (error) {
       console.error('Error loading categories:', error);
@@ -248,10 +279,18 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
     }
 
     try {
-      const availableSubcategories = taxonomyService.getSubcategories(
+      const taxonomySubcategories = getSubcategories(
         selectedLayer,
         selectedCategory
       );
+      
+      // Transform TaxonomyItem[] to SubcategoryOption[] format expected by AssetSearch
+      const availableSubcategories = taxonomySubcategories.map(subcategory => ({
+        id: subcategory.code,
+        code: subcategory.code,
+        name: subcategory.name,
+        numericCode: subcategory.numericCode
+      }));
       
       // Debug subcategory loading in development
       if (process.env.NODE_ENV === 'development') {
