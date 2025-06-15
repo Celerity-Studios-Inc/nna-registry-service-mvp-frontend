@@ -252,9 +252,19 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
         selectedLayer,
         selectedCategory
       );
+      
+      // Debug subcategory loading in development
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`🔍 Loading subcategories for ${selectedLayer} > ${selectedCategory}: found ${availableSubcategories?.length || 0} items`);
+        if (selectedCategory === 'RCK' || selectedCategory === 'Rock') {
+          console.log('🔍 Rock subcategories:', availableSubcategories);
+        }
+      }
+      
       setSubcategories(availableSubcategories);
     } catch (error) {
       console.error('Error loading subcategories:', error);
+      console.error(`Failed to load subcategories for layer: ${selectedLayer}, category: ${selectedCategory}`);
     }
   }, [selectedLayer, selectedCategory]);
 
@@ -363,9 +373,15 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
       console.log(`🎯 Retrieved ${results.length} assets, total: ${totalCount}`);
 
       // Check for potentially stale data (e.g., unexpected zero results for broad searches)
-      if (results.length === 0 && searchQuery.trim() && !selectedLayer && !selectedCategory && !selectedSubcategory) {
-        console.warn(`⚠️ Potentially stale data: Search for "${searchQuery}" returned 0 results`);
+      // Only flag as stale if it's a simple search term that should typically return results
+      if (results.length === 0 && searchQuery.trim().length >= 4 && !selectedLayer && !selectedCategory && !selectedSubcategory) {
+        // Only show warning in development to reduce production console noise
+        if (process.env.NODE_ENV === 'development') {
+          console.warn(`⚠️ Potentially stale data: Search for "${searchQuery}" returned 0 results`);
+        }
         setIsStaleData(true);
+      } else {
+        setIsStaleData(false);
       }
 
       // Normalize asset structure for frontend use
@@ -400,7 +416,7 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
       // Apply client-side sorting only if needed (backend should handle this eventually)
       let sortedResults = filteredResults;
       if (sortBy && sortedResults.length > 0) {
-        // Define layer order for alphabetical sorting (C > G > L > M > S > W)
+        // Define layer order for alphabetical sorting (B > C > G > L > M > P > R > S > T > W)
         const LAYER_ORDER: Record<string, number> = {
           'B': 1, // Branded
           'C': 2, // Composites
@@ -449,10 +465,16 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
               bValue = (b.name || b.friendlyName || '').toLowerCase();
               break;
             case 'layer':
-              // Use layer order mapping for proper grouping
+              // Use layer order mapping for proper grouping - always ascending for alphabetical order
               aValue = LAYER_ORDER[a.layer || ''] || 999;
               bValue = LAYER_ORDER[b.layer || ''] || 999;
-              break;
+              
+              // For layer sorting, override sortOrder to always be ascending (alphabetical)
+              // This ensures B comes before C, C before G, etc. regardless of sort order setting
+              if (aValue < bValue) return -1;
+              if (aValue > bValue) return 1;
+              return 0;
+              
             case 'createdBy':
               // Sort by creator/author name
               aValue = ((a as any).createdBy || (a as any).author || (a as any).creator || '').toLowerCase();
