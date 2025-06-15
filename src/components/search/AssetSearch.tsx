@@ -400,18 +400,18 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
       // Apply client-side sorting only if needed (backend should handle this eventually)
       let sortedResults = filteredResults;
       if (sortBy && sortedResults.length > 0) {
-        // Define layer order for proper sorting (descending priority: W > S > M > L > G > C)
+        // Define layer order for alphabetical sorting (C > G > L > M > S > W)
         const LAYER_ORDER: Record<string, number> = {
-          'W': 1, // Worlds
-          'S': 2, // Stars  
-          'M': 3, // Moves
+          'B': 1, // Branded
+          'C': 2, // Composites
+          'G': 3, // Songs
           'L': 4, // Looks
-          'G': 5, // Songs
-          'C': 6, // Composites
-          'B': 7, // Branded
-          'P': 8, // Personalize
+          'M': 5, // Moves
+          'P': 6, // Personalize
+          'R': 7, // Rights
+          'S': 8, // Stars
           'T': 9, // Training_Data
-          'R': 10 // Rights
+          'W': 10 // Worlds
         };
 
         sortedResults.sort((a, b) => {
@@ -421,18 +421,28 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
           switch (sortBy) {
             case 'createdAt':
               // Enhanced date parsing with proper validation
-              const aDate = a.createdAt ? new Date(a.createdAt) : new Date(0);
-              const bDate = b.createdAt ? new Date(b.createdAt) : new Date(0);
-              // Check for invalid dates
-              aValue = isNaN(aDate.getTime()) ? 0 : aDate.getTime();
-              bValue = isNaN(bDate.getTime()) ? 0 : bDate.getTime();
+              try {
+                const aDate = a.createdAt ? new Date(a.createdAt) : new Date(0);
+                const bDate = b.createdAt ? new Date(b.createdAt) : new Date(0);
+                // Check for invalid dates
+                aValue = isNaN(aDate.getTime()) ? 0 : aDate.getTime();
+                bValue = isNaN(bDate.getTime()) ? 0 : bDate.getTime();
+              } catch (error) {
+                aValue = 0;
+                bValue = 0;
+              }
               break;
             case 'updatedAt':
               // Enhanced date parsing for updatedAt
-              const aUpdateDate = a.updatedAt ? new Date(a.updatedAt) : new Date(0);
-              const bUpdateDate = b.updatedAt ? new Date(b.updatedAt) : new Date(0);
-              aValue = isNaN(aUpdateDate.getTime()) ? 0 : aUpdateDate.getTime();
-              bValue = isNaN(bUpdateDate.getTime()) ? 0 : bUpdateDate.getTime();
+              try {
+                const aUpdateDate = a.updatedAt ? new Date(a.updatedAt) : new Date(0);
+                const bUpdateDate = b.updatedAt ? new Date(b.updatedAt) : new Date(0);
+                aValue = isNaN(aUpdateDate.getTime()) ? 0 : aUpdateDate.getTime();
+                bValue = isNaN(bUpdateDate.getTime()) ? 0 : bUpdateDate.getTime();
+              } catch (error) {
+                aValue = 0;
+                bValue = 0;
+              }
               break;
             case 'name':
               aValue = (a.name || a.friendlyName || '').toLowerCase();
@@ -440,8 +450,8 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
               break;
             case 'layer':
               // Use layer order mapping for proper grouping
-              aValue = LAYER_ORDER[a.layer] || 999;
-              bValue = LAYER_ORDER[b.layer] || 999;
+              aValue = LAYER_ORDER[a.layer || ''] || 999;
+              bValue = LAYER_ORDER[b.layer || ''] || 999;
               break;
             case 'createdBy':
               // Sort by creator/author name
@@ -517,15 +527,19 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
   const handleSortChange = (newSortBy: string) => {
     setSortBy(newSortBy);
     setCurrentPage(1);
-    // Since we're now using client-side sorting, trigger a fresh search
-    performSearch(1);
+    // Trigger search with current results to apply new sorting
+    if (searchResults.length > 0) {
+      performSearch(1);
+    }
   };
 
   const handleSortOrderChange = (newOrder: 'asc' | 'desc') => {
     setSortOrder(newOrder);
     setCurrentPage(1);
-    // Since we're now using client-side sorting, trigger a fresh search
-    performSearch(1);
+    // Trigger search with current results to apply new sort order
+    if (searchResults.length > 0) {
+      performSearch(1);
+    }
   };
 
   // Enhanced force refresh handler for cache busting
@@ -540,7 +554,11 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
     setSelectedCategory('');
     setSelectedSubcategory('');
     setShowAdvancedFilters(false);
+    setShowSortControls(false);
     setCurrentPage(1);
+    // Clear search terms and suggestions
+    setSearchTerms([]);
+    setSearchSuggestions([]);
     // Immediate search to show all assets when clearing filters
     performSearch(1);
   };
@@ -642,7 +660,7 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
     }, 500); // 500ms debounce
 
     return () => clearTimeout(timeoutId);
-  }, [searchQuery, selectedLayer, selectedCategory, selectedSubcategory, isRealTimeSearch, isFilterEnabled, hideAssetsBeforeDate]);
+  }, [searchQuery, selectedLayer, selectedCategory, selectedSubcategory, isRealTimeSearch]);
 
   // Load recent searches from localStorage
   useEffect(() => {
@@ -681,8 +699,10 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
       setHideAssetsBeforeDate(hideAssetsBeforeDate);
       setIsFilterEnabled(isEnabled);
       
-      // Automatically refresh search results when settings change
-      performSearch(currentPage);
+      // Automatically refresh search results when settings change (only if we have results)
+      if (searchResults.length > 0 || searchQuery || selectedLayer || selectedCategory || selectedSubcategory) {
+        performSearch(currentPage);
+      }
     };
 
     window.addEventListener('nna-settings-changed', handleSettingsChange as EventListener);
@@ -690,7 +710,7 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
     return () => {
       window.removeEventListener('nna-settings-changed', handleSettingsChange as EventListener);
     };
-  }, [currentPage]);
+  }, [currentPage, searchResults.length, searchQuery, selectedLayer, selectedCategory, selectedSubcategory]);
 
   // Periodic data freshness check
   useEffect(() => {
