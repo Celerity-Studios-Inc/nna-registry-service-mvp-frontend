@@ -485,20 +485,15 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
               bValue = (b.name || b.friendlyName || '').toLowerCase();
               break;
             case 'layer':
-              // Use layer order mapping for proper grouping - always ascending for alphabetical order
+              // Use layer order mapping for proper grouping - respect sortOrder
               aValue = LAYER_ORDER[a.layer || ''] || 999;
               bValue = LAYER_ORDER[b.layer || ''] || 999;
-              
-              // For layer sorting, override sortOrder to always be ascending (alphabetical)
-              // This ensures B comes before C, C before G, etc. regardless of sort order setting
-              if (aValue < bValue) return -1;
-              if (aValue > bValue) return 1;
-              return 0;
+              break;
               
             case 'createdBy':
-              // Sort by creator/author name
-              aValue = ((a as any).createdBy || (a as any).author || (a as any).creator || '').toLowerCase();
-              bValue = ((b as any).createdBy || (b as any).author || (b as any).creator || '').toLowerCase();
+              // Sort by creator email or name from metadata
+              aValue = (a.createdBy || a.metadata?.createdBy || '').toLowerCase();
+              bValue = (b.createdBy || b.metadata?.createdBy || '').toLowerCase();
               break;
             default:
               return 0;
@@ -568,6 +563,14 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
   // Sorting handlers - now using client-side sorting
   const handleSortChange = (newSortBy: string) => {
     setSortBy(newSortBy);
+    
+    // Set logical defaults for sort order based on sort type
+    if (newSortBy === 'createdAt' || newSortBy === 'updatedAt') {
+      setSortOrder('desc'); // Newest first for dates
+    } else {
+      setSortOrder('asc');  // A→Z for names, layers, created by
+    }
+    
     setCurrentPage(1);
     // Always trigger search to apply new sorting, regardless of current results
     performSearch(1);
@@ -1154,10 +1157,10 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
                         <MenuItem value="asc">A → Z</MenuItem>
                         <MenuItem value="desc">Z → A</MenuItem>
                       </>
-                    ) : sortBy === 'layer' ? (
+                    ) : sortBy === 'layer' || sortBy === 'createdBy' ? (
                       <>
-                        <MenuItem value="asc">Alphabetical</MenuItem>
-                        <MenuItem value="desc">Alphabetical</MenuItem>
+                        <MenuItem value="asc">A → Z</MenuItem>
+                        <MenuItem value="desc">Z → A</MenuItem>
                       </>
                     ) : (
                       <>
