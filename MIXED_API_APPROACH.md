@@ -14,22 +14,29 @@ Different HTTP methods have different CORS requirements:
 
 ## Solution: Mixed Approach
 
-### Use Direct Backend For:
-- **File Uploads (POST)**: `https://registry.reviz.dev/api/assets`
-  - No CORS preflight issues
-  - Bypasses Vercel 4.5MB limit
-  - Supports full 32MB uploads
+### Smart Routing Approach:
 
-### Use Vercel Proxy For:
+**Use Vercel Proxy For:**
+- **Small File Uploads** (< 4MB): `/api/assets`
+  - No CORS issues
+  - Reliable routing
 - **Asset Search (GET)**: `/api/assets` 
 - **Asset Details (GET)**: `/api/assets`
 - **All read operations**
 
+**Use Direct Backend For:**
+- **Large File Uploads** (> 4MB): `https://registry.reviz.dev/api/assets`
+  - Bypasses Vercel 4.5MB limit
+  - Only when necessary
+
 ## Implementation Details
 
-### File Upload (POST) - Direct Backend
+### File Upload (POST) - Smart Routing
 ```javascript
-const assetEndpoint = 'https://registry.reviz.dev/api/assets';
+const fileSize = assetData.files?.length > 0 ? assetData.files[0].size : 0;
+const useDirect = fileSize > 4 * 1024 * 1024; // 4MB threshold
+const assetEndpoint = useDirect ? 'https://registry.reviz.dev/api/assets' : '/api/assets';
+
 const response = await fetch(assetEndpoint, {
   method: 'POST',
   headers: { Authorization: `Bearer ${authToken}` },
