@@ -9,7 +9,7 @@ Implemented direct backend connection to bypass Vercel proxy 4.5MB file size lim
 
 ### 1. Updated API Endpoints
 - **Old**: `/api/assets` (Vercel proxy - 4.5MB limit)
-- **New**: `https://nna-registry-service-us-central1.run.app/api/assets` (Direct - 32MB limit)
+- **New**: `https://registry.reviz.dev/api/assets` (Direct - 32MB limit)
 
 ### 2. Files Modified
 
@@ -34,11 +34,12 @@ Implemented direct backend connection to bypass Vercel proxy 4.5MB file size lim
 
 ## Key Backend Integration Points
 
-1. **Backend URL**: `https://nna-registry-service-us-central1.run.app/api`
+1. **Backend URL**: `https://registry.reviz.dev/api`
 2. **CORS**: Properly configured by backend team
 3. **File Size Limit**: 32MB (verified by backend team)
 4. **Authentication**: Continue using Bearer token in Authorization header
 5. **FormData**: Let browser set Content-Type with boundary
+6. **Error Handling**: API errors are now properly thrown to calling code (no more mock fallbacks)
 
 ## Testing Instructions
 

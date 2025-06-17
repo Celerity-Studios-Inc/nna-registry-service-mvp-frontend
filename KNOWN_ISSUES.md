@@ -10,10 +10,11 @@
 Vercel's serverless functions had a 4.5MB request payload limit. This has been resolved by implementing direct backend connection.
 
 ### Solution Implemented
-- Updated to use direct backend URL: `https://nna-registry-service-us-central1.run.app/api/assets`
+- Updated to use direct backend URL: `https://registry.reviz.dev/api/assets`
 - Bypassed Vercel proxy completely
 - Backend supports full 32MB file uploads
 - CORS properly configured by backend team
+- Fixed error handling to prevent false success messages
 
 ### Current Behavior
 - All files up to 32MB: Upload successfully ✅

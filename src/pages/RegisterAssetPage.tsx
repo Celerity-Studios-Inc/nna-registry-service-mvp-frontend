@@ -588,10 +588,14 @@ const RegisterAssetPage: React.FC = () => {
       } catch (error: any) {
         console.error("Asset creation failed:", error);
         
-        // Check for Vercel proxy size limit error
+        // Check for specific error types
         if (error.message?.includes('413') || error.message?.includes('Too Large')) {
           setError(
-            'File size exceeds Vercel proxy limit (4.5MB). Please reduce file size or contact support for alternative upload methods.'
+            'File size exceeds server limit. Please reduce file size and try again.'
+          );
+        } else if (error.message?.includes('Failed to fetch') || error.message?.includes('CERT_')) {
+          setError(
+            'Network connection error. Please check your internet connection and try again.'
           );
         } else {
           setError(error.message || 'Failed to create asset');

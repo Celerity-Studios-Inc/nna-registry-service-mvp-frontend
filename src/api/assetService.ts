@@ -240,7 +240,7 @@ class AssetService {
       const authToken = localStorage.getItem('accessToken') || '';
 
       // Make the API request - use direct backend URL
-      const backendUrl = 'https://nna-registry-service-us-central1.run.app/api/assets';
+      const backendUrl = 'https://registry.reviz.dev/api/assets';
       const response = await fetch(`${backendUrl}?${queryParams.toString()}`, {
         headers: {
           Authorization: `Bearer ${authToken}`,
@@ -398,7 +398,7 @@ class AssetService {
         if (isMongoId) {
           // For MongoDB IDs, we need to get all assets and filter client-side
           // This is not ideal but works until backend provides ID-based endpoint
-          response = await axios.get(`https://nna-registry-service-us-central1.run.app/api/assets`, {
+          response = await axios.get(`https://registry.reviz.dev/api/assets`, {
             params: { limit: 1000 }, // Get enough assets to find the one we need
             timeout: 5000,
             headers: {
@@ -408,7 +408,7 @@ class AssetService {
           });
         } else {
           // For asset names, use search parameter
-          response = await axios.get(`https://nna-registry-service-us-central1.run.app/api/assets`, {
+          response = await axios.get(`https://registry.reviz.dev/api/assets`, {
             params: {
               search: identifier,
               limit: 1
@@ -958,7 +958,7 @@ class AssetService {
       // UPDATED: Use direct backend URL to bypass Vercel proxy 4.5MB limit
       // Backend supports up to 32MB with proper CORS configuration
       // Don't set Content-Type header - let browser set it with boundary for FormData
-      const assetEndpoint = 'https://nna-registry-service-us-central1.run.app/api/assets';
+      const assetEndpoint = 'https://registry.reviz.dev/api/assets';
       
       console.log('📤 Uploading asset directly to backend:', assetEndpoint);
       console.log('📦 File size:', assetData.files?.length > 0 ? `${(assetData.files[0].size / 1024 / 1024).toFixed(2)}MB` : 'No file');
@@ -1003,7 +1003,8 @@ class AssetService {
       }
     } catch (error) {
       console.error('Error in asset creation:', error);
-      return this.mockCreateAsset(assetData);
+      // Don't return mock data on real API errors - throw the error to caller
+      throw error;
     }
   }
 
