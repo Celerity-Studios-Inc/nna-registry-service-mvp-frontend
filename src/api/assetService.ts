@@ -239,9 +239,8 @@ class AssetService {
       // Get auth token
       const authToken = localStorage.getItem('accessToken') || '';
 
-      // Make the API request - use direct backend URL
-      const backendUrl = 'https://registry.reviz.dev/api/assets';
-      const response = await fetch(`${backendUrl}?${queryParams.toString()}`, {
+      // Make the API request - use proxy for GET requests (no CORS issues)
+      const response = await fetch(`/api/assets?${queryParams.toString()}`, {
         headers: {
           Authorization: `Bearer ${authToken}`,
           'Content-Type': 'application/json',
@@ -398,7 +397,7 @@ class AssetService {
         if (isMongoId) {
           // For MongoDB IDs, we need to get all assets and filter client-side
           // This is not ideal but works until backend provides ID-based endpoint
-          response = await axios.get(`https://registry.reviz.dev/api/assets`, {
+          response = await axios.get(`/api/assets`, {
             params: { limit: 1000 }, // Get enough assets to find the one we need
             timeout: 5000,
             headers: {
@@ -408,7 +407,7 @@ class AssetService {
           });
         } else {
           // For asset names, use search parameter
-          response = await axios.get(`https://registry.reviz.dev/api/assets`, {
+          response = await axios.get(`/api/assets`, {
             params: {
               search: identifier,
               limit: 1

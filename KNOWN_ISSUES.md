@@ -10,10 +10,10 @@
 Vercel's serverless functions had a 4.5MB request payload limit. This has been resolved by implementing direct backend connection.
 
 ### Solution Implemented
-- Updated to use direct backend URL: `https://registry.reviz.dev/api/assets`
-- Bypassed Vercel proxy completely
+- **Mixed Approach**: Direct backend for uploads, proxy for reads
+- **File Uploads**: Use `https://registry.reviz.dev/api/assets` (bypasses 4.5MB limit)
+- **Data Fetching**: Use `/api/assets` proxy (avoids CORS preflight issues)
 - Backend supports full 32MB file uploads
-- CORS properly configured by backend team
 - Fixed error handling to prevent false success messages
 
 ### Current Behavior
