@@ -961,7 +961,7 @@ class AssetService {
       const assetEndpoint = 'https://nna-registry-service-us-central1.run.app/api/assets';
       
       console.log('📤 Uploading asset directly to backend:', assetEndpoint);
-      console.log('📦 File size:', assetData.file?.size ? `${(assetData.file.size / 1024 / 1024).toFixed(2)}MB` : 'No file');
+      console.log('📦 File size:', assetData.files?.length > 0 ? `${(assetData.files[0].size / 1024 / 1024).toFixed(2)}MB` : 'No file');
 
       const response = await fetch(assetEndpoint, {
         method: 'POST',
