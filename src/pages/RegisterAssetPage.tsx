@@ -582,7 +582,28 @@ const RegisterAssetPage: React.FC = () => {
       // Add a small delay for better user experience
       await new Promise(resolve => setTimeout(resolve, 800));
 
-      const createdAsset = await assetService.createAsset(assetData);
+      let createdAsset;
+      try {
+        createdAsset = await assetService.createAsset(assetData);
+      } catch (error: any) {
+        console.error("Asset creation failed:", error);
+        
+        // Check for Vercel proxy size limit error
+        if (error.message?.includes('413') || error.message?.includes('Too Large')) {
+          setError(
+            'File size exceeds Vercel proxy limit (4.5MB). Please reduce file size or contact support for alternative upload methods.'
+          );
+        } else {
+          setError(error.message || 'Failed to create asset');
+        }
+        setLoading(false);
+        return;
+      }
+
+      if (!createdAsset) {
+        throw new Error("Asset creation failed - no asset returned from API");
+      }
+
       environmentSafeLog("Asset created successfully:", createdAsset);
       
       // Add prominent console logging about the asset HFN and MFA for debugging
@@ -598,11 +619,7 @@ const RegisterAssetPage: React.FC = () => {
       console.log("%cIMPORTANT: Check the success page to verify HFN and MFA display", "color: #FF5722; font-weight: bold;");
       console.log("The success page should now show the same HFN and MFA in both the header and asset details card.");
       console.log("If you notice any discrepancies, they will be highlighted with an info alert.");
-      console.log("This fix ensures consistent display of taxonomy data across the application.");
-      
-      if (!createdAsset) {
-        throw new Error("Asset creation failed - no asset returned from API");
-      }
+      console.log("This fix ensures consistent display of taxonomy data across the application.")
       
       // Store the created asset in localStorage as a fallback in case of page refresh
       try {

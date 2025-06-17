@@ -2,6 +2,28 @@
 
 ## Last Updated: June 17, 2025
 
+## ~~CRITICAL: Vercel Proxy 4.5MB Size Limit~~ ✅ FIXED
+
+### Status: Fixed - June 17, 2025
+
+### Description
+Vercel's serverless functions had a 4.5MB request payload limit. This has been resolved by implementing direct backend connection.
+
+### Solution Implemented
+- Updated to use direct backend URL: `https://nna-registry-service-us-central1.run.app/api/assets`
+- Bypassed Vercel proxy completely
+- Backend supports full 32MB file uploads
+- CORS properly configured by backend team
+
+### Current Behavior
+- All files up to 32MB: Upload successfully ✅
+- Files over 32MB: Show proper validation error ✅
+- Direct backend connection with better performance ✅
+
+See DIRECT_BACKEND_IMPLEMENTATION.md for implementation details.
+
+---
+
 ## 1. Sort Order Dropdown Not Triggering Re-sort
 
 ### Status: Known Issue - Low Priority

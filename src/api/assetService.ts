@@ -239,8 +239,9 @@ class AssetService {
       // Get auth token
       const authToken = localStorage.getItem('accessToken') || '';
 
-      // Make the API request
-      const response = await fetch(`/api/assets?${queryParams.toString()}`, {
+      // Make the API request - use direct backend URL
+      const backendUrl = 'https://nna-registry-service-us-central1.run.app/api/assets';
+      const response = await fetch(`${backendUrl}?${queryParams.toString()}`, {
         headers: {
           Authorization: `Bearer ${authToken}`,
           'Content-Type': 'application/json',
@@ -397,7 +398,7 @@ class AssetService {
         if (isMongoId) {
           // For MongoDB IDs, we need to get all assets and filter client-side
           // This is not ideal but works until backend provides ID-based endpoint
-          response = await axios.get(`/api/assets`, {
+          response = await axios.get(`https://nna-registry-service-us-central1.run.app/api/assets`, {
             params: { limit: 1000 }, // Get enough assets to find the one we need
             timeout: 5000,
             headers: {
@@ -407,7 +408,7 @@ class AssetService {
           });
         } else {
           // For asset names, use search parameter
-          response = await axios.get(`/api/assets`, {
+          response = await axios.get(`https://nna-registry-service-us-central1.run.app/api/assets`, {
             params: {
               search: identifier,
               limit: 1
@@ -954,17 +955,19 @@ class AssetService {
       }
 
       // Make the API request using fetch for better FormData handling
-      // IMPORTANT: Use the direct assets endpoint which is optimized for FormData
-      // The assets.ts serverless function is specifically designed to handle
-      // multipart/form-data correctly with proper binary handling
-      // CRITICAL FIX: We must use the direct /api/assets endpoint, NOT /api/proxy?path=assets
-      // Using the proxy endpoint causes FormData handling issues, preventing asset creation
-      const assetEndpoint = '/api/assets'; // Direct endpoint - do not change this
+      // UPDATED: Use direct backend URL to bypass Vercel proxy 4.5MB limit
+      // Backend supports up to 32MB with proper CORS configuration
+      // Don't set Content-Type header - let browser set it with boundary for FormData
+      const assetEndpoint = 'https://nna-registry-service-us-central1.run.app/api/assets';
+      
+      console.log('📤 Uploading asset directly to backend:', assetEndpoint);
+      console.log('📦 File size:', assetData.file?.size ? `${(assetData.file.size / 1024 / 1024).toFixed(2)}MB` : 'No file');
 
       const response = await fetch(assetEndpoint, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${authToken}`,
+          // Don't set Content-Type - browser will set it with boundary for multipart/form-data
         },
         body: formData,
       });
