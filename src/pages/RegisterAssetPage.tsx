@@ -1224,7 +1224,7 @@ const RegisterAssetPage: React.FC = () => {
               onFilesChange={handleFilesChange}
               layerCode={watchLayer}
               maxFiles={1}
-              maxSize={watchLayer === 'C' ? 10 * 1024 * 1024 : 5 * 1024 * 1024}
+              maxSize={32 * 1024 * 1024} // 32MB for all asset types
               onUploadProgress={handleUploadProgress}
               onUploadComplete={handleUploadComplete}
               onUploadError={handleUploadError}
