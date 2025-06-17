@@ -115,6 +115,14 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
     }
   }, []);
 
+  // Debug: Monitor searchResults changes
+  useEffect(() => {
+    console.log('🔍 searchResults updated:', searchResults.length, 'items');
+    if (searchResults.length > 0) {
+      console.log('📋 First item:', searchResults[0].name, 'Created by:', searchResults[0].createdBy || searchResults[0].metadata?.createdBy);
+    }
+  }, [searchResults]);
+
   // Load initial assets when component mounts
   useEffect(() => {
     // Perform initial load using working API pattern
@@ -524,6 +532,11 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
 
   // Shared sort function that can be used without re-fetching data
   const applySortToResults = (results: Asset[], currentSortBy: string, currentSortOrder: 'asc' | 'desc'): Asset[] => {
+    console.log('🔧 applySortToResults called:', {
+      resultCount: results.length,
+      sortBy: currentSortBy,
+      sortOrder: currentSortOrder
+    });
     if (!currentSortBy || results.length === 0) return results;
     
     const LAYER_ORDER: Record<string, number> = {
@@ -601,6 +614,7 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
 
   // Sorting handlers - now using client-side sorting
   const handleSortChange = (newSortBy: string) => {
+    console.log('🔄 Sort by changing to:', newSortBy);
     setSortBy(newSortBy);
     
     // Set logical defaults for sort order based on sort type
@@ -615,19 +629,31 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
     // Apply sort immediately to existing results
     if (searchResults.length > 0) {
       const sortedResults = applySortToResults(searchResults, newSortBy, newSortOrder);
-      setSearchResults(sortedResults);
+      // Force a new array reference to ensure React detects the change
+      setSearchResults([...sortedResults]);
     }
     
     setCurrentPage(1);
   };
 
   const handleSortOrderChange = (newOrder: 'asc' | 'desc') => {
+    console.log('🔄 Sort order changing to:', newOrder, 'Current sortBy:', sortBy);
+    console.log('📊 Current results length:', searchResults.length);
     setSortOrder(newOrder);
     
     // Apply sort immediately to existing results
     if (searchResults.length > 0) {
       const sortedResults = applySortToResults(searchResults, sortBy, newOrder);
-      setSearchResults(sortedResults);
+      console.log('✅ Sorted results:', sortedResults.length, 'items');
+      console.log('🔍 First few items after sort:', sortedResults.slice(0, 3).map(a => ({
+        name: a.name,
+        createdBy: a.createdBy || a.metadata?.createdBy,
+        createdAt: a.createdAt
+      })));
+      // Force a new array reference to ensure React detects the change
+      setSearchResults([...sortedResults]);
+    } else {
+      console.log('⚠️ No results to sort');
     }
     
     setCurrentPage(1);
