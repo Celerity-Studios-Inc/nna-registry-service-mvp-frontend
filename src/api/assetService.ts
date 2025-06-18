@@ -957,7 +957,7 @@ class AssetService {
       // SMART ROUTING: Use proxy for small files, direct backend for large files
       // Backend CORS has been fixed to handle preflight requests properly
       const fileSize = assetData.files?.length > 0 ? assetData.files[0].size : 0;
-      const useDirect = fileSize > 4.5 * 1024 * 1024; // Use direct for files > 4.5MB
+      const useDirect = fileSize > 4.0 * 1024 * 1024; // Use direct for files > 4MB (conservative threshold)
       const assetEndpoint = useDirect 
         ? 'https://registry.reviz.dev/api/assets' 
         : '/api/assets';
@@ -966,9 +966,9 @@ class AssetService {
       console.log('📦 File size:', assetData.files?.length > 0 ? `${(assetData.files[0].size / 1024 / 1024).toFixed(2)}MB` : 'No file');
       
       if (useDirect) {
-        console.log('✅ Using direct backend for large file upload (>4.5MB)');
+        console.log('✅ Using direct backend for large file upload (>4MB)');
       } else {
-        console.log('✅ Using proxy for optimal performance (<4.5MB)');
+        console.log('✅ Using proxy for optimal performance (≤4MB)');
       }
 
       const response = await fetch(assetEndpoint, {
