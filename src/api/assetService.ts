@@ -954,20 +954,21 @@ class AssetService {
       }
 
       // Make the API request using fetch for better FormData handling
-      // IMPORTANT: Due to CORS preflight issues with Authorization header on direct backend,
-      // we must use the proxy for all uploads. This limits file size to 4.5MB.
-      // The backend CORS configuration doesn't properly handle OPTIONS preflight requests
-      // triggered by the Authorization header.
-      const assetEndpoint = '/api/assets';
+      // SMART ROUTING: Use proxy for small files, direct backend for large files
+      // Backend CORS has been fixed to handle preflight requests properly
+      const fileSize = assetData.files?.length > 0 ? assetData.files[0].size : 0;
+      const useDirect = fileSize > 4.5 * 1024 * 1024; // Use direct for files > 4.5MB
+      const assetEndpoint = useDirect 
+        ? 'https://registry.reviz.dev/api/assets' 
+        : '/api/assets';
       
-      console.log('📤 Uploading asset via PROXY:', assetEndpoint);
+      console.log(`📤 Uploading asset via ${useDirect ? 'DIRECT backend' : 'PROXY'}:`, assetEndpoint);
       console.log('📦 File size:', assetData.files?.length > 0 ? `${(assetData.files[0].size / 1024 / 1024).toFixed(2)}MB` : 'No file');
       
-      // Check file size and warn if over 4.5MB
-      const fileSize = assetData.files?.length > 0 ? assetData.files[0].size : 0;
-      if (fileSize > 4.5 * 1024 * 1024) {
-        console.warn('⚠️ WARNING: File size exceeds 4.5MB Vercel proxy limit. Upload will likely fail.');
-        console.warn('⚠️ To support larger files, backend CORS configuration must be fixed to handle preflight requests.');
+      if (useDirect) {
+        console.log('✅ Using direct backend for large file upload (>4.5MB)');
+      } else {
+        console.log('✅ Using proxy for optimal performance (<4.5MB)');
       }
 
       const response = await fetch(assetEndpoint, {

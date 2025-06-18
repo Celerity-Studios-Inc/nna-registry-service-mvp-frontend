@@ -2,30 +2,33 @@
 
 ## Last Updated: June 17, 2025
 
-## ~~CRITICAL: Vercel Proxy 4.5MB Size Limit~~ ❌ REVERTED DUE TO CORS
+## ~~CRITICAL: Vercel Proxy 4.5MB Size Limit~~ ✅ FIXED WITH SMART ROUTING
 
-### Status: Reverted - June 17, 2025
+### Status: Fixed - June 17, 2025
 
 ### Description
-Vercel's serverless functions have a 4.5MB request payload limit. Attempted to bypass this with direct backend connection but encountered CORS preflight issues.
+Vercel's serverless functions have a 4.5MB request payload limit. This has been resolved with backend CORS fixes and smart routing implementation.
 
-### Attempted Solution (Failed)
-- **Direct Backend**: `https://registry.reviz.dev/api/assets` 
-- **Issue**: Authorization header triggers CORS preflight which backend doesn't handle
-- **Error**: "Response to preflight request doesn't pass access control check"
+### Solution Implemented
+- **Smart Routing Strategy**: Automatic routing based on file size
+- **Small files (≤4.5MB)**: Use Vercel proxy for optimal performance
+- **Large files (>4.5MB)**: Direct backend connection up to 32MB
+- **Backend CORS**: Properly configured to handle preflight requests
 
-### Current Status
-- **Reverted to proxy**: All uploads use `/api/assets` to avoid CORS
-- **File size limit**: 4.5MB due to Vercel proxy limitation
-- **Backend fix needed**: CORS configuration must handle OPTIONS preflight requests
+### Backend CORS Fix Applied
+The backend team implemented:
+1. OPTIONS preflight request handling
+2. Proper Access-Control headers (Authorization, Content-Type)
+3. Multiple allowed origins including production URLs
+4. 24-hour preflight cache (Access-Control-Max-Age: 86400)
 
-### Backend Requirements
-To support large files, backend must:
-1. Handle OPTIONS preflight requests
-2. Include proper CORS headers for Authorization
-3. Respond with Access-Control-Allow-Headers: Authorization
+### Current Behavior
+- **Files ≤4.5MB**: Upload via proxy (faster, no CORS preflight) ✅
+- **Files >4.5MB to 32MB**: Upload via direct backend ✅
+- **Files >32MB**: Frontend validation prevents upload ✅
+- **All GET requests**: Continue using proxy (no changes needed) ✅
 
-See CORS_PREFLIGHT_ISSUE.md for detailed analysis.
+See SMART_ROUTING_RESTORED.md for implementation details.
 
 ---
 
