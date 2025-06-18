@@ -954,12 +954,11 @@ class AssetService {
       }
 
       // Make the API request using fetch for better FormData handling
-      // SMART ROUTING: Use proxy for smaller files (no CORS issues), direct backend for large files
-      const fileSize = assetData.files?.length > 0 ? assetData.files[0].size : 0;
-      const useDirect = fileSize > 4 * 1024 * 1024; // 4MB threshold
-      const assetEndpoint = useDirect ? 'https://registry.reviz.dev/api/assets' : '/api/assets';
+      // Use direct backend for ALL uploads - CORS is properly configured for POST requests
+      // This allows full 32MB upload capability as confirmed by successful 30MB upload
+      const assetEndpoint = 'https://registry.reviz.dev/api/assets';
       
-      console.log(`📤 Uploading asset via ${useDirect ? 'DIRECT backend' : 'PROXY'}:`, assetEndpoint);
+      console.log('📤 Uploading asset via DIRECT backend:', assetEndpoint);
       console.log('📦 File size:', assetData.files?.length > 0 ? `${(assetData.files[0].size / 1024 / 1024).toFixed(2)}MB` : 'No file');
 
       const response = await fetch(assetEndpoint, {
