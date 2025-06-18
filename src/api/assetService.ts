@@ -954,12 +954,21 @@ class AssetService {
       }
 
       // Make the API request using fetch for better FormData handling
-      // Use direct backend for ALL uploads - CORS is properly configured for POST requests
-      // This allows full 32MB upload capability as confirmed by successful 30MB upload
-      const assetEndpoint = 'https://registry.reviz.dev/api/assets';
+      // IMPORTANT: Due to CORS preflight issues with Authorization header on direct backend,
+      // we must use the proxy for all uploads. This limits file size to 4.5MB.
+      // The backend CORS configuration doesn't properly handle OPTIONS preflight requests
+      // triggered by the Authorization header.
+      const assetEndpoint = '/api/assets';
       
-      console.log('📤 Uploading asset via DIRECT backend:', assetEndpoint);
+      console.log('📤 Uploading asset via PROXY:', assetEndpoint);
       console.log('📦 File size:', assetData.files?.length > 0 ? `${(assetData.files[0].size / 1024 / 1024).toFixed(2)}MB` : 'No file');
+      
+      // Check file size and warn if over 4.5MB
+      const fileSize = assetData.files?.length > 0 ? assetData.files[0].size : 0;
+      if (fileSize > 4.5 * 1024 * 1024) {
+        console.warn('⚠️ WARNING: File size exceeds 4.5MB Vercel proxy limit. Upload will likely fail.');
+        console.warn('⚠️ To support larger files, backend CORS configuration must be fixed to handle preflight requests.');
+      }
 
       const response = await fetch(assetEndpoint, {
         method: 'POST',

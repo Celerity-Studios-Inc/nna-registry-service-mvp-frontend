@@ -2,26 +2,30 @@
 
 ## Last Updated: June 17, 2025
 
-## ~~CRITICAL: Vercel Proxy 4.5MB Size Limit~~ ✅ FIXED
+## ~~CRITICAL: Vercel Proxy 4.5MB Size Limit~~ ❌ REVERTED DUE TO CORS
 
-### Status: Fixed - June 17, 2025
+### Status: Reverted - June 17, 2025
 
 ### Description
-Vercel's serverless functions had a 4.5MB request payload limit. This has been resolved by implementing direct backend connection.
+Vercel's serverless functions have a 4.5MB request payload limit. Attempted to bypass this with direct backend connection but encountered CORS preflight issues.
 
-### Solution Implemented
-- **Mixed Approach**: Direct backend for uploads, proxy for reads
-- **File Uploads**: Use `https://registry.reviz.dev/api/assets` (bypasses 4.5MB limit)
-- **Data Fetching**: Use `/api/assets` proxy (avoids CORS preflight issues)
-- Backend supports full 32MB file uploads
-- Fixed error handling to prevent false success messages
+### Attempted Solution (Failed)
+- **Direct Backend**: `https://registry.reviz.dev/api/assets` 
+- **Issue**: Authorization header triggers CORS preflight which backend doesn't handle
+- **Error**: "Response to preflight request doesn't pass access control check"
 
-### Current Behavior
-- All files up to 32MB: Upload successfully ✅
-- Files over 32MB: Show proper validation error ✅
-- Direct backend connection with better performance ✅
+### Current Status
+- **Reverted to proxy**: All uploads use `/api/assets` to avoid CORS
+- **File size limit**: 4.5MB due to Vercel proxy limitation
+- **Backend fix needed**: CORS configuration must handle OPTIONS preflight requests
 
-See DIRECT_BACKEND_IMPLEMENTATION.md for implementation details.
+### Backend Requirements
+To support large files, backend must:
+1. Handle OPTIONS preflight requests
+2. Include proper CORS headers for Authorization
+3. Respond with Access-Control-Allow-Headers: Authorization
+
+See CORS_PREFLIGHT_ISSUE.md for detailed analysis.
 
 ---
 
