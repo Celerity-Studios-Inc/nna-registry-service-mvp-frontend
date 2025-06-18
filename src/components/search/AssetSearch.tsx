@@ -624,24 +624,11 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
   };
 
   const handleSortOrderChange = (newOrder: 'asc' | 'desc') => {
-    console.log('🔄 Sort order change requested:', { 
-      from: sortOrder, 
-      to: newOrder, 
-      sortBy, 
-      resultsCount: searchResults.length 
-    });
-    
     setSortOrder(newOrder);
     
     // Apply sort immediately to existing results
     if (searchResults.length > 0) {
       const sortedResults = applySortToResults(searchResults, sortBy, newOrder);
-      console.log('🔧 Applied sort to results:', { 
-        sortBy, 
-        newOrder, 
-        originalCount: searchResults.length, 
-        sortedCount: sortedResults.length 
-      });
       // Force a new array reference to ensure React detects the change
       setSearchResults([...sortedResults]);
     }
@@ -1215,13 +1202,9 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
                   <Select
                     value={sortOrder}
                     label="Order"
-                    onChange={(e) => {
-                      console.log('📝 Select onChange triggered:', e.target.value);
-                      handleSortOrderChange(e.target.value as 'asc' | 'desc');
-                    }}
+                    onChange={(e) => handleSortOrderChange(e.target.value as 'asc' | 'desc')}
                     displayEmpty
                     renderValue={(value) => {
-                      console.log('🎨 renderValue called:', { value, sortBy });
                       if (!value) return 'Select Order';
                       if (sortBy === 'name' || sortBy === 'layer' || sortBy === 'createdBy') {
                         return value === 'asc' ? 'A → Z' : 'Z → A';
@@ -1229,22 +1212,17 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
                       return value === 'desc' ? 'Newest First' : 'Oldest First';
                     }}
                   >
-                    {/* Dynamic labels based on Sort By selection */}
-                    {sortBy === 'name' ? (
-                      <>
-                        <MenuItem value="asc">A → Z</MenuItem>
-                        <MenuItem value="desc">Z → A</MenuItem>
-                      </>
-                    ) : sortBy === 'layer' || sortBy === 'createdBy' ? (
-                      <>
-                        <MenuItem value="asc">A → Z</MenuItem>
-                        <MenuItem value="desc">Z → A</MenuItem>
-                      </>
+                    {/* Fixed MenuItem structure to prevent React key conflicts */}
+                    {(sortBy === 'name' || sortBy === 'layer' || sortBy === 'createdBy') ? (
+                      [
+                        <MenuItem key="asc" value="asc">A → Z</MenuItem>,
+                        <MenuItem key="desc" value="desc">Z → A</MenuItem>
+                      ]
                     ) : (
-                      <>
-                        <MenuItem value="desc">Newest First</MenuItem>
-                        <MenuItem value="asc">Oldest First</MenuItem>
-                      </>
+                      [
+                        <MenuItem key="desc" value="desc">Newest First</MenuItem>,
+                        <MenuItem key="asc" value="asc">Oldest First</MenuItem>
+                      ]
                     )}
                   </Select>
                 </FormControl>
