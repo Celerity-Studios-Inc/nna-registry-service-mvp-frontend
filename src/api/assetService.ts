@@ -15,6 +15,7 @@ import assetRegistryService from './assetRegistryService';
 import { TaxonomyConverter } from '../services/taxonomyConverter';
 import { debugLog } from '../utils/logger';
 import { environmentSafeLog } from '../utils/environment';
+import { getUploadEndpoint, getEnvironmentConfig, logEnvironmentInfo } from '../utils/environment.config';
 import axios from 'axios';
 
 // Determine whether real backend is available and connected
@@ -955,23 +956,20 @@ class AssetService {
 
       // Make the API request using fetch for better FormData handling
       // SMART ROUTING: Use proxy for small files, direct backend for large files
-      // Backend CORS has been fixed to handle preflight requests properly
+      // Environment-aware routing for staging vs production backends
       const fileSize = assetData.files?.length > 0 ? assetData.files[0].size : 0;
-      const useDirect = fileSize > 4.0 * 1024 * 1024; // Use direct for files > 4MB (conservative threshold)
-      const assetEndpoint = useDirect 
-        ? 'https://registry.reviz.dev/api/assets' 
-        : '/api/assets';
+      const uploadConfig = getUploadEndpoint(fileSize);
       
-      console.log(`📤 Uploading asset via ${useDirect ? 'DIRECT backend' : 'PROXY'}:`, assetEndpoint);
-      console.log('📦 File size:', assetData.files?.length > 0 ? `${(assetData.files[0].size / 1024 / 1024).toFixed(2)}MB` : 'No file');
-      
-      if (useDirect) {
-        console.log('✅ Using direct backend for large file upload (>4MB)');
-      } else {
-        console.log('✅ Using proxy for optimal performance (≤4MB)');
+      // Log environment info on first upload (debug mode only)
+      const config = getEnvironmentConfig();
+      if (config.enableDebugLogging) {
+        logEnvironmentInfo();
+        console.log(`📤 Uploading asset via ${uploadConfig.useDirect ? 'DIRECT backend' : 'PROXY'}:`, uploadConfig.url);
+        console.log('📦 File size:', fileSize > 0 ? `${(fileSize / 1024 / 1024).toFixed(2)}MB` : 'No file');
+        console.log('📊 Routing reason:', uploadConfig.reason);
       }
 
-      const response = await fetch(assetEndpoint, {
+      const response = await fetch(uploadConfig.url, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${authToken}`,

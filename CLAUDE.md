@@ -7,10 +7,83 @@ The NNA Registry Service is a platform for managing digital assets within a Nami
 
 This workspace contains a frontend implementation built with React and TypeScript.
 
-**🎯 CURRENT STATUS: MVP RELEASE 1.0.1 + TAXONOMY SERVICE FIX DEPLOYED** (June 2025)
-- **Latest Commit**: `d172939` - Taxonomy Service Fix (CI/CD #582 - Successfully deployed)
+**🎯 CURRENT STATUS: STAGING ENVIRONMENT IMPLEMENTATION COMPLETE** (January 2025)
 - **Production URL**: https://nna-registry-service-mvp-frontend.vercel.app
+- **Staging URL**: https://nna-registry-staging.vercel.app (pending deployment)
 - **Repository**: https://github.com/Celerity-Studios-Inc/nna-registry-service-mvp-frontend
+- **Latest Achievement**: Complete staging environment infrastructure with live backend integration
+
+## 🚀 **STAGING ENVIRONMENT IMPLEMENTATION** (January 2025)
+
+### **Complete Infrastructure Setup**
+A comprehensive staging environment has been implemented for isolated testing with the live staging backend infrastructure. This provides complete environment separation and enhanced debugging capabilities.
+
+#### **Backend Integration**
+- **Staging Backend**: `https://nna-registry-service-staging-297923701246.us-central1.run.app`
+- **Custom Domain**: `https://registry.stg.reviz.dev` (provisioning - SSL certificate pending)
+- **Database**: Separate MongoDB instance (isolated from production)
+- **Storage**: Dedicated Google Cloud Storage bucket
+- **Authentication**: Separate JWT signing keys
+
+#### **Frontend Configuration**
+- **Staging URL**: `https://nna-registry-staging.vercel.app`
+- **Environment Detection**: Automatic staging vs production detection
+- **Visual Identification**: Staging banner for clear environment indication
+- **Enhanced Debugging**: Comprehensive logging and monitoring
+
+#### **Files Implemented**
+```
+📁 Staging Environment Files:
+├── .env.staging                              # Environment variables
+├── vercel.staging.json                       # Vercel deployment config
+├── .github/workflows/staging-deploy.yml      # GitHub Actions workflow
+├── src/utils/environment.config.ts           # Environment detection utility
+├── src/components/common/StagingBanner.tsx   # Visual environment indicator
+├── docs/STAGING_ENVIRONMENT_SETUP.md         # Complete setup guide
+├── staging-test-checklist.md                 # Testing procedures
+├── test-staging-backend.js                   # Backend connectivity test
+└── STAGING_DEPLOYMENT_STATUS.md              # Implementation status
+```
+
+#### **Key Features**
+- **Smart Routing**: Environment-aware API calls and file uploads
+- **Data Isolation**: Complete separation from production database
+- **Enhanced Logging**: Debug information for staging development
+- **Automated Deployment**: GitHub Actions integration for staging branch
+- **Testing Framework**: Comprehensive test procedures and validation
+
+#### **Environment Detection**
+```typescript
+// Automatic environment detection
+1. REACT_APP_ENVIRONMENT environment variable
+2. NODE_ENV value  
+3. URL hostname patterns (staging domain detection)
+4. Vercel environment detection
+```
+
+#### **Smart File Upload Routing**
+```typescript
+// Environment-aware backend routing
+- Staging Small Files (≤4MB): Via Vercel proxy → staging backend
+- Staging Large Files (>4MB): Direct to staging backend
+- Production: Maintains existing smart routing logic
+- Threshold: Configurable via REACT_APP_SMART_ROUTING_THRESHOLD
+```
+
+#### **Deployment Ready**
+✅ **Configuration Complete**: All environment files configured  
+✅ **Code Implementation**: Environment detection and routing implemented  
+✅ **Visual Indicators**: Staging banner and environment identification  
+✅ **Testing Framework**: Complete test procedures established  
+✅ **Documentation**: Comprehensive setup and troubleshooting guides  
+✅ **GitHub Integration**: Automated deployment workflow configured  
+
+#### **Next Steps for Deployment**
+1. **Commit Changes**: Push staging configuration to repository
+2. **Deploy to Vercel**: Execute staging deployment
+3. **Test Connectivity**: Verify staging backend integration
+4. **Run Test Suite**: Complete workflow validation
+5. **Environment Verification**: Confirm staging banner and data isolation
 
 ## ✅ **RECENT SUCCESS: Subcategory Dropdown Fix**
 
@@ -23,10 +96,14 @@ This workspace contains a frontend implementation built with React and TypeScrip
 
 ## Build & Test Commands
 - Start dev server: `npm start`
+- Start staging server: `npm run start:staging`
 - Build for production: `npm run build`
+- Build for staging: `npm run build:staging`
+- Deploy to staging: `npm run deploy:staging`
 - Run all tests: `npm test`
 - Run a single test: `npm test -- --testPathPattern="path/to/test"` or `npm test ComponentName`
 - Format code: `npm run format`
+- Test staging backend: `node test-staging-backend.js`
 - Run critical taxonomy tests: `./scripts/run-critical-cases-test.sh`
 
 ## Architecture

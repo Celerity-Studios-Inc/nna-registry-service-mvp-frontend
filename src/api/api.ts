@@ -5,6 +5,7 @@ import {
   ErrorHandler,
 } from '../types/error.types';
 import { environmentSafeLog, environmentSafeWarn, environmentSafeError, isDebuggingAllowed } from '../utils/environment';
+import { getEnvironmentConfig } from '../utils/environment.config';
 
 // Create a global error handler for use outside React components
 let globalErrorHandler: ErrorHandler | null = null;
@@ -13,6 +14,9 @@ let globalErrorHandler: ErrorHandler | null = null;
 export const setGlobalErrorHandler = (handler: ErrorHandler) => {
   globalErrorHandler = handler;
 };
+
+// Get environment configuration for API setup
+const envConfig = getEnvironmentConfig();
 
 // Configuration for API requests
 export const apiConfig = {
@@ -25,9 +29,11 @@ export const apiConfig = {
 
   // Define debugging information for the API
   debug: {
-    version: '1.3',
+    version: '1.4',
     timestamp: new Date().toISOString(),
-    backendUrl: 'https://registry.reviz.dev/api',
+    environment: envConfig.name,
+    backendUrl: envConfig.backendUrl,
+    frontendUrl: envConfig.frontendUrl,
   },
 };
 

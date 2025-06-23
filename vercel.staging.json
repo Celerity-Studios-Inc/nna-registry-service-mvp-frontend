@@ -1,0 +1,69 @@
+{
+  "name": "nna-registry-staging",
+  "version": 2,
+  "builds": [
+    {
+      "src": "package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "build"
+      }
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "https://nna-registry-service-staging-297923701246.us-central1.run.app/api/$1"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/index.html"
+    }
+  ],
+  "env": {
+    "REACT_APP_ENVIRONMENT": "staging",
+    "REACT_APP_API_BASE_URL": "https://nna-registry-service-staging-297923701246.us-central1.run.app/api",
+    "REACT_APP_FRONTEND_URL": "https://nna-registry-staging.vercel.app",
+    "REACT_APP_ENABLE_DEBUG_LOGGING": "true",
+    "REACT_APP_ENABLE_PERFORMANCE_MONITORING": "true",
+    "REACT_APP_STAGING_BANNER": "true",
+    "NODE_ENV": "staging",
+    "CI": "false"
+  },
+  "build": {
+    "env": {
+      "REACT_APP_ENVIRONMENT": "staging",
+      "REACT_APP_API_BASE_URL": "https://nna-registry-service-staging-297923701246.us-central1.run.app/api",
+      "REACT_APP_FRONTEND_URL": "https://nna-registry-staging.vercel.app",
+      "REACT_APP_ENABLE_DEBUG_LOGGING": "true",
+      "REACT_APP_ENABLE_PERFORMANCE_MONITORING": "true",
+      "REACT_APP_STAGING_BANNER": "true",
+      "NODE_ENV": "staging",
+      "CI": "false"
+    }
+  },
+  "regions": ["iad1"],
+  "headers": [
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        {
+          "key": "Access-Control-Allow-Origin",
+          "value": "https://nna-registry-staging.vercel.app"
+        },
+        {
+          "key": "Access-Control-Allow-Methods",
+          "value": "GET, POST, PUT, DELETE, OPTIONS"
+        },
+        {
+          "key": "Access-Control-Allow-Headers",
+          "value": "Authorization, Content-Type, Content-Length, X-Requested-With"
+        },
+        {
+          "key": "Access-Control-Max-Age",
+          "value": "86400"
+        }
+      ]
+    }
+  ]
+}

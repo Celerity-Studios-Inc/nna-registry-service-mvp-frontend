@@ -48,6 +48,7 @@ import ErrorBoundary from './components/error/ErrorBoundary';
 import GlobalErrorHandler from './components/common/GlobalErrorHandler';
 import TestComponent from './components/common/TestComponent';
 import ApiRouteAlert from './components/common/ApiRouteAlert';
+import StagingBanner from './components/common/StagingBanner';
 import TaxonomyValidator from './components/TaxonomyValidator';
 // AssetRegistrationWrapper is not used directly in routes
 import RegisterAssetPageWrapper from './components/asset/RegisterAssetPageWrapper';
@@ -173,6 +174,7 @@ const App: React.FC = () => {
           <CssBaseline />
           <ErrorProvider>
             <GlobalErrorHandler />
+            <StagingBanner /> {/* Show staging environment banner */}
             <ApiRouteAlert /> {/* Add alert for API routing issues */}
             <FeedbackProvider>
               <NotificationsProvider>
