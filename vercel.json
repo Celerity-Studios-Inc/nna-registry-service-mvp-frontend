@@ -1,126 +1,68 @@
 {
-  "framework": "create-react-app",
-  "buildCommand": "npm run build",
-  "installCommand": "npm install",
-  "outputDirectory": "build",
-  "public": true,
+  "version": 2,
+  "builds": [
+    {
+      "src": "package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "build"
+      }
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "https://nna-registry-service-staging-297923701246.us-central1.run.app/api/$1"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ],
   "env": {
-    "REACT_APP_API_URL": "/api",
-    "REACT_APP_USE_MOCK_API": "false",
-    "REACT_APP_REAL_BACKEND_API": "true",
-    "BACKEND_API_URL": "https://registry.reviz.dev/api"
+    "REACT_APP_ENVIRONMENT": "staging",
+    "REACT_APP_API_BASE_URL": "https://nna-registry-service-staging-297923701246.us-central1.run.app/api",
+    "REACT_APP_FRONTEND_URL": "https://nna-registry-staging.vercel.app",
+    "REACT_APP_ENABLE_DEBUG_LOGGING": "true",
+    "REACT_APP_ENABLE_PERFORMANCE_MONITORING": "true",
+    "REACT_APP_STAGING_BANNER": "true",
+    "NODE_ENV": "staging",
+    "CI": "false"
   },
-  "routes": [
+  "build": {
+    "env": {
+      "REACT_APP_ENVIRONMENT": "staging",
+      "REACT_APP_API_BASE_URL": "https://nna-registry-service-staging-297923701246.us-central1.run.app/api",
+      "REACT_APP_FRONTEND_URL": "https://nna-registry-staging.vercel.app",
+      "REACT_APP_ENABLE_DEBUG_LOGGING": "true",
+      "REACT_APP_ENABLE_PERFORMANCE_MONITORING": "true",
+      "REACT_APP_STAGING_BANNER": "true",
+      "NODE_ENV": "staging",
+      "CI": "false"
+    }
+  },
+  "regions": ["iad1"],
+  "headers": [
     {
-      "src": "/api/health",
-      "dest": "/api/health",
-      "methods": ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"]
-    },
-    {
-      "src": "/api/test-backend",
-      "dest": "/api/test-backend",
-      "methods": ["GET", "POST", "OPTIONS"]
-    },
-    {
-      "src": "/api/test-real-backend",
-      "dest": "/api/test-real-backend",
-      "methods": ["GET", "OPTIONS"]
-    },
-    {
-      "src": "/api/debug",
-      "dest": "/api/test-backend",
-      "methods": ["GET", "POST", "OPTIONS"]
-    },
-    {
-      "src": "/api/backend-url",
-      "dest": "/api/backend-url",
-      "methods": ["GET", "OPTIONS"]
-    },
-    {
-      "src": "/api/config",
-      "dest": "/api/backend-url",
-      "methods": ["GET", "OPTIONS"]
-    },
-    {
-      "src": "/api/proxy-debug",
-      "dest": "/api/proxy-debug",
-      "methods": ["GET", "OPTIONS"]
-    },
-    {
-      "src": "/api/auth-debug",
-      "dest": "/api/auth-debug",
-      "methods": ["GET", "POST", "OPTIONS"]
-    },
-    {
-      "src": "/api/test-proxy-html",
-      "dest": "/api/test-proxy-html",
-      "methods": ["GET", "POST", "OPTIONS"]
-    },
-    {
-      "src": "/api/serve-local",
-      "dest": "/api/serve-local",
-      "methods": ["GET", "POST", "OPTIONS"]
-    },
-    {
-      "src": "/api/auth",
-      "dest": "/api/auth-proxy",
-      "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
-    },
-    {
-      "src": "/api/auth/login",
-      "dest": "/api/auth-proxy",
-      "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
-    },
-    {
-      "src": "/api/auth/register",
-      "dest": "/api/auth-proxy", 
-      "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
-    },
-    {
-      "src": "/api/auth/profile",
-      "dest": "/api/auth-proxy",
-      "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
-    },
-    {
-      "src": "/api/auth/(.*)",
-      "dest": "/api/auth-proxy",
-      "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
-    },
-    {
-      "src": "/api/assets",
-      "dest": "/api/assets",
-      "methods": ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"]
-    },
-    {
-      "src": "/api/assets/(.*)",
-      "dest": "/api/assets",
-      "methods": ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"]
-    },
-    {
-      "src": "/api/assets-test",
-      "dest": "/api/assets-test",
-      "methods": ["GET", "POST", "OPTIONS"]
-    },
-    {
-      "src": "/api/(.*)",
-      "dest": "/api/proxy?path=$1",
-      "methods": ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"]
-    },
-    {
-      "src": "/static/(.*)",
-      "dest": "/static/$1"
-    },
-    {
-      "src": "/favicon.ico",
-      "dest": "/favicon.ico"
-    },
-    {
-      "src": "/manifest.json",
-      "dest": "/manifest.json"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/index.html"
+      "source": "/api/(.*)",
+      "headers": [
+        {
+          "key": "Access-Control-Allow-Origin",
+          "value": "https://nna-registry-staging.vercel.app"
+        },
+        {
+          "key": "Access-Control-Allow-Methods",
+          "value": "GET, POST, PUT, DELETE, OPTIONS"
+        },
+        {
+          "key": "Access-Control-Allow-Headers",
+          "value": "Authorization, Content-Type, Content-Length, X-Requested-With"
+        },
+        {
+          "key": "Access-Control-Max-Age",
+          "value": "86400"
+        }
+      ]
     }
   ]
 }

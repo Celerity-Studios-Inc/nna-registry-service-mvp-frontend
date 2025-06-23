@@ -25,8 +25,8 @@ export function detectEnvironment(): EnvironmentConfig['name'] {
     return reactAppEnv;
   }
 
-  // Check NODE_ENV
-  const nodeEnv = process.env.NODE_ENV;
+  // Check NODE_ENV with type assertion for staging
+  const nodeEnv = process.env.NODE_ENV as string;
   if (nodeEnv === 'staging') {
     return 'staging';
   }
