@@ -114,23 +114,22 @@ The serve.json file contains special routing rules to handle API requests proper
       // Health endpoint request failed
     }
 
-    // Use our dedicated endpoint to test the real backend directly
+    // Use the standard health endpoint to test backend connectivity
     try {
-      const response = await fetch('/api/test-real-backend');
+      const response = await fetch('/api/health');
 
       if (response.ok) {
         try {
-          // First check if it's HTML
           const responseText = await response.text();
           if (responseText.trim().startsWith('<!doctype html>')) {
-            // Since we got HTML, the real backend is probably not working correctly
+            // Since we got HTML, the backend is not working correctly
             realBackendWorking = false;
           } else {
             // Try to parse as JSON
             try {
-              const testResult = JSON.parse(responseText);
-              // Get the actual backend status from the dedicated test
-              realBackendWorking = testResult.realBackendAvailable === true;
+              const healthResult = JSON.parse(responseText);
+              // Check if backend reports healthy status
+              realBackendWorking = healthResult.status === 'healthy';
             } catch (jsonError) {
               realBackendWorking = false;
             }
@@ -140,7 +139,7 @@ The serve.json file contains special routing rules to handle API requests proper
         }
       }
     } catch (testError) {
-      // test-real-backend endpoint request failed
+      // Health endpoint request failed
     }
 
     // Check if user has forced mock mode via localStorage

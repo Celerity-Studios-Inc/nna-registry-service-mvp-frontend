@@ -31,16 +31,16 @@ const BackendStatus: React.FC<BackendStatusProps> = ({ onStatusChange }) => {
   const checkBackendStatus = async () => {
     setLoading(true);
     try {
-      // Try to hit the improved real backend test endpoint
-      const response = await axios.get('/api/test-real-backend', {
+      // Use the standard health endpoint that exists on staging backend
+      const response = await axios.get('/api/health', {
         timeout: 5000,
       });
 
       setDetails(response.data);
 
-      // Determine status directly from the realBackendAvailable flag
+      // Check if we got a healthy response from staging backend
       const backendStatus =
-        response.data?.realBackendAvailable === true
+        response.data?.status === 'healthy'
           ? 'available'
           : 'unavailable';
 
