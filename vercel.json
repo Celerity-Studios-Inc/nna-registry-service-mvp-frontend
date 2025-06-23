@@ -12,7 +12,7 @@
   "rewrites": [
     {
       "source": "/api/(.*)",
-      "destination": "https://nna-registry-service-staging-297923701246.us-central1.run.app/api/$1"
+      "destination": "https://registry.stg.reviz.dev/api/$1"
     },
     {
       "source": "/(.*)",
@@ -21,7 +21,7 @@
   ],
   "env": {
     "REACT_APP_ENVIRONMENT": "staging",
-    "REACT_APP_API_BASE_URL": "https://nna-registry-service-staging-297923701246.us-central1.run.app/api",
+    "REACT_APP_API_BASE_URL": "https://registry.stg.reviz.dev/api",
     "REACT_APP_FRONTEND_URL": "https://nna-registry-staging.vercel.app",
     "REACT_APP_ENABLE_DEBUG_LOGGING": "true",
     "REACT_APP_ENABLE_PERFORMANCE_MONITORING": "true",
@@ -32,7 +32,7 @@
   "build": {
     "env": {
       "REACT_APP_ENVIRONMENT": "staging",
-      "REACT_APP_API_BASE_URL": "https://nna-registry-service-staging-297923701246.us-central1.run.app/api",
+      "REACT_APP_API_BASE_URL": "https://registry.stg.reviz.dev/api",
       "REACT_APP_FRONTEND_URL": "https://nna-registry-staging.vercel.app",
       "REACT_APP_ENABLE_DEBUG_LOGGING": "true",
       "REACT_APP_ENABLE_PERFORMANCE_MONITORING": "true",

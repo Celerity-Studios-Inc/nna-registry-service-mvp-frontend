@@ -7,7 +7,7 @@
 
 const https = require('https');
 
-const STAGING_BACKEND = 'https://nna-registry-service-staging-297923701246.us-central1.run.app';
+const STAGING_BACKEND = 'https://registry.stg.reviz.dev';
 
 console.log('🧪 Testing Staging Backend Connectivity...\n');
 
