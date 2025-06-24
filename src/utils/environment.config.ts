@@ -35,7 +35,7 @@ export function detectEnvironment(): EnvironmentConfig['name'] {
   const hostname = typeof window !== 'undefined' ? window.location.hostname : '';
   
   // Staging environment detection
-  if (hostname.includes('staging') || hostname.includes('nna-registry-staging')) {
+  if (hostname.includes('staging') || hostname.includes('nna-registry-staging') || hostname.includes('stg')) {
     return 'staging';
   }
   
