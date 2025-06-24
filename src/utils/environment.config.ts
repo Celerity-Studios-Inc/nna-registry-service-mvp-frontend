@@ -93,7 +93,7 @@ export function getFrontendUrl(environment?: EnvironmentConfig['name']): string 
   switch (env) {
     case 'staging':
       return process.env.REACT_APP_FRONTEND_URL || 
-             'https://nna-registry-stg-frontend.vercel.app';
+             'https://nna-registry-frontend-stg.vercel.app';
     
     case 'production':
       return process.env.REACT_APP_FRONTEND_URL || 

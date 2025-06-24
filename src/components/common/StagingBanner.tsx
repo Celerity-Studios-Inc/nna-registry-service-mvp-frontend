@@ -1,57 +1,45 @@
 /**
- * Environment Banner Component
- * Displays environment identification banner for non-production environments
- * Enhanced for three-environment strategy (January 2025)
+ * Compact Environment Banner Component
+ * Displays a minimal 1-line environment identification banner
+ * Enhanced for three-environment strategy with compact design (January 2025)
  */
 
 import React from 'react';
-import { Box, Alert, AlertTitle, Chip, Typography } from '@mui/material';
-import { Warning, Science, BugReport, DeveloperMode, Public } from '@mui/icons-material';
+import { Box, Chip, Typography } from '@mui/material';
 import { getEnvironmentConfig } from '../../utils/environment.config';
 
 export const StagingBanner: React.FC = () => {
   const config = getEnvironmentConfig();
   
-  // Show banner for non-production environments or if explicitly enabled
-  const showBanner = !config.isProduction || 
-                    process.env.REACT_APP_STAGING_BANNER === 'true' ||
-                    window.location.search.includes('showBanner=true');
+  // Show banner for all environments (with environment-specific styling)
+  const showBanner = true; // Always show for environment identification
 
   if (!showBanner) {
     return null;
   }
 
-  // Environment-specific styling and content
+  // Environment-specific styling with red/orange/green color scheme
   const environmentConfig = {
     development: {
-      icon: <DeveloperMode />,
-      severity: 'info' as const,
-      backgroundColor: '#e3f2fd', // Blue 50
-      borderColor: '#2196f3', // Blue 500
-      iconColor: '#1565c0', // Blue 800
-      title: 'Development Environment',
-      message: '🔧 Local Development: This is your local development environment.',
-      chipColor: 'info' as const,
+      backgroundColor: '#d32f2f', // Red background
+      textColor: '#ffffff', // White text
+      chipColor: '#ffcdd2', // Light red chip
+      chipTextColor: '#b71c1c', // Dark red chip text
+      label: 'DEVELOPMENT',
     },
     staging: {
-      icon: <Science />,
-      severity: 'warning' as const,
-      backgroundColor: '#fff3e0', // Orange 50
-      borderColor: '#ff9800', // Orange 500
-      iconColor: '#f57c00', // Orange 800
-      title: 'Staging Environment',
-      message: '⚠️ Test Environment: This is the staging version of the NNA Registry Service.',
-      chipColor: 'warning' as const,
+      backgroundColor: '#f57c00', // Orange background
+      textColor: '#ffffff', // White text
+      chipColor: '#ffe0b2', // Light orange chip
+      chipTextColor: '#e65100', // Dark orange chip text
+      label: 'STAGING',
     },
     production: {
-      icon: <Public />,
-      severity: 'success' as const,
-      backgroundColor: '#e8f5e8', // Green 50
-      borderColor: '#4caf50', // Green 500
-      iconColor: '#2e7d32', // Green 800
-      title: 'Production Environment',
-      message: '🚀 Live Production: You are using the live production service.',
-      chipColor: 'success' as const,
+      backgroundColor: '#388e3c', // Green background
+      textColor: '#ffffff', // White text
+      chipColor: '#c8e6c9', // Light green chip
+      chipTextColor: '#1b5e20', // Dark green chip text
+      label: 'PRODUCTION',
     },
   };
 
@@ -64,41 +52,42 @@ export const StagingBanner: React.FC = () => {
         top: 0,
         zIndex: 1400, // Above app bar
         width: '100%',
+        height: '32px', // Fixed 1-line height
+        backgroundColor: envConfig.backgroundColor,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        px: 2,
       }}
     >
-      <Alert 
-        severity={envConfig.severity}
-        icon={envConfig.icon}
-        sx={{
-          borderRadius: 0,
-          backgroundColor: envConfig.backgroundColor,
-          borderBottom: `2px solid ${envConfig.borderColor}`,
-          '& .MuiAlert-icon': {
-            color: envConfig.iconColor,
-          },
-        }}
-      >
-        <AlertTitle sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-          <BugReport fontSize="small" />
-          {envConfig.title}
-          <Chip 
-            label={config.name.toUpperCase()} 
-            size="small" 
-            color={envConfig.chipColor}
-            variant="outlined"
-          />
-        </AlertTitle>
-        
-        <Typography variant="body2" sx={{ mb: 1 }}>
-          {envConfig.message}
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+        <Typography 
+          variant="body2" 
+          sx={{ 
+            color: envConfig.textColor,
+            fontWeight: 500,
+            fontSize: '0.875rem',
+          }}
+        >
+          NNA Registry Service
         </Typography>
         
-        <Typography variant="caption" sx={{ display: 'block', color: 'text.secondary' }}>
-          <strong>Backend:</strong> {config.backendUrl} | 
-          <strong> Frontend:</strong> {config.frontendUrl} |
-          <strong> Debug:</strong> {config.enableDebugLogging ? 'Enabled' : 'Disabled'}
-        </Typography>
-      </Alert>
+        <Chip 
+          label={envConfig.label}
+          size="small"
+          sx={{
+            backgroundColor: envConfig.chipColor,
+            color: envConfig.chipTextColor,
+            fontWeight: 600,
+            fontSize: '0.75rem',
+            height: '20px',
+            borderRadius: '10px',
+            '& .MuiChip-label': {
+              px: 1,
+            },
+          }}
+        />
+      </Box>
     </Box>
   );
 };
