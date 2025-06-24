@@ -2,6 +2,7 @@
  * Compact Environment Banner Component
  * Displays a minimal 1-line environment identification banner
  * Enhanced for three-environment strategy with compact design (January 2025)
+ * Force deployment trigger for staging environment testing
  */
 
 import React from 'react';
