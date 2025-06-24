@@ -34,28 +34,36 @@ export function detectEnvironment(): EnvironmentConfig['name'] {
   // Check URL patterns
   const hostname = typeof window !== 'undefined' ? window.location.hostname : '';
   
-  // Staging environment detection
-  if (hostname.includes('staging') || hostname.includes('nna-registry-staging') || hostname.includes('stg')) {
+  // Debug logging for environment detection
+  if (typeof window !== 'undefined' && process.env.NODE_ENV !== 'production') {
+    console.log('🌍 Environment Detection - Hostname:', hostname);
+  }
+  
+  // Staging environment detection (specific URLs first)
+  if (hostname.includes('nna-registry-frontend-stg.vercel.app') || 
+      hostname.includes('staging') || 
+      hostname.includes('nna-registry-staging') || 
+      hostname.includes('-stg.vercel.app')) {
     return 'staging';
   }
   
-  // Development environment detection
-  if (hostname === 'localhost' || hostname === '127.0.0.1') {
+  // Development environment detection (specific URLs first)
+  if (hostname === 'localhost' || 
+      hostname === '127.0.0.1' ||
+      hostname.includes('nna-registry-dev-frontend.vercel.app') ||
+      hostname.includes('-dev.vercel.app')) {
     return 'development';
   }
   
-  // Production environment detection (includes both Vercel and custom domains)
-  if (
-    hostname.includes('nna-registry-frontend.vercel.app') ||
-    hostname.includes('registry.reviz.dev') ||
-    (hostname.includes('vercel.app') && !hostname.includes('staging') && !hostname.includes('dev'))
-  ) {
+  // Production environment detection (specific URLs first, then generic)
+  if (hostname.includes('nna-registry-frontend.vercel.app') ||
+      hostname.includes('registry.reviz.dev')) {
     return 'production';
   }
   
-  // Development environment detection (Vercel dev deployment)
-  if (hostname.includes('nna-registry-dev-frontend.vercel.app')) {
-    return 'development';
+  // Generic vercel.app check (last resort)
+  if (hostname.includes('vercel.app')) {
+    return 'production'; // Default to production for unknown vercel domains
   }
 
   // Default to production for safety
