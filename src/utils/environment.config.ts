@@ -34,15 +34,27 @@ export function detectEnvironment(): EnvironmentConfig['name'] {
   // Check URL patterns
   const hostname = typeof window !== 'undefined' ? window.location.hostname : '';
   
+  // Staging environment detection
   if (hostname.includes('staging') || hostname.includes('nna-registry-staging')) {
     return 'staging';
   }
   
-  if (hostname.includes('vercel.app') && !hostname.includes('staging')) {
+  // Development environment detection
+  if (hostname === 'localhost' || hostname === '127.0.0.1') {
+    return 'development';
+  }
+  
+  // Production environment detection (includes both Vercel and custom domains)
+  if (
+    hostname.includes('nna-registry-frontend.vercel.app') ||
+    hostname.includes('registry.reviz.dev') ||
+    (hostname.includes('vercel.app') && !hostname.includes('staging') && !hostname.includes('dev'))
+  ) {
     return 'production';
   }
   
-  if (hostname === 'localhost' || hostname === '127.0.0.1') {
+  // Development environment detection (Vercel dev deployment)
+  if (hostname.includes('nna-registry-dev-frontend.vercel.app')) {
     return 'development';
   }
 
@@ -62,13 +74,13 @@ export function getBackendUrl(environment?: EnvironmentConfig['name']): string {
              'https://registry.stg.reviz.dev';
     
     case 'production':
-      return process.env.REACT_APP_API_BASE_URL || 
+      return process.env.REACT_APP_BACKEND_URL || 
              'https://registry.reviz.dev';
     
     case 'development':
     default:
-      return process.env.REACT_APP_API_BASE_URL || 
-             'https://registry.reviz.dev';
+      return process.env.REACT_APP_BACKEND_URL || 
+             'https://registry.dev.reviz.dev';
   }
 }
 
@@ -81,16 +93,16 @@ export function getFrontendUrl(environment?: EnvironmentConfig['name']): string 
   switch (env) {
     case 'staging':
       return process.env.REACT_APP_FRONTEND_URL || 
-             'https://nna-registry-staging.vercel.app';
+             'https://nna-registry-stg-frontend.vercel.app';
     
     case 'production':
       return process.env.REACT_APP_FRONTEND_URL || 
-             'https://nna-registry-service-mvp-frontend.vercel.app';
+             'https://nna-registry-frontend.vercel.app';
     
     case 'development':
     default:
       return process.env.REACT_APP_FRONTEND_URL || 
-             'http://localhost:3001';
+             'https://nna-registry-dev-frontend.vercel.app';
   }
 }
 

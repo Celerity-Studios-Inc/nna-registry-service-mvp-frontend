@@ -1,4 +1,5 @@
 {
+  "name": "nna-registry-production",
   "version": 2,
   "builds": [
     {
@@ -12,7 +13,7 @@
   "rewrites": [
     {
       "source": "/api/(.*)",
-      "destination": "https://registry.stg.reviz.dev/api/$1"
+      "destination": "https://registry.reviz.dev/api/$1"
     },
     {
       "source": "/(.*)",
@@ -20,24 +21,24 @@
     }
   ],
   "env": {
-    "REACT_APP_ENVIRONMENT": "staging",
-    "REACT_APP_API_BASE_URL": "https://registry.stg.reviz.dev/api",
-    "REACT_APP_FRONTEND_URL": "https://nna-registry-staging.vercel.app",
-    "REACT_APP_ENABLE_DEBUG_LOGGING": "true",
+    "REACT_APP_ENVIRONMENT": "production",
+    "REACT_APP_BACKEND_URL": "https://registry.reviz.dev",
+    "REACT_APP_FRONTEND_URL": "https://nna-registry-frontend.vercel.app",
+    "REACT_APP_ENABLE_DEBUG_LOGGING": "false",
     "REACT_APP_ENABLE_PERFORMANCE_MONITORING": "true",
-    "REACT_APP_STAGING_BANNER": "true",
-    "NODE_ENV": "staging",
+    "REACT_APP_STAGING_BANNER": "false",
+    "NODE_ENV": "production",
     "CI": "false"
   },
   "build": {
     "env": {
-      "REACT_APP_ENVIRONMENT": "staging",
-      "REACT_APP_API_BASE_URL": "https://registry.stg.reviz.dev/api",
-      "REACT_APP_FRONTEND_URL": "https://nna-registry-staging.vercel.app",
-      "REACT_APP_ENABLE_DEBUG_LOGGING": "true",
+      "REACT_APP_ENVIRONMENT": "production",
+      "REACT_APP_BACKEND_URL": "https://registry.reviz.dev",
+      "REACT_APP_FRONTEND_URL": "https://nna-registry-frontend.vercel.app",
+      "REACT_APP_ENABLE_DEBUG_LOGGING": "false",
       "REACT_APP_ENABLE_PERFORMANCE_MONITORING": "true",
-      "REACT_APP_STAGING_BANNER": "true",
-      "NODE_ENV": "staging",
+      "REACT_APP_STAGING_BANNER": "false",
+      "NODE_ENV": "production",
       "CI": "false"
     }
   },
@@ -48,7 +49,7 @@
       "headers": [
         {
           "key": "Access-Control-Allow-Origin",
-          "value": "https://nna-registry-staging.vercel.app"
+          "value": "https://nna-registry-frontend.vercel.app"
         },
         {
           "key": "Access-Control-Allow-Methods",

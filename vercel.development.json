@@ -1,5 +1,5 @@
 {
-  "name": "nna-registry-staging",
+  "name": "nna-registry-dev-frontend",
   "version": 2,
   "builds": [
     {
@@ -13,7 +13,7 @@
   "routes": [
     {
       "src": "/api/(.*)",
-      "dest": "https://registry.stg.reviz.dev/api/$1"
+      "dest": "https://registry.dev.reviz.dev/api/$1"
     },
     {
       "src": "/(.*)",
@@ -21,24 +21,24 @@
     }
   ],
   "env": {
-    "REACT_APP_ENVIRONMENT": "staging",
-    "REACT_APP_BACKEND_URL": "https://registry.stg.reviz.dev",
-    "REACT_APP_FRONTEND_URL": "https://nna-registry-stg-frontend.vercel.app",
+    "REACT_APP_ENVIRONMENT": "development",
+    "REACT_APP_BACKEND_URL": "https://registry.dev.reviz.dev",
+    "REACT_APP_FRONTEND_URL": "https://nna-registry-dev-frontend.vercel.app",
     "REACT_APP_ENABLE_DEBUG_LOGGING": "true",
     "REACT_APP_ENABLE_PERFORMANCE_MONITORING": "true",
     "REACT_APP_STAGING_BANNER": "true",
-    "NODE_ENV": "staging",
+    "NODE_ENV": "development",
     "CI": "false"
   },
   "build": {
     "env": {
-      "REACT_APP_ENVIRONMENT": "staging",
-      "REACT_APP_BACKEND_URL": "https://registry.stg.reviz.dev",
-      "REACT_APP_FRONTEND_URL": "https://nna-registry-stg-frontend.vercel.app",
+      "REACT_APP_ENVIRONMENT": "development",
+      "REACT_APP_BACKEND_URL": "https://registry.dev.reviz.dev",
+      "REACT_APP_FRONTEND_URL": "https://nna-registry-dev-frontend.vercel.app",
       "REACT_APP_ENABLE_DEBUG_LOGGING": "true",
       "REACT_APP_ENABLE_PERFORMANCE_MONITORING": "true",
       "REACT_APP_STAGING_BANNER": "true",
-      "NODE_ENV": "staging",
+      "NODE_ENV": "development",
       "CI": "false"
     }
   },
@@ -49,7 +49,7 @@
       "headers": [
         {
           "key": "Access-Control-Allow-Origin",
-          "value": "https://nna-registry-stg-frontend.vercel.app"
+          "value": "https://nna-registry-dev-frontend.vercel.app"
         },
         {
           "key": "Access-Control-Allow-Methods",

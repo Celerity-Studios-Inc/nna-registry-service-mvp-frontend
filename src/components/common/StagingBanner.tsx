@@ -1,25 +1,61 @@
 /**
- * Staging Environment Banner Component
- * Displays a prominent banner when running in staging environment
- * Created for staging environment integration (January 2025)
+ * Environment Banner Component
+ * Displays environment identification banner for non-production environments
+ * Enhanced for three-environment strategy (January 2025)
  */
 
 import React from 'react';
 import { Box, Alert, AlertTitle, Chip, Typography } from '@mui/material';
-import { Warning, Science, BugReport } from '@mui/icons-material';
+import { Warning, Science, BugReport, DeveloperMode, Public } from '@mui/icons-material';
 import { getEnvironmentConfig } from '../../utils/environment.config';
 
 export const StagingBanner: React.FC = () => {
   const config = getEnvironmentConfig();
   
-  // Only show banner in staging environment or if explicitly enabled
-  const showBanner = config.isStaging || 
+  // Show banner for non-production environments or if explicitly enabled
+  const showBanner = !config.isProduction || 
                     process.env.REACT_APP_STAGING_BANNER === 'true' ||
-                    (config.isDevelopment && window.location.search.includes('staging=true'));
+                    window.location.search.includes('showBanner=true');
 
   if (!showBanner) {
     return null;
   }
+
+  // Environment-specific styling and content
+  const environmentConfig = {
+    development: {
+      icon: <DeveloperMode />,
+      severity: 'info' as const,
+      backgroundColor: '#e3f2fd', // Blue 50
+      borderColor: '#2196f3', // Blue 500
+      iconColor: '#1565c0', // Blue 800
+      title: 'Development Environment',
+      message: '🔧 Local Development: This is your local development environment.',
+      chipColor: 'info' as const,
+    },
+    staging: {
+      icon: <Science />,
+      severity: 'warning' as const,
+      backgroundColor: '#fff3e0', // Orange 50
+      borderColor: '#ff9800', // Orange 500
+      iconColor: '#f57c00', // Orange 800
+      title: 'Staging Environment',
+      message: '⚠️ Test Environment: This is the staging version of the NNA Registry Service.',
+      chipColor: 'warning' as const,
+    },
+    production: {
+      icon: <Public />,
+      severity: 'success' as const,
+      backgroundColor: '#e8f5e8', // Green 50
+      borderColor: '#4caf50', // Green 500
+      iconColor: '#2e7d32', // Green 800
+      title: 'Production Environment',
+      message: '🚀 Live Production: You are using the live production service.',
+      chipColor: 'success' as const,
+    },
+  };
+
+  const envConfig = environmentConfig[config.name];
 
   return (
     <Box
@@ -31,35 +67,36 @@ export const StagingBanner: React.FC = () => {
       }}
     >
       <Alert 
-        severity="warning" 
-        icon={<Science />}
+        severity={envConfig.severity}
+        icon={envConfig.icon}
         sx={{
           borderRadius: 0,
-          backgroundColor: '#fff3e0', // Orange 50
-          borderBottom: '2px solid #ff9800', // Orange 500
+          backgroundColor: envConfig.backgroundColor,
+          borderBottom: `2px solid ${envConfig.borderColor}`,
           '& .MuiAlert-icon': {
-            color: '#f57c00', // Orange 800
+            color: envConfig.iconColor,
           },
         }}
       >
         <AlertTitle sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
           <BugReport fontSize="small" />
-          Staging Environment
+          {envConfig.title}
           <Chip 
             label={config.name.toUpperCase()} 
             size="small" 
-            color="warning" 
+            color={envConfig.chipColor}
             variant="outlined"
           />
         </AlertTitle>
         
         <Typography variant="body2" sx={{ mb: 1 }}>
-          <strong>⚠️ Test Environment:</strong> This is the staging version of the NNA Registry Service.
+          {envConfig.message}
         </Typography>
         
         <Typography variant="caption" sx={{ display: 'block', color: 'text.secondary' }}>
           <strong>Backend:</strong> {config.backendUrl} | 
-          <strong> Features:</strong> Enhanced debugging, test data isolation, separate database
+          <strong> Frontend:</strong> {config.frontendUrl} |
+          <strong> Debug:</strong> {config.enableDebugLogging ? 'Enabled' : 'Disabled'}
         </Typography>
       </Alert>
     </Box>
