@@ -72,7 +72,9 @@
       "Bash(./kill-port-3000.sh:*)",
       "Bash(awk:*)",
       "Bash(git tag:*)",
-      "Bash(git reset:*)"
+      "Bash(git reset:*)",
+      "Bash(gh run view:*)",
+      "Bash(npx vercel:*)"
     ],
     "deny": []
   }

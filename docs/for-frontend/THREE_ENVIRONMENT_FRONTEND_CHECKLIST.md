@@ -1,6 +1,6 @@
 # NNA Registry Service – Frontend Checklist for Three-Environment Strategy
 
-**Last updated:** $(date)
+**Last updated:** June 2025
 
 ## Overview
 The backend and infrastructure for the NNA Registry Service are now fully aligned with the three-environment strategy. This checklist will help the frontend team ensure seamless integration and complete environment isolation.
@@ -11,8 +11,8 @@ The backend and infrastructure for the NNA Registry Service are now fully aligne
 
 | Environment   | API Endpoint                        | Frontend Domain                                   | CORS Policy                        |
 |---------------|-------------------------------------|---------------------------------------------------|-------------------------------------|
-| Development   | https://registry.dev.reviz.dev      | https://nna-registry-dev-frontend.vercel.app      | https://nna-registry-dev-frontend.vercel.app, http://localhost:3001 |
-| Staging       | https://registry.stg.reviz.dev      | https://nna-registry-stg-frontend.vercel.app      | https://nna-registry-stg-frontend.vercel.app |
+| Development   | https://registry.dev.reviz.dev      | https://nna-registry-dev-frontend.vercel.app      | https://nna-registry-dev-frontend.vercel.app, http://localhost:3001, http://localhost:3000 |
+| Staging       | https://registry.stg.reviz.dev      | https://nna-registry-frontend-stg.vercel.app      | https://nna-registry-frontend-stg.vercel.app |
 | Production    | https://registry.reviz.dev          | https://nna-registry-frontend.vercel.app          | https://nna-registry-frontend.vercel.app |
 
 ---
@@ -70,6 +70,8 @@ The backend and infrastructure for the NNA Registry Service are now fully aligne
 
 - The full backend strategy and requirements are documented in:
   - `docs/for-backend/THREE_ENVIRONMENT_STRATEGY.md`
+  - `docs/for-backend/EXECUTIVE_SUMMARY_THREE_ENVIRONMENTS.md`
+  - `docs/for-backend/CONSOLIDATED_DOMAIN_REQUEST.md`
 
 ---
 
