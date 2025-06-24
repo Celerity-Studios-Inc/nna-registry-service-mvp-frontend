@@ -45,6 +45,45 @@ export const StagingBanner: React.FC = () => {
 
   const envConfig = environmentConfig[config.name];
 
+  // For production, show minimal chip-only banner
+  if (config.isProduction) {
+    return (
+      <Box
+        sx={{
+          position: 'sticky',
+          top: 0,
+          zIndex: 1400,
+          width: '100%',
+          height: '24px', // Minimal height for production
+          backgroundColor: 'transparent',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'flex-end',
+          px: 2,
+          py: 0.5,
+        }}
+      >
+        <Chip 
+          label={envConfig.label}
+          size="small"
+          sx={{
+            backgroundColor: envConfig.backgroundColor,
+            color: envConfig.textColor,
+            fontWeight: 600,
+            fontSize: '0.7rem',
+            height: '18px',
+            borderRadius: '9px',
+            border: `1px solid ${envConfig.backgroundColor}`,
+            '& .MuiChip-label': {
+              px: 1,
+            },
+          }}
+        />
+      </Box>
+    );
+  }
+
+  // For non-production, show full banner
   return (
     <Box
       sx={{
