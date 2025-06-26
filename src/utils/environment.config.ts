@@ -41,8 +41,8 @@ export function detectEnvironment(): EnvironmentConfig['name'] {
   
   // Staging environment detection (specific URLs first)
   if (hostname.includes('nna-registry-frontend-stg.vercel.app') || 
+      hostname.includes('nna-registry-staging.vercel.app') || 
       hostname.includes('staging') || 
-      hostname.includes('nna-registry-staging') || 
       hostname.includes('-stg.vercel.app')) {
     return 'staging';
   }

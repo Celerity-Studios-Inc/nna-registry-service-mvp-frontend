@@ -41,9 +41,8 @@ class AuthService {
         );
         debugLog('Login credentials (email only for security):', { email });
 
-        // Log URL construction for debugging
-        const fullUrl = window.location.origin + '/api/auth/login';
-        debugLog('Expected full URL after base concatenation:', fullUrl);
+        // API call will use the configured baseURL from api.ts
+        debugLog('Using Axios baseURL for auth endpoint: /auth/login');
 
         const response = await api.post<ApiResponse<AuthResponse>>(
           '/auth/login',
