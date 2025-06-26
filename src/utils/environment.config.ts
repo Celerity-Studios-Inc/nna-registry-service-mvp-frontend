@@ -36,20 +36,9 @@ export function detectEnvironment(): EnvironmentConfig['name'] {
   // Check URL patterns
   const hostname = typeof window !== 'undefined' ? window.location.hostname : '';
   
-  // Debug logging for environment detection
-  if (typeof window !== 'undefined') {
-    console.log('🌍 Environment Detection Debug:');
-    console.log('  - Hostname:', hostname);
-    console.log('  - REACT_APP_ENVIRONMENT:', process.env.REACT_APP_ENVIRONMENT);
-    console.log('  - NODE_ENV:', process.env.NODE_ENV);
-    console.log('  - URL hostname check:', window.location.hostname);
-  }
-  
-  // Staging environment detection (most specific URLs first)
-  if (hostname.includes('nna-registry-frontend-stg.vercel.app') || 
-      hostname.includes('nna-registry-staging.vercel.app') || 
-      hostname.includes('-stg.vercel.app')) {
-    console.log('🎯 Environment Detection: STAGING detected by hostname');
+  if (hostname.includes('staging') || 
+      hostname.includes('nna-registry-staging') || 
+      hostname.includes('nna-registry-frontend-stg.vercel.app')) {
     return 'staging';
   }
   
