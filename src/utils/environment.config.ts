@@ -34,7 +34,9 @@ export function detectEnvironment(): EnvironmentConfig['name'] {
   // Check URL patterns
   const hostname = typeof window !== 'undefined' ? window.location.hostname : '';
   
-  if (hostname.includes('staging') || hostname.includes('nna-registry-staging')) {
+  if (hostname.includes('staging') || 
+      hostname.includes('nna-registry-staging') || 
+      hostname.includes('nna-registry-frontend-stg.vercel.app')) {
     return 'staging';
   }
   
