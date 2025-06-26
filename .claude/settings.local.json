@@ -77,7 +77,8 @@
       "Bash(npx vercel:*)",
       "Bash(git branch:*)",
       "WebFetch(domain:registry.stg.reviz.dev)",
-      "Bash(/usr/local/bin/node:*)"
+      "Bash(/usr/local/bin/node:*)",
+      "WebFetch(domain:nna-registry-frontend-stg.vercel.app)"
     ],
     "deny": []
   }
