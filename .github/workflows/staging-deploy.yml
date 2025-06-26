@@ -55,7 +55,7 @@ jobs:
           REACT_APP_ENABLE_DEBUG_LOGGING: true
           REACT_APP_ENABLE_PERFORMANCE_MONITORING: true
           REACT_APP_STAGING_BANNER: true
-          NODE_ENV: staging
+          NODE_ENV: production
           CI: false
 
       - name: Install Vercel CLI
