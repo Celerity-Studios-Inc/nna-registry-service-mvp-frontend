@@ -1,5 +1,7 @@
 import React, { useEffect } from 'react';
 import { environmentSafeLog } from './utils/environment';
+import { logEnvironmentInfo } from './utils/environment.config';
+import { setupGlobalTaxonomyErrorHandler } from './utils/taxonomyErrorRecovery';
 import './App.css';
 import './styles/ErrorHandling.css';
 import './styles/TaxonomyExample.css';
@@ -155,6 +157,10 @@ const RootRedirect = () => {
 const App: React.FC = () => {
   // On start, check if we have a valid token structure and clear if not
   useEffect(() => {
+    // Initialize environment configuration logging FIRST
+    console.log('🚀 [APP] Initializing environment configuration...');
+    logEnvironmentInfo();
+    
     const token = localStorage.getItem('accessToken');
     // If token doesn't exist or looks malformed, clear it
     if (token && token.length < 10) {

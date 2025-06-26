@@ -19,15 +19,17 @@ export interface EnvironmentConfig {
  * Detect current environment based on multiple indicators
  */
 export function detectEnvironment(): EnvironmentConfig['name'] {
-  // Check environment variables first
+  // Check environment variables first (highest priority)
   const reactAppEnv = process.env.REACT_APP_ENVIRONMENT;
   if (reactAppEnv === 'staging' || reactAppEnv === 'production' || reactAppEnv === 'development') {
+    console.log('🎯 Environment Detection: Found via REACT_APP_ENVIRONMENT:', reactAppEnv);
     return reactAppEnv;
   }
 
   // Check NODE_ENV with type assertion for staging
   const nodeEnv = process.env.NODE_ENV as string;
   if (nodeEnv === 'staging') {
+    console.log('🎯 Environment Detection: Found via NODE_ENV:', nodeEnv);
     return 'staging';
   }
 
@@ -35,15 +37,19 @@ export function detectEnvironment(): EnvironmentConfig['name'] {
   const hostname = typeof window !== 'undefined' ? window.location.hostname : '';
   
   // Debug logging for environment detection
-  if (typeof window !== 'undefined' && process.env.NODE_ENV !== 'production') {
-    console.log('🌍 Environment Detection - Hostname:', hostname);
+  if (typeof window !== 'undefined') {
+    console.log('🌍 Environment Detection Debug:');
+    console.log('  - Hostname:', hostname);
+    console.log('  - REACT_APP_ENVIRONMENT:', process.env.REACT_APP_ENVIRONMENT);
+    console.log('  - NODE_ENV:', process.env.NODE_ENV);
+    console.log('  - URL hostname check:', window.location.hostname);
   }
   
-  // Staging environment detection (specific URLs first)
+  // Staging environment detection (most specific URLs first)
   if (hostname.includes('nna-registry-frontend-stg.vercel.app') || 
       hostname.includes('nna-registry-staging.vercel.app') || 
-      hostname.includes('staging') || 
       hostname.includes('-stg.vercel.app')) {
+    console.log('🎯 Environment Detection: STAGING detected by hostname');
     return 'staging';
   }
   
@@ -52,21 +58,31 @@ export function detectEnvironment(): EnvironmentConfig['name'] {
       hostname === '127.0.0.1' ||
       hostname.includes('nna-registry-dev-frontend.vercel.app') ||
       hostname.includes('-dev.vercel.app')) {
+    console.log('🎯 Environment Detection: DEVELOPMENT detected by hostname');
     return 'development';
   }
   
-  // Production environment detection (specific URLs first, then generic)
+  // Production environment detection (specific URLs first)
   if (hostname.includes('nna-registry-frontend.vercel.app') ||
       hostname.includes('registry.reviz.dev')) {
+    console.log('🎯 Environment Detection: PRODUCTION detected by hostname');
     return 'production';
   }
   
-  // Generic vercel.app check (last resort)
+  // Generic staging check for any staging patterns missed above
+  if (hostname.includes('staging') || hostname.includes('stg')) {
+    console.log('🎯 Environment Detection: STAGING detected by pattern');
+    return 'staging';
+  }
+  
+  // Generic vercel.app check (ONLY for unknown domains, not staging!)
   if (hostname.includes('vercel.app')) {
-    return 'production'; // Default to production for unknown vercel domains
+    console.warn('⚠️ Environment Detection: Unknown vercel.app domain defaulting to production:', hostname);
+    return 'production';
   }
 
   // Default to production for safety
+  console.warn('⚠️ Environment Detection: Defaulting to production for unknown hostname:', hostname);
   return 'production';
 }
 
@@ -168,13 +184,23 @@ export function getUploadEndpoint(fileSize: number, environment?: EnvironmentCon
 export function logEnvironmentInfo(): void {
   const config = getEnvironmentConfig();
   
-  if (config.enableDebugLogging) {
+  // Always log in staging for debugging
+  if (config.enableDebugLogging || config.isStaging) {
     console.group('🌍 Environment Configuration');
     console.log('Environment:', config.name);
     console.log('Backend URL:', config.backendUrl);
     console.log('Frontend URL:', config.frontendUrl);
+    console.log('Is Staging:', config.isStaging);
+    console.log('Is Production:', config.isProduction);
+    console.log('Is Development:', config.isDevelopment);
     console.log('Debug Logging:', config.enableDebugLogging);
     console.log('Performance Monitoring:', config.enablePerformanceMonitoring);
+    console.log('Environment Variables:', {
+      REACT_APP_ENVIRONMENT: process.env.REACT_APP_ENVIRONMENT,
+      NODE_ENV: process.env.NODE_ENV,
+      REACT_APP_BACKEND_URL: process.env.REACT_APP_BACKEND_URL,
+      REACT_APP_FRONTEND_URL: process.env.REACT_APP_FRONTEND_URL
+    });
     console.groupEnd();
   }
 }
