@@ -1,7 +1,6 @@
 import React, { useEffect } from 'react';
 import { environmentSafeLog } from './utils/environment';
 import { logEnvironmentInfo } from './utils/environment.config';
-import { setupGlobalTaxonomyErrorHandler } from './utils/taxonomyErrorRecovery';
 import './App.css';
 import './styles/ErrorHandling.css';
 import './styles/TaxonomyExample.css';
