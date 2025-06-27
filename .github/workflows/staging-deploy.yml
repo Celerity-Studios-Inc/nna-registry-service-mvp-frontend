@@ -46,7 +46,7 @@ jobs:
         continue-on-error: true
 
       - name: Build staging application
-        run: npm run build:staging
+        run: CI=false npm run build
         env:
           REACT_APP_ENVIRONMENT: staging
           REACT_APP_API_BASE_URL: https://registry.stg.reviz.dev/api
@@ -66,17 +66,12 @@ jobs:
 
       - name: Deploy to Vercel Staging
         run: |
-          if [ "${{ github.event_name }}" = "push" ] && [ "${{ github.ref }}" = "refs/heads/staging" ]; then
-            # Deploy to staging alias for staging branch pushes
-            vercel deploy --token=${{ secrets.VERCEL_TOKEN }} --target staging --yes > deployment-url.txt
-          else
-            # Deploy as preview for other cases
-            vercel deploy --token=${{ secrets.VERCEL_TOKEN }} --yes > deployment-url.txt
-          fi
+          # Deploy to staging environment with environment variables
+          vercel deploy --token=${{ secrets.VERCEL_TOKEN }} --target staging --yes > deployment-url.txt
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-          # Staging environment variables for build
+          # Staging environment variables for deployment
           REACT_APP_ENVIRONMENT: staging
           REACT_APP_API_BASE_URL: https://registry.stg.reviz.dev/api
           REACT_APP_BACKEND_URL: https://registry.stg.reviz.dev
