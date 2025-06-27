@@ -19,6 +19,7 @@ import {
   Button,
   Dialog,
   useTheme,
+  Chip,
 } from '@mui/material';
 import {
   Menu as MenuIcon,
@@ -44,6 +45,20 @@ import { AuthContext } from '../../contexts/AuthContext';
 import ErrorTestComponent from '../common/ErrorTestComponent';
 
 const drawerWidth = 240;
+
+// Environment detection
+const getCurrentEnvironment = () => {
+  if (process.env.REACT_APP_ENVIRONMENT) {
+    return process.env.REACT_APP_ENVIRONMENT;
+  }
+  if (process.env.NODE_ENV === 'production') {
+    return 'production';
+  }
+  return 'development';
+};
+
+// Version from package.json
+const APP_VERSION = process.env.REACT_APP_VERSION || '1.1.6';
 
 // Define navigation items with improved organization and grouping
 const navigationItems = [
@@ -225,6 +240,18 @@ const MainLayout: React.FC = () => {
             NNA Registry Service
           </Typography>
           
+          {/* Environment indicator and version */}
+          <Chip
+            label={getCurrentEnvironment().toUpperCase()}
+            size="small"
+            color={getCurrentEnvironment() === 'production' ? 'success' : 
+                   getCurrentEnvironment() === 'staging' ? 'warning' : 'info'}
+            sx={{ mr: 1 }}
+          />
+          <Typography variant="caption" sx={{ mr: 2 }}>
+            Release {APP_VERSION}
+          </Typography>
+
           {/* Right-aligned user info */}
           {authContext?.user && (
             <Typography 

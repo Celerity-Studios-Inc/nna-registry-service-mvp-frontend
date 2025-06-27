@@ -1,5 +1,5 @@
 {
-  "name": "nna-registry-service-mvp-frontend",
+  "name": "nna-registry-frontend",
   "version": "0.1.0",
   "private": true,
   "dependencies": {

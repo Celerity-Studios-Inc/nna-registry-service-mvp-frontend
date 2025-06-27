@@ -1,15 +1,5 @@
 {
-  "name": "nna-registry-production",
-  "version": 2,
-  "builds": [
-    {
-      "src": "package.json",
-      "use": "@vercel/static-build",
-      "config": {
-        "distDir": "build"
-      }
-    }
-  ],
+  "name": "nna-registry-frontend",
   "rewrites": [
     {
       "source": "/api/(.*)",
