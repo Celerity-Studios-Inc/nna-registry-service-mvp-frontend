@@ -79,8 +79,21 @@ async function handler(req: VercelRequest, res: VercelResponse) {
     console.log('AUTH PROXY - Removed duplicate /api/auth prefix from endpoint');
   }
   
-  // Construct the target URL - hardcode the backend URL
-  const targetUrl = `https://registry.reviz.dev/api/auth${endpoint}`;
+  // Construct the target URL - use environment-aware backend URL
+  const getBackendUrl = () => {
+    const environment = process.env.REACT_APP_ENVIRONMENT || process.env.VERCEL_ENV;
+    const frontendUrl = req.headers.host || '';
+    
+    // Check if we're in staging environment
+    if (environment === 'staging' || frontendUrl.includes('stg')) {
+      return process.env.REACT_APP_BACKEND_URL || 'https://registry.stg.reviz.dev';
+    }
+    
+    return process.env.REACT_APP_BACKEND_URL || 'https://registry.reviz.dev';
+  };
+  
+  const backendUrl = getBackendUrl();
+  const targetUrl = `${backendUrl}/api/auth${endpoint}`;
   
   console.log('AUTH PROXY - Target URL constructed:', targetUrl);
   
