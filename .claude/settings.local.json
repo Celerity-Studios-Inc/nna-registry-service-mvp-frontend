@@ -78,7 +78,8 @@
       "Bash(git branch:*)",
       "WebFetch(domain:registry.stg.reviz.dev)",
       "Bash(/usr/local/bin/node:*)",
-      "WebFetch(domain:nna-registry-frontend-stg.vercel.app)"
+      "WebFetch(domain:nna-registry-frontend-stg.vercel.app)",
+      "Bash(REACT_APP_ENVIRONMENT=staging REACT_APP_API_BASE_URL=https://registry.stg.reviz.dev/api REACT_APP_BACKEND_URL=https://registry.stg.reviz.dev REACT_APP_FRONTEND_URL=https://nna-registry-frontend-stg.vercel.app REACT_APP_ENABLE_DEBUG_LOGGING=true REACT_APP_STAGING_BANNER=true CI=false npm run build)"
     ],
     "deny": []
   }
