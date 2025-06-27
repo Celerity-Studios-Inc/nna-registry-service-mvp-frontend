@@ -1,5 +1,4 @@
 {
-  "name": "nna-registry-production",
   "version": 2,
   "builds": [
     {
@@ -20,28 +19,6 @@
       "destination": "/index.html"
     }
   ],
-  "env": {
-    "REACT_APP_ENVIRONMENT": "production",
-    "REACT_APP_BACKEND_URL": "https://registry.reviz.dev",
-    "REACT_APP_FRONTEND_URL": "https://nna-registry-frontend.vercel.app",
-    "REACT_APP_ENABLE_DEBUG_LOGGING": "false",
-    "REACT_APP_ENABLE_PERFORMANCE_MONITORING": "true",
-    "REACT_APP_STAGING_BANNER": "false",
-    "NODE_ENV": "production",
-    "CI": "false"
-  },
-  "build": {
-    "env": {
-      "REACT_APP_ENVIRONMENT": "production",
-      "REACT_APP_BACKEND_URL": "https://registry.reviz.dev",
-      "REACT_APP_FRONTEND_URL": "https://nna-registry-frontend.vercel.app",
-      "REACT_APP_ENABLE_DEBUG_LOGGING": "false",
-      "REACT_APP_ENABLE_PERFORMANCE_MONITORING": "true",
-      "REACT_APP_STAGING_BANNER": "false",
-      "NODE_ENV": "production",
-      "CI": "false"
-    }
-  },
   "regions": ["iad1"],
   "headers": [
     {
@@ -49,7 +26,7 @@
       "headers": [
         {
           "key": "Access-Control-Allow-Origin",
-          "value": "https://nna-registry-frontend.vercel.app"
+          "value": "*"
         },
         {
           "key": "Access-Control-Allow-Methods",
