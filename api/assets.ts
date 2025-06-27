@@ -21,9 +21,26 @@ async function handler(req: VercelRequest, res: VercelResponse) {
   console.log(`ASSETS HANDLER: ${req.method} ${req.url}`);
   
   try {
-    // Hard-code the backend URL
-    const backendUrl = 'https://registry.reviz.dev/api/assets';
-    console.log('ASSETS HANDLER - Using direct backend URL:', backendUrl);
+    // Environment-aware backend URL detection
+    const getBackendUrl = () => {
+      const environment = process.env.REACT_APP_ENVIRONMENT || process.env.VERCEL_ENV;
+      const frontendUrl = req.headers.host || '';
+      
+      console.log('ASSETS HANDLER - Environment detection:', {
+        REACT_APP_ENVIRONMENT: environment,
+        host: frontendUrl,
+        isStaging: environment === 'staging' || frontendUrl.includes('stg')
+      });
+      
+      if (environment === 'staging' || frontendUrl.includes('stg')) {
+        return (process.env.REACT_APP_BACKEND_URL || 'https://registry.stg.reviz.dev') + '/api/assets';
+      }
+      
+      return (process.env.REACT_APP_BACKEND_URL || 'https://registry.reviz.dev') + '/api/assets';
+    };
+    
+    const backendUrl = getBackendUrl();
+    console.log('ASSETS HANDLER - Using environment-aware backend URL:', backendUrl);
     
     // For debugging: log all parts of URL
     const url = req.url || '';
@@ -78,8 +95,9 @@ async function handler(req: VercelRequest, res: VercelResponse) {
       }
     });
     
-    // Set a specific Host header for the backend
-    headers['host'] = 'registry.reviz.dev';
+    // Set a specific Host header for the backend based on environment
+    const targetHost = backendUrl.includes('registry.stg.reviz.dev') ? 'registry.stg.reviz.dev' : 'registry.reviz.dev';
+    headers['host'] = targetHost;
     
     console.log('Forwarding with headers:', {
       contentType: headers['content-type'],

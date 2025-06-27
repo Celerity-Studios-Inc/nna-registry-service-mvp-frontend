@@ -2,6 +2,7 @@
  * Environment Configuration Utility
  * Handles environment detection and backend URL routing for staging/production
  * Created for staging environment integration (January 2025)
+ * Updated for Vercel Preview environment fix (June 2025)
  */
 
 export interface EnvironmentConfig {
@@ -19,6 +20,15 @@ export interface EnvironmentConfig {
  * Detect current environment based on multiple indicators
  */
 export function detectEnvironment(): EnvironmentConfig['name'] {
+  // Debug all environment variables
+  console.log('🔍 ALL ENV VARS:', {
+    REACT_APP_ENVIRONMENT: process.env.REACT_APP_ENVIRONMENT,
+    NODE_ENV: process.env.NODE_ENV,
+    VERCEL_ENV: process.env.VERCEL_ENV,
+    REACT_APP_BACKEND_URL: process.env.REACT_APP_BACKEND_URL,
+    REACT_APP_FRONTEND_URL: process.env.REACT_APP_FRONTEND_URL,
+  });
+
   // Check environment variables first (highest priority)
   const reactAppEnv = process.env.REACT_APP_ENVIRONMENT;
   if (reactAppEnv === 'staging' || reactAppEnv === 'production' || reactAppEnv === 'development') {
