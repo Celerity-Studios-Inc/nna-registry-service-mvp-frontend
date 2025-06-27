@@ -61,7 +61,7 @@ export function getBackendUrl(environment?: EnvironmentConfig['name']): string {
   switch (env) {
     case 'staging':
       return process.env.REACT_APP_BACKEND_URL || 
-             'https://nna-registry-service-staging-297923701246.us-central1.run.app';
+             'https://registry.stg.reviz.dev';
     
     case 'production':
       return process.env.REACT_APP_API_BASE_URL || 
@@ -83,7 +83,7 @@ export function getFrontendUrl(environment?: EnvironmentConfig['name']): string 
   switch (env) {
     case 'staging':
       return process.env.REACT_APP_FRONTEND_URL || 
-             'https://nna-registry-staging.vercel.app';
+             'https://nna-registry-frontend-stg.vercel.app';
     
     case 'production':
       return process.env.REACT_APP_FRONTEND_URL || 
