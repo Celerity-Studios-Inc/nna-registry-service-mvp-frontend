@@ -4,20 +4,28 @@
 
 This document provides comprehensive guidance for setting up and using the staging environment for the NNA Registry Service frontend. The staging environment provides an isolated testing environment connected to the staging backend infrastructure.
 
+## ✅ **STAGING ENVIRONMENT STATUS** (June 28, 2025)
+**Status**: **FULLY OPERATIONAL** - Perfect UI consistency with production achieved
+- **Staging URL**: `https://nna-registry-frontend-stg.vercel.app`
+- **UI Design**: Clean header with orange "STAGING" chip (matching production layout)
+- **Features**: Latest video thumbnails, search improvements, all functionality operational
+- **Backend**: Connected to staging backend with isolated database (22 assets available)
+
 ## 🏗️ **Infrastructure Overview**
 
 ### Backend Infrastructure (Provided by Backend Team)
-- **Staging Backend URL**: `https://nna-registry-service-staging-297923701246.us-central1.run.app`
+- **Staging Backend URL**: `https://registry.stg.reviz.dev` ✅ **UPDATED**
 - **Database**: Separate MongoDB instance (isolated from production)
 - **Storage**: Dedicated Google Cloud Storage bucket
 - **Authentication**: Separate JWT signing keys
 - **Environment**: Complete isolation from production data
 
 ### Frontend Infrastructure 
-- **Staging Frontend URL**: `https://nna-registry-staging.vercel.app`
-- **Deployment**: Vercel preview deployments
+- **Staging Frontend URL**: `https://nna-registry-frontend-stg.vercel.app` ✅ **OPERATIONAL**
+- **Deployment**: Automated CI/CD via GitHub Actions
 - **Configuration**: Environment-specific settings and feature flags
 - **CORS**: Pre-configured by backend team for staging domain
+- **UI Design**: Clean header with orange "STAGING" chip
 
 ## 📋 **Setup Instructions**
 

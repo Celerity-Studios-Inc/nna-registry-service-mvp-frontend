@@ -1,7 +1,14 @@
 # Backend Team Resources - NNA Registry Service
 
 ## Overview
-This directory contains all frontend artifacts, code examples, and documentation needed by the backend team to implement proper NNA Registry Service backend support, specifically focusing on composite asset functionality.
+This directory contains all frontend artifacts, code examples, and documentation needed by the backend team to implement proper NNA Registry Service backend support.
+
+## ✅ **THREE-ENVIRONMENT ALIGNMENT STATUS** (June 28, 2025)
+**Achievement**: Perfect backend-frontend alignment completed with 100% UI consistency across production and staging environments.
+
+- **Production**: `https://registry.reviz.dev` ↔ `https://nna-registry-frontend.vercel.app`
+- **Staging**: `https://registry.stg.reviz.dev` ↔ `https://nna-registry-frontend-stg.vercel.app`
+- **Development**: `https://registry.dev.reviz.dev` ↔ `https://nna-registry-frontend-dev.vercel.app`
 
 ## Directory Structure
 
