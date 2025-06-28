@@ -1,0 +1,1010 @@
+openapi: 3.0.3
+info:
+  title: NNA Registry Taxonomy Service API
+  description: |
+    Single source of truth for taxonomy data in the NNA Registry Platform.
+    Provides real-time taxonomy management, sequential numbering, and admin capabilities.
+    
+    ## Features
+    - Environment-aware endpoints (dev/staging/production)
+    - Intelligent caching with Redis
+    - Role-based access control for admin operations
+    - Idempotency support for state-changing operations
+    - Prometheus metrics for monitoring
+    - Comprehensive audit logging
+    
+    ## Authentication
+    - Public endpoints: No authentication required
+    - Admin endpoints: JWT Bearer token with administrator role
+    
+    ## Environments
+    - Development: https://registry.dev.reviz.dev/api/taxonomy
+    - Staging: https://registry.stg.reviz.dev/api/taxonomy
+    - Production: https://registry.reviz.dev/api/taxonomy
+  version: 1.0.0
+  contact:
+    name: NNA Registry Team
+    email: team@nnaregistry.com
+  license:
+    name: Proprietary
+
+servers:
+  - url: https://registry.reviz.dev/api/taxonomy
+    description: Production
+  - url: https://registry.stg.reviz.dev/api/taxonomy
+    description: Staging
+  - url: https://registry.dev.reviz.dev/api/taxonomy
+    description: Development
+
+security:
+  - BearerAuth: []
+  - {}
+
+paths:
+  /health:
+    get:
+      summary: Health check
+      description: Check service health and status across all dependencies
+      security: []
+      tags:
+        - System
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+              example:
+                status: healthy
+                environment: production
+                services:
+                  database:
+                    status: healthy
+                    responseTime: 15
+                    connections: { active: 5, max: 100 }
+                  cache:
+                    status: healthy
+                    hitRate: 0.92
+                    memory: { used: "512MB", max: "2GB" }
+                uptime: 1234567
+                timestamp: "2025-06-28T10:30:00Z"
+
+  /version:
+    get:
+      summary: Get taxonomy version
+      description: Get current taxonomy version and metadata
+      security: []
+      tags:
+        - Taxonomy
+      responses:
+        '200':
+          description: Current taxonomy version
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VersionResponse'
+              example:
+                version: 15
+                lastUpdated: "2025-06-28T10:30:00Z"
+                checksum: "a1b2c3d4e5f6789..."
+                totalNodes: 1247
+
+  /tree:
+    get:
+      summary: Get complete taxonomy tree
+      description: Get the complete taxonomy tree structure with all nodes
+      security: []
+      tags:
+        - Taxonomy
+      responses:
+        '200':
+          description: Complete taxonomy tree
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaxonomyTree'
+
+  /layers:
+    get:
+      summary: Get all layers
+      description: Get list of all available layers
+      security: []
+      tags:
+        - Taxonomy
+      responses:
+        '200':
+          description: List of layers
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LayersResponse'
+              example:
+                layers: ["G", "S", "L", "M", "W", "B", "P", "T", "C", "R"]
+                count: 10
+
+  /lookup/{layer}/categories:
+    get:
+      summary: Get categories for layer
+      description: Get all categories for a specific layer
+      security: []
+      tags:
+        - Taxonomy
+      parameters:
+        - name: layer
+          in: path
+          required: true
+          description: Layer code (e.g., S for Stars)
+          schema:
+            type: string
+            pattern: '^[A-Z]$'
+            example: S
+      responses:
+        '200':
+          description: Categories for the layer
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CategoriesResponse'
+              example:
+                layer: S
+                categories:
+                  - code: POP
+                    name: Pop Stars
+                    numericCode: "001"
+                  - code: HIP
+                    name: Hip Hop Stars
+                    numericCode: "002"
+                count: 2
+        '404':
+          description: Layer not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /lookup/{layer}/categories/{category}/subcategories:
+    get:
+      summary: Get subcategories
+      description: Get all subcategories for a layer and category
+      security: []
+      tags:
+        - Taxonomy
+      parameters:
+        - name: layer
+          in: path
+          required: true
+          description: Layer code
+          schema:
+            type: string
+            pattern: '^[A-Z]$'
+            example: S
+        - name: category
+          in: path
+          required: true
+          description: Category code
+          schema:
+            type: string
+            pattern: '^[A-Z]{3,10}$'
+            example: POP
+      responses:
+        '200':
+          description: Subcategories for the layer and category
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubcategoriesResponse'
+              example:
+                layer: S
+                category: POP
+                subcategories:
+                  - code: DIV
+                    name: Pop_Diva_Female_Stars
+                    numericCode: "001"
+                  - code: ICM
+                    name: Pop_Icon_Male_Stars
+                    numericCode: "002"
+                count: 2
+
+  /convert/hfn-to-mfa:
+    post:
+      summary: Convert HFN to MFA
+      description: Convert Human-Friendly Name to Machine-Friendly Address
+      security: []
+      tags:
+        - Conversion
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HfnToMfaRequest'
+            example:
+              hfn: "S.POP.DIV.001"
+      responses:
+        '200':
+          description: Conversion successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HfnToMfaResponse'
+              example:
+                hfn: "S.POP.DIV.001"
+                mfa: "2.001.001.001"
+                valid: true
+        '400':
+          description: Invalid HFN format
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /convert/mfa-to-hfn:
+    post:
+      summary: Convert MFA to HFN
+      description: Convert Machine-Friendly Address to Human-Friendly Name
+      security: []
+      tags:
+        - Conversion
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MfaToHfnRequest'
+            example:
+              mfa: "2.001.001.001"
+      responses:
+        '200':
+          description: Conversion successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MfaToHfnResponse'
+              example:
+                mfa: "2.001.001.001"
+                hfn: "S.POP.DIV.001"
+                valid: true
+
+  /next-sequence:
+    post:
+      summary: Get next sequential number
+      description: Get the next sequential number for asset registration with reservation
+      security:
+        - BearerAuth: []
+      tags:
+        - Sequence
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          description: Idempotency key to prevent duplicate sequence generation
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NextSequenceRequest'
+            example:
+              layer: "S"
+              categoryCode: "POP"
+              subcategoryCode: "DIV"
+      responses:
+        '200':
+          description: Next sequence number reserved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NextSequenceResponse'
+              example:
+                layer: "S"
+                category: "POP"
+                subcategory: "DIV"
+                nextNumber: 42
+                formattedSequence: "042"
+                reservedUntil: "2025-06-28T10:35:00Z"
+
+  /nodes:
+    post:
+      summary: Create taxonomy node
+      description: Create a new taxonomy node (admin only)
+      security:
+        - BearerAuth: []
+      tags:
+        - Admin
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          description: Idempotency key to prevent duplicate creation
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateNodeRequest'
+            example:
+              layer: "S"
+              category: "POP"
+              subcategory: "NEW"
+              name: "Pop_New_Category"
+              description: "New pop subcategory"
+              numericCode: "010"
+      responses:
+        '201':
+          description: Node created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NodeResponse'
+        '409':
+          description: Node already exists or idempotency conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /nodes/{id}:
+    put:
+      summary: Update taxonomy node
+      description: Update an existing taxonomy node (admin only)
+      security:
+        - BearerAuth: []
+      tags:
+        - Admin
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Node UUID
+          schema:
+            type: string
+            format: uuid
+        - name: Idempotency-Key
+          in: header
+          description: Idempotency key to prevent duplicate updates
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateNodeRequest'
+            example:
+              name: "Updated Pop Category"
+              description: "Updated description"
+      responses:
+        '200':
+          description: Node updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NodeResponse'
+        '404':
+          description: Node not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    delete:
+      summary: Delete taxonomy node
+      description: Delete a taxonomy node (admin only)
+      security:
+        - BearerAuth: []
+      tags:
+        - Admin
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Node UUID
+          schema:
+            type: string
+            format: uuid
+        - name: Idempotency-Key
+          in: header
+          description: Idempotency key to prevent duplicate deletions
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Node deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeleteNodeResponse'
+              example:
+                id: "550e8400-e29b-41d4-a716-446655440000"
+                deleted: true
+                version: 16
+                affectedAssets: 0
+                changelog: "Deleted S.POP.NEW taxonomy node"
+
+  /validate:
+    get:
+      summary: Validate taxonomy
+      description: Validate taxonomy structure and consistency
+      security:
+        - BearerAuth: []
+      tags:
+        - Admin
+      responses:
+        '200':
+          description: Validation results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationResponse'
+              example:
+                isValid: true
+                errors: []
+                warnings: ["Layer W has no subcategories for category BCH"]
+                totalNodes: 1247
+                validationDate: "2025-06-28T10:30:00Z"
+
+  /cache/invalidate:
+    post:
+      summary: Invalidate cache
+      description: Invalidate taxonomy cache (admin only)
+      security:
+        - BearerAuth: []
+      tags:
+        - Admin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CacheInvalidateRequest'
+            example:
+              scope: "layer"
+              layer: "S"
+              reason: "admin_edit_new_subcategory"
+      responses:
+        '200':
+          description: Cache invalidated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CacheInvalidateResponse'
+              example:
+                invalidated: ["layers:all", "categories:S", "subcategories:S:POP"]
+                timestamp: "2025-06-28T10:30:00Z"
+                affectedInstances: 3
+
+  /metrics/prometheus:
+    get:
+      summary: Prometheus metrics
+      description: Get Prometheus-compatible metrics for monitoring
+      security:
+        - BearerAuth: []
+      tags:
+        - Monitoring
+      responses:
+        '200':
+          description: Prometheus metrics
+          content:
+            text/plain:
+              schema:
+                type: string
+              example: |
+                # HELP taxonomy_http_requests_total Total HTTP requests
+                # TYPE taxonomy_http_requests_total counter
+                taxonomy_http_requests_total{method="GET",endpoint="/layers",status="200"} 1234
+                
+                # HELP taxonomy_cache_hits_total Cache hits
+                # TYPE taxonomy_cache_hits_total counter
+                taxonomy_cache_hits_total{cache_type="redis",key_type="layers"} 5678
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token with administrator role for admin endpoints
+
+  schemas:
+    HealthResponse:
+      type: object
+      required:
+        - status
+        - environment
+        - uptime
+        - timestamp
+      properties:
+        status:
+          type: string
+          enum: [healthy, degraded, unhealthy]
+          description: Overall service health status
+        environment:
+          type: string
+          enum: [development, staging, production]
+          description: Current environment
+        services:
+          type: object
+          properties:
+            database:
+              $ref: '#/components/schemas/ServiceHealth'
+            cache:
+              $ref: '#/components/schemas/ServiceHealth'
+            storage:
+              $ref: '#/components/schemas/ServiceHealth'
+        uptime:
+          type: integer
+          description: Service uptime in seconds
+        timestamp:
+          type: string
+          format: date-time
+          description: Health check timestamp
+
+    ServiceHealth:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [healthy, degraded, unhealthy]
+        responseTime:
+          type: integer
+          description: Response time in milliseconds
+        details:
+          type: object
+          description: Service-specific health details
+
+    VersionResponse:
+      type: object
+      required:
+        - version
+        - lastUpdated
+        - totalNodes
+      properties:
+        version:
+          type: integer
+          description: Current taxonomy version number
+        lastUpdated:
+          type: string
+          format: date-time
+          description: Last update timestamp
+        checksum:
+          type: string
+          description: SHA-256 checksum of taxonomy data
+        totalNodes:
+          type: integer
+          description: Total number of taxonomy nodes
+
+    TaxonomyTree:
+      type: object
+      required:
+        - version
+        - lastUpdated
+        - tree
+      properties:
+        version:
+          type: integer
+        lastUpdated:
+          type: string
+          format: date-time
+        tree:
+          type: array
+          items:
+            $ref: '#/components/schemas/TaxonomyNode'
+
+    TaxonomyNode:
+      type: object
+      required:
+        - id
+        - name
+        - numericCode
+      properties:
+        id:
+          type: string
+          format: uuid
+        layer:
+          type: string
+          description: Layer code (only for layer nodes)
+        category:
+          type: string
+          description: Category code (only for category nodes)
+        subcategory:
+          type: string
+          description: Subcategory code (only for subcategory nodes)
+        name:
+          type: string
+          description: Human-readable name
+        description:
+          type: string
+          description: Optional description
+        numericCode:
+          type: string
+          description: Numeric code for MFA conversion
+        children:
+          type: array
+          items:
+            $ref: '#/components/schemas/TaxonomyNode'
+          description: Child nodes
+
+    LayersResponse:
+      type: object
+      required:
+        - layers
+        - count
+      properties:
+        layers:
+          type: array
+          items:
+            type: string
+          description: Array of layer codes
+        count:
+          type: integer
+          description: Number of layers
+
+    CategoriesResponse:
+      type: object
+      required:
+        - layer
+        - categories
+        - count
+      properties:
+        layer:
+          type: string
+          description: Layer code
+        categories:
+          type: array
+          items:
+            $ref: '#/components/schemas/TaxonomyItem'
+        count:
+          type: integer
+
+    SubcategoriesResponse:
+      type: object
+      required:
+        - layer
+        - category
+        - subcategories
+        - count
+      properties:
+        layer:
+          type: string
+        category:
+          type: string
+        subcategories:
+          type: array
+          items:
+            $ref: '#/components/schemas/TaxonomyItem'
+        count:
+          type: integer
+
+    TaxonomyItem:
+      type: object
+      required:
+        - code
+        - name
+        - numericCode
+      properties:
+        code:
+          type: string
+          description: Taxonomy code
+        name:
+          type: string
+          description: Human-readable name
+        numericCode:
+          type: string
+          description: Numeric code for MFA conversion
+
+    HfnToMfaRequest:
+      type: object
+      required:
+        - hfn
+      properties:
+        hfn:
+          type: string
+          pattern: '^[A-Z]\.[A-Z]{3,10}\.[A-Z]{3,10}\.\d{3}$'
+          example: "S.POP.DIV.001"
+          description: Human-Friendly Name
+
+    HfnToMfaResponse:
+      type: object
+      required:
+        - hfn
+        - mfa
+        - valid
+      properties:
+        hfn:
+          type: string
+          description: Original HFN
+        mfa:
+          type: string
+          description: Converted MFA
+        valid:
+          type: boolean
+          description: Whether conversion was successful
+
+    MfaToHfnRequest:
+      type: object
+      required:
+        - mfa
+      properties:
+        mfa:
+          type: string
+          pattern: '^\d+\.\d{3}\.\d{3}\.\d{3}$'
+          example: "2.001.001.001"
+          description: Machine-Friendly Address
+
+    MfaToHfnResponse:
+      type: object
+      required:
+        - mfa
+        - hfn
+        - valid
+      properties:
+        mfa:
+          type: string
+        hfn:
+          type: string
+        valid:
+          type: boolean
+
+    NextSequenceRequest:
+      type: object
+      required:
+        - layer
+        - categoryCode
+        - subcategoryCode
+      properties:
+        layer:
+          type: string
+          pattern: '^[A-Z]$'
+        categoryCode:
+          type: string
+          pattern: '^[A-Z]{3,10}$'
+        subcategoryCode:
+          type: string
+          pattern: '^[A-Z]{3,10}$'
+
+    NextSequenceResponse:
+      type: object
+      required:
+        - layer
+        - category
+        - subcategory
+        - nextNumber
+        - formattedSequence
+      properties:
+        layer:
+          type: string
+        category:
+          type: string
+        subcategory:
+          type: string
+        nextNumber:
+          type: integer
+          description: Next sequence number
+        formattedSequence:
+          type: string
+          description: Zero-padded sequence (e.g., "042")
+        reservedUntil:
+          type: string
+          format: date-time
+          description: Reservation expiry time
+
+    CreateNodeRequest:
+      type: object
+      required:
+        - layer
+        - name
+        - numericCode
+      properties:
+        layer:
+          type: string
+          pattern: '^[A-Z]$'
+        category:
+          type: string
+          pattern: '^[A-Z]{3,10}$'
+        subcategory:
+          type: string
+          pattern: '^[A-Z]{3,10}$'
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        description:
+          type: string
+          maxLength: 500
+        numericCode:
+          type: string
+          pattern: '^\d{3}$'
+
+    UpdateNodeRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        description:
+          type: string
+          maxLength: 500
+
+    NodeResponse:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          type: string
+          format: uuid
+        layer:
+          type: string
+        category:
+          type: string
+        subcategory:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        numericCode:
+          type: string
+        created:
+          type: boolean
+          description: Whether node was created (vs already existed)
+        updated:
+          type: boolean
+          description: Whether node was updated
+        version:
+          type: integer
+          description: New taxonomy version
+
+    DeleteNodeResponse:
+      type: object
+      required:
+        - id
+        - deleted
+        - version
+      properties:
+        id:
+          type: string
+          format: uuid
+        deleted:
+          type: boolean
+        version:
+          type: integer
+        affectedAssets:
+          type: integer
+          description: Number of assets using this taxonomy node
+        changelog:
+          type: string
+          description: Human-readable change description
+
+    ValidationResponse:
+      type: object
+      required:
+        - isValid
+        - errors
+        - warnings
+        - totalNodes
+        - validationDate
+      properties:
+        isValid:
+          type: boolean
+        errors:
+          type: array
+          items:
+            type: string
+          description: Critical validation errors
+        warnings:
+          type: array
+          items:
+            type: string
+          description: Non-critical issues
+        totalNodes:
+          type: integer
+        validationDate:
+          type: string
+          format: date-time
+
+    CacheInvalidateRequest:
+      type: object
+      required:
+        - scope
+        - reason
+      properties:
+        scope:
+          type: string
+          enum: [all, layer, category, subcategory]
+          description: Scope of cache invalidation
+        layer:
+          type: string
+          description: Layer to invalidate (if scope is layer/category/subcategory)
+        category:
+          type: string
+          description: Category to invalidate (if scope is category/subcategory)
+        reason:
+          type: string
+          description: Reason for invalidation (for audit)
+
+    CacheInvalidateResponse:
+      type: object
+      required:
+        - invalidated
+        - timestamp
+      properties:
+        invalidated:
+          type: array
+          items:
+            type: string
+          description: List of cache keys that were invalidated
+        timestamp:
+          type: string
+          format: date-time
+        affectedInstances:
+          type: integer
+          description: Number of cache instances affected
+
+    ErrorResponse:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: object
+          required:
+            - code
+            - message
+            - timestamp
+            - requestId
+            - retryable
+          properties:
+            code:
+              type: string
+              description: Machine-readable error code
+              enum:
+                - TAXONOMY_NOT_FOUND
+                - INVALID_TAXONOMY_PATH
+                - DUPLICATE_NUMERIC_CODE
+                - VALIDATION_FAILED
+                - INSUFFICIENT_PERMISSIONS
+                - IDEMPOTENCY_CONFLICT
+                - RATE_LIMIT_EXCEEDED
+                - DATABASE_ERROR
+                - CACHE_ERROR
+            message:
+              type: string
+              description: Human-readable error message
+            details:
+              type: object
+              description: Additional error context
+            field:
+              type: string
+              description: Field that caused validation error
+            timestamp:
+              type: string
+              format: date-time
+            requestId:
+              type: string
+              description: Unique request identifier for tracing
+            retryable:
+              type: boolean
+              description: Whether the operation can be safely retried
+
+tags:
+  - name: System
+    description: System health and status endpoints
+  - name: Taxonomy
+    description: Public taxonomy data access
+  - name: Conversion
+    description: HFN/MFA conversion utilities
+  - name: Sequence
+    description: Sequential number generation
+  - name: Admin
+    description: Administrative operations (requires authentication)
+  - name: Monitoring
+    description: Monitoring and metrics endpoints
