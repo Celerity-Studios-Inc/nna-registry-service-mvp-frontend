@@ -3,6 +3,7 @@ name: Staging Environment Deploy
 on:
   push:
     branches:
+      - main
       - staging
       - develop
   pull_request:
@@ -21,7 +22,7 @@ on:
 
 env:
   VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-  VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+  VERCEL_PROJECT_ID_STAGING: ${{ secrets.VERCEL_PROJECT_ID_STAGING }}
 
 jobs:
   staging-deploy:
@@ -49,8 +50,8 @@ jobs:
         run: npm run build:staging
         env:
           REACT_APP_ENVIRONMENT: staging
-          REACT_APP_API_BASE_URL: https://nna-registry-service-staging-297923701246.us-central1.run.app/api
-          REACT_APP_FRONTEND_URL: https://nna-registry-staging.vercel.app
+          REACT_APP_BACKEND_URL: https://registry.stg.reviz.dev
+          REACT_APP_FRONTEND_URL: https://nna-registry-frontend-stg.vercel.app
           REACT_APP_ENABLE_DEBUG_LOGGING: true
           REACT_APP_ENABLE_PERFORMANCE_MONITORING: true
           REACT_APP_STAGING_BANNER: true
@@ -74,7 +75,7 @@ jobs:
           fi
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_STAGING }}
 
       - name: Get deployment URL
         id: deployment
@@ -107,7 +108,7 @@ jobs:
             
             **Environment:** Staging
             **URL:** ${deploymentUrl}
-            **Backend:** https://nna-registry-service-staging-297923701246.us-central1.run.app/api
+            **Backend:** https://registry.stg.reviz.dev/api
             
             **Test Areas:**
             - [ ] Asset registration workflow
