@@ -40,7 +40,7 @@ export function detectEnvironment(): EnvironmentConfig['name'] {
   }
   
   // Staging environment detection (canonical domain first)
-  if (hostname.includes('nna-registry-frontend.stg.vercel.app') || 
+  if (hostname.includes('nna-registry-frontend-stg.vercel.app') || 
       hostname.includes('staging') || 
       hostname.includes('-stg.vercel.app')) {
     return 'staging';
@@ -49,7 +49,7 @@ export function detectEnvironment(): EnvironmentConfig['name'] {
   // Development environment detection (canonical domain first)
   if (hostname === 'localhost' || 
       hostname === '127.0.0.1' ||
-      hostname.includes('nna-registry-frontend.dev.vercel.app') ||
+      hostname.includes('nna-registry-frontend-dev.vercel.app') ||
       hostname.includes('-dev.vercel.app')) {
     return 'development';
   }
@@ -100,7 +100,7 @@ export function getFrontendUrl(environment?: EnvironmentConfig['name']): string 
   switch (env) {
     case 'staging':
       return process.env.REACT_APP_FRONTEND_URL || 
-             'https://nna-registry-frontend.stg.vercel.app';
+             'https://nna-registry-frontend-stg.vercel.app';
     
     case 'production':
       return process.env.REACT_APP_FRONTEND_URL || 
@@ -109,7 +109,7 @@ export function getFrontendUrl(environment?: EnvironmentConfig['name']): string 
     case 'development':
     default:
       return process.env.REACT_APP_FRONTEND_URL || 
-             'https://nna-registry-frontend.dev.vercel.app';
+             'https://nna-registry-frontend-dev.vercel.app';
   }
 }
 
