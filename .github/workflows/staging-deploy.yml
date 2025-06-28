@@ -69,12 +69,15 @@ jobs:
 
       - name: Deploy to Vercel Staging
         run: |
+          # Copy staging config to vercel.json for deployment
+          cp vercel.staging.json vercel.json
+          
           if [ "${{ github.event_name }}" = "push" ] && [ "${{ github.ref }}" = "refs/heads/staging" ]; then
             # Deploy to staging alias for staging branch pushes
-            vercel deploy --config vercel.staging.json --token=${{ secrets.VERCEL_TOKEN }} --target staging --yes > deployment-url.txt
+            vercel deploy --token=${{ secrets.VERCEL_TOKEN }} --prod --yes > deployment-url.txt
           else
             # Deploy as preview for other cases
-            vercel deploy --config vercel.staging.json --token=${{ secrets.VERCEL_TOKEN }} --yes > deployment-url.txt
+            vercel deploy --token=${{ secrets.VERCEL_TOKEN }} --yes > deployment-url.txt
           fi
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
