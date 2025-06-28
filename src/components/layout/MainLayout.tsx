@@ -236,21 +236,23 @@ const MainLayout: React.FC = () => {
           >
             <MenuIcon />
           </IconButton>
-          <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
-            NNA Registry Service
-          </Typography>
           
-          {/* Environment indicator and version */}
-          <Chip
-            label={getCurrentEnvironment().toUpperCase()}
-            size="small"
-            color={getCurrentEnvironment() === 'production' ? 'success' : 
-                   getCurrentEnvironment() === 'staging' ? 'warning' : 'info'}
-            sx={{ mr: 1 }}
-          />
-          <Typography variant="caption" sx={{ mr: 2 }}>
-            Release {APP_VERSION}
-          </Typography>
+          {/* Title with environment chip and version */}
+          <Box sx={{ display: 'flex', alignItems: 'center', flexGrow: 1 }}>
+            <Typography variant="h6" noWrap component="div" sx={{ mr: 2 }}>
+              NNA Registry Service
+            </Typography>
+            <Chip
+              label={getCurrentEnvironment().toUpperCase()}
+              size="small"
+              color={getCurrentEnvironment() === 'production' ? 'success' : 
+                     getCurrentEnvironment() === 'staging' ? 'warning' : 'info'}
+              sx={{ mr: 1.5 }}
+            />
+            <Typography variant="caption" sx={{ opacity: 0.8 }}>
+              Release {APP_VERSION}
+            </Typography>
+          </Box>
 
           {/* Right-aligned user info */}
           {authContext?.user && (
@@ -266,14 +268,6 @@ const MainLayout: React.FC = () => {
               • {authContext.user.username || authContext.user.email || 'User'}
             </Typography>
           )}
-          
-          <Tooltip title="Notifications">
-            <IconButton color="inherit">
-              <Badge badgeContent={3} color="secondary">
-                <NotificationsIcon />
-              </Badge>
-            </IconButton>
-          </Tooltip>
 
           {/* Add Login/Logout button */}
           {authContext?.isAuthenticated ? (

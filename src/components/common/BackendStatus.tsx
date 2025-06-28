@@ -38,9 +38,11 @@ const BackendStatus: React.FC<BackendStatusProps> = ({ onStatusChange }) => {
 
       setDetails(response.data);
 
-      // Check if we got a healthy response from staging backend
+      // Check if we got a healthy response - be more flexible with status checking
       const backendStatus =
-        response.data?.status === 'healthy'
+        response.data?.status === 'healthy' || 
+        response.data?.status === 'ok' ||
+        response.status === 200
           ? 'available'
           : 'unavailable';
 
