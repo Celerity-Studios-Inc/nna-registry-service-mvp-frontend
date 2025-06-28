@@ -46,12 +46,12 @@ export const StagingBanner: React.FC = () => {
 
   const envConfig = environmentConfig[config.name];
 
-  // For production, don't show banner since we have environment indicator in main header
-  if (config.isProduction) {
+  // Don't show banner for production or staging since we have environment indicators in main header
+  if (config.isProduction || config.isStaging) {
     return null;
   }
 
-  // For non-production, show full banner
+  // Only show full banner for development
   return (
     <Box
       sx={{
