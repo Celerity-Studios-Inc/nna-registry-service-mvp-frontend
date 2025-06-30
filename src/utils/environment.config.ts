@@ -15,76 +15,88 @@ export interface EnvironmentConfig {
   enablePerformanceMonitoring: boolean;
 }
 
+// Cache for environment detection to prevent multiple calls
+let _cachedEnvironment: EnvironmentConfig['name'] | null = null;
+let _environmentLogged = false;
+
 /**
  * Detect current environment based on multiple indicators
  */
 export function detectEnvironment(): EnvironmentConfig['name'] {
+  // Return cached result if available
+  if (_cachedEnvironment) {
+    return _cachedEnvironment;
+  }
+  
   // Check URL patterns FIRST (most reliable for Vercel deployments)
   const hostname = typeof window !== 'undefined' ? window.location.hostname : '';
   
-  // Debug logging for environment detection
-  if (typeof window !== 'undefined') {
-    console.log('🌍 Environment Detection Debug:');
-    console.log('- Hostname:', hostname);
-    console.log('- REACT_APP_ENVIRONMENT:', process.env.REACT_APP_ENVIRONMENT);
-    console.log('- NODE_ENV:', process.env.NODE_ENV);
-  }
+  let detectedEnv: EnvironmentConfig['name'];
+  let detectionMethod = '';
   
   // PRIORITY 1: Development environment detection (canonical domain first)
   if (hostname === 'nna-registry-frontend-dev.vercel.app' ||
       hostname === 'localhost' || 
       hostname === '127.0.0.1' ||
       hostname.includes('-dev.vercel.app')) {
-    console.log('🎯 Hostname-based detection: DEVELOPMENT');
-    return 'development';
+    detectedEnv = 'development';
+    detectionMethod = 'hostname';
   }
-  
   // PRIORITY 2: Staging environment detection (canonical domain first)
-  if (hostname === 'nna-registry-frontend-stg.vercel.app' || 
+  else if (hostname === 'nna-registry-frontend-stg.vercel.app' || 
       hostname.includes('staging') || 
       hostname.includes('-stg.vercel.app')) {
-    console.log('🎯 Hostname-based detection: STAGING');
-    return 'staging';
+    detectedEnv = 'staging';
+    detectionMethod = 'hostname';
   }
-  
   // PRIORITY 3: Production environment detection (canonical domain first)
-  if (hostname === 'nna-registry-frontend.vercel.app' ||
+  else if (hostname === 'nna-registry-frontend.vercel.app' ||
       hostname.includes('registry.reviz.dev')) {
-    console.log('🎯 Hostname-based detection: PRODUCTION');
-    return 'production';
+    detectedEnv = 'production';
+    detectionMethod = 'hostname';
   }
-  
   // FALLBACK 1: Check environment variables (only if hostname detection fails)
-  const reactAppEnv = process.env.REACT_APP_ENVIRONMENT;
-  if (reactAppEnv === 'development') {
-    console.log('🎯 Environment variable fallback: DEVELOPMENT');
-    return 'development';
+  else if (process.env.REACT_APP_ENVIRONMENT === 'development') {
+    detectedEnv = 'development';
+    detectionMethod = 'REACT_APP_ENVIRONMENT';
   }
-  if (reactAppEnv === 'staging') {
-    console.log('🎯 Environment variable fallback: STAGING');
-    return 'staging';
+  else if (process.env.REACT_APP_ENVIRONMENT === 'staging') {
+    detectedEnv = 'staging';
+    detectionMethod = 'REACT_APP_ENVIRONMENT';
   }
-  if (reactAppEnv === 'production') {
-    console.log('🎯 Environment variable fallback: PRODUCTION');
-    return 'production';
+  else if (process.env.REACT_APP_ENVIRONMENT === 'production') {
+    detectedEnv = 'production';
+    detectionMethod = 'REACT_APP_ENVIRONMENT';
   }
-
   // FALLBACK 2: Check NODE_ENV with type assertion for staging
-  const nodeEnv = process.env.NODE_ENV as string;
-  if (nodeEnv === 'staging') {
-    console.log('🎯 NODE_ENV fallback: STAGING');
-    return 'staging';
+  else if (process.env.NODE_ENV === 'staging') {
+    detectedEnv = 'staging';
+    detectionMethod = 'NODE_ENV';
+  }
+  // FALLBACK 3: Generic vercel.app check (last resort)
+  else if (hostname.includes('vercel.app')) {
+    detectedEnv = 'production';
+    detectionMethod = 'vercel-fallback';
+  }
+  // FALLBACK 4: Default to production for safety
+  else {
+    detectedEnv = 'production';
+    detectionMethod = 'ultimate-fallback';
   }
   
-  // FALLBACK 3: Generic vercel.app check (last resort)
-  if (hostname.includes('vercel.app')) {
-    console.log('🎯 Generic Vercel fallback: PRODUCTION');
-    return 'production'; // Default to production for unknown vercel domains
+  // Cache the result
+  _cachedEnvironment = detectedEnv;
+  
+  // Log only once for debugging (not on every call)
+  if (!_environmentLogged && typeof window !== 'undefined') {
+    console.log(`🌍 Environment: ${detectedEnv.toUpperCase()} (via ${detectionMethod})`);
+    if (detectedEnv === 'development') {
+      console.log(`🔧 Hostname: ${hostname}`);
+    }
+    _environmentLogged = true;
   }
-
-  // FALLBACK 4: Default to production for safety
-  console.log('🎯 Ultimate fallback: PRODUCTION');
-  return 'production';
+  
+  return detectedEnv;
 }
 
 /**
