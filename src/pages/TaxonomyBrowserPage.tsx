@@ -704,7 +704,9 @@ const CategoryBrowser: React.FC<CategoryBrowserProps> = ({ initialLayer }) => {
                       {/* HFN and MFA Display */}
                       <Box sx={{ mb: 2 }}>
                         {(() => {
-                          const subcategoryHFN = generateSubcategoryHFN(selectedLayer, selectedCategory?.code || '', subcategory.code);
+                          // Extract just the subcategory part (remove category prefix if present)
+                          const subcategoryCodeOnly = subcategory.code.includes('.') ? subcategory.code.split('.')[1] : subcategory.code;
+                          const subcategoryHFN = generateSubcategoryHFN(selectedLayer, selectedCategory?.code || '', subcategoryCodeOnly);
                           const subcategoryMFA = generateSubcategoryMFA(selectedLayer, selectedCategory?.numericCode || '', subcategory.numericCode);
                           return (
                             <>
