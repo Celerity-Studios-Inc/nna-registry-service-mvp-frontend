@@ -71,6 +71,37 @@ const getTaxonomyService = () => {
   return taxonomyService;
 };
 
+// Helper function to try backend service and fallback to frontend if it fails
+const getTaxonomyServiceWithFallback = () => {
+  const useBackendTaxonomy = localStorage.getItem('nna-use-backend-taxonomy') === 'true';
+  
+  if (useBackendTaxonomy) {
+    // Return a wrapper that tries backend first, then falls back to frontend
+    return {
+      async getCategories(layer: string) {
+        try {
+          logger.info(`Trying backend taxonomy service for layer ${layer} categories`);
+          return await backendTaxonomyService.getCategories(layer);
+        } catch (error) {
+          logger.warn(`Backend taxonomy failed for ${layer} categories, falling back to frontend service:`, error);
+          return taxonomyService.getCategories(layer);
+        }
+      },
+      async getSubcategories(layer: string, category: string) {
+        try {
+          logger.info(`Trying backend taxonomy service for ${layer}.${category} subcategories`);
+          return await backendTaxonomyService.getSubcategories(layer, category);
+        } catch (error) {
+          logger.warn(`Backend taxonomy failed for ${layer}.${category} subcategories, falling back to frontend service:`, error);
+          return taxonomyService.getSubcategories(layer, category);
+        }
+      }
+    };
+  }
+  
+  return taxonomyService;
+};
+
 // Check if user has admin permissions (placeholder for RBAC)
 const hasAdminPermissions = () => {
   // TODO: Implement proper RBAC check
@@ -106,7 +137,7 @@ const LayerOverview: React.FC = () => {
 
         // Calculate statistics for each layer
         const stats: Record<string, any> = {};
-        const currentTaxonomyService = getTaxonomyService();
+        const currentTaxonomyService = getTaxonomyServiceWithFallback();
         
         for (const layer of availableLayers) {
           try {
@@ -115,9 +146,20 @@ const LayerOverview: React.FC = () => {
             let totalSubcategories = 0;
             
             for (const category of categories) {
-              const subcategoriesResult = currentTaxonomyService.getSubcategories(layer, category.code);
-              const subcategories = Array.isArray(subcategoriesResult) ? subcategoriesResult : await subcategoriesResult;
-              totalSubcategories += subcategories.length;
+              // Validate category has a valid code before requesting subcategories
+              if (!category || !category.code || category.code === 'undefined') {
+                logger.warn(`Skipping invalid category for layer ${layer}:`, category);
+                continue;
+              }
+              
+              try {
+                const subcategoriesResult = currentTaxonomyService.getSubcategories(layer, category.code);
+                const subcategories = Array.isArray(subcategoriesResult) ? subcategoriesResult : await subcategoriesResult;
+                totalSubcategories += subcategories.length;
+              } catch (subcatError) {
+                logger.warn(`Failed to load subcategories for ${layer}.${category.code}:`, subcatError);
+                // Continue processing other categories even if one fails
+              }
             }
 
             stats[layer] = {
@@ -317,7 +359,7 @@ const CategoryBrowser: React.FC = () => {
     setSelectedCategory(null);
     setSubcategories([]);
     try {
-      const currentTaxonomyService = getTaxonomyService();
+      const currentTaxonomyService = getTaxonomyServiceWithFallback();
       const categoryDataResult = currentTaxonomyService.getCategories(layer);
       const categoryData = Array.isArray(categoryDataResult) ? categoryDataResult : await categoryDataResult;
       setCategories(categoryData);
@@ -332,8 +374,17 @@ const CategoryBrowser: React.FC = () => {
 
   const loadSubcategories = async (layer: string, categoryCode: string) => {
     setLoadingSubcategories(true);
+    
+    // Validate inputs before making API call
+    if (!categoryCode || categoryCode === 'undefined' || categoryCode.trim() === '') {
+      logger.error(`Invalid category code provided: "${categoryCode}" for layer ${layer}`);
+      setSubcategories([]);
+      setLoadingSubcategories(false);
+      return;
+    }
+    
     try {
-      const currentTaxonomyService = getTaxonomyService();
+      const currentTaxonomyService = getTaxonomyServiceWithFallback();
       const subcategoryDataResult = currentTaxonomyService.getSubcategories(layer, categoryCode);
       const subcategoryData = Array.isArray(subcategoryDataResult) ? subcategoryDataResult : await subcategoryDataResult;
       setSubcategories(subcategoryData);
