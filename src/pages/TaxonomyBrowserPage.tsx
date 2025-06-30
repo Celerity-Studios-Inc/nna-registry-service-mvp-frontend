@@ -43,16 +43,11 @@ import { backendTaxonomyService } from '../services/backendTaxonomyService';
 import { TaxonomyItem } from '../types/taxonomy.types';
 import { logger } from '../utils/logger';
 import EnhancedLayerIcon from '../components/common/EnhancedLayerIcon';
+import { detectEnvironment } from '../utils/environment.config';
 
-// Environment detection utility
+// Use centralized environment detection (hostname-based)
 const getCurrentEnvironment = () => {
-  if (process.env.REACT_APP_ENVIRONMENT) {
-    return process.env.REACT_APP_ENVIRONMENT;
-  }
-  if (process.env.NODE_ENV === 'production') {
-    return 'production';
-  }
-  return 'development';
+  return detectEnvironment();
 };
 
 // Taxonomy service selection based on user settings
