@@ -43,13 +43,13 @@ class BackendTaxonomyServiceImpl implements BackendTaxonomyService {
       return 'http://localhost:8080';
     }
     
-    // Development: https://nna-registry-frontend.dev.vercel.app
-    if (hostname === 'nna-registry-frontend.dev.vercel.app') {
+    // Development: https://nna-registry-frontend-dev.vercel.app
+    if (hostname === 'nna-registry-frontend-dev.vercel.app') {
       return 'https://registry.dev.reviz.dev';
     }
     
-    // Staging: https://nna-registry-frontend.stg.vercel.app
-    if (hostname === 'nna-registry-frontend.stg.vercel.app') {
+    // Staging: https://nna-registry-frontend-stg.vercel.app
+    if (hostname === 'nna-registry-frontend-stg.vercel.app') {
       return 'https://registry.stg.reviz.dev';
     }
     

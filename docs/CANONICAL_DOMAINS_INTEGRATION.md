@@ -3,8 +3,8 @@
 ## 🎯 **CANONICAL DOMAIN MAPPING - CORRECTED**
 
 ### **✅ Frontend Canonical Domains**
-1. **Development**: `https://nna-registry-frontend.dev.vercel.app`
-2. **Staging**: `https://nna-registry-frontend.stg.vercel.app`
+1. **Development**: `https://nna-registry-frontend-dev.vercel.app`
+2. **Staging**: `https://nna-registry-frontend-stg.vercel.app`
 3. **Production**: `https://nna-registry-frontend.vercel.app`
 
 ### **✅ Backend Canonical Domains**
@@ -16,8 +16,8 @@
 
 | Environment | Frontend Domain | Backend Domain | Status |
 |-------------|----------------|----------------|---------|
-| **Development** | `nna-registry-frontend.dev.vercel.app` | `registry.dev.reviz.dev` | ✅ **Ready** |
-| **Staging** | `nna-registry-frontend.stg.vercel.app` | `registry.stg.reviz.dev` | ✅ **Ready** |
+| **Development** | `nna-registry-frontend-dev.vercel.app` | `registry.dev.reviz.dev` | ✅ **Ready** |
+| **Staging** | `nna-registry-frontend-stg.vercel.app` | `registry.stg.reviz.dev` | ✅ **Ready** |
 | **Production** | `nna-registry-frontend.vercel.app` | `registry.reviz.dev` | ✅ **Ready** |
 
 ---
@@ -29,13 +29,13 @@
 private getBackendUrl(): string {
   const hostname = window.location.hostname;
   
-  // Development: https://nna-registry-frontend.dev.vercel.app
-  if (hostname === 'nna-registry-frontend.dev.vercel.app') {
+  // Development: https://nna-registry-frontend-dev.vercel.app
+  if (hostname === 'nna-registry-frontend-dev.vercel.app') {
     return 'https://registry.dev.reviz.dev';
   }
   
-  // Staging: https://nna-registry-frontend.stg.vercel.app
-  if (hostname === 'nna-registry-frontend.stg.vercel.app') {
+  // Staging: https://nna-registry-frontend-stg.vercel.app
+  if (hostname === 'nna-registry-frontend-stg.vercel.app') {
     return 'https://registry.stg.reviz.dev';
   }
   
@@ -54,7 +54,7 @@ private getBackendUrl(): string {
 ## 🧪 **CORRECTED TESTING PLAN**
 
 ### **Phase 1: Development Environment Testing**
-**URL**: `https://nna-registry-frontend.dev.vercel.app`
+**URL**: `https://nna-registry-frontend-dev.vercel.app`
 
 **Test Steps:**
 1. **Access Development Frontend**: Navigate to canonical development URL
@@ -64,7 +64,7 @@ private getBackendUrl(): string {
 5. **Taxonomy Browser**: Test enhanced features at `/taxonomy`
 
 ### **Phase 2: Staging Environment Testing**
-**URL**: `https://nna-registry-frontend.stg.vercel.app`
+**URL**: `https://nna-registry-frontend-stg.vercel.app`
 
 **Test Steps:**
 1. **Access Staging Frontend**: Navigate to canonical staging URL
@@ -90,14 +90,14 @@ private getBackendUrl(): string {
 ### **✅ Test Each Environment**
 
 #### **Development Environment**
-- [ ] Access: `https://nna-registry-frontend.dev.vercel.app`
+- [ ] Access: `https://nna-registry-frontend-dev.vercel.app`
 - [ ] Settings: Navigate to `/settings` and test toggle
 - [ ] Backend URL: Should detect `registry.dev.reviz.dev`
 - [ ] Taxonomy: Test enhanced browser at `/taxonomy`
 - [ ] Integration: Enable backend service and verify
 
 #### **Staging Environment**
-- [ ] Access: `https://nna-registry-frontend.stg.vercel.app`
+- [ ] Access: `https://nna-registry-frontend-stg.vercel.app`
 - [ ] Backend URL: Should detect `registry.stg.reviz.dev`
 - [ ] Data Isolation: Verify separate from production
 - [ ] CORS: Confirm backend allows staging domain
@@ -119,10 +119,10 @@ The backend should allow these exact origins:
 
 ```typescript
 // Development
-allowedOrigins: ['https://nna-registry-frontend.dev.vercel.app']
+allowedOrigins: ['https://nna-registry-frontend-dev.vercel.app', 'http://localhost:3000']
 
 // Staging
-allowedOrigins: ['https://nna-registry-frontend.stg.vercel.app']
+allowedOrigins: ['https://nna-registry-frontend-stg.vercel.app']
 
 // Production
 allowedOrigins: ['https://nna-registry-frontend.vercel.app']
@@ -131,13 +131,13 @@ allowedOrigins: ['https://nna-registry-frontend.vercel.app']
 ### **CORS Testing Commands**
 ```bash
 # Test Development CORS
-curl -H "Origin: https://nna-registry-frontend.dev.vercel.app" \
+curl -H "Origin: https://nna-registry-frontend-dev.vercel.app" \
      -H "Access-Control-Request-Method: GET" \
      -X OPTIONS \
      https://registry.dev.reviz.dev/api/taxonomy/layers
 
 # Test Staging CORS
-curl -H "Origin: https://nna-registry-frontend.stg.vercel.app" \
+curl -H "Origin: https://nna-registry-frontend-stg.vercel.app" \
      -H "Access-Control-Request-Method: GET" \
      -X OPTIONS \
      https://registry.stg.reviz.dev/api/taxonomy/layers
@@ -182,10 +182,10 @@ curl -s "https://registry.reviz.dev/api/health"
 ### **Frontend Accessibility**
 ```bash
 # Development
-curl -s "https://nna-registry-frontend.dev.vercel.app" | head -5
+curl -s "https://nna-registry-frontend-dev.vercel.app" | head -5
 
 # Staging
-curl -s "https://nna-registry-frontend.stg.vercel.app" | head -5
+curl -s "https://nna-registry-frontend-stg.vercel.app" | head -5
 
 # Production
 curl -s "https://nna-registry-frontend.vercel.app" | head -5
@@ -197,7 +197,7 @@ curl -s "https://nna-registry-frontend.vercel.app" | head -5
 
 ### **Immediate (Today)**
 1. **Commit Domain Fixes**: Push updated backend URL detection
-2. **Test Development**: Access `nna-registry-frontend.dev.vercel.app`
+2. **Test Development**: Access `nna-registry-frontend-dev.vercel.app`
 3. **Verify Toggle**: Test settings toggle with correct backend URL
 4. **Document Results**: Confirm integration working correctly
 
@@ -220,13 +220,13 @@ curl -s "https://nna-registry-frontend.vercel.app" | head -5
 ### **Always Use These Canonical Domains:**
 
 **✅ CORRECT:**
-- Development: `https://nna-registry-frontend.dev.vercel.app`
-- Staging: `https://nna-registry-frontend.stg.vercel.app`
+- Development: `https://nna-registry-frontend-dev.vercel.app`
+- Staging: `https://nna-registry-frontend-stg.vercel.app`
 - Production: `https://nna-registry-frontend.vercel.app`
 
 **❌ INCORRECT (Previous Confusion):**
 - ~~`https://nna-registry-service-mvp-frontend.vercel.app`~~
-- ~~`https://nna-registry-frontend-dev.vercel.app`~~
+- ~~`https://nna-registry-frontend.dev.vercel.app`~~
 - ~~`https://nna-registry-staging.vercel.app`~~
 
 ---
