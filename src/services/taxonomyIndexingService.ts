@@ -45,7 +45,11 @@ class TaxonomyIndexService {
   async getIndex(): Promise<TaxonomyIndex> {
     const cached = this.getCachedIndex();
     
-    if (cached && this.isCacheValid(cached)) {
+    // Check if cached data is from wrong source (frontend vs backend)
+    if (cached && cached.data.version.startsWith('frontend-')) {
+      console.info('Clearing cache - frontend fallback data detected, fetching fresh backend data');
+      this.clearCache();
+    } else if (cached && this.isCacheValid(cached)) {
       return cached.data;
     }
 
@@ -116,20 +120,12 @@ class TaxonomyIndexService {
   // Get current version without full index
   async getCurrentVersion(): Promise<string> {
     try {
-      const response = await fetch(`${TaxonomyIndexService.API_BASE}/version`);
-      if (!response.ok) {
-        throw new Error('Failed to fetch taxonomy version');
-      }
-      const data = await response.json();
-      return data.version;
+      // Since backend doesn't have /version endpoint, get version from full index
+      const index = await this.fetchIndex();
+      return index.version;
     } catch (error) {
-      // Fallback: try to get version from full index
-      try {
-        const index = await this.fetchIndex();
-        return index.version;
-      } catch {
-        throw new Error('Unable to fetch taxonomy version');
-      }
+      console.warn('Unable to fetch taxonomy version:', error);
+      return 'unknown';
     }
   }
 
