@@ -2,16 +2,29 @@
 // Contains flattened taxonomy for Branded
 
 export const B_LAYER_LOOKUP = {
-  undefined: {
-    numericCode: '00S',
-    name: 'Star',
+  LUX: {
+    numericCode: '001',
+    name: 'Luxury',
   },
-  'undefined.undefined': {
-    numericCode: 'RBL',
-    name: 'Red_Bull',
+  'LUX.GUC': {
+    numericCode: '001',
+    name: 'Gucci',
+  },
+  'LUX.PRA': {
+    numericCode: '002',
+    name: 'Prada',
+  },
+  BEV: {
+    numericCode: '002',
+    name: 'Beverages',
+  },
+  'BEV.COK': {
+    numericCode: '001',
+    name: 'Coke',
   },
 };
 
 export const B_SUBCATEGORIES = {
-  undefined: ['undefined.undefined'],
+  LUX: ['LUX.GUC', 'LUX.PRA'],
+  BEV: ['BEV.COK'],
 };
