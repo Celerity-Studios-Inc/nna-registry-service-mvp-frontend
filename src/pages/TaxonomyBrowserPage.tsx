@@ -122,7 +122,11 @@ const TabPanel: React.FC<TabPanelProps> = ({ children, value, index }) => (
   </div>
 );
 
-const LayerOverview: React.FC = () => {
+interface LayerOverviewProps {
+  onLayerDoubleClick?: (layer: string) => void;
+}
+
+const LayerOverview: React.FC<LayerOverviewProps> = ({ onLayerDoubleClick }) => {
   const [layers, setLayers] = useState<string[]>([]);
   const [layerStats, setLayerStats] = useState<Record<string, any>>({});
   const [loading, setLoading] = useState(true);
@@ -224,6 +228,12 @@ const LayerOverview: React.FC = () => {
     setSelectedLayer(selectedLayer === layer ? null : layer);
   };
 
+  const handleLayerDoubleClick = (layer: string) => {
+    if (onLayerDoubleClick) {
+      onLayerDoubleClick(layer);
+    }
+  };
+
   if (loading) {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">
@@ -258,6 +268,7 @@ const LayerOverview: React.FC = () => {
                 })
               }}
               onClick={() => handleLayerClick(layer)}
+              onDoubleClick={() => handleLayerDoubleClick(layer)}
             >
               <CardContent sx={{ textAlign: 'center', p: 3 }}>
                 {/* Enhanced Layer Icon */}
@@ -345,8 +356,12 @@ const LayerOverview: React.FC = () => {
   );
 };
 
-const CategoryBrowser: React.FC = () => {
-  const [selectedLayer, setSelectedLayer] = useState<string>('S');
+interface CategoryBrowserProps {
+  initialLayer?: string;
+}
+
+const CategoryBrowser: React.FC<CategoryBrowserProps> = ({ initialLayer }) => {
+  const [selectedLayer, setSelectedLayer] = useState<string>(initialLayer || 'S');
   const [categories, setCategories] = useState<TaxonomyItem[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<TaxonomyItem | null>(null);
   const [subcategories, setSubcategories] = useState<TaxonomyItem[]>([]);
@@ -409,6 +424,30 @@ const CategoryBrowser: React.FC = () => {
     }
   };
 
+  const handleCategoryDoubleClick = (category: TaxonomyItem) => {
+    // Double-click automatically expands subcategories
+    setSelectedCategory(category);
+    loadSubcategories(selectedLayer, category.code);
+  };
+
+  // Generate HFN for category or subcategory
+  const generateHFN = (layer: string, categoryCode: string, subcategoryCode?: string): string => {
+    if (subcategoryCode) {
+      return `${layer}.${categoryCode}.${subcategoryCode}.001`;
+    }
+    return `${layer}.${categoryCode}.BAS.001`; // Default to BAS for category-level HFN
+  };
+
+  // Generate MFA using taxonomy service
+  const generateMFA = (hfn: string): string => {
+    try {
+      return taxonomyService.convertHFNtoMFA(hfn);
+    } catch (error) {
+      logger.warn(`Failed to convert HFN to MFA: ${hfn}`, error);
+      return 'N/A';
+    }
+  };
+
   const handleEditClick = (type: 'category' | 'subcategory', item: TaxonomyItem) => {
     setEditingItem({ type, item });
   };
@@ -426,6 +465,13 @@ const CategoryBrowser: React.FC = () => {
   useEffect(() => {
     loadCategories(selectedLayer);
   }, [selectedLayer]);
+
+  // Handle initialLayer prop changes
+  useEffect(() => {
+    if (initialLayer && initialLayer !== selectedLayer) {
+      setSelectedLayer(initialLayer);
+    }
+  }, [initialLayer]);
 
   return (
     <Box>
@@ -509,6 +555,7 @@ const CategoryBrowser: React.FC = () => {
                       cursor: 'pointer'
                     }}
                     onClick={() => handleCategoryClick(category)}
+                    onDoubleClick={() => handleCategoryDoubleClick(category)}
                   >
                     <CardContent>
                       <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
@@ -527,6 +574,24 @@ const CategoryBrowser: React.FC = () => {
                             {category.name}
                           </Typography>
                         </Box>
+                      </Box>
+                      
+                      {/* HFN and MFA Display */}
+                      <Box sx={{ mb: 2 }}>
+                        {(() => {
+                          const categoryHFN = generateHFN(selectedLayer, category.code);
+                          const categoryMFA = generateMFA(categoryHFN);
+                          return (
+                            <>
+                              <Typography variant="caption" display="block" color="text.secondary">
+                                HFN: <strong>{categoryHFN}</strong>
+                              </Typography>
+                              <Typography variant="caption" display="block" color="text.secondary">
+                                MFA: <strong>{categoryMFA}</strong>
+                              </Typography>
+                            </>
+                          );
+                        })()}
                       </Box>
                       
                       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 2 }}>
@@ -635,6 +700,24 @@ const CategoryBrowser: React.FC = () => {
                             {subcategory.name}
                           </Typography>
                         </Box>
+                      </Box>
+                      
+                      {/* HFN and MFA Display */}
+                      <Box sx={{ mb: 2 }}>
+                        {(() => {
+                          const subcategoryHFN = generateHFN(selectedLayer, selectedCategory?.code || '', subcategory.code);
+                          const subcategoryMFA = generateMFA(subcategoryHFN);
+                          return (
+                            <>
+                              <Typography variant="caption" display="block" color="text.secondary">
+                                HFN: <strong>{subcategoryHFN}</strong>
+                              </Typography>
+                              <Typography variant="caption" display="block" color="text.secondary">
+                                MFA: <strong>{subcategoryMFA}</strong>
+                              </Typography>
+                            </>
+                          );
+                        })()}
                       </Box>
                       
                       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 2 }}>
@@ -894,10 +977,17 @@ const AdminTools: React.FC = () => {
 
 const TaxonomyBrowserPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState(0);
+  const [selectedLayerForBrowser, setSelectedLayerForBrowser] = useState<string | undefined>(undefined);
   const environment = getCurrentEnvironment();
 
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
     setActiveTab(newValue);
+  };
+
+  const handleLayerDoubleClick = (layer: string) => {
+    setSelectedLayerForBrowser(layer);
+    setActiveTab(1); // Switch to Category Browser tab
+    logger.info(`Navigating to Category Browser for layer ${layer}`);
   };
 
   return (
@@ -954,11 +1044,11 @@ const TaxonomyBrowserPage: React.FC = () => {
 
       {/* Tab Content */}
       <TabPanel value={activeTab} index={0}>
-        <LayerOverview />
+        <LayerOverview onLayerDoubleClick={handleLayerDoubleClick} />
       </TabPanel>
 
       <TabPanel value={activeTab} index={1}>
-        <CategoryBrowser />
+        <CategoryBrowser initialLayer={selectedLayerForBrowser} />
       </TabPanel>
 
       <TabPanel value={activeTab} index={2}>
