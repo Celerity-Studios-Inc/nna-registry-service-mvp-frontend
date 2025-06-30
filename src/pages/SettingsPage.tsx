@@ -9,6 +9,10 @@ import {
   Button,
   Alert,
   Divider,
+  Switch,
+  FormControlLabel,
+  Chip,
+  Grid,
 } from '@mui/material';
 
 /**
@@ -17,6 +21,7 @@ import {
 const SettingsPage: React.FC = () => {
   const [hideAssetsBeforeDate, setHideAssetsBeforeDate] = useState<string>('2025-05-15');
   const [isEnabled, setIsEnabled] = useState<boolean>(true);
+  const [useBackendTaxonomy, setUseBackendTaxonomy] = useState<boolean>(false);
   const [saveMessage, setSaveMessage] = useState<string>('');
 
   // Load settings from localStorage on component mount
@@ -24,6 +29,7 @@ const SettingsPage: React.FC = () => {
     try {
       const savedDate = localStorage.getItem('nna-hide-assets-before-date');
       const savedEnabled = localStorage.getItem('nna-hide-test-assets');
+      const savedBackendTaxonomy = localStorage.getItem('nna-use-backend-taxonomy');
       
       if (savedDate) {
         setHideAssetsBeforeDate(savedDate);
@@ -31,6 +37,10 @@ const SettingsPage: React.FC = () => {
       
       if (savedEnabled !== null) {
         setIsEnabled(JSON.parse(savedEnabled));
+      }
+
+      if (savedBackendTaxonomy !== null) {
+        setUseBackendTaxonomy(JSON.parse(savedBackendTaxonomy));
       }
     } catch (error) {
       console.warn('Failed to load settings:', error);
@@ -42,6 +52,7 @@ const SettingsPage: React.FC = () => {
     try {
       localStorage.setItem('nna-hide-assets-before-date', hideAssetsBeforeDate);
       localStorage.setItem('nna-hide-test-assets', JSON.stringify(isEnabled));
+      localStorage.setItem('nna-use-backend-taxonomy', JSON.stringify(useBackendTaxonomy));
       
       setSaveMessage('Settings saved successfully!');
       setTimeout(() => setSaveMessage(''), 3000);
@@ -132,6 +143,92 @@ const SettingsPage: React.FC = () => {
             </Alert>
           )}
         </Box>
+      </Paper>
+
+      {/* Taxonomy Service Settings */}
+      <Paper elevation={2} sx={{ p: 3, mb: 3 }}>
+        <Typography variant="h6" gutterBottom>
+          Taxonomy Service Configuration
+        </Typography>
+        
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+          Choose between the frontend static taxonomy service or the new backend API-powered taxonomy service.
+        </Typography>
+
+        <Grid container spacing={3}>
+          <Grid item xs={12} md={6}>
+            <Box sx={{ 
+              p: 2, 
+              borderRadius: 2, 
+              border: `2px solid ${!useBackendTaxonomy ? '#1976d2' : '#e0e0e0'}`,
+              backgroundColor: !useBackendTaxonomy ? '#f3f7ff' : 'transparent'
+            }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                <Chip 
+                  label="Current" 
+                  size="small" 
+                  color={!useBackendTaxonomy ? "primary" : "default"}
+                  sx={{ mr: 1 }}
+                />
+                <Typography variant="h6">Frontend Service</Typography>
+              </Box>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                Static taxonomy data with flattened lookup tables. Reliable and tested.
+              </Typography>
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={!useBackendTaxonomy}
+                    onChange={() => setUseBackendTaxonomy(false)}
+                    color="primary"
+                  />
+                }
+                label="Use Frontend Service"
+              />
+            </Box>
+          </Grid>
+
+          <Grid item xs={12} md={6}>
+            <Box sx={{ 
+              p: 2, 
+              borderRadius: 2, 
+              border: `2px solid ${useBackendTaxonomy ? '#1976d2' : '#e0e0e0'}`,
+              backgroundColor: useBackendTaxonomy ? '#f3f7ff' : 'transparent'
+            }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                <Chip 
+                  label="New" 
+                  size="small" 
+                  color={useBackendTaxonomy ? "primary" : "default"}
+                  sx={{ mr: 1 }}
+                />
+                <Typography variant="h6">Backend API Service</Typography>
+              </Box>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                Live backend API with database integration. Real-time updates and editing capabilities.
+              </Typography>
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={useBackendTaxonomy}
+                    onChange={() => setUseBackendTaxonomy(true)}
+                    color="primary"
+                  />
+                }
+                label="Use Backend API"
+              />
+            </Box>
+          </Grid>
+        </Grid>
+
+        {useBackendTaxonomy && (
+          <Alert severity="warning" sx={{ mt: 2 }}>
+            <Typography variant="body2">
+              <strong>Experimental Feature:</strong> Backend taxonomy service is in testing phase. 
+              You can switch back to the frontend service at any time if you encounter issues.
+            </Typography>
+          </Alert>
+        )}
       </Paper>
 
       <Paper elevation={1} sx={{ p: 3 }}>
