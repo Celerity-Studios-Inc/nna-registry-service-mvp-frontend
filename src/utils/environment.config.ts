@@ -35,8 +35,11 @@ export function detectEnvironment(): EnvironmentConfig['name'] {
   const hostname = typeof window !== 'undefined' ? window.location.hostname : '';
   
   // Debug logging for environment detection
-  if (typeof window !== 'undefined' && process.env.NODE_ENV !== 'production') {
-    console.log('🌍 Environment Detection - Hostname:', hostname);
+  if (typeof window !== 'undefined') {
+    console.log('🌍 Environment Detection Debug:');
+    console.log('- Hostname:', hostname);
+    console.log('- REACT_APP_ENVIRONMENT:', process.env.REACT_APP_ENVIRONMENT);
+    console.log('- NODE_ENV:', process.env.NODE_ENV);
   }
   
   // Staging environment detection (canonical domain first)
@@ -49,7 +52,7 @@ export function detectEnvironment(): EnvironmentConfig['name'] {
   // Development environment detection (canonical domain first)
   if (hostname === 'localhost' || 
       hostname === '127.0.0.1' ||
-      hostname.includes('nna-registry-frontend-dev.vercel.app') ||
+      hostname === 'nna-registry-frontend-dev.vercel.app' ||
       hostname.includes('-dev.vercel.app')) {
     return 'development';
   }
