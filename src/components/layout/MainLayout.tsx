@@ -43,18 +43,13 @@ import {
 } from '@mui/icons-material';
 import { AuthContext } from '../../contexts/AuthContext';
 import ErrorTestComponent from '../common/ErrorTestComponent';
+import { detectEnvironment } from '../../utils/environment.config';
 
 const drawerWidth = 240;
 
-// Environment detection
+// Environment detection using comprehensive detection logic
 const getCurrentEnvironment = () => {
-  if (process.env.REACT_APP_ENVIRONMENT) {
-    return process.env.REACT_APP_ENVIRONMENT;
-  }
-  if (process.env.NODE_ENV === 'production') {
-    return 'production';
-  }
-  return 'development';
+  return detectEnvironment();
 };
 
 // Version from package.json

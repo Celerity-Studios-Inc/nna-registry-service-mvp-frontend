@@ -36,22 +36,29 @@ class BackendTaxonomyServiceImpl implements BackendTaxonomyService {
       return process.env.REACT_APP_BACKEND_TAXONOMY_URL;
     }
 
-    // Default based on environment using new backend URLs
+    // Default based on canonical frontend domains
     const hostname = window.location.hostname;
     
     if (hostname === 'localhost' || hostname === '127.0.0.1') {
       return 'http://localhost:8080';
     }
     
-    if (hostname.includes('dev') || hostname.includes('nna-registry-frontend-dev')) {
+    // Development: https://nna-registry-frontend.dev.vercel.app
+    if (hostname === 'nna-registry-frontend.dev.vercel.app') {
       return 'https://registry.dev.reviz.dev';
     }
     
-    if (hostname.includes('staging') || hostname.includes('-stg.')) {
+    // Staging: https://nna-registry-frontend.stg.vercel.app
+    if (hostname === 'nna-registry-frontend.stg.vercel.app') {
       return 'https://registry.stg.reviz.dev';
     }
     
-    // Production
+    // Production: https://nna-registry-frontend.vercel.app
+    if (hostname === 'nna-registry-frontend.vercel.app') {
+      return 'https://registry.reviz.dev';
+    }
+    
+    // Fallback to production for any other domain
     return 'https://registry.reviz.dev';
   }
 

@@ -75,7 +75,11 @@
       "Bash(git reset:*)",
       "Bash(gh run view:*)",
       "Bash(npx vercel:*)",
-      "Bash(git branch:*)"
+      "Bash(git branch:*)",
+      "Bash(true)",
+      "Bash(kill:*)",
+      "Bash(BROWSER=none npm start)",
+      "WebFetch(domain:localhost)"
     ],
     "deny": []
   }

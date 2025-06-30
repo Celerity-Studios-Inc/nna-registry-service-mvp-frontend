@@ -55,6 +55,7 @@ import RegisterAssetPageWrapper from './components/asset/RegisterAssetPageWrappe
 import TaxonomyInitProvider from './components/providers/TaxonomyInitProvider';
 import TaxonomyExample from './components/examples/TaxonomyExample';
 import TaxonomySelectorV3Test from './pages/TaxonomySelectorV3Test';
+import TaxonomyBrowserPage from './pages/TaxonomyBrowserPage';
 
 // Force initialization of the flattened taxonomy service is now handled by TaxonomyInitProvider
 import { taxonomyService } from './services/simpleTaxonomyService';
@@ -287,6 +288,14 @@ const App: React.FC = () => {
                             element={
                               <ProtectedRoute>
                                 <SettingsPage />
+                              </ProtectedRoute>
+                            }
+                          />
+                          <Route
+                            path="/taxonomy"
+                            element={
+                              <ProtectedRoute>
+                                <TaxonomyBrowserPage />
                               </ProtectedRoute>
                             }
                           />
