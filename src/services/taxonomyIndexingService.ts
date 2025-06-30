@@ -27,7 +27,19 @@ interface CachedIndex {
 class TaxonomyIndexService {
   private static readonly CACHE_KEY = 'nna_taxonomy_index';
   private static readonly CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours
-  private static readonly API_BASE = '/api/taxonomy';
+  private static readonly API_BASE = (() => {
+    const hostname = typeof window !== 'undefined' ? window.location.hostname : '';
+    if (hostname === 'nna-registry-frontend-dev.vercel.app' || hostname === 'localhost') {
+      return 'https://registry.dev.reviz.dev/api/taxonomy';
+    }
+    if (hostname === 'nna-registry-frontend-stg.vercel.app') {
+      return 'https://registry.stg.reviz.dev/api/taxonomy';
+    }
+    if (hostname === 'nna-registry-frontend.vercel.app') {
+      return 'https://registry.reviz.dev/api/taxonomy';
+    }
+    return '/api/taxonomy'; // Fallback to proxy
+  })();
 
   // Get cached index or fetch from API
   async getIndex(): Promise<TaxonomyIndex> {
@@ -185,7 +197,8 @@ class TaxonomyIndexService {
         throw new Error('Invalid taxonomy index response structure');
       }
       
-      return data;
+      // Transform backend response to our expected format
+      return this.transformBackendResponse(data);
     } catch (error) {
       console.error('Error fetching taxonomy index:', error);
       
@@ -202,6 +215,57 @@ class TaxonomyIndexService {
       
       throw error;
     }
+  }
+
+  // Transform backend response to our expected index format
+  private transformBackendResponse(backendData: any): TaxonomyIndex {
+    const layers: Record<string, LayerIndex> = {};
+    let totalLayers = 0;
+
+    for (const [layerCode, layerData] of Object.entries(backendData.layers)) {
+      if (layerData && typeof layerData === 'object' && 'categories' in layerData) {
+        const categories: Record<string, { subcategoryCount: number }> = {};
+        let totalSubcategories = 0;
+        let totalCategories = 0;
+
+        const layerCategories = (layerData as any).categories;
+        for (const [categoryCode, categoryData] of Object.entries(layerCategories)) {
+          if (categoryData && typeof categoryData === 'object' && 'subcategories' in categoryData) {
+            const subcategories = (categoryData as any).subcategories;
+            const subcategoryCount = Object.keys(subcategories).length;
+            
+            categories[categoryCode] = { subcategoryCount };
+            totalSubcategories += subcategoryCount;
+            totalCategories++;
+          }
+        }
+
+        if (totalCategories > 0) {
+          layers[layerCode] = {
+            totalCategories,
+            totalSubcategories,
+            categories
+          };
+          totalLayers++;
+        }
+      }
+    }
+
+    const transformedIndex: TaxonomyIndex = {
+      version: `backend-${backendData.version}`,
+      lastUpdated: new Date().toISOString(),
+      totalLayers,
+      layers
+    };
+
+    console.info('Transformed backend taxonomy index:', {
+      version: transformedIndex.version,
+      totalLayers: transformedIndex.totalLayers,
+      layersProcessed: Object.keys(transformedIndex.layers),
+      backendVersion: backendData.version
+    });
+
+    return transformedIndex;
   }
 
   // Generate index from frontend taxonomy data as fallback
