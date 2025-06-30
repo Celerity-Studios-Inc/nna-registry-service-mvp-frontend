@@ -36,19 +36,23 @@ class BackendTaxonomyServiceImpl implements BackendTaxonomyService {
       return process.env.REACT_APP_BACKEND_TAXONOMY_URL;
     }
 
-    // Default based on environment
+    // Default based on environment using new backend URLs
     const hostname = window.location.hostname;
     
     if (hostname === 'localhost' || hostname === '127.0.0.1') {
       return 'http://localhost:8080';
     }
     
+    if (hostname.includes('dev') || hostname.includes('nna-registry-frontend-dev')) {
+      return 'https://registry.dev.reviz.dev';
+    }
+    
     if (hostname.includes('staging') || hostname.includes('-stg.')) {
-      return 'https://nna-registry-backend-stg.vercel.app';
+      return 'https://registry.stg.reviz.dev';
     }
     
     // Production
-    return 'https://nna-registry-backend.vercel.app';
+    return 'https://registry.reviz.dev';
   }
 
   private getCacheKey(endpoint: string, params?: Record<string, string>): string {
