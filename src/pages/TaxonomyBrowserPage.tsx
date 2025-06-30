@@ -39,6 +39,7 @@ import {
   NavigateNext as NavigateNextIcon,
 } from '@mui/icons-material';
 import { taxonomyService } from '../services/simpleTaxonomyService';
+import { backendTaxonomyService } from '../services/backendTaxonomyService';
 import { TaxonomyItem } from '../types/taxonomy.types';
 import { logger } from '../utils/logger';
 import EnhancedLayerIcon from '../components/common/EnhancedLayerIcon';
@@ -52,6 +53,22 @@ const getCurrentEnvironment = () => {
     return 'production';
   }
   return 'development';
+};
+
+// Taxonomy service selection based on user settings
+const getTaxonomyService = () => {
+  try {
+    const useBackendTaxonomy = localStorage.getItem('nna-use-backend-taxonomy');
+    if (useBackendTaxonomy === 'true') {
+      logger.info('Using backend taxonomy service');
+      return backendTaxonomyService;
+    }
+  } catch (error) {
+    logger.warn('Failed to read backend taxonomy setting:', error);
+  }
+  
+  logger.info('Using frontend taxonomy service');
+  return taxonomyService;
 };
 
 // Check if user has admin permissions (placeholder for RBAC)
@@ -89,13 +106,17 @@ const LayerOverview: React.FC = () => {
 
         // Calculate statistics for each layer
         const stats: Record<string, any> = {};
+        const currentTaxonomyService = getTaxonomyService();
+        
         for (const layer of availableLayers) {
           try {
-            const categories = taxonomyService.getCategories(layer);
+            const categoriesResult = currentTaxonomyService.getCategories(layer);
+            const categories = Array.isArray(categoriesResult) ? categoriesResult : await categoriesResult;
             let totalSubcategories = 0;
             
             for (const category of categories) {
-              const subcategories = taxonomyService.getSubcategories(layer, category.code);
+              const subcategoriesResult = currentTaxonomyService.getSubcategories(layer, category.code);
+              const subcategories = Array.isArray(subcategoriesResult) ? subcategoriesResult : await subcategoriesResult;
               totalSubcategories += subcategories.length;
             }
 
@@ -296,7 +317,9 @@ const CategoryBrowser: React.FC = () => {
     setSelectedCategory(null);
     setSubcategories([]);
     try {
-      const categoryData = taxonomyService.getCategories(layer);
+      const currentTaxonomyService = getTaxonomyService();
+      const categoryDataResult = currentTaxonomyService.getCategories(layer);
+      const categoryData = Array.isArray(categoryDataResult) ? categoryDataResult : await categoryDataResult;
       setCategories(categoryData);
       logger.info(`Loaded ${categoryData.length} categories for layer ${layer}`);
     } catch (error) {
@@ -310,7 +333,9 @@ const CategoryBrowser: React.FC = () => {
   const loadSubcategories = async (layer: string, categoryCode: string) => {
     setLoadingSubcategories(true);
     try {
-      const subcategoryData = taxonomyService.getSubcategories(layer, categoryCode);
+      const currentTaxonomyService = getTaxonomyService();
+      const subcategoryDataResult = currentTaxonomyService.getSubcategories(layer, categoryCode);
+      const subcategoryData = Array.isArray(subcategoryDataResult) ? subcategoryDataResult : await subcategoryDataResult;
       setSubcategories(subcategoryData);
       logger.info(`Loaded ${subcategoryData.length} subcategories for ${layer}.${categoryCode}`);
     } catch (error) {
@@ -791,7 +816,11 @@ const AdminTools: React.FC = () => {
               <Grid item xs={12} sm={4}>
                 <Box>
                   <Typography variant="body2" color="text.secondary">Taxonomy Service</Typography>
-                  <Chip label="SimpleTaxonomyService" color="info" sx={{ mt: 1 }} />
+                  <Chip 
+                    label={localStorage.getItem('nna-use-backend-taxonomy') === 'true' ? 'Backend API Service' : 'Frontend Service'} 
+                    color={localStorage.getItem('nna-use-backend-taxonomy') === 'true' ? 'primary' : 'info'} 
+                    sx={{ mt: 1 }} 
+                  />
                 </Box>
               </Grid>
               <Grid item xs={12} sm={4}>

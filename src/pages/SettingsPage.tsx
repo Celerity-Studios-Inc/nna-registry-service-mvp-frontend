@@ -179,7 +179,11 @@ const SettingsPage: React.FC = () => {
                 control={
                   <Switch
                     checked={!useBackendTaxonomy}
-                    onChange={() => setUseBackendTaxonomy(false)}
+                    onChange={() => {
+                      setUseBackendTaxonomy(false);
+                      // Auto-save backend taxonomy setting
+                      localStorage.setItem('nna-use-backend-taxonomy', JSON.stringify(false));
+                    }}
                     color="primary"
                   />
                 }
@@ -211,7 +215,11 @@ const SettingsPage: React.FC = () => {
                 control={
                   <Switch
                     checked={useBackendTaxonomy}
-                    onChange={() => setUseBackendTaxonomy(true)}
+                    onChange={() => {
+                      setUseBackendTaxonomy(true);
+                      // Auto-save backend taxonomy setting
+                      localStorage.setItem('nna-use-backend-taxonomy', JSON.stringify(true));
+                    }}
                     color="primary"
                   />
                 }
