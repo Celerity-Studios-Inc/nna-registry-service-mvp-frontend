@@ -425,22 +425,26 @@ const CategoryBrowser: React.FC<CategoryBrowserProps> = ({ initialLayer }) => {
     loadSubcategories(selectedLayer, category.code);
   };
 
-  // Generate HFN for category or subcategory
-  const generateHFN = (layer: string, categoryCode: string, subcategoryCode?: string): string => {
-    if (subcategoryCode) {
-      return `${layer}.${categoryCode}.${subcategoryCode}.001`;
-    }
-    return `${layer}.${categoryCode}.BAS.001`; // Default to BAS for category-level HFN
+  // Generate HFN for category (Layer.Category only)
+  const generateCategoryHFN = (layer: string, categoryCode: string): string => {
+    return `${layer}.${categoryCode}`;
   };
 
-  // Generate MFA using taxonomy service
-  const generateMFA = (hfn: string): string => {
-    try {
-      return taxonomyService.convertHFNtoMFA(hfn);
-    } catch (error) {
-      logger.warn(`Failed to convert HFN to MFA: ${hfn}`, error);
-      return 'N/A';
-    }
+  // Generate HFN for subcategory (Layer.Category.Subcategory)
+  const generateSubcategoryHFN = (layer: string, categoryCode: string, subcategoryCode: string): string => {
+    return `${layer}.${categoryCode}.${subcategoryCode}`;
+  };
+
+  // Generate MFA for category (Layer.Category only)
+  const generateCategoryMFA = (layer: string, categoryNumericCode: string): string => {
+    const layerNumeric = taxonomyService.getLayerNumericCode(layer);
+    return `${layerNumeric}.${categoryNumericCode}`;
+  };
+
+  // Generate MFA for subcategory (Layer.Category.Subcategory)
+  const generateSubcategoryMFA = (layer: string, categoryNumericCode: string, subcategoryNumericCode: string): string => {
+    const layerNumeric = taxonomyService.getLayerNumericCode(layer);
+    return `${layerNumeric}.${categoryNumericCode}.${subcategoryNumericCode}`;
   };
 
   const handleEditClick = (type: 'category' | 'subcategory', item: TaxonomyItem) => {
@@ -574,8 +578,8 @@ const CategoryBrowser: React.FC<CategoryBrowserProps> = ({ initialLayer }) => {
                       {/* HFN and MFA Display */}
                       <Box sx={{ mb: 2 }}>
                         {(() => {
-                          const categoryHFN = generateHFN(selectedLayer, category.code);
-                          const categoryMFA = generateMFA(categoryHFN);
+                          const categoryHFN = generateCategoryHFN(selectedLayer, category.code);
+                          const categoryMFA = generateCategoryMFA(selectedLayer, category.numericCode);
                           return (
                             <>
                               <Typography variant="caption" display="block" color="text.secondary">
@@ -700,8 +704,8 @@ const CategoryBrowser: React.FC<CategoryBrowserProps> = ({ initialLayer }) => {
                       {/* HFN and MFA Display */}
                       <Box sx={{ mb: 2 }}>
                         {(() => {
-                          const subcategoryHFN = generateHFN(selectedLayer, selectedCategory?.code || '', subcategory.code);
-                          const subcategoryMFA = generateMFA(subcategoryHFN);
+                          const subcategoryHFN = generateSubcategoryHFN(selectedLayer, selectedCategory?.code || '', subcategory.code);
+                          const subcategoryMFA = generateSubcategoryMFA(selectedLayer, selectedCategory?.numericCode || '', subcategory.numericCode);
                           return (
                             <>
                               <Typography variant="caption" display="block" color="text.secondary">
