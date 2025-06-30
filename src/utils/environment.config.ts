@@ -69,7 +69,7 @@ export function detectEnvironment(): EnvironmentConfig['name'] {
     detectionMethod = 'REACT_APP_ENVIRONMENT';
   }
   // FALLBACK 2: Check NODE_ENV with type assertion for staging
-  else if (process.env.NODE_ENV === 'staging') {
+  else if ((process.env.NODE_ENV as string) === 'staging') {
     detectedEnv = 'staging';
     detectionMethod = 'NODE_ENV';
   }
