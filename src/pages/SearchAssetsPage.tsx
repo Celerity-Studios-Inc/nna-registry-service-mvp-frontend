@@ -1,7 +1,6 @@
 import React from 'react';
 import { Typography, Box } from '@mui/material';
 import AssetSearch from '../components/search/AssetSearch';
-import EnvironmentDebugger from '../components/debug/EnvironmentDebugger';
 
 const SearchAssetsPage: React.FC = () => {
   const handleSearch = (query: string) => {
@@ -15,7 +14,6 @@ const SearchAssetsPage: React.FC = () => {
         Browse Assets
       </Typography>
 
-      <EnvironmentDebugger />
 
       <AssetSearch
         onSearch={handleSearch}

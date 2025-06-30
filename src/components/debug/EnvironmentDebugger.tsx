@@ -8,21 +8,39 @@ const EnvironmentDebugger: React.FC = () => {
   const backendUrl = process.env.REACT_APP_BACKEND_URL;
   const frontendUrl = process.env.REACT_APP_FRONTEND_URL;
 
-  // Manually detect environment using same logic
+  // Manually detect environment using hostname-first logic (same as environment.config.ts)
   const detectEnv = () => {
-    if (reactAppEnv === 'staging' || reactAppEnv === 'production' || reactAppEnv === 'development') {
-      return reactAppEnv;
-    }
-    
-    if ((nodeEnv as string) === 'staging') {
-      return 'staging';
-    }
-    
-    if (hostname === 'nna-registry-frontend-dev.vercel.app' || hostname.includes('-dev.vercel.app')) {
+    // PRIORITY 1: Hostname-based detection (most reliable)
+    if (hostname === 'nna-registry-frontend-dev.vercel.app' ||
+        hostname === 'localhost' || 
+        hostname === '127.0.0.1' ||
+        hostname.includes('-dev.vercel.app')) {
       return 'development';
     }
     
-    if (hostname.includes('nna-registry-frontend-stg.vercel.app') || hostname.includes('-stg.vercel.app')) {
+    if (hostname === 'nna-registry-frontend-stg.vercel.app' || 
+        hostname.includes('staging') || 
+        hostname.includes('-stg.vercel.app')) {
+      return 'staging';
+    }
+    
+    if (hostname === 'nna-registry-frontend.vercel.app' ||
+        hostname.includes('registry.reviz.dev')) {
+      return 'production';
+    }
+    
+    // FALLBACK: Environment variables (only if hostname detection fails)
+    if (reactAppEnv === 'development') {
+      return 'development';
+    }
+    if (reactAppEnv === 'staging') {
+      return 'staging';
+    }
+    if (reactAppEnv === 'production') {
+      return 'production';
+    }
+    
+    if ((nodeEnv as string) === 'staging') {
       return 'staging';
     }
     
