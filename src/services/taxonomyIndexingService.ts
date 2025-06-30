@@ -188,7 +188,86 @@ class TaxonomyIndexService {
       return data;
     } catch (error) {
       console.error('Error fetching taxonomy index:', error);
+      
+      // If backend is not available (404, network error, CORS, etc.), use frontend fallback
+      if (error instanceof Error && 
+          (error.message.includes('404') || 
+           error.message.includes('Failed to fetch') ||
+           error.message.includes('NetworkError') ||
+           error.message.includes('fetch') ||
+           error.message.includes('CORS'))) {
+        console.warn('Backend taxonomy index not available, generating from frontend data...');
+        return this.generateFrontendIndex();
+      }
+      
       throw error;
+    }
+  }
+
+  // Generate index from frontend taxonomy data as fallback
+  private generateFrontendIndex(): TaxonomyIndex {
+    try {
+      // Import frontend taxonomy service
+      const { taxonomyService } = require('../services/simpleTaxonomyService');
+      
+      const layers: Record<string, LayerIndex> = {};
+      const layerCodes = ['G', 'S', 'L', 'M', 'W', 'B', 'P', 'T', 'C', 'R'];
+      let totalLayers = 0;
+      
+      for (const layer of layerCodes) {
+        try {
+          const categories = taxonomyService.getCategories(layer);
+          let totalSubcategories = 0;
+          const categoryData: Record<string, { subcategoryCount: number }> = {};
+          
+          for (const category of categories) {
+            const subcategories = taxonomyService.getSubcategories(layer, category.code);
+            const subcategoryCount = subcategories.length;
+            totalSubcategories += subcategoryCount;
+            
+            categoryData[category.code] = {
+              subcategoryCount
+            };
+          }
+          
+          if (categories.length > 0) {
+            layers[layer] = {
+              totalCategories: categories.length,
+              totalSubcategories,
+              categories: categoryData
+            };
+            totalLayers++;
+          }
+        } catch (error) {
+          console.warn(`Failed to generate index for layer ${layer}:`, error);
+          // Continue with other layers
+        }
+      }
+      
+      const frontendIndex: TaxonomyIndex = {
+        version: 'frontend-' + new Date().toISOString().split('T')[0], // e.g., "frontend-2025-06-30"
+        lastUpdated: new Date().toISOString(),
+        totalLayers,
+        layers
+      };
+      
+      console.info('Generated frontend taxonomy index:', {
+        version: frontendIndex.version,
+        totalLayers: frontendIndex.totalLayers,
+        layersGenerated: Object.keys(frontendIndex.layers)
+      });
+      
+      return frontendIndex;
+    } catch (error) {
+      console.error('Failed to generate frontend taxonomy index:', error);
+      
+      // Absolute fallback - return empty but valid structure
+      return {
+        version: 'fallback-' + Date.now(),
+        lastUpdated: new Date().toISOString(),
+        totalLayers: 0,
+        layers: {}
+      };
     }
   }
 }
