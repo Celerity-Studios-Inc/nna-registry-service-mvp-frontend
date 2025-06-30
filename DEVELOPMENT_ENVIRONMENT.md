@@ -20,6 +20,7 @@ Access the development environment at: https://nna-registry-frontend-dev.vercel.
 This environment is configured to automatically route to the development backend for testing the backend integration.
 
 ## Deployment Status
-- Commit: 1ded96c
-- Timestamp: $(date)
-- Trigger: Force deployment for Preview environment
+- Commit: 252ea2d (Debug deployment)
+- Issue: Environment variables not being applied
+- Environment showing: PRODUCTION (should be DEVELOPMENT)
+- Trigger: Force rebuild to apply environment variables
