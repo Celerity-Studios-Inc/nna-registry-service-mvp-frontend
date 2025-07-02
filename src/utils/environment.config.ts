@@ -38,9 +38,10 @@ export function detectEnvironment(): EnvironmentConfig['name'] {
   if (hostname === 'nna-registry-frontend-dev.vercel.app' ||
       hostname === 'localhost' || 
       hostname === '127.0.0.1' ||
-      hostname.includes('-dev.vercel.app')) {
+      hostname.includes('-dev.vercel.app') ||
+      process.env.REACT_APP_ENVIRONMENT === 'development') {
     detectedEnv = 'development';
-    detectionMethod = 'hostname';
+    detectionMethod = process.env.REACT_APP_ENVIRONMENT === 'development' ? 'env-var' : 'hostname';
   }
   // PRIORITY 2: Staging environment detection (canonical domain first)
   else if (hostname === 'nna-registry-frontend-stg.vercel.app' || 
@@ -105,6 +106,15 @@ export function detectEnvironment(): EnvironmentConfig['name'] {
 export function getBackendUrl(environment?: EnvironmentConfig['name']): string {
   const env = environment || detectEnvironment();
   
+  // Debug logging for Vercel Preview environment issues
+  if (env === 'development' && typeof window !== 'undefined') {
+    console.log('🔧 [DEBUG] Environment Variables Check:');
+    console.log('  REACT_APP_BACKEND_URL:', process.env.REACT_APP_BACKEND_URL);
+    console.log('  REACT_APP_ENVIRONMENT:', process.env.REACT_APP_ENVIRONMENT);
+    console.log('  NODE_ENV:', process.env.NODE_ENV);
+    console.log('  Detected Environment:', env);
+  }
+  
   switch (env) {
     case 'staging':
       return process.env.REACT_APP_BACKEND_URL || 
@@ -116,8 +126,20 @@ export function getBackendUrl(environment?: EnvironmentConfig['name']): string {
     
     case 'development':
     default:
-      return process.env.REACT_APP_BACKEND_URL || 
-             'https://registry.dev.reviz.dev';
+      // Explicit check for development environment variable
+      if (process.env.REACT_APP_ENVIRONMENT === 'development' && process.env.REACT_APP_BACKEND_URL) {
+        const envBackendUrl = process.env.REACT_APP_BACKEND_URL;
+        if (env === 'development' && typeof window !== 'undefined') {
+          console.log('🎯 [DEBUG] Using Vercel ENV Backend URL:', envBackendUrl);
+        }
+        return envBackendUrl;
+      }
+      
+      const backendUrl = process.env.REACT_APP_BACKEND_URL || 'https://registry.dev.reviz.dev';
+      if (env === 'development' && typeof window !== 'undefined') {
+        console.log('🎯 [DEBUG] Final Backend URL:', backendUrl);
+      }
+      return backendUrl;
   }
 }
 
