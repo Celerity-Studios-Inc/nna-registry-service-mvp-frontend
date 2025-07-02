@@ -44,6 +44,7 @@ import {
 import { AuthContext } from '../../contexts/AuthContext';
 import ErrorTestComponent from '../common/ErrorTestComponent';
 import { detectEnvironment } from '../../utils/environment.config';
+import TaxonomySyncStatus from '../common/TaxonomySyncStatus';
 
 const drawerWidth = 240;
 
@@ -247,6 +248,11 @@ const MainLayout: React.FC = () => {
             <Typography variant="caption" sx={{ opacity: 0.8 }}>
               Release {APP_VERSION}
             </Typography>
+          </Box>
+
+          {/* Taxonomy Sync Status */}
+          <Box sx={{ mr: 2 }}>
+            <TaxonomySyncStatus compact showRefreshButton={false} />
           </Box>
 
           {/* Right-aligned user info */}

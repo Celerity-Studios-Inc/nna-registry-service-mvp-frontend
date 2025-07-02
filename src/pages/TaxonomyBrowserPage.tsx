@@ -46,6 +46,7 @@ import { logger } from '../utils/logger';
 import EnhancedLayerIcon from '../components/common/EnhancedLayerIcon';
 import { detectEnvironment } from '../utils/environment.config';
 import { useTaxonomyIndex } from '../hooks/useTaxonomyIndex';
+import { useTaxonomy } from '../components/providers/TaxonomySyncProvider';
 
 // Use centralized environment detection (hostname-based)
 const getCurrentEnvironment = () => {
@@ -125,6 +126,14 @@ interface LayerOverviewProps {
 
 const LayerOverview: React.FC<LayerOverviewProps> = ({ onLayerDoubleClick }) => {
   const [selectedLayer, setSelectedLayer] = useState<string | null>(null);
+  
+  // Use the new taxonomy sync system
+  const taxonomy = useTaxonomy();
+  
+  // Fallback to old system for compatibility during transition
+  const legacyTaxonomy = useTaxonomyIndex();
+  
+  // Choose which system to use based on availability
   const {
     index,
     loading,
@@ -134,7 +143,16 @@ const LayerOverview: React.FC<LayerOverviewProps> = ({ onLayerDoubleClick }) => 
     getTotalSubcategories,
     cacheStatus,
     clearCache
-  } = useTaxonomyIndex();
+  } = taxonomy.index ? {
+    index: taxonomy.index,
+    loading: taxonomy.loading || taxonomy.initializing,
+    error: taxonomy.error,
+    refresh: taxonomy.forceSync,
+    getCategoryCount: taxonomy.getCategoryCount,
+    getTotalSubcategories: taxonomy.getTotalSubcategories,
+    cacheStatus: { cached: !!taxonomy.index, age: taxonomy.cacheAge },
+    clearCache: () => taxonomy.forceSync()
+  } : legacyTaxonomy;
 
   // Get all available layers from the index or fallback to default list
   const layers = index ? Object.keys(index.layers) : ['G', 'S', 'L', 'M', 'W', 'B', 'P', 'T', 'C', 'R'];

@@ -53,6 +53,7 @@ import TaxonomyValidator from './components/TaxonomyValidator';
 // AssetRegistrationWrapper is not used directly in routes
 import RegisterAssetPageWrapper from './components/asset/RegisterAssetPageWrapper';
 import TaxonomyInitProvider from './components/providers/TaxonomyInitProvider';
+import { TaxonomySyncProvider } from './components/providers/TaxonomySyncProvider';
 import TaxonomyExample from './components/examples/TaxonomyExample';
 import TaxonomySelectorV3Test from './pages/TaxonomySelectorV3Test';
 import TaxonomyBrowserPage from './pages/TaxonomyBrowserPage';
@@ -188,6 +189,7 @@ const App: React.FC = () => {
                       </div>
                     }
                   >
+                    <TaxonomySyncProvider enableDebugLogging={process.env.NODE_ENV === 'development'}>
                     <Router>
                       <Routes>
                         <Route path="/login" element={<LoginPage />} />
@@ -304,6 +306,7 @@ const App: React.FC = () => {
                       </Routes>
                     </Router>
                     <FeedbackDisplay />
+                    </TaxonomySyncProvider>
                   </TaxonomyInitProvider>
                 </AuthProvider>
               </NotificationsProvider>
