@@ -79,7 +79,9 @@
       "Bash(true)",
       "Bash(kill:*)",
       "Bash(BROWSER=none npm start)",
-      "WebFetch(domain:localhost)"
+      "WebFetch(domain:localhost)",
+      "WebFetch(domain:nna-registry-frontend-dev.vercel.app)",
+      "WebFetch(domain:registry.dev.reviz.dev)"
     ],
     "deny": []
   }

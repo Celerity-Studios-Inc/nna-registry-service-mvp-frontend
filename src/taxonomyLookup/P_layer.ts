@@ -2,23 +2,25 @@
 // Contains flattened taxonomy for Personalize
 
 export const P_LAYER_LOOKUP = {
-  undefined: {
-    numericCode: '00W',
-    name: 'World',
+  FAC: {
+    numericCode: '001',
+    name: 'Face',
   },
-  'undefined.undefined': {
-    numericCode: 'OBJ',
-    name: 'Object',
+  'FAC.SWP': {
+    numericCode: '001',
+    name: 'Swap',
+  },
+  VOI: {
+    numericCode: '002',
+    name: 'Voice',
+  },
+  'VOI.MOD': {
+    numericCode: '001',
+    name: 'Modulation',
   },
 };
 
 export const P_SUBCATEGORIES = {
-  undefined: [
-    'undefined.undefined',
-    'undefined.undefined',
-    'undefined.undefined',
-    'undefined.undefined',
-    'undefined.undefined',
-    'undefined.undefined',
-  ],
+  FAC: ['FAC.SWP'],
+  VOI: ['VOI.MOD'],
 };

@@ -14,6 +14,7 @@ const SearchAssetsPage: React.FC = () => {
         Browse Assets
       </Typography>
 
+
       <AssetSearch
         onSearch={handleSearch}
         initialParams={{

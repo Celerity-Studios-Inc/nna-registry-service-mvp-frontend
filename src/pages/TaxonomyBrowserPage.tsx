@@ -37,21 +37,67 @@ import {
   Save as SaveIcon,
   Cancel as CancelIcon,
   NavigateNext as NavigateNextIcon,
+  ClearAll as ClearCacheIcon,
 } from '@mui/icons-material';
 import { taxonomyService } from '../services/simpleTaxonomyService';
+import { backendTaxonomyService } from '../services/backendTaxonomyService';
 import { TaxonomyItem } from '../types/taxonomy.types';
 import { logger } from '../utils/logger';
 import EnhancedLayerIcon from '../components/common/EnhancedLayerIcon';
+import { detectEnvironment } from '../utils/environment.config';
+import { useTaxonomyIndex } from '../hooks/useTaxonomyIndex';
+import { useTaxonomy } from '../components/providers/TaxonomySyncProvider';
 
-// Environment detection utility
+// Use centralized environment detection (hostname-based)
 const getCurrentEnvironment = () => {
-  if (process.env.REACT_APP_ENVIRONMENT) {
-    return process.env.REACT_APP_ENVIRONMENT;
+  return detectEnvironment();
+};
+
+// Taxonomy service selection based on user settings
+const getTaxonomyService = () => {
+  try {
+    const useBackendTaxonomy = localStorage.getItem('nna-use-backend-taxonomy');
+    if (useBackendTaxonomy === 'true') {
+      logger.info('Using backend taxonomy service');
+      return backendTaxonomyService;
+    }
+  } catch (error) {
+    logger.warn('Failed to read backend taxonomy setting:', error);
   }
-  if (process.env.NODE_ENV === 'production') {
-    return 'production';
+  
+  logger.info('Using frontend taxonomy service');
+  return taxonomyService;
+};
+
+// Helper function to try backend service and fallback to frontend if it fails
+const getTaxonomyServiceWithFallback = () => {
+  const useBackendTaxonomy = localStorage.getItem('nna-use-backend-taxonomy') === 'true';
+  
+  if (useBackendTaxonomy) {
+    // Return a wrapper that tries backend first, then falls back to frontend
+    return {
+      async getCategories(layer: string) {
+        try {
+          logger.info(`Trying backend taxonomy service for layer ${layer} categories`);
+          return await backendTaxonomyService.getCategories(layer);
+        } catch (error) {
+          logger.warn(`Backend taxonomy failed for ${layer} categories, falling back to frontend service:`, error);
+          return taxonomyService.getCategories(layer);
+        }
+      },
+      async getSubcategories(layer: string, category: string) {
+        try {
+          logger.info(`Trying backend taxonomy service for ${layer}.${category} subcategories`);
+          return await backendTaxonomyService.getSubcategories(layer, category);
+        } catch (error) {
+          logger.warn(`Backend taxonomy failed for ${layer}.${category} subcategories, falling back to frontend service:`, error);
+          return taxonomyService.getSubcategories(layer, category);
+        }
+      }
+    };
   }
-  return 'development';
+  
+  return taxonomyService;
 };
 
 // Check if user has admin permissions (placeholder for RBAC)
@@ -74,56 +120,42 @@ const TabPanel: React.FC<TabPanelProps> = ({ children, value, index }) => (
   </div>
 );
 
-const LayerOverview: React.FC = () => {
-  const [layers, setLayers] = useState<string[]>([]);
-  const [layerStats, setLayerStats] = useState<Record<string, any>>({});
-  const [loading, setLoading] = useState(true);
+interface LayerOverviewProps {
+  onLayerDoubleClick?: (layer: string) => void;
+}
+
+const LayerOverview: React.FC<LayerOverviewProps> = ({ onLayerDoubleClick }) => {
   const [selectedLayer, setSelectedLayer] = useState<string | null>(null);
+  
+  // Use the new taxonomy sync system
+  const taxonomy = useTaxonomy();
+  
+  // Fallback to old system for compatibility during transition
+  const legacyTaxonomy = useTaxonomyIndex();
+  
+  // Choose which system to use based on availability
+  const {
+    index,
+    loading,
+    error,
+    refresh,
+    getCategoryCount,
+    getTotalSubcategories,
+    cacheStatus,
+    clearCache
+  } = taxonomy.index ? {
+    index: taxonomy.index,
+    loading: taxonomy.loading || taxonomy.initializing,
+    error: taxonomy.error,
+    refresh: taxonomy.forceSync,
+    getCategoryCount: taxonomy.getCategoryCount,
+    getTotalSubcategories: taxonomy.getTotalSubcategories,
+    cacheStatus: { cached: !!taxonomy.index, age: taxonomy.cacheAge },
+    clearCache: () => taxonomy.forceSync()
+  } : legacyTaxonomy;
 
-  useEffect(() => {
-    const loadLayerData = async () => {
-      try {
-        // Get all available layers
-        const availableLayers = ['G', 'S', 'L', 'M', 'W', 'B', 'P', 'T', 'C', 'R'];
-        setLayers(availableLayers);
-
-        // Calculate statistics for each layer
-        const stats: Record<string, any> = {};
-        for (const layer of availableLayers) {
-          try {
-            const categories = taxonomyService.getCategories(layer);
-            let totalSubcategories = 0;
-            
-            for (const category of categories) {
-              const subcategories = taxonomyService.getSubcategories(layer, category.code);
-              totalSubcategories += subcategories.length;
-            }
-
-            stats[layer] = {
-              categories: categories.length,
-              subcategories: totalSubcategories,
-              lastUpdated: new Date().toISOString().split('T')[0], // Placeholder
-            };
-          } catch (error) {
-            logger.error(`Error loading stats for layer ${layer}:`, error);
-            stats[layer] = {
-              categories: 0,
-              subcategories: 0,
-              error: true,
-            };
-          }
-        }
-        
-        setLayerStats(stats);
-      } catch (error) {
-        logger.error('Error loading layer data:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadLayerData();
-  }, []);
+  // Get all available layers from the index or fallback to default list
+  const layers = index ? Object.keys(index.layers) : ['G', 'S', 'L', 'M', 'W', 'B', 'P', 'T', 'C', 'R'];
 
   const getLayerName = (layer: string): string => {
     const names: Record<string, string> = {
@@ -161,142 +193,232 @@ const LayerOverview: React.FC = () => {
     setSelectedLayer(selectedLayer === layer ? null : layer);
   };
 
+  const handleLayerDoubleClick = (layer: string) => {
+    if (onLayerDoubleClick) {
+      onLayerDoubleClick(layer);
+    }
+  };
+
   if (loading) {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">
         <CircularProgress />
-        <Typography variant="body1" sx={{ ml: 2 }}>Loading taxonomy data...</Typography>
+        <Typography variant="body1" sx={{ ml: 2 }}>Loading taxonomy index...</Typography>
+      </Box>
+    );
+  }
+
+  if (error) {
+    return (
+      <Box>
+        <Alert severity="error" sx={{ mb: 2 }}>
+          <Typography variant="body1" sx={{ fontWeight: 'bold', mb: 1 }}>
+            Failed to load taxonomy index
+          </Typography>
+          <Typography variant="body2" sx={{ mb: 2 }}>
+            {error}
+          </Typography>
+          <Box sx={{ display: 'flex', gap: 1 }}>
+            <Button 
+              variant="outlined" 
+              size="small" 
+              startIcon={<RefreshIcon />}
+              onClick={refresh}
+            >
+              Retry
+            </Button>
+            <Button 
+              variant="outlined" 
+              size="small" 
+              startIcon={<ClearCacheIcon />}
+              onClick={clearCache}
+            >
+              Clear Cache
+            </Button>
+          </Box>
+        </Alert>
       </Box>
     );
   }
 
   return (
-    <Grid container spacing={3}>
-      {layers.map((layer) => {
-        const stats = layerStats[layer] || {};
-        const isSelected = selectedLayer === layer;
-        
-        return (
-          <Grid item xs={12} sm={6} md={4} lg={3} key={layer}>
-            <Card 
-              sx={{ 
-                height: '100%',
-                cursor: 'pointer',
-                transition: 'all 0.3s ease',
-                '&:hover': { 
-                  boxShadow: 6,
-                  transform: 'translateY(-4px)',
-                },
-                ...(isSelected && {
-                  boxShadow: 6,
-                  transform: 'translateY(-2px)',
-                  borderColor: 'primary.main',
-                  borderWidth: 2,
-                })
-              }}
-              onClick={() => handleLayerClick(layer)}
-            >
-              <CardContent sx={{ textAlign: 'center', p: 3 }}>
-                {/* Enhanced Layer Icon */}
-                <Box sx={{ mb: 2, display: 'flex', justifyContent: 'center' }}>
-                  <EnhancedLayerIcon 
-                    layer={layer} 
-                    width={80} 
-                    height={80} 
-                    showLabel={false}
-                    showBadge={false}
-                  />
-                </Box>
+    <Box>
+      {/* Cache Status and Controls */}
+      {index && (
+        <Box sx={{ mb: 3 }}>
+          <Alert severity="info" sx={{ mb: 2 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <Box>
+                <Typography variant="body2">
+                  <strong>Taxonomy Index Version:</strong> {index.version} | 
+                  <strong> Last Updated:</strong> {new Date(index.lastUpdated).toLocaleString()} |
+                  <strong> Cache:</strong> {cacheStatus.cached ? `${cacheStatus.age} old` : 'Not cached'}
+                </Typography>
+              </Box>
+              <Box sx={{ display: 'flex', gap: 1 }}>
+                <Button 
+                  variant="outlined" 
+                  size="small" 
+                  startIcon={<RefreshIcon />}
+                  onClick={refresh}
+                >
+                  Refresh
+                </Button>
+                <Button 
+                  variant="outlined" 
+                  size="small" 
+                  startIcon={<ClearCacheIcon />}
+                  onClick={clearCache}
+                >
+                  Clear Cache
+                </Button>
+              </Box>
+            </Box>
+          </Alert>
+        </Box>
+      )}
 
-                {/* Layer Code and Name */}
-                <Typography variant="h5" component="div" sx={{ fontWeight: 'bold', mb: 1 }}>
-                  {layer}
-                </Typography>
-                <Typography variant="h6" sx={{ mb: 1 }}>
-                  {getLayerName(layer)}
-                </Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                  {getLayerDescription(layer)}
-                </Typography>
-
-                {/* Statistics */}
-                {!stats.error ? (
-                  <Box sx={{ mb: 2 }}>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-around', mb: 1 }}>
-                      <Box sx={{ textAlign: 'center' }}>
-                        <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
-                          {stats.categories || 0}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          Categories
-                        </Typography>
-                      </Box>
-                      <Box sx={{ textAlign: 'center' }}>
-                        <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
-                          {stats.subcategories || 0}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          Subcategories
-                        </Typography>
-                      </Box>
-                    </Box>
-                    <Chip 
-                      label="Active" 
-                      size="small" 
-                      color="success"
-                      sx={{ mt: 1 }}
+      <Grid container spacing={3}>
+        {layers.map((layer) => {
+          const categoryCount = getCategoryCount(layer);
+          const subcategoryCount = getTotalSubcategories(layer);
+          const isSelected = selectedLayer === layer;
+          const hasData = index?.layers[layer];
+          
+          return (
+            <Grid item xs={12} sm={6} md={4} lg={3} key={layer}>
+              <Card 
+                sx={{ 
+                  height: '100%',
+                  cursor: 'pointer',
+                  transition: 'all 0.3s ease',
+                  '&:hover': { 
+                    boxShadow: 6,
+                    transform: 'translateY(-4px)',
+                  },
+                  ...(isSelected && {
+                    boxShadow: 6,
+                    transform: 'translateY(-2px)',
+                    borderColor: 'primary.main',
+                    borderWidth: 2,
+                  })
+                }}
+                onClick={() => handleLayerClick(layer)}
+                onDoubleClick={() => handleLayerDoubleClick(layer)}
+              >
+                <CardContent sx={{ textAlign: 'center', p: 3 }}>
+                  {/* Enhanced Layer Icon */}
+                  <Box sx={{ mb: 2, display: 'flex', justifyContent: 'center' }}>
+                    <EnhancedLayerIcon 
+                      layer={layer} 
+                      width={80} 
+                      height={80} 
+                      showLabel={false}
+                      showBadge={false}
                     />
                   </Box>
-                ) : (
-                  <Alert severity="error" sx={{ mt: 1, fontSize: '0.8rem' }}>
-                    Failed to load data
-                  </Alert>
-                )}
 
-                {/* Action Buttons */}
-                <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}>
-                  <Tooltip title="View Categories">
-                    <IconButton size="small" color="primary">
-                      <ViewIcon fontSize="small" />
-                    </IconButton>
-                  </Tooltip>
-                  {hasAdminPermissions() && (
-                    <Tooltip title="Edit Layer">
-                      <IconButton size="small" color="secondary">
-                        <EditIcon fontSize="small" />
+                  {/* Layer Code and Name */}
+                  <Typography variant="h5" component="div" sx={{ fontWeight: 'bold', mb: 1 }}>
+                    {layer}
+                  </Typography>
+                  <Typography variant="h6" sx={{ mb: 1 }}>
+                    {getLayerName(layer)}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                    {getLayerDescription(layer)}
+                  </Typography>
+
+                  {/* Statistics */}
+                  {hasData ? (
+                    <Box sx={{ mb: 2 }}>
+                      <Box sx={{ display: 'flex', justifyContent: 'space-around', mb: 1 }}>
+                        <Box sx={{ textAlign: 'center' }}>
+                          <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
+                            {categoryCount}
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            Categories
+                          </Typography>
+                        </Box>
+                        <Box sx={{ textAlign: 'center' }}>
+                          <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
+                            {subcategoryCount}
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            Subcategories
+                          </Typography>
+                        </Box>
+                      </Box>
+                      <Chip 
+                        label="Indexed" 
+                        size="small" 
+                        color="success"
+                        sx={{ mt: 1 }}
+                      />
+                    </Box>
+                  ) : (
+                    <Box sx={{ mb: 2 }}>
+                      <Alert severity="warning" sx={{ fontSize: '0.8rem' }}>
+                        No index data available
+                      </Alert>
+                    </Box>
+                  )}
+
+                  {/* Action Buttons */}
+                  <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}>
+                    <Tooltip title="View Categories">
+                      <IconButton size="small" color="primary">
+                        <ViewIcon fontSize="small" />
                       </IconButton>
                     </Tooltip>
-                  )}
-                  <Tooltip title="View History">
-                    <IconButton size="small">
-                      <HistoryIcon fontSize="small" />
-                    </IconButton>
-                  </Tooltip>
-                </Box>
-              </CardContent>
-            </Card>
-          </Grid>
-        );
-      })}
-    </Grid>
+                    {hasAdminPermissions() && (
+                      <Tooltip title="Edit Layer">
+                        <IconButton size="small" color="secondary">
+                          <EditIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                    )}
+                    <Tooltip title="View History">
+                      <IconButton size="small">
+                        <HistoryIcon fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+                  </Box>
+                </CardContent>
+              </Card>
+            </Grid>
+          );
+        })}
+      </Grid>
+    </Box>
   );
 };
 
-const CategoryBrowser: React.FC = () => {
-  const [selectedLayer, setSelectedLayer] = useState<string>('S');
+interface CategoryBrowserProps {
+  initialLayer?: string;
+}
+
+const CategoryBrowser: React.FC<CategoryBrowserProps> = ({ initialLayer }) => {
+  const [selectedLayer, setSelectedLayer] = useState<string>(initialLayer || 'S');
   const [categories, setCategories] = useState<TaxonomyItem[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<TaxonomyItem | null>(null);
   const [subcategories, setSubcategories] = useState<TaxonomyItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [loadingSubcategories, setLoadingSubcategories] = useState(false);
   const [editingItem, setEditingItem] = useState<{ type: 'category' | 'subcategory', item: TaxonomyItem } | null>(null);
+  
+  // Use taxonomy indexing for accurate subcategory counts
+  const { getSubcategoryCount, getLayerSubcategoryCounts } = useTaxonomyIndex();
 
   const loadCategories = async (layer: string) => {
     setLoading(true);
     setSelectedCategory(null);
     setSubcategories([]);
     try {
-      const categoryData = taxonomyService.getCategories(layer);
+      const currentTaxonomyService = getTaxonomyServiceWithFallback();
+      const categoryDataResult = currentTaxonomyService.getCategories(layer);
+      const categoryData = Array.isArray(categoryDataResult) ? categoryDataResult : await categoryDataResult;
       setCategories(categoryData);
       logger.info(`Loaded ${categoryData.length} categories for layer ${layer}`);
     } catch (error) {
@@ -309,8 +431,19 @@ const CategoryBrowser: React.FC = () => {
 
   const loadSubcategories = async (layer: string, categoryCode: string) => {
     setLoadingSubcategories(true);
+    
+    // Validate inputs before making API call
+    if (!categoryCode || categoryCode === 'undefined' || categoryCode.trim() === '') {
+      logger.error(`Invalid category code provided: "${categoryCode}" for layer ${layer}`);
+      setSubcategories([]);
+      setLoadingSubcategories(false);
+      return;
+    }
+    
     try {
-      const subcategoryData = taxonomyService.getSubcategories(layer, categoryCode);
+      const currentTaxonomyService = getTaxonomyServiceWithFallback();
+      const subcategoryDataResult = currentTaxonomyService.getSubcategories(layer, categoryCode);
+      const subcategoryData = Array.isArray(subcategoryDataResult) ? subcategoryDataResult : await subcategoryDataResult;
       setSubcategories(subcategoryData);
       logger.info(`Loaded ${subcategoryData.length} subcategories for ${layer}.${categoryCode}`);
     } catch (error) {
@@ -333,6 +466,34 @@ const CategoryBrowser: React.FC = () => {
     }
   };
 
+  const handleCategoryDoubleClick = (category: TaxonomyItem) => {
+    // Double-click automatically expands subcategories
+    setSelectedCategory(category);
+    loadSubcategories(selectedLayer, category.code);
+  };
+
+  // Generate HFN for category (Layer.Category only)
+  const generateCategoryHFN = (layer: string, categoryCode: string): string => {
+    return `${layer}.${categoryCode}`;
+  };
+
+  // Generate HFN for subcategory (Layer.Category.Subcategory)
+  const generateSubcategoryHFN = (layer: string, categoryCode: string, subcategoryCode: string): string => {
+    return `${layer}.${categoryCode}.${subcategoryCode}`;
+  };
+
+  // Generate MFA for category (Layer.Category only)
+  const generateCategoryMFA = (layer: string, categoryNumericCode: string): string => {
+    const layerNumeric = taxonomyService.getLayerNumericCode(layer);
+    return `${layerNumeric}.${categoryNumericCode}`;
+  };
+
+  // Generate MFA for subcategory (Layer.Category.Subcategory)
+  const generateSubcategoryMFA = (layer: string, categoryNumericCode: string, subcategoryNumericCode: string): string => {
+    const layerNumeric = taxonomyService.getLayerNumericCode(layer);
+    return `${layerNumeric}.${categoryNumericCode}.${subcategoryNumericCode}`;
+  };
+
   const handleEditClick = (type: 'category' | 'subcategory', item: TaxonomyItem) => {
     setEditingItem({ type, item });
   };
@@ -350,6 +511,13 @@ const CategoryBrowser: React.FC = () => {
   useEffect(() => {
     loadCategories(selectedLayer);
   }, [selectedLayer]);
+
+  // Handle initialLayer prop changes
+  useEffect(() => {
+    if (initialLayer && initialLayer !== selectedLayer) {
+      setSelectedLayer(initialLayer);
+    }
+  }, [initialLayer]);
 
   return (
     <Box>
@@ -377,6 +545,28 @@ const CategoryBrowser: React.FC = () => {
           ))}
         </Box>
       </Box>
+
+      {/* Subcategory Counts Summary */}
+      {!selectedCategory && (
+        <Box sx={{ mb: 3 }}>
+          <Paper sx={{ p: 2 }}>
+            <Typography variant="h6" gutterBottom>
+              Subcategory Counts for Layer {selectedLayer}
+            </Typography>
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+              {getLayerSubcategoryCounts(selectedLayer).map(({ category, count }) => (
+                <Chip
+                  key={category}
+                  label={`${category}: ${count}`}
+                  variant="outlined"
+                  size="small"
+                  color={count > 0 ? 'primary' : 'default'}
+                />
+              ))}
+            </Box>
+          </Paper>
+        </Box>
+      )}
 
       {/* Breadcrumb Navigation */}
       {selectedCategory && (
@@ -433,6 +623,7 @@ const CategoryBrowser: React.FC = () => {
                       cursor: 'pointer'
                     }}
                     onClick={() => handleCategoryClick(category)}
+                    onDoubleClick={() => handleCategoryDoubleClick(category)}
                   >
                     <CardContent>
                       <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
@@ -453,12 +644,38 @@ const CategoryBrowser: React.FC = () => {
                         </Box>
                       </Box>
                       
+                      {/* HFN and MFA Display */}
+                      <Box sx={{ mb: 2 }}>
+                        {(() => {
+                          const categoryHFN = generateCategoryHFN(selectedLayer, category.code);
+                          const categoryMFA = generateCategoryMFA(selectedLayer, category.numericCode);
+                          return (
+                            <>
+                              <Typography variant="caption" display="block" color="text.secondary">
+                                HFN: <strong>{categoryHFN}</strong>
+                              </Typography>
+                              <Typography variant="caption" display="block" color="text.secondary">
+                                MFA: <strong>{categoryMFA}</strong>
+                              </Typography>
+                            </>
+                          );
+                        })()}
+                      </Box>
+                      
                       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 2 }}>
-                        <Chip 
-                          label={`Numeric: ${category.numericCode}`} 
-                          size="small" 
-                          variant="outlined" 
-                        />
+                        <Box sx={{ display: 'flex', gap: 1 }}>
+                          <Chip 
+                            label={`Numeric: ${category.numericCode}`} 
+                            size="small" 
+                            variant="outlined" 
+                          />
+                          <Chip 
+                            label={`${getSubcategoryCount(selectedLayer, category.code)} subcategories`} 
+                            size="small" 
+                            color="primary"
+                            variant="outlined" 
+                          />
+                        </Box>
                         <Box>
                           <Tooltip title="View Subcategories">
                             <IconButton 
@@ -561,6 +778,26 @@ const CategoryBrowser: React.FC = () => {
                         </Box>
                       </Box>
                       
+                      {/* HFN and MFA Display */}
+                      <Box sx={{ mb: 2 }}>
+                        {(() => {
+                          // Extract just the subcategory part (remove category prefix if present)
+                          const subcategoryCodeOnly = subcategory.code.includes('.') ? subcategory.code.split('.')[1] : subcategory.code;
+                          const subcategoryHFN = generateSubcategoryHFN(selectedLayer, selectedCategory?.code || '', subcategoryCodeOnly);
+                          const subcategoryMFA = generateSubcategoryMFA(selectedLayer, selectedCategory?.numericCode || '', subcategory.numericCode);
+                          return (
+                            <>
+                              <Typography variant="caption" display="block" color="text.secondary">
+                                HFN: <strong>{subcategoryHFN}</strong>
+                              </Typography>
+                              <Typography variant="caption" display="block" color="text.secondary">
+                                MFA: <strong>{subcategoryMFA}</strong>
+                              </Typography>
+                            </>
+                          );
+                        })()}
+                      </Box>
+                      
                       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 2 }}>
                         <Chip 
                           label={`Numeric: ${subcategory.numericCode}`} 
@@ -657,6 +894,14 @@ const CategoryBrowser: React.FC = () => {
 const AdminTools: React.FC = () => {
   const [showAdvancedFeatures, setShowAdvancedFeatures] = useState(false);
   const environment = getCurrentEnvironment();
+  const { 
+    index, 
+    loading, 
+    error, 
+    refresh, 
+    cacheStatus, 
+    clearCache 
+  } = useTaxonomyIndex();
 
   if (!hasAdminPermissions()) {
     return (
@@ -677,6 +922,88 @@ const AdminTools: React.FC = () => {
       </Alert>
 
       <Grid container spacing={3}>
+        {/* Taxonomy Index Management */}
+        <Grid item xs={12}>
+          <Paper sx={{ p: 3 }}>
+            <Typography variant="h6" gutterBottom>
+              Taxonomy Index Management
+            </Typography>
+            
+            {loading && (
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+                <CircularProgress size={20} />
+                <Typography variant="body2">Loading taxonomy index...</Typography>
+              </Box>
+            )}
+            
+            {error && (
+              <Alert severity="error" sx={{ mb: 2 }}>
+                <Typography variant="body2">
+                  <strong>Error:</strong> {error}
+                </Typography>
+              </Alert>
+            )}
+            
+            {index && (
+              <Box sx={{ mb: 2 }}>
+                <Grid container spacing={2}>
+                  <Grid item xs={12} sm={3}>
+                    <Box>
+                      <Typography variant="body2" color="text.secondary">Version</Typography>
+                      <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
+                        {index.version}
+                      </Typography>
+                    </Box>
+                  </Grid>
+                  <Grid item xs={12} sm={3}>
+                    <Box>
+                      <Typography variant="body2" color="text.secondary">Last Updated</Typography>
+                      <Typography variant="body1">
+                        {new Date(index.lastUpdated).toLocaleString()}
+                      </Typography>
+                    </Box>
+                  </Grid>
+                  <Grid item xs={12} sm={3}>
+                    <Box>
+                      <Typography variant="body2" color="text.secondary">Total Layers</Typography>
+                      <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
+                        {index.totalLayers}
+                      </Typography>
+                    </Box>
+                  </Grid>
+                  <Grid item xs={12} sm={3}>
+                    <Box>
+                      <Typography variant="body2" color="text.secondary">Cache Status</Typography>
+                      <Typography variant="body1">
+                        {cacheStatus.cached ? `Cached (${cacheStatus.age})` : 'Not cached'}
+                      </Typography>
+                    </Box>
+                  </Grid>
+                </Grid>
+              </Box>
+            )}
+            
+            <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+              <Button
+                variant="outlined"
+                startIcon={<RefreshIcon />}
+                onClick={refresh}
+                disabled={loading}
+              >
+                Refresh Index
+              </Button>
+              <Button
+                variant="outlined"
+                startIcon={<ClearCacheIcon />}
+                onClick={clearCache}
+                disabled={loading}
+              >
+                Clear Cache
+              </Button>
+            </Box>
+          </Paper>
+        </Grid>
+
         {/* Basic Admin Tools */}
         <Grid item xs={12} md={6}>
           <Paper sx={{ p: 3 }}>
@@ -791,7 +1118,11 @@ const AdminTools: React.FC = () => {
               <Grid item xs={12} sm={4}>
                 <Box>
                   <Typography variant="body2" color="text.secondary">Taxonomy Service</Typography>
-                  <Chip label="SimpleTaxonomyService" color="info" sx={{ mt: 1 }} />
+                  <Chip 
+                    label={localStorage.getItem('nna-use-backend-taxonomy') === 'true' ? 'Backend API Service' : 'Frontend Service'} 
+                    color={localStorage.getItem('nna-use-backend-taxonomy') === 'true' ? 'primary' : 'info'} 
+                    sx={{ mt: 1 }} 
+                  />
                 </Box>
               </Grid>
               <Grid item xs={12} sm={4}>
@@ -814,10 +1145,17 @@ const AdminTools: React.FC = () => {
 
 const TaxonomyBrowserPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState(0);
+  const [selectedLayerForBrowser, setSelectedLayerForBrowser] = useState<string | undefined>(undefined);
   const environment = getCurrentEnvironment();
 
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
     setActiveTab(newValue);
+  };
+
+  const handleLayerDoubleClick = (layer: string) => {
+    setSelectedLayerForBrowser(layer);
+    setActiveTab(1); // Switch to Category Browser tab
+    logger.info(`Navigating to Category Browser for layer ${layer}`);
   };
 
   return (
@@ -874,11 +1212,11 @@ const TaxonomyBrowserPage: React.FC = () => {
 
       {/* Tab Content */}
       <TabPanel value={activeTab} index={0}>
-        <LayerOverview />
+        <LayerOverview onLayerDoubleClick={handleLayerDoubleClick} />
       </TabPanel>
 
       <TabPanel value={activeTab} index={1}>
-        <CategoryBrowser />
+        <CategoryBrowser initialLayer={selectedLayerForBrowser} />
       </TabPanel>
 
       <TabPanel value={activeTab} index={2}>

@@ -7,11 +7,49 @@ The NNA Registry Service is a platform for managing digital assets within a Nami
 
 This workspace contains a frontend implementation built with React and TypeScript.
 
-**🎯 CURRENT STATUS: STAGING ENVIRONMENT IMPLEMENTATION COMPLETE** (January 2025)
-- **Production URL**: https://nna-registry-service-mvp-frontend.vercel.app
-- **Staging URL**: https://nna-registry-staging.vercel.app (pending deployment)
-- **Repository**: https://github.com/Celerity-Studios-Inc/nna-registry-service-mvp-frontend
-- **Latest Achievement**: Complete staging environment infrastructure with live backend integration
+**🚨 URGENT STATUS: ASYNC TAXONOMY SYNC IMPLEMENTATION COMPLETE - DEPLOYMENT PENDING** (July 2, 2025)
+
+### **CRITICAL SESSION HANDOFF NOTE**
+**Previous Session Status**: Implementation 100% complete, bash tool degraded preventing deployment execution
+**Required Action**: Execute deployment across all three environments (dev/staging/production)
+**Implementation Ready**: All code files created and integrated, awaiting git commit + push
+
+### **ASYNC TAXONOMY SYNC IMPLEMENTATION COMPLETE**
+- **Backend Team Specification**: Complete implementation per TAXONOMY_INDEXING_SPECIFICATION
+- **All Required Components**: TaxonomySyncService, TaxonomySyncProvider, TaxonomySyncStatus, hooks, integration
+- **Environment-Aware Routing**: Dev/staging/production backend URL detection
+- **Real-time Monitoring**: Background polling (5min), health checks (2min), visual status indicators
+- **Performance Optimized**: 24-hour caching, O(1) lookups, version-based invalidation
+
+### **FILES IMPLEMENTED IN PREVIOUS SESSION**
+✅ **Core Service**: `/src/services/taxonomySyncService.ts` - Background sync with health monitoring
+✅ **React Hook**: `/src/hooks/useTaxonomySync.ts` - State management and utility functions  
+✅ **Context Provider**: `/src/components/providers/TaxonomySyncProvider.tsx` - Enhanced context with formatting helpers
+✅ **Status Component**: `/src/components/common/TaxonomySyncStatus.tsx` - Visual indicators and manual refresh
+✅ **App Integration**: `src/App.tsx` - TaxonomySyncProvider wrapper with debug logging
+✅ **Header Integration**: `src/components/layout/MainLayout.tsx` - Real-time status in header
+✅ **Page Integration**: `src/pages/TaxonomyBrowserPage.tsx` - Updated to use new sync system
+
+### **DEPLOYMENT ARCHITECTURE CONFIRMED**
+1. **Development**: Part of main project, triggers on push to main
+2. **Staging**: Independent Vercel project (`nna-registry-service-staging`), manual trigger via GitHub Actions  
+3. **Production**: Part of main project, uses `--prod` flag, triggers on push to main
+
+### **BASH TOOL DEGRADATION ISSUE**
+- **Error**: `zsh:source:1: no such file or directory: /var/folders/j4/kzgsm6k97tj2nxs3r2t54btr0000gn/T/claude-shell-snapshot-653b`
+- **Impact**: Cannot execute git commands or deployment triggers
+- **Workaround**: Manual deployment commands provided to user
+- **Session Management Issue**: Common degradation requiring new session restart
+
+### **IMMEDIATE NEXT SESSION PRIORITIES**
+1. **Execute Git Commands**: Commit and push async taxonomy sync implementation
+2. **Trigger Main CI/CD**: Push to main branch to deploy dev + production
+3. **Trigger Staging**: Manual workflow trigger via GitHub Actions
+4. **Verify Deployments**: Monitor all three environment deployments
+5. **Run Tests**: Execute programmatic tests and generate backend team note
+
+**Previous Status**: https://nna-registry-service-mvp-frontend.vercel.app
+**Repository**: https://github.com/Celerity-Studios-Inc/nna-registry-service-mvp-frontend
 
 ## 🚀 **STAGING ENVIRONMENT IMPLEMENTATION** (January 2025)
 
