@@ -15,89 +15,41 @@ export interface EnvironmentConfig {
   enablePerformanceMonitoring: boolean;
 }
 
-// Cache for environment detection to prevent multiple calls
-let _cachedEnvironment: EnvironmentConfig['name'] | null = null;
-let _environmentLogged = false;
-
 /**
  * Detect current environment based on multiple indicators
  */
 export function detectEnvironment(): EnvironmentConfig['name'] {
-  // Return cached result if available
-  if (_cachedEnvironment) {
-    return _cachedEnvironment;
+  // Check environment variable first
+  if (process.env.REACT_APP_ENVIRONMENT) {
+    return process.env.REACT_APP_ENVIRONMENT as EnvironmentConfig['name'];
   }
   
-  // Check URL patterns FIRST (most reliable for Vercel deployments)
+  // Check URL patterns for Vercel deployments
   const hostname = typeof window !== 'undefined' ? window.location.hostname : '';
   
-  let detectedEnv: EnvironmentConfig['name'];
-  let detectionMethod = '';
-  
-  // PRIORITY 1: Development environment detection (canonical domain first)
+  // Development environment detection
   if (hostname === 'nna-registry-frontend-dev.vercel.app' ||
       hostname === 'localhost' || 
       hostname === '127.0.0.1' ||
-      hostname.includes('-dev.vercel.app') ||
-      process.env.REACT_APP_ENVIRONMENT === 'development') {
-    detectedEnv = 'development';
-    detectionMethod = process.env.REACT_APP_ENVIRONMENT === 'development' ? 'env-var' : 'hostname';
+      hostname.includes('-dev.vercel.app')) {
+    return 'development';
   }
-  // PRIORITY 2: Staging environment detection (canonical domain first)
-  else if (hostname === 'nna-registry-frontend-stg.vercel.app' || 
+  
+  // Staging environment detection
+  if (hostname === 'nna-registry-frontend-stg.vercel.app' || 
       hostname.includes('staging') || 
       hostname.includes('-stg.vercel.app')) {
-    detectedEnv = 'staging';
-    detectionMethod = 'hostname';
+    return 'staging';
   }
-  // PRIORITY 3: Production environment detection (canonical domain first)
-  else if (hostname === 'nna-registry-frontend.vercel.app' ||
+  
+  // Production environment detection
+  if (hostname === 'nna-registry-frontend.vercel.app' ||
       hostname.includes('registry.reviz.dev')) {
-    detectedEnv = 'production';
-    detectionMethod = 'hostname';
-  }
-  // FALLBACK 1: Check environment variables (only if hostname detection fails)
-  else if (process.env.REACT_APP_ENVIRONMENT === 'development') {
-    detectedEnv = 'development';
-    detectionMethod = 'REACT_APP_ENVIRONMENT';
-  }
-  else if (process.env.REACT_APP_ENVIRONMENT === 'staging') {
-    detectedEnv = 'staging';
-    detectionMethod = 'REACT_APP_ENVIRONMENT';
-  }
-  else if (process.env.REACT_APP_ENVIRONMENT === 'production') {
-    detectedEnv = 'production';
-    detectionMethod = 'REACT_APP_ENVIRONMENT';
-  }
-  // FALLBACK 2: Check NODE_ENV with type assertion for staging
-  else if ((process.env.NODE_ENV as string) === 'staging') {
-    detectedEnv = 'staging';
-    detectionMethod = 'NODE_ENV';
-  }
-  // FALLBACK 3: Generic vercel.app check (last resort)
-  else if (hostname.includes('vercel.app')) {
-    detectedEnv = 'production';
-    detectionMethod = 'vercel-fallback';
-  }
-  // FALLBACK 4: Default to production for safety
-  else {
-    detectedEnv = 'production';
-    detectionMethod = 'ultimate-fallback';
+    return 'production';
   }
   
-  // Cache the result
-  _cachedEnvironment = detectedEnv;
-  
-  // Log only once for debugging (not on every call)
-  if (!_environmentLogged && typeof window !== 'undefined') {
-    console.log(`🌍 Environment: ${detectedEnv.toUpperCase()} (via ${detectionMethod})`);
-    if (detectedEnv === 'development') {
-      console.log(`🔧 Hostname: ${hostname}`);
-    }
-    _environmentLogged = true;
-  }
-  
-  return detectedEnv;
+  // Default to production for safety
+  return 'production';
 }
 
 /**
@@ -106,40 +58,21 @@ export function detectEnvironment(): EnvironmentConfig['name'] {
 export function getBackendUrl(environment?: EnvironmentConfig['name']): string {
   const env = environment || detectEnvironment();
   
-  // Debug logging for Vercel Preview environment issues
-  if (env === 'development' && typeof window !== 'undefined') {
-    console.log('🔧 [DEBUG] Environment Variables Check:');
-    console.log('  REACT_APP_BACKEND_URL:', process.env.REACT_APP_BACKEND_URL);
-    console.log('  REACT_APP_ENVIRONMENT:', process.env.REACT_APP_ENVIRONMENT);
-    console.log('  NODE_ENV:', process.env.NODE_ENV);
-    console.log('  Detected Environment:', env);
+  // Use environment variable if available, otherwise fallback to defaults
+  if (process.env.REACT_APP_BACKEND_URL) {
+    return process.env.REACT_APP_BACKEND_URL;
   }
   
   switch (env) {
     case 'staging':
-      return process.env.REACT_APP_BACKEND_URL || 
-             'https://registry.stg.reviz.dev';
+      return 'https://registry.stg.reviz.dev';
     
     case 'production':
-      return process.env.REACT_APP_BACKEND_URL || 
-             'https://registry.reviz.dev';
+      return 'https://registry.reviz.dev';
     
     case 'development':
     default:
-      // Explicit check for development environment variable
-      if (process.env.REACT_APP_ENVIRONMENT === 'development' && process.env.REACT_APP_BACKEND_URL) {
-        const envBackendUrl = process.env.REACT_APP_BACKEND_URL;
-        if (env === 'development' && typeof window !== 'undefined') {
-          console.log('🎯 [DEBUG] Using Vercel ENV Backend URL:', envBackendUrl);
-        }
-        return envBackendUrl;
-      }
-      
-      const backendUrl = process.env.REACT_APP_BACKEND_URL || 'https://registry.dev.reviz.dev';
-      if (env === 'development' && typeof window !== 'undefined') {
-        console.log('🎯 [DEBUG] Final Backend URL:', backendUrl);
-      }
-      return backendUrl;
+      return 'https://registry.dev.reviz.dev';
   }
 }
 
@@ -149,19 +82,21 @@ export function getBackendUrl(environment?: EnvironmentConfig['name']): string {
 export function getFrontendUrl(environment?: EnvironmentConfig['name']): string {
   const env = environment || detectEnvironment();
   
+  // Use environment variable if available, otherwise fallback to defaults
+  if (process.env.REACT_APP_FRONTEND_URL) {
+    return process.env.REACT_APP_FRONTEND_URL;
+  }
+  
   switch (env) {
     case 'staging':
-      return process.env.REACT_APP_FRONTEND_URL || 
-             'https://nna-registry-frontend-stg.vercel.app';
+      return 'https://nna-registry-frontend-stg.vercel.app';
     
     case 'production':
-      return process.env.REACT_APP_FRONTEND_URL || 
-             'https://nna-registry-frontend.vercel.app';
+      return 'https://nna-registry-frontend.vercel.app';
     
     case 'development':
     default:
-      return process.env.REACT_APP_FRONTEND_URL || 
-             'https://nna-registry-frontend-dev.vercel.app';
+      return 'https://nna-registry-frontend-dev.vercel.app';
   }
 }
 

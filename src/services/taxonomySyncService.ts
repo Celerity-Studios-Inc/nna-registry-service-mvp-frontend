@@ -1,6 +1,7 @@
 // services/taxonomySyncService.ts
 
 import { logger } from '../utils/logger';
+import { getBackendUrl } from '../utils/environment.config';
 
 interface SyncState {
   isInitialized: boolean;
@@ -63,19 +64,10 @@ interface TaxonomyIndex {
 }
 
 class TaxonomySyncService {
-  private static readonly API_BASE = (() => {
-    const hostname = typeof window !== 'undefined' ? window.location.hostname : '';
-    if (hostname === 'nna-registry-frontend-dev.vercel.app' || hostname === 'localhost') {
-      return 'https://registry.dev.reviz.dev/api/taxonomy';
-    }
-    if (hostname === 'nna-registry-frontend-stg.vercel.app') {
-      return 'https://registry.stg.reviz.dev/api/taxonomy';
-    }
-    if (hostname === 'nna-registry-frontend.vercel.app') {
-      return 'https://registry.reviz.dev/api/taxonomy';
-    }
-    return '/api/taxonomy'; // Fallback to proxy
-  })();
+  private static getApiBase(): string {
+    const backendUrl = getBackendUrl();
+    return `${backendUrl}/api/taxonomy`;
+  }
   
   private static readonly SYNC_INTERVAL = 5 * 60 * 1000; // 5 minutes
   private static readonly HEALTH_CHECK_INTERVAL = 2 * 60 * 1000; // 2 minutes
@@ -140,7 +132,7 @@ class TaxonomySyncService {
     try {
       logger.info('📥 Syncing taxonomy index...');
       
-      const response = await fetch(`${TaxonomySyncService.API_BASE}/index`);
+      const response = await fetch(`${TaxonomySyncService.getApiBase()}/index`);
       if (!response.ok) {
         throw new Error(`Sync failed: ${response.status} ${response.statusText}`);
       }
@@ -174,7 +166,7 @@ class TaxonomySyncService {
   // Check taxonomy service health
   async checkHealth(): Promise<TaxonomyHealth> {
     try {
-      const response = await fetch(`${TaxonomySyncService.API_BASE}/health`);
+      const response = await fetch(`${TaxonomySyncService.getApiBase()}/health`);
       if (!response.ok) {
         throw new Error(`Health check failed: ${response.status}`);
       }
@@ -202,7 +194,7 @@ class TaxonomySyncService {
   // Get current taxonomy version
   async getVersion(): Promise<TaxonomyVersion> {
     try {
-      const response = await fetch(`${TaxonomySyncService.API_BASE}/version`);
+      const response = await fetch(`${TaxonomySyncService.getApiBase()}/version`);
       if (!response.ok) {
         throw new Error(`Version check failed: ${response.status}`);
       }
@@ -221,7 +213,7 @@ class TaxonomySyncService {
   // Get layer count
   async getLayerCount(): Promise<LayerCount> {
     try {
-      const response = await fetch(`${TaxonomySyncService.API_BASE}/layer-count`);
+      const response = await fetch(`${TaxonomySyncService.getApiBase()}/layer-count`);
       if (!response.ok) {
         throw new Error(`Layer count failed: ${response.status}`);
       }
@@ -237,7 +229,7 @@ class TaxonomySyncService {
   // Get category count for a layer
   async getCategoryCount(layer: string): Promise<CategoryCount> {
     try {
-      const response = await fetch(`${TaxonomySyncService.API_BASE}/layers/${layer}/category-count`);
+      const response = await fetch(`${TaxonomySyncService.getApiBase()}/layers/${layer}/category-count`);
       if (!response.ok) {
         throw new Error(`Category count failed: ${response.status}`);
       }
@@ -253,7 +245,7 @@ class TaxonomySyncService {
   // Get subcategory count for a category
   async getSubcategoryCount(layer: string, category: string): Promise<SubcategoryCount> {
     try {
-      const response = await fetch(`${TaxonomySyncService.API_BASE}/layers/${layer}/categories/${category}/subcategory-count`);
+      const response = await fetch(`${TaxonomySyncService.getApiBase()}/layers/${layer}/categories/${category}/subcategory-count`);
       if (!response.ok) {
         throw new Error(`Subcategory count failed: ${response.status}`);
       }
@@ -269,7 +261,7 @@ class TaxonomySyncService {
   // Get all subcategory counts for a layer
   async getLayerSubcategoryCounts(layer: string): Promise<LayerSubcategoryCounts> {
     try {
-      const response = await fetch(`${TaxonomySyncService.API_BASE}/layers/${layer}/subcategory-counts`);
+      const response = await fetch(`${TaxonomySyncService.getApiBase()}/layers/${layer}/subcategory-counts`);
       if (!response.ok) {
         throw new Error(`Layer subcategory counts failed: ${response.status}`);
       }
