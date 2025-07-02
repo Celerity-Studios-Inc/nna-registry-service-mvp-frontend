@@ -58,7 +58,31 @@ export function detectEnvironment(): EnvironmentConfig['name'] {
 export function getBackendUrl(environment?: EnvironmentConfig['name']): string {
   const env = environment || detectEnvironment();
   
-  // Use environment variable if available, otherwise fallback to defaults
+  // FORCE CORRECT BACKEND URLs - Override Vercel environment variables
+  const hostname = typeof window !== 'undefined' ? window.location.hostname : '';
+  
+  // Force development backend for development hostnames
+  if (hostname === 'nna-registry-frontend-dev.vercel.app' || 
+      hostname === 'localhost' || 
+      hostname.includes('-dev.vercel.app')) {
+    console.log('🔧 FORCING development backend URL (overriding Vercel env vars)');
+    return 'https://registry.dev.reviz.dev';
+  }
+  
+  // Force staging backend for staging hostnames
+  if (hostname === 'nna-registry-frontend-stg.vercel.app' || 
+      hostname.includes('-stg.vercel.app')) {
+    console.log('🔧 FORCING staging backend URL (overriding Vercel env vars)');
+    return 'https://registry.stg.reviz.dev';
+  }
+  
+  // Force production backend for production hostnames
+  if (hostname === 'nna-registry-frontend.vercel.app') {
+    console.log('🔧 FORCING production backend URL (overriding Vercel env vars)');
+    return 'https://registry.reviz.dev';
+  }
+  
+  // Fallback to environment variable or defaults
   if (process.env.REACT_APP_BACKEND_URL) {
     return process.env.REACT_APP_BACKEND_URL;
   }

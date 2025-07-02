@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Environment Debug - NNA Registry</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .debug-section {
+            margin-bottom: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .debug-section h3 {
+            margin-top: 0;
+            color: #333;
+        }
+        .env-var {
+            font-family: monospace;
+            background-color: #f8f8f8;
+            padding: 5px;
+            border: 1px solid #e0e0e0;
+            margin: 5px 0;
+        }
+        .error {
+            color: red;
+            font-weight: bold;
+        }
+        .success {
+            color: green;
+            font-weight: bold;
+        }
+        .warning {
+            color: orange;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Environment Debug Tool</h1>
+        <p><strong>Purpose:</strong> Debug environment variable issues in development deployment</p>
+        <p><strong>Current URL:</strong> <span id="current-url"></span></p>
+        
+        <div class="debug-section">
+            <h3>🌍 Environment Detection</h3>
+            <div id="environment-detection"></div>
+        </div>
+        
+        <div class="debug-section">
+            <h3>🔧 Environment Variables (Build Time)</h3>
+            <div id="build-time-vars"></div>
+        </div>
+        
+        <div class="debug-section">
+            <h3>🌐 Runtime Detection</h3>
+            <div id="runtime-detection"></div>
+        </div>
+        
+        <div class="debug-section">
+            <h3>🎯 Expected vs Actual</h3>
+            <div id="comparison"></div>
+        </div>
+    </div>
+
+    <script>
+        // Display current URL
+        document.getElementById('current-url').textContent = window.location.href;
+        
+        // Environment detection logic (simplified from our config)
+        function detectEnvironment() {
+            const hostname = window.location.hostname;
+            
+            // Check for development patterns
+            if (hostname === 'nna-registry-frontend-dev.vercel.app' ||
+                hostname === 'localhost' || 
+                hostname === '127.0.0.1' ||
+                hostname.includes('-dev.vercel.app')) {
+                return 'development';
+            }
+            
+            // Check for staging patterns
+            if (hostname === 'nna-registry-frontend-stg.vercel.app' || 
+                hostname.includes('staging') || 
+                hostname.includes('-stg.vercel.app')) {
+                return 'staging';
+            }
+            
+            // Check for production patterns
+            if (hostname === 'nna-registry-frontend.vercel.app' ||
+                hostname.includes('registry.reviz.dev')) {
+                return 'production';
+            }
+            
+            return 'unknown';
+        }
+        
+        // Runtime detection
+        const detectedEnv = detectEnvironment();
+        const hostname = window.location.hostname;
+        
+        document.getElementById('environment-detection').innerHTML = `
+            <div class="env-var">Detected Environment: <strong>${detectedEnv}</strong></div>
+            <div class="env-var">Hostname: <strong>${hostname}</strong></div>
+        `;
+        
+        // Build-time environment variables (these are baked into the build)
+        const buildTimeVars = {
+            'REACT_APP_ENVIRONMENT': process.env.REACT_APP_ENVIRONMENT || 'undefined',
+            'REACT_APP_BACKEND_URL': process.env.REACT_APP_BACKEND_URL || 'undefined',
+            'REACT_APP_FRONTEND_URL': process.env.REACT_APP_FRONTEND_URL || 'undefined',
+            'NODE_ENV': process.env.NODE_ENV || 'undefined'
+        };
+        
+        let buildVarsHtml = '';
+        for (const [key, value] of Object.entries(buildTimeVars)) {
+            const isCorrect = (
+                (detectedEnv === 'development' && key === 'REACT_APP_BACKEND_URL' && value === 'https://registry.dev.reviz.dev') ||
+                (detectedEnv === 'development' && key === 'REACT_APP_ENVIRONMENT' && value === 'development') ||
+                (key === 'NODE_ENV' && (value === 'development' || value === 'production'))
+            );
+            const cssClass = isCorrect ? 'success' : (value === 'undefined' ? 'warning' : 'error');
+            buildVarsHtml += `<div class="env-var ${cssClass}">${key}: <strong>${value}</strong></div>`;
+        }
+        document.getElementById('build-time-vars').innerHTML = buildVarsHtml;
+        
+        // Runtime detection
+        document.getElementById('runtime-detection').innerHTML = `
+            <div class="env-var">User Agent: ${navigator.userAgent}</div>
+            <div class="env-var">Referrer: ${document.referrer || 'none'}</div>
+            <div class="env-var">Protocol: ${window.location.protocol}</div>
+        `;
+        
+        // Expected vs Actual comparison
+        const expectedBackendUrl = detectedEnv === 'development' ? 'https://registry.dev.reviz.dev' : 
+                                   detectedEnv === 'staging' ? 'https://registry.stg.reviz.dev' :
+                                   'https://registry.reviz.dev';
+        
+        const actualBackendUrl = buildTimeVars.REACT_APP_BACKEND_URL;
+        const isBackendCorrect = actualBackendUrl === expectedBackendUrl;
+        
+        document.getElementById('comparison').innerHTML = `
+            <div class="env-var">Expected Backend URL: <strong>${expectedBackendUrl}</strong></div>
+            <div class="env-var ${isBackendCorrect ? 'success' : 'error'}">Actual Backend URL: <strong>${actualBackendUrl}</strong></div>
+            <div class="env-var ${isBackendCorrect ? 'success' : 'error'}">Status: <strong>${isBackendCorrect ? '✅ CORRECT' : '❌ WRONG - THIS IS THE PROBLEM!'}</strong></div>
+            ${!isBackendCorrect ? '<div class="error">🚨 The Vercel environment variables need to be updated in the Vercel dashboard!</div>' : ''}
+        `;
+    </script>
+</body>
+</html>
