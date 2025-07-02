@@ -15,3 +15,5 @@ Updated environment.config.ts to properly read Vercel Preview environment variab
 - REACT_APP_BACKEND_URL=https://registry.dev.reviz.dev
 
 This file is created to trigger a new Vercel Preview deployment.
+
+**Update**: Fresh development deployment trigger for CORS fix verification.
