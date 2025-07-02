@@ -8,7 +8,7 @@ interface SyncState {
   isHealthy: boolean;
   lastSyncTime: number | null;
   lastError: string | null;
-  connectionState: 'connected' | 'disconnected' | 'error';
+  connectionState: 'connected' | 'disconnected' | 'error' | 'degraded';
 }
 
 interface TaxonomyVersion {
