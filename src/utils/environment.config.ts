@@ -93,19 +93,21 @@ export function detectEnvironment(): EnvironmentConfig['name'] {
 export function getBackendUrl(environment?: EnvironmentConfig['name']): string {
   const env = environment || detectEnvironment();
   
+  // Force correct backend URL based on detected environment
+  // This overrides incorrect Vercel environment variables
   switch (env) {
     case 'staging':
-      return process.env.REACT_APP_BACKEND_URL || 
-             'https://registry.stg.reviz.dev';
+      console.log('🎯 Backend URL for STAGING: https://registry.stg.reviz.dev');
+      return 'https://registry.stg.reviz.dev';
     
     case 'production':
-      return process.env.REACT_APP_BACKEND_URL || 
-             'https://registry.reviz.dev';
+      console.log('🎯 Backend URL for PRODUCTION: https://registry.reviz.dev');
+      return 'https://registry.reviz.dev';
     
     case 'development':
     default:
-      return process.env.REACT_APP_BACKEND_URL || 
-             'https://registry.dev.reviz.dev';
+      console.log('🎯 Backend URL for DEVELOPMENT: https://registry.dev.reviz.dev');
+      return 'https://registry.dev.reviz.dev';
   }
 }
 
