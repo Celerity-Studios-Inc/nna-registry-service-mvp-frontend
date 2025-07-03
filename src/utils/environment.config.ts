@@ -30,11 +30,13 @@ export function detectEnvironment(): EnvironmentConfig['name'] {
     console.log('- NODE_ENV:', process.env.NODE_ENV);
   }
   
-  // PRIORITY 1: Development environment detection (canonical domain first)
+  // PRIORITY 1: Development environment detection (canonical domain + git branch URLs)
   if (hostname === 'nna-registry-frontend-dev.vercel.app' ||
       hostname === 'localhost' || 
       hostname === '127.0.0.1' ||
-      hostname.includes('-dev.vercel.app')) {
+      hostname.includes('-dev.vercel.app') ||
+      hostname.includes('-git-development-') ||
+      hostname.includes('development') && hostname.includes('vercel.app')) {
     console.log('🎯 Hostname-based detection: DEVELOPMENT');
     return 'development';
   }
