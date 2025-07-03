@@ -99,25 +99,23 @@ export function getBackendUrl(environment?: EnvironmentConfig['name']): string {
   console.log('🔍 [getBackendUrl] Environment:', env);
   console.log('🔍 [getBackendUrl] REACT_APP_BACKEND_URL:', process.env.REACT_APP_BACKEND_URL);
   
-  // Use environment variable if available (should be correct from Vercel)
-  if (process.env.REACT_APP_BACKEND_URL) {
-    console.log('🎯 Using environment variable backend URL:', process.env.REACT_APP_BACKEND_URL);
-    return process.env.REACT_APP_BACKEND_URL;
-  }
+  // OVERRIDE: Ignore environment variables since they're not working correctly in Vercel
+  // Use detected environment to determine correct backend URL
+  console.log('🚨 OVERRIDING environment variable - using detected environment instead');
   
-  // Fallback to defaults based on environment
+  // Use detected environment to force correct backend URL
   switch (env) {
     case 'staging':
-      console.log('🎯 Fallback backend URL for STAGING: https://registry.stg.reviz.dev');
+      console.log('🎯 FORCED backend URL for STAGING: https://registry.stg.reviz.dev');
       return 'https://registry.stg.reviz.dev';
     
     case 'production':
-      console.log('🎯 Fallback backend URL for PRODUCTION: https://registry.reviz.dev');
+      console.log('🎯 FORCED backend URL for PRODUCTION: https://registry.reviz.dev');
       return 'https://registry.reviz.dev';
     
     case 'development':
     default:
-      console.log('🎯 Fallback backend URL for DEVELOPMENT: https://registry.dev.reviz.dev');
+      console.log('🎯 FORCED backend URL for DEVELOPMENT: https://registry.dev.reviz.dev');
       return 'https://registry.dev.reviz.dev';
   }
 }
