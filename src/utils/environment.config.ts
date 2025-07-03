@@ -19,36 +19,71 @@ export interface EnvironmentConfig {
  * Detect current environment based on multiple indicators
  */
 export function detectEnvironment(): EnvironmentConfig['name'] {
-  // Check environment variable first
-  if (process.env.REACT_APP_ENVIRONMENT) {
-    return process.env.REACT_APP_ENVIRONMENT as EnvironmentConfig['name'];
-  }
-  
-  // Check URL patterns for Vercel deployments
+  // Check URL patterns FIRST (most reliable for Vercel deployments)
   const hostname = typeof window !== 'undefined' ? window.location.hostname : '';
   
-  // Development environment detection
+  // Debug logging for environment detection
+  if (typeof window !== 'undefined') {
+    console.log('🌍 Environment Detection Debug:');
+    console.log('- Hostname:', hostname);
+    console.log('- REACT_APP_ENVIRONMENT:', process.env.REACT_APP_ENVIRONMENT);
+    console.log('- NODE_ENV:', process.env.NODE_ENV);
+  }
+  
+  // PRIORITY 1: Development environment detection (canonical domain first)
   if (hostname === 'nna-registry-frontend-dev.vercel.app' ||
       hostname === 'localhost' || 
       hostname === '127.0.0.1' ||
       hostname.includes('-dev.vercel.app')) {
+    console.log('🎯 Hostname-based detection: DEVELOPMENT');
     return 'development';
   }
   
-  // Staging environment detection
+  // PRIORITY 2: Staging environment detection (canonical domain first)
   if (hostname === 'nna-registry-frontend-stg.vercel.app' || 
       hostname.includes('staging') || 
       hostname.includes('-stg.vercel.app')) {
+    console.log('🎯 Hostname-based detection: STAGING');
     return 'staging';
   }
   
-  // Production environment detection
+  // PRIORITY 3: Production environment detection (canonical domain first)
   if (hostname === 'nna-registry-frontend.vercel.app' ||
       hostname.includes('registry.reviz.dev')) {
+    console.log('🎯 Hostname-based detection: PRODUCTION');
     return 'production';
   }
   
-  // Default to production for safety
+  // FALLBACK 1: Check environment variables (only if hostname detection fails)
+  const reactAppEnv = process.env.REACT_APP_ENVIRONMENT;
+  if (reactAppEnv === 'development') {
+    console.log('🎯 Environment variable fallback: DEVELOPMENT');
+    return 'development';
+  }
+  if (reactAppEnv === 'staging') {
+    console.log('🎯 Environment variable fallback: STAGING');
+    return 'staging';
+  }
+  if (reactAppEnv === 'production') {
+    console.log('🎯 Environment variable fallback: PRODUCTION');
+    return 'production';
+  }
+
+  // FALLBACK 2: Check NODE_ENV with type assertion for staging
+  const nodeEnv = process.env.NODE_ENV as string;
+  if (nodeEnv === 'staging') {
+    console.log('🎯 NODE_ENV fallback: STAGING');
+    return 'staging';
+  }
+  
+  // FALLBACK 3: Generic vercel.app check (last resort)
+  if (hostname.includes('vercel.app')) {
+    console.log('🎯 Generic Vercel fallback: PRODUCTION');
+    return 'production'; // Default to production for unknown vercel domains
+  }
+
+  // FALLBACK 4: Default to production for safety
+  console.log('🎯 Ultimate fallback: PRODUCTION');
   return 'production';
 }
 
@@ -58,45 +93,19 @@ export function detectEnvironment(): EnvironmentConfig['name'] {
 export function getBackendUrl(environment?: EnvironmentConfig['name']): string {
   const env = environment || detectEnvironment();
   
-  // FORCE CORRECT BACKEND URLs - Override Vercel environment variables
-  const hostname = typeof window !== 'undefined' ? window.location.hostname : '';
-  
-  // Force development backend for development hostnames
-  if (hostname === 'nna-registry-frontend-dev.vercel.app' || 
-      hostname === 'localhost' || 
-      hostname.includes('-dev.vercel.app')) {
-    console.log('🔧 FORCING development backend URL (overriding Vercel env vars)');
-    return 'https://registry.dev.reviz.dev';
-  }
-  
-  // Force staging backend for staging hostnames
-  if (hostname === 'nna-registry-frontend-stg.vercel.app' || 
-      hostname.includes('-stg.vercel.app')) {
-    console.log('🔧 FORCING staging backend URL (overriding Vercel env vars)');
-    return 'https://registry.stg.reviz.dev';
-  }
-  
-  // Force production backend for production hostnames
-  if (hostname === 'nna-registry-frontend.vercel.app') {
-    console.log('🔧 FORCING production backend URL (overriding Vercel env vars)');
-    return 'https://registry.reviz.dev';
-  }
-  
-  // Fallback to environment variable or defaults
-  if (process.env.REACT_APP_BACKEND_URL) {
-    return process.env.REACT_APP_BACKEND_URL;
-  }
-  
   switch (env) {
     case 'staging':
-      return 'https://registry.stg.reviz.dev';
+      return process.env.REACT_APP_BACKEND_URL || 
+             'https://registry.stg.reviz.dev';
     
     case 'production':
-      return 'https://registry.reviz.dev';
+      return process.env.REACT_APP_BACKEND_URL || 
+             'https://registry.reviz.dev';
     
     case 'development':
     default:
-      return 'https://registry.dev.reviz.dev';
+      return process.env.REACT_APP_BACKEND_URL || 
+             'https://registry.dev.reviz.dev';
   }
 }
 
@@ -106,21 +115,19 @@ export function getBackendUrl(environment?: EnvironmentConfig['name']): string {
 export function getFrontendUrl(environment?: EnvironmentConfig['name']): string {
   const env = environment || detectEnvironment();
   
-  // Use environment variable if available, otherwise fallback to defaults
-  if (process.env.REACT_APP_FRONTEND_URL) {
-    return process.env.REACT_APP_FRONTEND_URL;
-  }
-  
   switch (env) {
     case 'staging':
-      return 'https://nna-registry-frontend-stg.vercel.app';
+      return process.env.REACT_APP_FRONTEND_URL || 
+             'https://nna-registry-frontend-stg.vercel.app';
     
     case 'production':
-      return 'https://nna-registry-frontend.vercel.app';
+      return process.env.REACT_APP_FRONTEND_URL || 
+             'https://nna-registry-frontend.vercel.app';
     
     case 'development':
     default:
-      return 'https://nna-registry-frontend-dev.vercel.app';
+      return process.env.REACT_APP_FRONTEND_URL || 
+             'https://nna-registry-frontend-dev.vercel.app';
   }
 }
 
