@@ -49,13 +49,6 @@ const AssetDetail: React.FC = () => {
         if (!id) throw new Error('Asset ID is required');
 
         const loadedAsset = await assetService.getAssetById(id);
-        
-        // Debug: Check asset structure for file information
-        console.log('🔍 ASSET DEBUG - Full asset object:', loadedAsset);
-        console.log('🔍 ASSET DEBUG - Files property:', loadedAsset.files);
-        console.log('🔍 ASSET DEBUG - Files length:', loadedAsset.files?.length);
-        console.log('🔍 ASSET DEBUG - Asset keys:', Object.keys(loadedAsset));
-        
         setAsset(loadedAsset);
         setError(null);
       } catch (err) {
@@ -473,21 +466,22 @@ const AssetDetail: React.FC = () => {
                     }}
                   />
                 </ListItem>
-                {/* File Information */}
-                {(() => {
-                  console.log('🔍 RENDER DEBUG - asset.files:', asset.files);
-                  console.log('🔍 RENDER DEBUG - asset.files exists:', !!asset.files);
-                  console.log('🔍 RENDER DEBUG - asset.files.length:', asset.files?.length);
-                  console.log('🔍 RENDER DEBUG - Condition result:', asset.files && asset.files.length > 0);
-                  return null;
-                })()}
-                {asset.files && asset.files.length > 0 && (
+                {/* File Information - Adapted for backend structure */}
+                {asset.gcpStorageUrl && (
                   <>
                     <Divider component="li" />
                     <ListItem disablePadding sx={{ py: 1 }}>
                       <ListItemText
                         primary="Filename"
-                        secondary={asset.files[0].filename || 'Unknown'}
+                        secondary={(() => {
+                          // Extract filename from GCS URL or use asset name with extension
+                          if (asset.gcpStorageUrl) {
+                            const urlParts = asset.gcpStorageUrl.split('/');
+                            const filename = urlParts[urlParts.length - 1];
+                            return filename || `${asset.name}.mp4`;
+                          }
+                          return `${asset.name || 'Unknown'}.mp4`;
+                        })()}
                         primaryTypographyProps={{
                           variant: 'body2',
                           color: 'text.secondary',
@@ -503,7 +497,22 @@ const AssetDetail: React.FC = () => {
                     <ListItem disablePadding sx={{ py: 1 }}>
                       <ListItemText
                         primary="File Type"
-                        secondary={asset.files[0].contentType || 'Unknown'}
+                        secondary={(() => {
+                          // Determine file type from URL extension
+                          if (asset.gcpStorageUrl) {
+                            const url = asset.gcpStorageUrl.toLowerCase();
+                            if (url.includes('.mp4')) return 'video/mp4';
+                            if (url.includes('.jpg') || url.includes('.jpeg')) return 'image/jpeg';
+                            if (url.includes('.png')) return 'image/png';
+                            if (url.includes('.mp3')) return 'audio/mp3';
+                            if (url.includes('.wav')) return 'audio/wav';
+                          }
+                          // Default based on layer
+                          if (asset.layer === 'W' || asset.layer === 'M') return 'video/mp4';
+                          if (asset.layer === 'G') return 'audio/mp3';
+                          if (asset.layer === 'S' || asset.layer === 'L') return 'image/jpeg';
+                          return 'Unknown';
+                        })()}
                         primaryTypographyProps={{
                           variant: 'body2',
                           color: 'text.secondary',
@@ -513,15 +522,19 @@ const AssetDetail: React.FC = () => {
                     <Divider component="li" />
                     <ListItem disablePadding sx={{ py: 1 }}>
                       <ListItemText
-                        primary="File Size"
-                        secondary={
-                          asset.files[0].size 
-                            ? `${(asset.files[0].size / (1024 * 1024)).toFixed(2)} MB`
-                            : 'Unknown'
-                        }
+                        primary="File URL"
+                        secondary={asset.gcpStorageUrl}
                         primaryTypographyProps={{
                           variant: 'body2',
                           color: 'text.secondary',
+                        }}
+                        secondaryTypographyProps={{
+                          variant: 'body2',
+                          fontFamily: 'monospace',
+                          sx: { 
+                            wordBreak: 'break-all',
+                            fontSize: '0.75rem'
+                          },
                         }}
                       />
                     </ListItem>
