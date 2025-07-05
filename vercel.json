@@ -1,6 +1,5 @@
 {
   "name": "nna-registry-frontend",
-  "functions": {},
   "rewrites": [
     {
       "source": "/api/(.*)",
