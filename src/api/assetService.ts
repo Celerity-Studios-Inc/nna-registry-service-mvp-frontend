@@ -1135,11 +1135,40 @@ class AssetService {
     updateData: AssetUpdateRequest
   ): Promise<Asset> {
     try {
-      const response = await api.put<ApiResponse<Asset>>(
-        `/assets/${id}`,
-        updateData
-      );
-      return response.data.data as Asset;
+      // Use same smart routing approach as createAsset
+      const config = getEnvironmentConfig();
+      
+      // For update operations, we can use direct backend since it's just JSON data (small payload)
+      const updateUrl = `${config.backendUrl}/api/assets/${id}`;
+      
+      // Get auth token (same approach as createAsset)
+      const authToken = localStorage.getItem('accessToken');
+      if (!authToken) {
+        throw new Error('No authentication token found');
+      }
+
+      if (config.enableDebugLogging) {
+        console.log(`📝 Updating asset via DIRECT backend:`, updateUrl);
+        console.log('📦 Update data:', updateData);
+      }
+
+      const response = await fetch(updateUrl, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${authToken}`,
+        },
+        body: JSON.stringify(updateData),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Asset update failed:', errorText);
+        throw new Error(`Failed to update asset: ${response.status} ${response.statusText}`);
+      }
+
+      const result = await response.json();
+      return result.data as Asset;
     } catch (error) {
       console.error(`Error updating asset ${id}:`, error);
       throw new Error('Failed to update asset');
