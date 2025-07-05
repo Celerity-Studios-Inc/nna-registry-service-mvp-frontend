@@ -29,6 +29,7 @@ import {
   Collections as CollectionsIcon,
   Notifications as NotificationsIcon,
   ChevronLeft as ChevronLeftIcon,
+  ArrowBack as ArrowBackIcon,
   Upload as UploadIcon,
   ViewList as ViewListIcon,
   Category as CategoryIcon,
@@ -79,6 +80,11 @@ const MainLayout: React.FC = () => {
   const [errorTestOpen, setErrorTestOpen] = useState(false);
   const authContext = useContext(AuthContext);
   const { index: taxonomyIndex, isHealthy: taxonomyHealthy } = useTaxonomySync();
+  
+  // Check if we're on a detail page that should show back navigation
+  const isDetailPage = location.pathname.includes('/asset/') || 
+                       location.pathname.includes('/edit-asset/') ||
+                       (location.pathname === '/register-asset' && location.search);
 
   const handleLogout = () => {
     if (authContext) {
@@ -225,6 +231,19 @@ const MainLayout: React.FC = () => {
         }}
       >
         <Toolbar>
+          {/* Conditional Back Navigation for Detail Pages */}
+          {isDetailPage && (
+            <IconButton
+              color="inherit"
+              aria-label="go back"
+              edge="start"
+              onClick={() => navigate(-1)}
+              sx={{ mr: 2 }}
+            >
+              <ArrowBackIcon />
+            </IconButton>
+          )}
+          
           <IconButton
             color="inherit"
             aria-label="open drawer"
@@ -265,7 +284,7 @@ const MainLayout: React.FC = () => {
           </Box>
 
           {/* Taxonomy Sync Status with Dynamic Version Info */}
-          <Box sx={{ mr: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Box sx={{ mr: 2, display: 'flex', alignItems: 'center' }}>
             <Typography 
               variant="body2" 
               sx={{ 
@@ -279,7 +298,6 @@ const MainLayout: React.FC = () => {
                 : 'Taxonomy Loading...'
               }
             </Typography>
-            <TaxonomySyncStatus compact showRefreshButton={false} />
           </Box>
 
           {/* Right-aligned user info */}

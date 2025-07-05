@@ -27,6 +27,7 @@ import {
 import BackendStatus from '../components/common/BackendStatus';
 import assetService from '../api/assetService';
 import AssetThumbnail from '../components/common/AssetThumbnail';
+import AssetCard from '../components/asset/AssetCard';
 import { Asset } from '../types/asset.types';
 
 const mockUser = { username: 'ajaymadhok' };
@@ -184,90 +185,7 @@ const DashboardPage: React.FC = () => {
           <Grid container spacing={3}>
             {recentAssets.map(asset => (
               <Grid item xs={12} sm={6} md={4} key={asset.id || asset._id}>
-                <Card
-                  sx={{
-                    height: '100%',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    cursor: 'pointer',
-                    '&:hover': {
-                      boxShadow: 4,
-                      transform: 'translateY(-2px)',
-                      transition: 'all 0.2s ease-in-out',
-                    },
-                  }}
-                  onClick={() => navigate(`/asset/${asset.id || asset._id}`)}
-                >
-                  {/* Asset Thumbnail */}
-                  <Box sx={{ height: 160, overflow: 'hidden' }}>
-                    <AssetThumbnail 
-                      asset={asset} 
-                      width={400} 
-                      height={160}
-                    />
-                  </Box>
-                  
-                  <CardContent sx={{ flexGrow: 1, pb: 1 }}>
-                    <Typography 
-                      variant="h6" 
-                      component="h3" 
-                      noWrap
-                      sx={{ fontSize: '1rem', fontWeight: 600 }}
-                    >
-                      {asset.name}
-                    </Typography>
-                    
-                    <Box sx={{ display: 'flex', gap: 1, mt: 1, mb: 1 }}>
-                      <Chip 
-                        label={asset.layer} 
-                        size="small" 
-                        color="primary"
-                        sx={{ fontSize: '0.75rem' }}
-                      />
-                      <Chip 
-                        label={asset.category || asset.categoryCode} 
-                        size="small" 
-                        variant="outlined"
-                        sx={{ fontSize: '0.75rem' }}
-                      />
-                    </Box>
-                    
-                    {asset.description && (
-                      <Typography 
-                        variant="body2" 
-                        color="text.secondary"
-                        sx={{ 
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          display: '-webkit-box',
-                          WebkitLineClamp: 2,
-                          WebkitBoxOrient: 'vertical',
-                        }}
-                      >
-                        {asset.description}
-                      </Typography>
-                    )}
-                  </CardContent>
-                  
-                  <CardActions sx={{ px: 2, pb: 2 }}>
-                    <Typography 
-                      variant="caption" 
-                      color="text.secondary"
-                      sx={{ flexGrow: 1 }}
-                    >
-                      {new Date(asset.createdAt).toLocaleDateString()}
-                    </Typography>
-                    <Button 
-                      size="small"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        navigate(`/asset/${asset.id || asset._id}`);
-                      }}
-                    >
-                      View Details
-                    </Button>
-                  </CardActions>
-                </Card>
+                <AssetCard asset={asset} />
               </Grid>
             ))}
           </Grid>
