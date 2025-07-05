@@ -22,6 +22,7 @@ import RegisterPage from './pages/RegisterPage';
 // RegisterAssetPageNew is now used via RegisterAssetPageWrapper, so not imported directly
 import SearchAssetsPage from './pages/SearchAssetsPage';
 import AssetDetailPage from './pages/AssetDetailPage';
+import AssetEditPage from './pages/AssetEditPage';
 import DashboardPage from './pages/DashboardPage';
 import ApiDebugPage from './pages/ApiDebugPage';
 import ConnectivityHelp from './pages/ConnectivityHelp';
@@ -282,6 +283,14 @@ const App: React.FC = () => {
                             element={
                               <ProtectedRoute>
                                 <AssetDetailPage />
+                              </ProtectedRoute>
+                            }
+                          />
+                          <Route
+                            path="/assets/:id/edit"
+                            element={
+                              <ProtectedRoute>
+                                <AssetEditPage />
                               </ProtectedRoute>
                             }
                           />
