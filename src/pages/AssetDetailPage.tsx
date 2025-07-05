@@ -49,6 +49,13 @@ const AssetDetail: React.FC = () => {
         if (!id) throw new Error('Asset ID is required');
 
         const loadedAsset = await assetService.getAssetById(id);
+        
+        // Debug: Check asset structure for file information
+        console.log('🔍 ASSET DEBUG - Full asset object:', loadedAsset);
+        console.log('🔍 ASSET DEBUG - Files property:', loadedAsset.files);
+        console.log('🔍 ASSET DEBUG - Files length:', loadedAsset.files?.length);
+        console.log('🔍 ASSET DEBUG - Asset keys:', Object.keys(loadedAsset));
+        
         setAsset(loadedAsset);
         setError(null);
       } catch (err) {
@@ -467,6 +474,13 @@ const AssetDetail: React.FC = () => {
                   />
                 </ListItem>
                 {/* File Information */}
+                {(() => {
+                  console.log('🔍 RENDER DEBUG - asset.files:', asset.files);
+                  console.log('🔍 RENDER DEBUG - asset.files exists:', !!asset.files);
+                  console.log('🔍 RENDER DEBUG - asset.files.length:', asset.files?.length);
+                  console.log('🔍 RENDER DEBUG - Condition result:', asset.files && asset.files.length > 0);
+                  return null;
+                })()}
                 {asset.files && asset.files.length > 0 && (
                   <>
                     <Divider component="li" />
