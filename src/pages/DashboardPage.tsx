@@ -14,8 +14,9 @@ import {
   Avatar,
   Chip,
   IconButton,
+  CircularProgress,
 } from '@mui/material';
-import { Link as RouterLink } from 'react-router-dom';
+import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import {
   Add as AddIcon,
   Search as SearchIcon,
@@ -24,35 +25,42 @@ import {
   MoreVert as MoreVertIcon,
 } from '@mui/icons-material';
 import BackendStatus from '../components/common/BackendStatus';
+import assetService from '../api/assetService';
+import AssetThumbnail from '../components/common/AssetThumbnail';
+import { Asset } from '../types/asset.types';
 
 const mockUser = { username: 'ajaymadhok' };
-const mockIncompleteAssets = [
-  {
-    id: '1',
-    name: 'S.POP.BAS.001.png',
-    description: 'Olivia as a Base Pop Star',
-    type: 'training_data',
-    createdAt: '2025-05-06',
-  },
-  {
-    id: '2',
-    name: 'G.POP.BAS.002.mp3',
-    description: 'Pop Base Track',
-    type: 'rights_data',
-    createdAt: '2025-05-05',
-  },
-];
-const mockStats = { registered: 30, myAssets: 12, pending: 5 };
-const mockRecentAssets = [
-  { id: '1', name: 'S.POP.BAS.001.png', layer: 'S', createdAt: '2025-05-06' },
-  { id: '2', name: 'G.POP.BAS.002.mp3', layer: 'G', createdAt: '2025-05-05' },
-  { id: '3', name: 'L.POP.BAS.001.png', layer: 'L', createdAt: '2025-05-03' },
-];
 
 const DashboardPage: React.FC = () => {
-  const [incompleteAssets, setIncompleteAssets] = useState<any[]>([]);
+  const navigate = useNavigate();
+  const [recentAssets, setRecentAssets] = useState<Asset[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
   useEffect(() => {
-    setIncompleteAssets(mockIncompleteAssets);
+    const loadRecentAssets = async () => {
+      try {
+        setLoading(true);
+        // Fetch recent assets from the API (limit to 6 for dashboard)
+        const response = await assetService.searchAssets({
+          page: 1,
+          limit: 6,
+          sort: 'createdAt',
+          order: 'desc'
+        });
+        
+        if (response && response.items) {
+          setRecentAssets(response.items);
+        }
+      } catch (err) {
+        console.error('Error loading recent assets:', err);
+        setError('Failed to load recent assets');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadRecentAssets();
   }, []);
 
   return (
@@ -117,170 +125,154 @@ const DashboardPage: React.FC = () => {
         </Grid>
       </Paper>
 
-      {/* Incomplete Assets */}
-      {incompleteAssets.length > 0 && (
-        <Paper sx={{ p: 3, mb: 3 }}>
-          <Box
-            sx={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              mb: 2,
-            }}
+      {/* Recent Assets - Default Dashboard View */}
+      <Paper sx={{ p: 3, mb: 3 }}>
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            mb: 2,
+          }}
+        >
+          <Typography variant="h6" component="h2">
+            Recent Assets
+          </Typography>
+          <Button
+            component={RouterLink}
+            to="/search-assets"
+            variant="outlined"
+            size="small"
           >
-            <Typography variant="h6" component="h2">
-              Incomplete Assets
-            </Typography>
-            <Chip
-              label={`${incompleteAssets.length} pending`}
-              color="warning"
-            />
+            View All Assets
+          </Button>
+        </Box>
+        <Divider sx={{ mb: 3 }} />
+        
+        {loading ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+            <CircularProgress />
           </Box>
-          <Divider sx={{ mb: 2 }} />
-          <Grid container spacing={2}>
-            {incompleteAssets.map(asset => (
-              <Grid item xs={12} sm={6} md={4} key={asset.id}>
+        ) : error ? (
+          <Box sx={{ textAlign: 'center', py: 4 }}>
+            <Typography color="error" gutterBottom>
+              {error}
+            </Typography>
+            <Button 
+              variant="outlined" 
+              onClick={() => window.location.reload()}
+            >
+              Retry
+            </Button>
+          </Box>
+        ) : recentAssets.length === 0 ? (
+          <Box sx={{ textAlign: 'center', py: 4 }}>
+            <Typography color="text.secondary" gutterBottom>
+              No assets found. Start by registering your first asset!
+            </Typography>
+            <Button
+              component={RouterLink}
+              to="/register-asset"
+              variant="contained"
+              startIcon={<AddIcon />}
+              sx={{ mt: 2 }}
+            >
+              Register Asset
+            </Button>
+          </Box>
+        ) : (
+          <Grid container spacing={3}>
+            {recentAssets.map(asset => (
+              <Grid item xs={12} sm={6} md={4} key={asset.id || asset._id}>
                 <Card
                   sx={{
+                    height: '100%',
                     display: 'flex',
                     flexDirection: 'column',
-                    height: '100%',
+                    cursor: 'pointer',
                     '&:hover': {
-                      boxShadow: 3,
+                      boxShadow: 4,
                       transform: 'translateY(-2px)',
-                      transition: 'all 0.2s',
+                      transition: 'all 0.2s ease-in-out',
                     },
                   }}
+                  onClick={() => navigate(`/asset/${asset.id || asset._id}`)}
                 >
-                  <CardHeader
-                    avatar={
-                      <Avatar
-                        sx={{
-                          bgcolor:
-                            asset.type === 'training_data'
-                              ? 'secondary.main'
-                              : 'primary.main',
+                  {/* Asset Thumbnail */}
+                  <Box sx={{ height: 160, overflow: 'hidden' }}>
+                    <AssetThumbnail 
+                      asset={asset} 
+                      width={400} 
+                      height={160}
+                    />
+                  </Box>
+                  
+                  <CardContent sx={{ flexGrow: 1, pb: 1 }}>
+                    <Typography 
+                      variant="h6" 
+                      component="h3" 
+                      noWrap
+                      sx={{ fontSize: '1rem', fontWeight: 600 }}
+                    >
+                      {asset.name}
+                    </Typography>
+                    
+                    <Box sx={{ display: 'flex', gap: 1, mt: 1, mb: 1 }}>
+                      <Chip 
+                        label={asset.layer} 
+                        size="small" 
+                        color="primary"
+                        sx={{ fontSize: '0.75rem' }}
+                      />
+                      <Chip 
+                        label={asset.category || asset.categoryCode} 
+                        size="small" 
+                        variant="outlined"
+                        sx={{ fontSize: '0.75rem' }}
+                      />
+                    </Box>
+                    
+                    {asset.description && (
+                      <Typography 
+                        variant="body2" 
+                        color="text.secondary"
+                        sx={{ 
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          display: '-webkit-box',
+                          WebkitLineClamp: 2,
+                          WebkitBoxOrient: 'vertical',
                         }}
                       >
-                        {asset.name.charAt(0)}
-                      </Avatar>
-                    }
-                    action={
-                      <IconButton>
-                        <MoreVertIcon />
-                      </IconButton>
-                    }
-                    title={asset.name}
-                    subheader={`Needs ${
-                      asset.type === 'training_data'
-                        ? 'training data'
-                        : 'rights data'
-                    }`}
-                  />
-                  <CardContent sx={{ flexGrow: 1 }}>
-                    <Typography
-                      variant="body2"
-                      color="text.secondary"
-                      paragraph
-                    >
-                      {asset.description}
-                    </Typography>
-                    <Typography
-                      variant="caption"
-                      color="text.secondary"
-                      display="block"
-                    >
-                      Created {asset.createdAt}
-                    </Typography>
+                        {asset.description}
+                      </Typography>
+                    )}
                   </CardContent>
-                  <CardActions>
-                    <Button
-                      size="small"
-                      color="primary"
-                      startIcon={<EditIcon />}
-                      component={RouterLink}
-                      to={`/register-asset?edit=${asset.id}`}
+                  
+                  <CardActions sx={{ px: 2, pb: 2 }}>
+                    <Typography 
+                      variant="caption" 
+                      color="text.secondary"
+                      sx={{ flexGrow: 1 }}
                     >
-                      Complete
+                      {new Date(asset.createdAt).toLocaleDateString()}
+                    </Typography>
+                    <Button 
+                      size="small"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigate(`/asset/${asset.id || asset._id}`);
+                      }}
+                    >
+                      View Details
                     </Button>
-                    <Button size="small">View Details</Button>
                   </CardActions>
                 </Card>
               </Grid>
             ))}
           </Grid>
-        </Paper>
-      )}
-
-      {/* Stats Cards */}
-      <Box sx={{ mb: 4 }}>
-        <Typography variant="h6" gutterBottom>
-          Overview
-        </Typography>
-        <Grid container spacing={3}>
-          <Grid item xs={12} sm={6} md={3}>
-            <Card>
-              <CardContent>
-                <Typography color="text.secondary" gutterBottom>
-                  Registered Assets
-                </Typography>
-                <Typography variant="h5">{mockStats.registered}</Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <Card>
-              <CardContent>
-                <Typography color="text.secondary" gutterBottom>
-                  My Assets
-                </Typography>
-                <Typography variant="h5">{mockStats.myAssets}</Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <Card>
-              <CardContent>
-                <Typography color="text.secondary" gutterBottom>
-                  Pending Review
-                </Typography>
-                <Typography variant="h5">{mockStats.pending}</Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-        </Grid>
-      </Box>
-
-      {/* Recent Assets */}
-      <Box>
-        <Typography variant="h6" gutterBottom>
-          Recent Assets
-        </Typography>
-        <Grid container spacing={2}>
-          {mockRecentAssets.map(asset => (
-            <Grid item key={asset.id} xs={12} sm={6} md={4}>
-              <Paper sx={{ p: 2 }}>
-                <Typography variant="subtitle1">{asset.name}</Typography>
-                <Typography variant="body2">Layer: {asset.layer}</Typography>
-                <Typography variant="caption">
-                  Created: {asset.createdAt}
-                </Typography>
-                <Box sx={{ mt: 1 }}>
-                  <Button
-                    size="small"
-                    startIcon={<EditIcon />}
-                    component={RouterLink}
-                    to={`/register-asset?edit=${asset.id}`}
-                  >
-                    Curate
-                  </Button>
-                  <Button size="small">View</Button>
-                </Box>
-              </Paper>
-            </Grid>
-          ))}
-        </Grid>
-      </Box>
+        )}
+      </Paper>
     </Container>
   );
 };

@@ -45,6 +45,7 @@ import { AuthContext } from '../../contexts/AuthContext';
 import ErrorTestComponent from '../common/ErrorTestComponent';
 import { detectEnvironment } from '../../utils/environment.config';
 import TaxonomySyncStatus from '../common/TaxonomySyncStatus';
+import { useTaxonomySync } from '../../hooks/useTaxonomySync';
 
 const drawerWidth = 240;
 
@@ -77,6 +78,7 @@ const MainLayout: React.FC = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [errorTestOpen, setErrorTestOpen] = useState(false);
   const authContext = useContext(AuthContext);
+  const { index: taxonomyIndex, isHealthy: taxonomyHealthy } = useTaxonomySync();
 
   const handleLogout = () => {
     if (authContext) {
@@ -238,20 +240,45 @@ const MainLayout: React.FC = () => {
             <Typography variant="h6" noWrap component="div" sx={{ mr: 2 }}>
               NNA Registry Service
             </Typography>
+            
+            {/* Environment Chip with colored background */}
             <Chip
               label={getCurrentEnvironment().toUpperCase()}
               size="small"
-              color={getCurrentEnvironment() === 'production' ? 'success' : 
-                     getCurrentEnvironment() === 'staging' ? 'warning' : 'info'}
-              sx={{ mr: 1.5 }}
+              sx={{ 
+                mr: 1.5,
+                fontWeight: 600,
+                fontSize: '0.75rem',
+                backgroundColor: getCurrentEnvironment() === 'production' ? '#4caf50' : 
+                                getCurrentEnvironment() === 'staging' ? '#ff9800' : '#f44336',
+                color: 'white',
+                '&:hover': {
+                  backgroundColor: getCurrentEnvironment() === 'production' ? '#45a049' : 
+                                  getCurrentEnvironment() === 'staging' ? '#e68900' : '#da190b',
+                }
+              }}
             />
+            
             <Typography variant="caption" sx={{ opacity: 0.8 }}>
               Release {APP_VERSION}
             </Typography>
           </Box>
 
-          {/* Taxonomy Sync Status */}
-          <Box sx={{ mr: 2 }}>
+          {/* Taxonomy Sync Status with Dynamic Version Info */}
+          <Box sx={{ mr: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Typography 
+              variant="body2" 
+              sx={{ 
+                fontSize: '0.8rem',
+                fontWeight: 500,
+                color: taxonomyHealthy ? 'rgba(255, 255, 255, 0.9)' : 'rgba(255, 193, 7, 0.9)'
+              }}
+            >
+              {taxonomyIndex 
+                ? `Synced with Taxonomy v${taxonomyIndex.version}`
+                : 'Taxonomy Loading...'
+              }
+            </Typography>
             <TaxonomySyncStatus compact showRefreshButton={false} />
           </Box>
 

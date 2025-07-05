@@ -131,10 +131,10 @@ const AssetDetail: React.FC = () => {
         </Alert>
         <Button
           startIcon={<ArrowBackIcon />}
-          onClick={() => navigate('/search-assets')}
+          onClick={() => navigate(-1)} // Go back to previous page
           variant="outlined"
         >
-          Back to Search
+          Back to Browse Assets
         </Button>
       </Container>
     );
@@ -179,11 +179,11 @@ const AssetDetail: React.FC = () => {
     <Container maxWidth="lg" sx={{ mt: 4 }}>
       <Button
         startIcon={<ArrowBackIcon />}
-        onClick={() => navigate('/search-assets')}
+        onClick={() => navigate(-1)} // Go back to previous page
         variant="outlined"
         sx={{ mb: 3 }}
       >
-        Back to Search
+        Back to Browse Assets
       </Button>
 
       <Paper elevation={3} sx={{ p: 4 }}>
@@ -381,7 +381,7 @@ const AssetDetail: React.FC = () => {
               </Grid>
             </Paper>
 
-            {/* Basic Details */}
+            {/* Compact Asset Details */}
             <Paper variant="outlined" sx={{ p: 3, mb: 3 }}>
               <Typography 
                 variant="h6" 
@@ -391,113 +391,98 @@ const AssetDetail: React.FC = () => {
               >
                 📋 Asset Details
               </Typography>
-              <List disablePadding>
-                <ListItem disablePadding sx={{ py: 1 }}>
-                  <ListItemText
-                    primary="Asset ID"
-                    secondary={asset.id || asset._id || 'Unknown'}
-                    primaryTypographyProps={{
-                      variant: 'body2',
-                      color: 'text.secondary',
-                    }}
-                    secondaryTypographyProps={{
-                      variant: 'body2',
-                      fontFamily: 'monospace',
-                      sx: { wordBreak: 'break-all' },
-                    }}
-                  />
-                </ListItem>
-                <Divider component="li" />
-                <ListItem disablePadding sx={{ py: 1 }}>
-                  <ListItemText
-                    primary="Layer"
-                    secondary={asset.layer || 'Unknown'}
-                    primaryTypographyProps={{
-                      variant: 'body2',
-                      color: 'text.secondary',
-                    }}
-                  />
-                </ListItem>
-                <Divider component="li" />
-                <ListItem disablePadding sx={{ py: 1 }}>
-                  <ListItemText
-                    primary="Category"
-                    secondary={
-                      asset.category || asset.categoryCode || 'Unknown'
-                    }
-                    primaryTypographyProps={{
-                      variant: 'body2',
-                      color: 'text.secondary',
-                    }}
-                  />
-                </ListItem>
-                <Divider component="li" />
-                <ListItem disablePadding sx={{ py: 1 }}>
-                  <ListItemText
-                    primary="Subcategory"
-                    secondary={
-                      asset.subcategory || asset.subcategoryCode || 'Unknown'
-                    }
-                    primaryTypographyProps={{
-                      variant: 'body2',
-                      color: 'text.secondary',
-                    }}
-                  />
-                </ListItem>
-                <Divider component="li" />
-                <ListItem disablePadding sx={{ py: 1 }}>
-                  <ListItemText
-                    primary="Created"
-                    secondary={formatDate(asset.createdAt)}
-                    primaryTypographyProps={{
-                      variant: 'body2',
-                      color: 'text.secondary',
-                    }}
-                  />
-                </ListItem>
-                <Divider component="li" />
-                <ListItem disablePadding sx={{ py: 1 }}>
-                  <ListItemText
-                    primary="Last Updated"
-                    secondary={formatDate(asset.updatedAt)}
-                    primaryTypographyProps={{
-                      variant: 'body2',
-                      color: 'text.secondary',
-                    }}
-                  />
-                </ListItem>
-                {/* File Information - Adapted for backend structure */}
+              <Box sx={{ 
+                '& .detail-row': {
+                  display: 'grid',
+                  gridTemplateColumns: '1fr 1fr',
+                  gap: 3,
+                  py: 1.5,
+                  px: 2,
+                  borderRadius: 1,
+                },
+                '& .detail-row:nth-of-type(odd)': {
+                  backgroundColor: '#f8f9fa',
+                },
+                '& .detail-row:nth-of-type(even)': {
+                  backgroundColor: 'transparent',
+                },
+                '& .detail-item': {
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 0.5,
+                },
+                '& .detail-label': {
+                  fontSize: '0.75rem',
+                  fontWeight: 600,
+                  color: 'text.secondary',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.5px',
+                },
+                '& .detail-value': {
+                  fontSize: '0.875rem',
+                  color: 'text.primary',
+                  fontFamily: (theme) => theme.typography.body2.fontFamily,
+                }
+              }}>
+                {/* Row 1: Asset ID (full width) */}
+                <Box className="detail-row" sx={{ gridTemplateColumns: '1fr !important' }}>
+                  <Box className="detail-item">
+                    <Typography className="detail-label">Asset ID</Typography>
+                    <Typography className="detail-value" sx={{ 
+                      fontFamily: 'monospace', 
+                      fontSize: '0.8rem',
+                      wordBreak: 'break-all' 
+                    }}>
+                      {asset.id || asset._id || 'Unknown'}
+                    </Typography>
+                  </Box>
+                </Box>
+
+                {/* Row 2: Layer & Category */}
+                <Box className="detail-row">
+                  <Box className="detail-item">
+                    <Typography className="detail-label">Layer</Typography>
+                    <Typography className="detail-value">{asset.layer || 'Unknown'}</Typography>
+                  </Box>
+                  <Box className="detail-item">
+                    <Typography className="detail-label">Category</Typography>
+                    <Typography className="detail-value">
+                      {asset.category || asset.categoryCode || 'Unknown'}
+                    </Typography>
+                  </Box>
+                </Box>
+
+                {/* Row 3: Subcategory & (empty for now) */}
+                <Box className="detail-row">
+                  <Box className="detail-item">
+                    <Typography className="detail-label">Subcategory</Typography>
+                    <Typography className="detail-value">
+                      {asset.subcategory || asset.subcategoryCode || 'Unknown'}
+                    </Typography>
+                  </Box>
+                  <Box className="detail-item">
+                    {/* Empty space for symmetry */}
+                  </Box>
+                </Box>
+
+                {/* Row 4: Created & Last Updated */}
+                <Box className="detail-row">
+                  <Box className="detail-item">
+                    <Typography className="detail-label">Date Created</Typography>
+                    <Typography className="detail-value">{formatDate(asset.createdAt)}</Typography>
+                  </Box>
+                  <Box className="detail-item">
+                    <Typography className="detail-label">Last Updated</Typography>
+                    <Typography className="detail-value">{formatDate(asset.updatedAt)}</Typography>
+                  </Box>
+                </Box>
+                {/* Row 5: File Type & File Size */}
                 {asset.gcpStorageUrl && (
-                  <>
-                    <Divider component="li" />
-                    <ListItem disablePadding sx={{ py: 1 }}>
-                      <ListItemText
-                        primary="Filename"
-                        secondary={(() => {
-                          // Extract filename from GCS URL or use asset name with extension
-                          if (asset.gcpStorageUrl) {
-                            const urlParts = asset.gcpStorageUrl.split('/');
-                            const filename = urlParts[urlParts.length - 1];
-                            return filename || `${asset.name}.mp4`;
-                          }
-                          return `${asset.name || 'Unknown'}.mp4`;
-                        })()}
-                        primaryTypographyProps={{
-                          variant: 'body2',
-                          color: 'text.secondary',
-                        }}
-                        secondaryTypographyProps={{
-                          variant: 'body2',
-                          fontFamily: 'monospace',
-                          sx: { wordBreak: 'break-all' },
-                        }}
-                      />
-                    </ListItem>
-                    <Divider component="li" />
-                    <ListItem disablePadding sx={{ py: 1 }}>
-                      <ListItemText
-                        primary="File Type"
-                        secondary={(() => {
+                  <Box className="detail-row">
+                    <Box className="detail-item">
+                      <Typography className="detail-label">File Type</Typography>
+                      <Typography className="detail-value">
+                        {(() => {
                           // Determine file type from URL extension
                           if (asset.gcpStorageUrl) {
                             const url = asset.gcpStorageUrl.toLowerCase();
@@ -513,49 +498,84 @@ const AssetDetail: React.FC = () => {
                           if (asset.layer === 'S' || asset.layer === 'L') return 'image/jpeg';
                           return 'Unknown';
                         })()}
-                        primaryTypographyProps={{
-                          variant: 'body2',
-                          color: 'text.secondary',
-                        }}
-                      />
-                    </ListItem>
-                    <Divider component="li" />
-                    <ListItem disablePadding sx={{ py: 1 }}>
-                      <ListItemText
-                        primary="File URL"
-                        secondary={asset.gcpStorageUrl}
-                        primaryTypographyProps={{
-                          variant: 'body2',
-                          color: 'text.secondary',
-                        }}
-                        secondaryTypographyProps={{
-                          variant: 'body2',
-                          fontFamily: 'monospace',
-                          sx: { 
-                            wordBreak: 'break-all',
-                            fontSize: '0.75rem'
-                          },
-                        }}
-                      />
-                    </ListItem>
-                  </>
+                      </Typography>
+                    </Box>
+                    <Box className="detail-item">
+                      <Typography className="detail-label">File Size</Typography>
+                      <Typography className="detail-value">
+                        {(() => {
+                          // Try to get file size from various sources
+                          if (asset.files && asset.files[0]?.size) {
+                            return `${(asset.files[0].size / (1024 * 1024)).toFixed(2)} MB`;
+                          }
+                          if ((asset as any).fileSize) {
+                            return `${((asset as any).fileSize / (1024 * 1024)).toFixed(2)} MB`;
+                          }
+                          if ((asset as any).size) {
+                            return `${((asset as any).size / (1024 * 1024)).toFixed(2)} MB`;
+                          }
+                          // Fallback: estimate from layer type
+                          if (asset.layer === 'W' || asset.layer === 'M') return '2-5 MB (Video)';
+                          if (asset.layer === 'G') return '3-8 MB (Audio)';
+                          if (asset.layer === 'S' || asset.layer === 'L') return '0.5-2 MB (Image)';
+                          return 'Size not available';
+                        })()}
+                      </Typography>
+                    </Box>
+                  </Box>
                 )}
+
+                {/* Row 6: Filename (full width) */}
+                {asset.gcpStorageUrl && (
+                  <Box className="detail-row" sx={{ gridTemplateColumns: '1fr !important' }}>
+                    <Box className="detail-item">
+                      <Typography className="detail-label">Filename</Typography>
+                      <Typography className="detail-value" sx={{ 
+                        fontFamily: 'monospace', 
+                        fontSize: '0.8rem',
+                        wordBreak: 'break-all' 
+                      }}>
+                        {(() => {
+                          // Extract filename from GCS URL or use asset name with extension
+                          if (asset.gcpStorageUrl) {
+                            const urlParts = asset.gcpStorageUrl.split('/');
+                            const filename = urlParts[urlParts.length - 1];
+                            return filename || `${asset.name}.mp4`;
+                          }
+                          return `${asset.name || 'Unknown'}.mp4`;
+                        })()}
+                      </Typography>
+                    </Box>
+                  </Box>
+                )}
+
+                {/* Row 7: File URL (full width) */}
+                {asset.gcpStorageUrl && (
+                  <Box className="detail-row" sx={{ gridTemplateColumns: '1fr !important' }}>
+                    <Box className="detail-item">
+                      <Typography className="detail-label">File URL</Typography>
+                      <Typography className="detail-value" sx={{ 
+                        fontFamily: 'monospace', 
+                        fontSize: '0.7rem',
+                        wordBreak: 'break-all',
+                        color: 'primary.main'
+                      }}>
+                        {asset.gcpStorageUrl}
+                      </Typography>
+                    </Box>
+                  </Box>
+                )}
+              </Box>
+                {/* Row 8: Created By (if available) */}
                 {asset.createdBy && (
-                  <>
-                    <Divider component="li" />
-                    <ListItem disablePadding sx={{ py: 1 }}>
-                      <ListItemText
-                        primary="Created By"
-                        secondary={asset.createdBy}
-                        primaryTypographyProps={{
-                          variant: 'body2',
-                          color: 'text.secondary',
-                        }}
-                      />
-                    </ListItem>
-                  </>
+                  <Box className="detail-row" sx={{ gridTemplateColumns: '1fr !important' }}>
+                    <Box className="detail-item">
+                      <Typography className="detail-label">Created By</Typography>
+                      <Typography className="detail-value">{asset.createdBy}</Typography>
+                    </Box>
+                  </Box>
                 )}
-              </List>
+              </Box>
             </Paper>
 
             {/* Files section */}
