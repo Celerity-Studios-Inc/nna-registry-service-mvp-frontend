@@ -565,7 +565,7 @@ const AssetDetail: React.FC = () => {
                     </Box>
                   </Box>
                 )}
-              </Box>
+
                 {/* Row 8: Created By (if available) */}
                 {asset.createdBy && (
                   <Box className="detail-row" sx={{ gridTemplateColumns: '1fr !important' }}>

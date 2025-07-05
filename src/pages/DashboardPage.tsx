@@ -42,15 +42,15 @@ const DashboardPage: React.FC = () => {
       try {
         setLoading(true);
         // Fetch recent assets from the API (limit to 6 for dashboard)
-        const response = await assetService.searchAssets({
+        const response = await assetService.getAssets({
           page: 1,
           limit: 6,
           sort: 'createdAt',
           order: 'desc'
         });
         
-        if (response && response.items) {
-          setRecentAssets(response.items);
+        if (response && response.data) {
+          setRecentAssets(response.data);
         }
       } catch (err) {
         console.error('Error loading recent assets:', err);
