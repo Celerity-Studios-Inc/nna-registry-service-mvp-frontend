@@ -466,6 +466,53 @@ const AssetDetail: React.FC = () => {
                     }}
                   />
                 </ListItem>
+                {/* File Information */}
+                {asset.files && asset.files.length > 0 && (
+                  <>
+                    <Divider component="li" />
+                    <ListItem disablePadding sx={{ py: 1 }}>
+                      <ListItemText
+                        primary="Filename"
+                        secondary={asset.files[0].filename || 'Unknown'}
+                        primaryTypographyProps={{
+                          variant: 'body2',
+                          color: 'text.secondary',
+                        }}
+                        secondaryTypographyProps={{
+                          variant: 'body2',
+                          fontFamily: 'monospace',
+                          sx: { wordBreak: 'break-all' },
+                        }}
+                      />
+                    </ListItem>
+                    <Divider component="li" />
+                    <ListItem disablePadding sx={{ py: 1 }}>
+                      <ListItemText
+                        primary="File Type"
+                        secondary={asset.files[0].contentType || 'Unknown'}
+                        primaryTypographyProps={{
+                          variant: 'body2',
+                          color: 'text.secondary',
+                        }}
+                      />
+                    </ListItem>
+                    <Divider component="li" />
+                    <ListItem disablePadding sx={{ py: 1 }}>
+                      <ListItemText
+                        primary="File Size"
+                        secondary={
+                          asset.files[0].size 
+                            ? `${(asset.files[0].size / (1024 * 1024)).toFixed(2)} MB`
+                            : 'Unknown'
+                        }
+                        primaryTypographyProps={{
+                          variant: 'body2',
+                          color: 'text.secondary',
+                        }}
+                      />
+                    </ListItem>
+                  </>
+                )}
                 {asset.createdBy && (
                   <>
                     <Divider component="li" />
