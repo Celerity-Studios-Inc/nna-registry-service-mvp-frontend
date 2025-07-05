@@ -84,7 +84,28 @@ const MainLayout: React.FC = () => {
   // Check if we're on a detail page that should show back navigation
   const isDetailPage = location.pathname.includes('/asset/') || 
                        location.pathname.includes('/edit-asset/') ||
+                       location.pathname.startsWith('/assets/') ||
                        (location.pathname === '/register-asset' && location.search);
+  
+  // Smart navigation handler for main header back button
+  const handleMainBackNavigation = () => {
+    // For asset detail pages, go to Browse Assets
+    if (location.pathname.includes('/asset/')) {
+      navigate('/search-assets');
+    }
+    // For edit pages, go to Browse Assets  
+    else if (location.pathname.includes('/edit-asset/')) {
+      navigate('/search-assets');
+    }
+    // For register asset with query params, go to dashboard
+    else if (location.pathname === '/register-asset' && location.search) {
+      navigate('/dashboard');
+    }
+    // Default fallback
+    else {
+      navigate(-1);
+    }
+  };
 
   const handleLogout = () => {
     if (authContext) {
@@ -237,8 +258,9 @@ const MainLayout: React.FC = () => {
               color="inherit"
               aria-label="go back"
               edge="start"
-              onClick={() => navigate(-1)}
+              onClick={handleMainBackNavigation}
               sx={{ mr: 2 }}
+              title="Go back to Browse Assets"
             >
               <ArrowBackIcon />
             </IconButton>

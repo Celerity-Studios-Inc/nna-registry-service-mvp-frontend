@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import {
   Container,
   Typography,
@@ -35,11 +35,24 @@ import { isVideoUrl } from '../utils/videoThumbnail';
 const AssetDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
 
   // State
   const [asset, setAsset] = useState<Asset | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
+
+  // Smart back navigation - go to Browse Assets instead of edit page
+  const handleBackNavigation = () => {
+    // Check if we came from an edit page by looking at the referrer or state
+    const searchParams = new URLSearchParams(location.search);
+    const fromEdit = searchParams.get('from') === 'edit' || 
+                     document.referrer.includes('/edit-asset/') ||
+                     window.history.length > 1;
+    
+    // Always go to Browse Assets for consistency
+    navigate('/search-assets');
+  };
 
   // Load asset data
   useEffect(() => {
@@ -131,7 +144,7 @@ const AssetDetail: React.FC = () => {
         </Alert>
         <Button
           startIcon={<ArrowBackIcon />}
-          onClick={() => navigate(-1)} // Go back to previous page
+          onClick={handleBackNavigation}
           variant="outlined"
         >
           Back to Browse Assets
@@ -179,7 +192,7 @@ const AssetDetail: React.FC = () => {
     <Container maxWidth="lg" sx={{ mt: 4 }}>
       <Button
         startIcon={<ArrowBackIcon />}
-        onClick={() => navigate(-1)} // Go back to previous page
+        onClick={handleBackNavigation}
         variant="outlined"
         sx={{ mb: 3 }}
       >
