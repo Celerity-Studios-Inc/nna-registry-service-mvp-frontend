@@ -44,7 +44,10 @@ const AssetEditPage: React.FC = () => {
     try {
       setSaving(true);
       setError(null);
-      await assetService.updateAsset(id, { description });
+      // Use asset.name for the backend API (which expects asset name, not MongoDB ID)
+      const assetIdentifier = asset.name || id;
+      console.log('🔍 Update attempt - using asset identifier:', assetIdentifier, 'for asset:', asset.name);
+      await assetService.updateAsset(assetIdentifier, { description });
       navigate(`/assets/${id}`);
     } catch (error) {
       console.error('Error updating asset:', error);
