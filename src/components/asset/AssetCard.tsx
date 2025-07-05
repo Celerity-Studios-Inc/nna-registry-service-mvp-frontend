@@ -392,14 +392,14 @@ const AssetCard: React.FC<AssetCardProps> = ({
           <Button
             size="small"
             component={Link}
-            to={`/assets/${asset._id || asset.id}`} // Use MongoDB ID for URL routing
+            to={`/assets/${asset._id || asset.id}/edit`} // Navigate to edit page
             endIcon={<LaunchIcon />}
             onClick={e => {
               // Prevent navigation if id is undefined or null
               if (!asset._id && !asset.id) {
                 e.preventDefault();
                 console.error(
-                  'Asset ID is undefined, cannot navigate to details page',
+                  'Asset ID is undefined, cannot navigate to edit page',
                   asset
                 );
                 // Could add an error notification here
@@ -408,7 +408,7 @@ const AssetCard: React.FC<AssetCardProps> = ({
               }
             }}
           >
-            View Details
+            Edit Details
           </Button>
         </CardActions>
       )}
