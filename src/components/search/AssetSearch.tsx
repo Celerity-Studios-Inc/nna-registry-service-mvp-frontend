@@ -576,17 +576,17 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
           bValue = LAYER_ORDER[b.layer || ''] || 999;
           break;
         case 'createdBy':
-          // Check multiple possible field names for creator information
+          // Backend returns 'registeredBy' as primary field for creator information
           aValue = (
-            a.createdBy || 
             (a as any).registeredBy || 
+            a.createdBy || 
             a.metadata?.createdBy || 
             (a as any).created_by ||
             ''
           ).toLowerCase();
           bValue = (
-            b.createdBy || 
             (b as any).registeredBy || 
+            b.createdBy || 
             b.metadata?.createdBy || 
             (b as any).created_by ||
             ''
