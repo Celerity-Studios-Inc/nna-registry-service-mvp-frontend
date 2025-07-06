@@ -1,0 +1,115 @@
+name: Production CI/CD
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+  VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+jobs:
+  test:
+    name: Test & Build
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+
+    - name: Install Dependencies
+      run: npm ci
+
+    - name: Type Check
+      run: npx tsc --noEmit
+
+    - name: Lint Check
+      run: npm run lint --if-present
+
+    - name: Security Audit
+      run: npm audit --audit-level moderate
+
+    - name: Build Application
+      run: CI=false npm run build
+      env:
+        REACT_APP_ENVIRONMENT: production
+        REACT_APP_BACKEND_URL: https://nna-registry-service-297923701246.us-central1.run.app
+
+    - name: Upload Build Artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: production-build
+        path: build/
+        retention-days: 30
+
+  deploy:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: test
+    if: github.ref == 'refs/heads/main'
+    environment: production
+    
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+
+    - name: Download Build Artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: production-build
+        path: build/
+
+    - name: Install Vercel CLI
+      run: npm install --global vercel@latest
+
+    - name: Pull Vercel Environment Information
+      run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+
+    - name: Build Project Artifacts
+      run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+
+    - name: Deploy Project Artifacts to Vercel
+      run: vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }}
+
+    - name: Deploy to Production
+      run: vercel --prod --token=${{ secrets.VERCEL_TOKEN }}
+
+  health-check:
+    name: Production Health Check
+    runs-on: ubuntu-latest
+    needs: deploy
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+    - name: Wait for Production Deployment
+      run: sleep 60
+
+    - name: Check Production Environment Health
+      run: |
+        curl -f https://nna-registry-frontend.vercel.app/ || exit 1
+        echo "✅ Production environment is healthy"
+
+    - name: Backend Integration Test
+      run: |
+        curl -f https://nna-registry-service-297923701246.us-central1.run.app/api/health || echo "⚠️ Production backend connectivity issue"
+
+    - name: Notify Success
+      if: success()
+      run: |
+        echo "🎉 Production deployment successful!"
+        echo "🌍 Live at: https://nna-registry-frontend.vercel.app/"
+
+    - name: Notify Failure
+      if: failure()
+      run: |
+        echo "❌ Production deployment failed or unhealthy"
+        echo "🚨 IMMEDIATE ACTION REQUIRED"
+        exit 1
