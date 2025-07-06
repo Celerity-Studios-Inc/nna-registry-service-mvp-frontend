@@ -54,6 +54,8 @@ export function detectEnvironment(): EnvironmentConfig['name'] {
     console.log('- Hostname:', hostname);
     console.log('- REACT_APP_ENVIRONMENT:', process.env.REACT_APP_ENVIRONMENT);
     console.log('- NODE_ENV:', process.env.NODE_ENV);
+    console.log('- REACT_APP_BACKEND_URL:', process.env.REACT_APP_BACKEND_URL);
+    console.log('- BACKEND_API_URL:', process.env.BACKEND_API_URL);
   }
   
   let detectedEnv: EnvironmentConfig['name'];
