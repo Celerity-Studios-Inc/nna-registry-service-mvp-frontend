@@ -27,6 +27,11 @@ import {
   Settings as SettingsIcon,
   Logout as LogoutIcon,
   Login as LoginIcon,
+  Sync as SyncIcon,
+  CheckCircle as CheckCircleIcon,
+  Error as ErrorIcon,
+  Warning as WarningIcon,
+  Refresh as RefreshIcon,
 } from '@mui/icons-material';
 import { AuthContext } from '../../contexts/AuthContext';
 import ErrorTestComponent from '../common/ErrorTestComponent';
@@ -63,7 +68,7 @@ const MainLayout: React.FC = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [errorTestOpen, setErrorTestOpen] = useState(false);
   const authContext = useContext(AuthContext);
-  const { index: taxonomyIndex, isHealthy: taxonomyHealthy } = useTaxonomySync();
+  const { index: taxonomyIndex, isHealthy: taxonomyHealthy, isConnected: taxonomyConnected, loading: taxonomyLoading, error: taxonomyError, forceSync } = useTaxonomySync();
 
   const handleLogout = () => {
     if (authContext) {
@@ -82,6 +87,15 @@ const MainLayout: React.FC = () => {
 
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
+  };
+
+  const handleTaxonomyRefresh = async () => {
+    try {
+      await forceSync();
+      console.log('✅ Manual taxonomy sync completed');
+    } catch (error) {
+      console.error('❌ Manual taxonomy sync failed:', error);
+    }
   };
 
   const closeErrorTestDialog = () => {
@@ -242,21 +256,46 @@ const MainLayout: React.FC = () => {
             </Typography>
           </Box>
 
-          {/* Taxonomy Sync Status with Dynamic Version Info */}
-          <Box sx={{ mr: 2, display: 'flex', alignItems: 'center' }}>
-            <Typography 
-              variant="body2" 
-              sx={{ 
-                fontSize: '0.8rem',
-                fontWeight: 500,
-                color: taxonomyHealthy ? 'rgba(255, 255, 255, 0.9)' : 'rgba(255, 193, 7, 0.9)'
-              }}
-            >
-              {taxonomyIndex 
-                ? `Synced with Taxonomy v${taxonomyIndex.version}`
-                : 'Taxonomy Loading...'
+          {/* Taxonomy Sync Status with Manual Refresh */}
+          <Box sx={{ mr: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Chip
+              icon={
+                taxonomyError ? <ErrorIcon /> :
+                !taxonomyConnected ? <WarningIcon /> :
+                taxonomyLoading ? <SyncIcon className="spinning" /> :
+                taxonomyHealthy ? <CheckCircleIcon /> : <WarningIcon />
               }
-            </Typography>
+              label={
+                taxonomyError ? 'Sync Error' :
+                !taxonomyConnected ? 'Disconnected' :
+                taxonomyLoading ? 'Syncing...' :
+                taxonomyIndex ? `Taxonomy v${taxonomyIndex.version}` : 'Loading...'
+              }
+              size="small"
+              color={
+                taxonomyError ? 'error' :
+                !taxonomyConnected ? 'warning' :
+                taxonomyLoading ? 'info' :
+                taxonomyHealthy ? 'success' : 'default'
+              }
+              variant="outlined"
+              sx={{ 
+                backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                color: 'white',
+                '& .MuiChip-icon': { color: 'white' }
+              }}
+            />
+            <IconButton
+              onClick={handleTaxonomyRefresh}
+              size="small"
+              sx={{ 
+                color: 'white',
+                '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.1)' }
+              }}
+              title="Refresh taxonomy data"
+            >
+              <RefreshIcon fontSize="small" />
+            </IconButton>
           </Box>
 
           {/* Right-aligned user info */}
