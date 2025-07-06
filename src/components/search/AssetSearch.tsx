@@ -528,16 +528,16 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
     if (!currentSortBy || results.length === 0) return results;
     
     const LAYER_ORDER: Record<string, number> = {
-      'B': 1, // Branded
-      'C': 2, // Composites
-      'G': 3, // Songs
+      'W': 1, // Worlds (highest priority)
+      'S': 2, // Stars
+      'M': 3, // Moves
       'L': 4, // Looks
-      'M': 5, // Moves
-      'P': 6, // Personalize
-      'R': 7, // Rights
-      'S': 8, // Stars
+      'G': 5, // Songs
+      'C': 6, // Composites
+      'B': 7, // Branded
+      'P': 8, // Personalize
       'T': 9, // Training_Data
-      'W': 10 // Worlds
+      'R': 10 // Rights (lowest priority)
     };
 
     return [...results].sort((a, b) => {
@@ -1219,14 +1219,22 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
                     displayEmpty
                     renderValue={(value) => {
                       if (!value) return 'Select Order';
-                      if (sortBy === 'name' || sortBy === 'layer' || sortBy === 'createdBy') {
+                      if (sortBy === 'layer') {
+                        return value === 'asc' ? '🎯 Priority Order' : '🔄 Reverse Priority';
+                      }
+                      if (sortBy === 'name' || sortBy === 'createdBy') {
                         return value === 'asc' ? 'A → Z' : 'Z → A';
                       }
                       return value === 'desc' ? 'Newest First' : 'Oldest First';
                     }}
                   >
                     {/* Fixed MenuItem structure to prevent React key conflicts */}
-                    {(sortBy === 'name' || sortBy === 'layer' || sortBy === 'createdBy') ? (
+                    {sortBy === 'layer' ? (
+                      [
+                        <MenuItem key="asc" value="asc">🎯 Priority Order</MenuItem>,
+                        <MenuItem key="desc" value="desc">🔄 Reverse Priority</MenuItem>
+                      ]
+                    ) : (sortBy === 'name' || sortBy === 'createdBy') ? (
                       [
                         <MenuItem key="asc" value="asc">A → Z</MenuItem>,
                         <MenuItem key="desc" value="desc">Z → A</MenuItem>
