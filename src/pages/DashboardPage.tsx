@@ -182,9 +182,26 @@ const DashboardPage: React.FC = () => {
             </Button>
           </Box>
         ) : (
-          <Grid container spacing={3}>
+          <Grid 
+            container 
+            spacing={{ xs: 2, sm: 3, md: 3 }}
+          >
             {recentAssets.map(asset => (
-              <Grid item xs={12} sm={6} md={4} key={asset.id || asset._id}>
+              <Grid 
+                item 
+                xs={12} 
+                sm={6} 
+                md={4} 
+                lg={3} 
+                xl={3}
+                key={asset.id || asset._id}
+                sx={{
+                  display: 'flex',
+                  '& > *': {
+                    width: '100%'
+                  }
+                }}
+              >
                 <AssetCard asset={asset} />
               </Grid>
             ))}
