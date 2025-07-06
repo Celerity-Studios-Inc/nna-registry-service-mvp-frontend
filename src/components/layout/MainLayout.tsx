@@ -14,11 +14,7 @@ import {
   ListItemText,
   Toolbar,
   Typography,
-  Badge,
-  Tooltip,
   Button,
-  Dialog,
-  useTheme,
   Chip,
 } from '@mui/material';
 import {
@@ -27,25 +23,14 @@ import {
   Search as SearchIcon,
   Add as AddIcon,
   Collections as CollectionsIcon,
-  Notifications as NotificationsIcon,
-  ChevronLeft as ChevronLeftIcon,
-  ArrowBack as ArrowBackIcon,
-  Upload as UploadIcon,
-  ViewList as ViewListIcon,
   Category as CategoryIcon,
-  DataObject as DataObjectIcon,
   Settings as SettingsIcon,
-  Api as ApiIcon,
   Logout as LogoutIcon,
   Login as LoginIcon,
-  BugReport as BugReportIcon,
-  ErrorOutline as ErrorOutlineIcon,
-  Warning as WarningIcon,
 } from '@mui/icons-material';
 import { AuthContext } from '../../contexts/AuthContext';
 import ErrorTestComponent from '../common/ErrorTestComponent';
 import { detectEnvironment } from '../../utils/environment.config';
-import TaxonomySyncStatus from '../common/TaxonomySyncStatus';
 import { useTaxonomySync } from '../../hooks/useTaxonomySync';
 
 const drawerWidth = 240;
@@ -73,39 +58,12 @@ const navigationItems = [
 ];
 
 const MainLayout: React.FC = () => {
-  const theme = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [errorTestOpen, setErrorTestOpen] = useState(false);
   const authContext = useContext(AuthContext);
   const { index: taxonomyIndex, isHealthy: taxonomyHealthy } = useTaxonomySync();
-  
-  // Check if we're on a detail page that should show back navigation
-  const isDetailPage = location.pathname.includes('/asset/') || 
-                       location.pathname.includes('/edit-asset/') ||
-                       location.pathname.startsWith('/assets/') ||
-                       (location.pathname === '/register-asset' && location.search);
-  
-  // Smart navigation handler for main header back button
-  const handleMainBackNavigation = () => {
-    // For asset detail pages, go to Browse Assets
-    if (location.pathname.includes('/asset/')) {
-      navigate('/search-assets');
-    }
-    // For edit pages, go to Browse Assets  
-    else if (location.pathname.includes('/edit-asset/')) {
-      navigate('/search-assets');
-    }
-    // For register asset with query params, go to dashboard
-    else if (location.pathname === '/register-asset' && location.search) {
-      navigate('/dashboard');
-    }
-    // Default fallback
-    else {
-      navigate(-1);
-    }
-  };
 
   const handleLogout = () => {
     if (authContext) {
@@ -126,10 +84,6 @@ const MainLayout: React.FC = () => {
     setMobileOpen(!mobileOpen);
   };
 
-  const openErrorTestDialog = () => {
-    setErrorTestOpen(true);
-  };
-
   const closeErrorTestDialog = () => {
     setErrorTestOpen(false);
   };
@@ -147,9 +101,6 @@ const MainLayout: React.FC = () => {
         <Typography variant="h6" noWrap component="div">
           NNA Registry
         </Typography>
-        <IconButton onClick={handleDrawerToggle}>
-          <ChevronLeftIcon />
-        </IconButton>
       </Toolbar>
       <Divider />
       {/* Primary navigation items */}
@@ -252,20 +203,6 @@ const MainLayout: React.FC = () => {
         }}
       >
         <Toolbar>
-          {/* Conditional Back Navigation for Detail Pages */}
-          {isDetailPage && (
-            <IconButton
-              color="inherit"
-              aria-label="go back"
-              edge="start"
-              onClick={handleMainBackNavigation}
-              sx={{ mr: 2 }}
-              title="Go back to Browse Assets"
-            >
-              <ArrowBackIcon />
-            </IconButton>
-          )}
-          
           <IconButton
             color="inherit"
             aria-label="open drawer"
