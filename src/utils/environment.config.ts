@@ -23,10 +23,12 @@ export interface EnvironmentConfig {
 // Cache for environment detection results
 let _cachedEnvironment: EnvironmentConfig['name'] | null = null;
 let _cachedConfig: EnvironmentConfig | null = null;
+let _cachedBackendUrl: string | null = null;
+let _cachedFrontendUrl: string | null = null;
 let _detectionCount = 0;
 
-// Debug logging control
-const MAX_DEBUG_LOGS = 3; // Only log first 3 detections to reduce noise
+// Debug logging control  
+const MAX_DEBUG_LOGS = 1; // Only log first detection to reduce noise
 const ENABLE_VERBOSE_LOGGING = typeof window !== 'undefined' && 
   (window.location.search.includes('debug=true') || 
    window.localStorage.getItem('nna-debug-mode') === 'true');
@@ -124,13 +126,18 @@ export function detectEnvironment(): EnvironmentConfig['name'] {
 }
 
 /**
- * Get backend URL for current environment (with caching)
+ * Get backend URL for current environment (with caching to reduce console noise)
  */
 export function getBackendUrl(environment?: EnvironmentConfig['name']): string {
+  // Return cached URL if available and no specific environment requested
+  if (!environment && _cachedBackendUrl) {
+    return _cachedBackendUrl;
+  }
+
   const env = environment || detectEnvironment();
   
-  // Only log on first few calls or when verbose logging is enabled
-  const shouldLog = _detectionCount <= MAX_DEBUG_LOGS || ENABLE_VERBOSE_LOGGING;
+  // Only log on first call or when verbose logging is enabled
+  const shouldLog = (_detectionCount <= MAX_DEBUG_LOGS && !_cachedBackendUrl) || ENABLE_VERBOSE_LOGGING;
   
   if (shouldLog) {
     console.log('🔍 [getBackendUrl] Environment:', env);
@@ -138,43 +145,70 @@ export function getBackendUrl(environment?: EnvironmentConfig['name']): string {
     console.log('🚨 OVERRIDING environment variable - using detected environment instead');
   }
   
+  let url: string;
   // Use detected environment to force correct backend URL
   switch (env) {
     case 'staging':
-      if (shouldLog) console.log('🎯 FORCED backend URL for STAGING: https://registry.stg.reviz.dev');
-      return 'https://registry.stg.reviz.dev';
+      url = 'https://registry.stg.reviz.dev';
+      if (shouldLog) console.log('🎯 FORCED backend URL for STAGING:', url);
+      break;
     
     case 'production':
-      if (shouldLog) console.log('🎯 FORCED backend URL for PRODUCTION: https://registry.reviz.dev');
-      return 'https://registry.reviz.dev';
+      url = 'https://registry.reviz.dev';
+      if (shouldLog) console.log('🎯 FORCED backend URL for PRODUCTION:', url);
+      break;
     
     case 'development':
     default:
-      if (shouldLog) console.log('🎯 FORCED backend URL for DEVELOPMENT: https://registry.dev.reviz.dev');
-      return 'https://registry.dev.reviz.dev';
+      url = 'https://registry.dev.reviz.dev';
+      if (shouldLog) console.log('🎯 FORCED backend URL for DEVELOPMENT:', url);
+      break;
   }
+
+  // Cache the result if no specific environment was requested
+  if (!environment) {
+    _cachedBackendUrl = url;
+  }
+
+  return url;
 }
 
 /**
- * Get frontend URL for current environment (for CORS)
+ * Get frontend URL for current environment (for CORS with caching)
  */
 export function getFrontendUrl(environment?: EnvironmentConfig['name']): string {
+  // Return cached URL if available and no specific environment requested
+  if (!environment && _cachedFrontendUrl) {
+    return _cachedFrontendUrl;
+  }
+
   const env = environment || detectEnvironment();
   
+  let url: string;
   switch (env) {
     case 'staging':
-      return process.env.REACT_APP_FRONTEND_URL || 
-             'https://nna-registry-frontend-stg.vercel.app';
+      url = process.env.REACT_APP_FRONTEND_URL || 
+            'https://nna-registry-frontend-stg.vercel.app';
+      break;
     
     case 'production':
-      return process.env.REACT_APP_FRONTEND_URL || 
-             'https://nna-registry-frontend.vercel.app';
+      url = process.env.REACT_APP_FRONTEND_URL || 
+            'https://nna-registry-frontend.vercel.app';
+      break;
     
     case 'development':
     default:
-      return process.env.REACT_APP_FRONTEND_URL || 
-             'https://nna-registry-frontend-dev.vercel.app';
+      url = process.env.REACT_APP_FRONTEND_URL || 
+            'https://nna-registry-frontend-dev.vercel.app';
+      break;
   }
+
+  // Cache the result if no specific environment was requested
+  if (!environment) {
+    _cachedFrontendUrl = url;
+  }
+
+  return url;
 }
 
 /**
