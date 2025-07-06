@@ -65,6 +65,7 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
   const [sortBy, setSortBy] = useState<string>('createdAt');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [showSortControls, setShowSortControls] = useState<boolean>(false);
+  const [initialLoad, setInitialLoad] = useState(true);
   
   // Enhanced cache busting
   const [lastSearchTime, setLastSearchTime] = useState<number>(0);
@@ -347,8 +348,8 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
         return subcategory?.name || subcategoryCode;
       };
 
-      // When sorting is active, fetch all results for proper client-side sorting
-      const isSortingActive = sortBy && sortBy !== 'createdAt'; // createdAt is default, others are intentional sorts
+      // When any sorting is applied, fetch all results for proper client-side sorting
+      const isSortingActive = sortBy && sortBy !== ''; // Any sort selection means we need all results
       const effectivePage = isSortingActive ? 1 : page;
       const effectiveLimit = isSortingActive ? 1000 : itemsPerPage; // Fetch up to 1000 results for sorting
 
@@ -634,7 +635,7 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
     performSearch(1);
   };
 
-  // Sorting handlers - trigger new search to fetch all results for proper sorting
+  // Sorting handlers - use state updates with useEffect to trigger search
   const handleSortChange = (newSortBy: string) => {
     setSortBy(newSortBy);
     
@@ -647,19 +648,15 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
     }
     setSortOrder(newSortOrder);
     
-    // Reset to page 1 and trigger new search to fetch all results for sorting
+    // Reset to page 1 - the useEffect will handle the search trigger
     setCurrentPage(1);
-    // Trigger new search which will fetch all results when sorting is active
-    performSearch(1);
   };
 
   const handleSortOrderChange = (newOrder: 'asc' | 'desc') => {
     setSortOrder(newOrder);
     
-    // Reset to page 1 and trigger new search to fetch all results for sorting
+    // Reset to page 1 - the useEffect will handle the search trigger
     setCurrentPage(1);
-    // Trigger new search which will fetch all results when sorting is active
-    performSearch(1);
   };
 
   // Enhanced force refresh handler for cache busting
@@ -831,6 +828,16 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
       window.removeEventListener('nna-settings-changed', handleSettingsChange as EventListener);
     };
   }, [currentPage, searchResults.length, searchQuery, selectedLayer, selectedCategory, selectedSubcategory]);
+
+  // Trigger search when sort parameters change (but not on initial load)
+  useEffect(() => {
+    if (initialLoad) {
+      setInitialLoad(false);
+      return;
+    }
+    // Trigger search when sort parameters change after initial load
+    performSearch(currentPage);
+  }, [sortBy, sortOrder]);
 
   // Periodic data freshness check
   useEffect(() => {
