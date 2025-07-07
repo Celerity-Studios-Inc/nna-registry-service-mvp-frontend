@@ -65,6 +65,7 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
   const [sortBy, setSortBy] = useState<string>('createdAt');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [showSortControls, setShowSortControls] = useState<boolean>(false);
+  const [initialLoad, setInitialLoad] = useState(true);
   
   // Enhanced cache busting
   const [lastSearchTime, setLastSearchTime] = useState<number>(0);
@@ -359,13 +360,18 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
         return subcategory?.name || subcategoryCode;
       };
 
+      // When any sorting is applied, fetch all results for proper client-side sorting
+      const isSortingActive = sortBy && sortBy !== ''; // Any sort selection means we need all results
+      const effectivePage = isSortingActive ? 1 : page;
+      const effectiveLimit = isSortingActive ? 1000 : itemsPerPage; // Fetch up to 1000 results for sorting
+
       const searchParams = {
         search: searchQuery || undefined,
         layer: selectedLayer || undefined,
         category: getCategoryName(selectedCategory),
         subcategory: getSubcategoryName(selectedSubcategory),
-        page: page,
-        limit: itemsPerPage,
+        page: effectivePage,
+        limit: effectiveLimit,
         // STEP 1.6 FIX: Removed all cache busting parameters (_t, _v, _fresh)
         // Backend rejects these with "property should not exist" errors
       };
@@ -491,24 +497,40 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
         sortedResults = applySortToResults(sortedResults, sortBy, sortOrder);
       }
 
-      // Handle pagination and filtering transparently
-      // When client-side filtering is active, show backend totals with filtering note
-      let displayCount = totalCount;
-      let showFilteringNote = false;
-      
-      if (isFilterEnabled && hideAssetsBeforeDate && filteredResults.length < normalizedResults.length) {
-        // We filtered some results on this page, note this to user
-        showFilteringNote = true;
+      // Handle pagination differently when sorting vs normal browsing
+      if (isSortingActive && sortedResults.length > itemsPerPage) {
+        // Client-side pagination for sorted results
+        const startIndex = (page - 1) * itemsPerPage;
+        const endIndex = startIndex + itemsPerPage;
+        const paginatedResults = sortedResults.slice(startIndex, endIndex);
+        
+        setSearchResults(paginatedResults);
+        setTotalAssets(sortedResults.length); // Total of sorted results
+        setCurrentPage(page);
+        setTotalPages(Math.ceil(sortedResults.length / itemsPerPage));
         
         if (process.env.NODE_ENV === 'development') {
-          console.log(`📊 Page filtering: ${normalizedResults.length} → ${filteredResults.length} (backend total: ${totalCount})`);
+          console.log(`🔄 Client-side pagination: Showing ${startIndex + 1}-${Math.min(endIndex, sortedResults.length)} of ${sortedResults.length} sorted results`);
         }
+      } else {
+        // Normal server-side pagination
+        let displayCount = totalCount;
+        let showFilteringNote = false;
+        
+        if (isFilterEnabled && hideAssetsBeforeDate && filteredResults.length < normalizedResults.length) {
+          // We filtered some results on this page, note this to user
+          showFilteringNote = true;
+          
+          if (process.env.NODE_ENV === 'development') {
+            console.log(`📊 Page filtering: ${normalizedResults.length} → ${filteredResults.length} (backend total: ${totalCount})`);
+          }
+        }
+        
+        setSearchResults(sortedResults);
+        setTotalAssets(displayCount); // Use backend total for pagination
+        setCurrentPage(page);
+        setTotalPages(Math.ceil(displayCount / itemsPerPage));
       }
-      
-      setSearchResults(sortedResults);
-      setTotalAssets(displayCount); // Use backend total for pagination
-      setCurrentPage(page);
-      setTotalPages(Math.ceil(displayCount / itemsPerPage));
       setLastSearchTime(searchTime);
 
       // Call the onSearch callback with the query
@@ -541,7 +563,7 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
     
     const LAYER_ORDER: Record<string, number> = {
       'B': 1, // Branded
-      'C': 2, // Composites
+      'C': 2, // Composites  
       'G': 3, // Songs
       'L': 4, // Looks
       'M': 5, // Moves
@@ -588,8 +610,21 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
           bValue = LAYER_ORDER[b.layer || ''] || 999;
           break;
         case 'createdBy':
-          aValue = (a.createdBy || a.metadata?.createdBy || '').toLowerCase();
-          bValue = (b.createdBy || b.metadata?.createdBy || '').toLowerCase();
+          // Backend returns 'registeredBy' as primary field for creator information
+          aValue = (
+            (a as any).registeredBy || 
+            a.createdBy || 
+            a.metadata?.createdBy || 
+            (a as any).created_by ||
+            ''
+          ).toLowerCase();
+          bValue = (
+            (b as any).registeredBy || 
+            b.createdBy || 
+            b.metadata?.createdBy || 
+            (b as any).created_by ||
+            ''
+          ).toLowerCase();
           break;
         default:
           return 0;
@@ -612,7 +647,7 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
     performSearch(1);
   };
 
-  // Sorting handlers - now using client-side sorting
+  // Sorting handlers - use state updates with useEffect to trigger search
   const handleSortChange = (newSortBy: string) => {
     setSortBy(newSortBy);
     
@@ -625,26 +660,14 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
     }
     setSortOrder(newSortOrder);
     
-    // Apply sort immediately to existing results
-    if (searchResults.length > 0) {
-      const sortedResults = applySortToResults(searchResults, newSortBy, newSortOrder);
-      // Force a new array reference to ensure React detects the change
-      setSearchResults([...sortedResults]);
-    }
-    
+    // Reset to page 1 - the useEffect will handle the search trigger
     setCurrentPage(1);
   };
 
   const handleSortOrderChange = (newOrder: 'asc' | 'desc') => {
     setSortOrder(newOrder);
     
-    // Apply sort immediately to existing results
-    if (searchResults.length > 0) {
-      const sortedResults = applySortToResults(searchResults, sortBy, newOrder);
-      // Force a new array reference to ensure React detects the change
-      setSearchResults([...sortedResults]);
-    }
-    
+    // Reset to page 1 - the useEffect will handle the search trigger
     setCurrentPage(1);
   };
 
@@ -817,6 +840,16 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
       window.removeEventListener('nna-settings-changed', handleSettingsChange as EventListener);
     };
   }, [currentPage, searchResults.length, searchQuery, selectedLayer, selectedCategory, selectedSubcategory]);
+
+  // Trigger search when sort parameters change (but not on initial load)
+  useEffect(() => {
+    if (initialLoad) {
+      setInitialLoad(false);
+      return;
+    }
+    // Trigger search when sort parameters change after initial load
+    performSearch(currentPage);
+  }, [sortBy, sortOrder]);
 
   // Periodic data freshness check
   useEffect(() => {
