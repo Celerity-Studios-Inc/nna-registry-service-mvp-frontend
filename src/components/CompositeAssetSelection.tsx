@@ -55,6 +55,7 @@ const LAYER_CONFIG = {
 
 interface CompositeAssetSelectionProps {
   onComponentsSelected: (components: Asset[]) => void;
+  onValidationChange?: (errors: string[]) => void;
   initialComponents?: Asset[];
   targetLayer?: string;
   layerName?: string;
@@ -74,6 +75,7 @@ interface RightsVerificationResult {
 
 const CompositeAssetSelection: React.FC<CompositeAssetSelectionProps> = ({
   onComponentsSelected,
+  onValidationChange,
   initialComponents = [],
   targetLayer = 'C',
   layerName = 'Composite',
@@ -90,6 +92,14 @@ const CompositeAssetSelection: React.FC<CompositeAssetSelectionProps> = ({
   // Registration state removed - now handled by unified workflow
   const [validating, setValidating] = useState(false);
   const [validationStatus, setValidationStatus] = useState<'idle' | 'validating' | 'success' | 'error'>('idle');
+  
+  // Helper function to update validation errors and notify parent
+  const updateValidationErrors = (errors: string[]) => {
+    setValidationErrors(errors);
+    if (onValidationChange) {
+      onValidationChange(errors);
+    }
+  };
 
   // Validate component compatibility
   const validateComponentCompatibility = (components: Asset[]): string[] => {
@@ -223,7 +233,7 @@ const CompositeAssetSelection: React.FC<CompositeAssetSelectionProps> = ({
     await new Promise(resolve => setTimeout(resolve, 500));
     
     const errors = validateComponents(selectedComponents);
-    setValidationErrors(errors);
+    updateValidationErrors(errors);
     
     if (errors.length === 0) {
       setValidationStatus('success');
@@ -242,7 +252,7 @@ const CompositeAssetSelection: React.FC<CompositeAssetSelectionProps> = ({
     // First validate components
     const errors = validateComponents(selectedComponents);
     if (errors.length > 0) {
-      setValidationErrors(errors);
+      updateValidationErrors(errors);
       toast.error('Please fix validation errors before continuing');
       return;
     }
@@ -356,7 +366,7 @@ const CompositeAssetSelection: React.FC<CompositeAssetSelectionProps> = ({
     
     // Validate compatibility
     const errors = validateComponentCompatibility(newComponents);
-    setValidationErrors(errors);
+    updateValidationErrors(errors);
 
     // Update parent component
     onComponentsSelected(newComponents);
@@ -378,7 +388,7 @@ const CompositeAssetSelection: React.FC<CompositeAssetSelectionProps> = ({
 
     // Validate compatibility
     const errors = validateComponentCompatibility(newComponents);
-    setValidationErrors(errors);
+    updateValidationErrors(errors);
 
     // Update parent component
     onComponentsSelected(newComponents);
