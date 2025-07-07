@@ -1075,6 +1075,9 @@ const RegisterAssetPage: React.FC = () => {
   
   // Map to store file hashes for duplicate detection
   const [fileHashes, setFileHashes] = useState<Map<string, string> | null>(null);
+  
+  // State to track composite asset validation errors
+  const [compositeValidationErrors, setCompositeValidationErrors] = useState<string[]>([]);
 
   // Handle file upload progress
   const handleUploadProgress = (fileId: string, progress: number) => {
@@ -1469,6 +1472,11 @@ const RegisterAssetPage: React.FC = () => {
                   
                   // Components selected - user can now submit from this step
                 }}
+                onValidationChange={(errors) => {
+                  // Update parent component validation state
+                  setCompositeValidationErrors(errors);
+                  environmentSafeLog(`[REGISTER PAGE] Validation errors updated:`, errors);
+                }}
                 targetLayer={watchLayer}
                 layerName={getValues('layerName')}
                 initialComponents={getValues('layerSpecificData.components') || []}
@@ -1496,7 +1504,7 @@ const RegisterAssetPage: React.FC = () => {
                     // Now trigger the actual submission
                     handleSubmit(onSubmit as any)();
                   }}
-                  disabled={isSubmitting || loading}
+                  disabled={isSubmitting || loading || (isCompositeLayer && compositeValidationErrors.length > 0)}
                   startIcon={isSubmitting ? <CircularProgress size={20} /> : undefined}
                 >
                   {isSubmitting ? 'SUBMITTING ASSET...' : 'SUBMIT ASSET'}
