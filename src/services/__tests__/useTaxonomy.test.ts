@@ -27,7 +27,7 @@ jest.mock('../../services/taxonomyErrorRecovery', () => ({
 
 // Wrapper component for the hook
 const Wrapper = ({ children }: { children: React.ReactNode }) => {
-  return <FeedbackProvider>{children}</FeedbackProvider>;
+  return React.createElement(FeedbackProvider, null, children);
 };
 
 describe('useTaxonomy hook', () => {
