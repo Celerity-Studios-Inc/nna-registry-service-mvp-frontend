@@ -52,7 +52,7 @@ const LayerSelection: React.FC<LayerSelectionProps> = ({
       try {
         setLoading(true);
         // Use enhancedTaxonomyService to get layers
-        const layerCodes = getLayers();
+        const layerCodes = await getLayers();
         
         // Layer names mapping
         const layerNames: Record<string, string> = {

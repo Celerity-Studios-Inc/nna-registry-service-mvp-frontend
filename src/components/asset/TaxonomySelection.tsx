@@ -89,7 +89,7 @@ const TaxonomySelection: React.FC<TaxonomySelectionProps> = ({
         debugLog(`=== TAXONOMY DEBUG: Fetching categories for layer ${layerCode} ===`);
         
         // Use enhanced service for category loading
-        const enhancedCategoryItems = getCategories(layerCode);
+        const enhancedCategoryItems = await getCategories(layerCode);
         debugLog('Enhanced service result:', enhancedCategoryItems);
         
         // Map TaxonomyItem[] to CategoryOption[]
@@ -186,12 +186,12 @@ const TaxonomySelection: React.FC<TaxonomySelectionProps> = ({
             (layerCode === 'W' && selectedCategoryCode === 'BCH')) {
           debugLog(`[DEBUG] Known problematic combination detected: ${layerCode}.${selectedCategoryCode}`);
           // Use the inspection utility from enhanced service
-          const inspection = inspectTaxonomyStructure(layerCode, selectedCategoryCode);
+          const inspection = await inspectTaxonomyStructure(layerCode, selectedCategoryCode);
           debugLog('Inspection result:', inspection);
         }
         
         // Use enhanced service to get subcategories
-        const enhancedSubcategoryItems = getSubcategories(layerCode, selectedCategoryCode);
+        const enhancedSubcategoryItems = await getSubcategories(layerCode, selectedCategoryCode);
         debugLog('Enhanced service subcategory result:', enhancedSubcategoryItems);
         
         // Map TaxonomyItem[] to SubcategoryOption[]
@@ -279,7 +279,7 @@ const TaxonomySelection: React.FC<TaxonomySelectionProps> = ({
 
           // Generate the MFA using both the original and enhanced services for comparison
           const originalMfaAddress = convertHFNToMFA(hfnAddress);
-          const enhancedMfaAddress = convertHFNtoMFA(hfnAddress);
+          const enhancedMfaAddress = await convertHFNtoMFA(hfnAddress);
           
           debugLog(`MFA conversion comparison:`, {
             hfnAddress,

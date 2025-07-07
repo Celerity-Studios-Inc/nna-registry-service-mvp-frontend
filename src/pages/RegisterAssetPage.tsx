@@ -762,7 +762,7 @@ const RegisterAssetPage: React.FC = () => {
       
       // Use dynamic import with proper typing for better error handling
       const enhancedService = await import('../services/enhancedTaxonomyService');
-      const subcategories = enhancedService.getSubcategories(watchLayer, watchCategory);
+      const subcategories = await enhancedService.getSubcategories(watchLayer, watchCategory);
       
       environmentSafeLog(`[REGISTER PAGE] Searching subcategories for match:`, {
         originalSubcategoryCode: subcategoryCode,

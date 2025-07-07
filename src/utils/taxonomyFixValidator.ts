@@ -54,7 +54,7 @@ export const validateTaxonomyFix = async (
       await new Promise(resolve => setTimeout(resolve, 300));
       
       // Get subcategories using enhanced service
-      const subcategories = enhancedTaxonomyService.getSubcategories(test.layer, test.category);
+      const subcategories = await enhancedTaxonomyService.getSubcategories(test.layer, test.category);
       
       // Log results
       console.log(`✅ ${key}: ${subcategories?.length || 0} subcategories`);

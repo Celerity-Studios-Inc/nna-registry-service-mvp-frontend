@@ -30,7 +30,7 @@ const TaxonomySelectorV3Test: React.FC = () => {
   };
   
   // Handle subcategory selection
-  const handleSubcategorySelect = (subcategory: string) => {
+  const handleSubcategorySelect = async (subcategory: string) => {
     console.log(`Selected subcategory: ${subcategory}`);
     setSelectedSubcategoryCode(subcategory);
     
@@ -43,7 +43,7 @@ const TaxonomySelectorV3Test: React.FC = () => {
       setHfnAddress(hfn);
       
       try {
-        const mfa = convertHFNtoMFA(hfn);
+        const mfa = await convertHFNtoMFA(hfn);
         setMfaAddress(mfa);
       } catch (error) {
         console.error('Error converting HFN to MFA:', error);

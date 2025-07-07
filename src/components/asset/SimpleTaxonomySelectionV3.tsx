@@ -20,7 +20,7 @@ import {
   getLayers,
   getCategories,
   getSubcategories,
-  debugTaxonomyData
+  debugTaxonomyAPI
 } from '../../services/enhancedTaxonomyService';
 import { FALLBACK_SUBCATEGORIES } from '../../services/taxonomyFallbackData';
 import { taxonomyService } from '../../services/simpleTaxonomyService';
@@ -89,14 +89,18 @@ const SimpleTaxonomySelectionV3: React.FC<SimpleTaxonomySelectionV3Props> = ({
 
   // Load layers on component mount
   useEffect(() => {
-    try {
-      const availableLayers = getLayers();
-      logger.info('Available layers:', availableLayers);
-      setLayers(availableLayers);
-    } catch (err) {
-      logger.error('Error loading layers:', err);
-      setError('Failed to load layers');
-    }
+    const loadLayers = async () => {
+      try {
+        const availableLayers = await getLayers();
+        logger.info('Available layers:', availableLayers);
+        setLayers(availableLayers);
+      } catch (err) {
+        logger.error('Error loading layers:', err);
+        setError('Failed to load layers');
+      }
+    };
+    
+    loadLayers();
   }, []);
 
   // Load categories when layer changes
@@ -105,29 +109,34 @@ const SimpleTaxonomySelectionV3: React.FC<SimpleTaxonomySelectionV3Props> = ({
       setIsProcessing(true);
       setError(null);
       
-      try {
-        const categories = getCategories(selectedLayer);
-        logger.info(`Categories for layer ${selectedLayer}:`, categories);
-        
-        if (isMounted.current) {
-          setCategoryOptions(categories);
+      const loadCategories = async () => {
+        try {
+          logger.debug(`Loading categories for layer: ${selectedLayer}`);
+          const categories = await getCategories(selectedLayer);
+          logger.info(`Categories for layer ${selectedLayer}:`, categories);
           
-          // Clear subcategory if layer changes
-          if (selectedSubcategoryCode) {
-            onSubcategorySelect('');
+          if (isMounted.current) {
+            setCategoryOptions(categories);
+            
+            // Clear subcategory if layer changes
+            if (selectedSubcategoryCode) {
+              onSubcategorySelect('');
+            }
+          }
+        } catch (err) {
+          logger.error(`Error loading categories for ${selectedLayer}:`, err);
+          if (isMounted.current) {
+            setError(`Failed to load categories for ${selectedLayer}`);
+            setCategoryOptions([]);
+          }
+        } finally {
+          if (isMounted.current) {
+            setIsProcessing(false);
           }
         }
-      } catch (err) {
-        logger.error(`Error loading categories for ${selectedLayer}:`, err);
-        if (isMounted.current) {
-          setError(`Failed to load categories for ${selectedLayer}`);
-          setCategoryOptions([]);
-        }
-      } finally {
-        if (isMounted.current) {
-          setIsProcessing(false);
-        }
-      }
+      };
+      
+      loadCategories();
     } else {
       setCategoryOptions([]);
     }
@@ -164,7 +173,7 @@ const SimpleTaxonomySelectionV3: React.FC<SimpleTaxonomySelectionV3Props> = ({
         
         // 2. Try enhanced taxonomy service
         logger.debug(`Trying enhanced taxonomy service for ${cacheKey}`);
-        const subcategories = getSubcategories(selectedLayer, selectedCategoryCode);
+        const subcategories = await getSubcategories(selectedLayer, selectedCategoryCode);
         
         if (subcategories && subcategories.length > 0) {
           logger.info(`Found ${subcategories.length} subcategories from enhanced service for ${cacheKey}`);
@@ -242,7 +251,7 @@ const SimpleTaxonomySelectionV3: React.FC<SimpleTaxonomySelectionV3Props> = ({
         }
         
         // Log detailed diagnostics
-        debugTaxonomyData(selectedLayer, selectedCategoryCode);
+        debugTaxonomyAPI(selectedLayer, selectedCategoryCode);
         
       } catch (err) {
         logger.error(`Error loading subcategories for ${cacheKey}:`, err);
@@ -293,10 +302,10 @@ const SimpleTaxonomySelectionV3: React.FC<SimpleTaxonomySelectionV3Props> = ({
     
     // Force re-loading
     setIsProcessing(true);
-    setTimeout(() => {
+    setTimeout(async () => {
       try {
         // Try to get subcategories from the enhanced service
-        const subcategories = getSubcategories(selectedLayer, selectedCategoryCode);
+        const subcategories = await getSubcategories(selectedLayer, selectedCategoryCode);
         
         if (subcategories && subcategories.length > 0 && isMounted.current) {
           setSubcategoryOptions(subcategories);
@@ -584,8 +593,8 @@ const SimpleTaxonomySelectionV3: React.FC<SimpleTaxonomySelectionV3Props> = ({
                   variant="outlined"
                   onClick={() => {
                     setCategoryOptions([]);
-                    setTimeout(() => {
-                      const categories = getCategories(selectedLayer);
+                    setTimeout(async () => {
+                      const categories = await getCategories(selectedLayer);
                       setCategoryOptions(categories);
                     }, 100);
                   }}
