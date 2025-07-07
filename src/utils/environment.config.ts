@@ -148,22 +148,22 @@ export function getBackendUrl(environment?: EnvironmentConfig['name']): string {
   }
   
   let url: string;
-  // Use detected environment to force correct backend URL
+  // Use detected environment to force correct backend URL (CANONICAL DOMAINS ONLY)
   switch (env) {
     case 'staging':
-      url = 'https://nna-registry-service-staging-297923701246.us-central1.run.app';
-      if (shouldLog) console.log('🎯 FORCED backend URL for STAGING:', url);
+      url = 'https://registry.stg.reviz.dev';
+      if (shouldLog) console.log('🎯 CANONICAL backend URL for STAGING:', url);
       break;
     
     case 'production':
-      url = 'https://nna-registry-service-297923701246.us-central1.run.app';
-      if (shouldLog) console.log('🎯 FORCED backend URL for PRODUCTION:', url);
+      url = 'https://registry.reviz.dev';
+      if (shouldLog) console.log('🎯 CANONICAL backend URL for PRODUCTION:', url);
       break;
     
     case 'development':
     default:
       url = 'https://registry.dev.reviz.dev';
-      if (shouldLog) console.log('🎯 FORCED backend URL for DEVELOPMENT:', url);
+      if (shouldLog) console.log('🎯 CANONICAL backend URL for DEVELOPMENT:', url);
       break;
   }
 

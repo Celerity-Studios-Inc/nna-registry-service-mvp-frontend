@@ -41,7 +41,7 @@ jobs:
       run: CI=false npm run build
       env:
         REACT_APP_ENVIRONMENT: production
-        REACT_APP_BACKEND_URL: https://nna-registry-service-297923701246.us-central1.run.app
+        REACT_APP_BACKEND_URL: https://registry.reviz.dev
 
     - name: Upload Build Artifacts
       uses: actions/upload-artifact@v4
@@ -99,7 +99,7 @@ jobs:
 
     - name: Backend Integration Test
       run: |
-        curl -f https://nna-registry-service-297923701246.us-central1.run.app/api/health || echo "⚠️ Production backend connectivity issue"
+        curl -f https://registry.reviz.dev/api/health || echo "⚠️ Production backend connectivity issue"
 
     - name: Notify Success
       if: success()
