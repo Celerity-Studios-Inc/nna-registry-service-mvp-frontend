@@ -66,6 +66,9 @@ jobs:
     - name: Install Vercel CLI
       run: npm install --global vercel@latest
 
+    - name: Copy Development Vercel Configuration
+      run: cp vercel.development.json vercel.json
+
     - name: Pull Vercel Environment Information
       run: vercel pull --yes --environment=development --token=${{ secrets.VERCEL_TOKEN }}
 
