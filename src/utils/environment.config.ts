@@ -151,12 +151,12 @@ export function getBackendUrl(environment?: EnvironmentConfig['name']): string {
   // Use detected environment to force correct backend URL
   switch (env) {
     case 'staging':
-      url = 'https://registry.stg.reviz.dev';
+      url = 'https://nna-registry-service-staging-297923701246.us-central1.run.app';
       if (shouldLog) console.log('🎯 FORCED backend URL for STAGING:', url);
       break;
     
     case 'production':
-      url = 'https://registry.reviz.dev';
+      url = 'https://nna-registry-service-297923701246.us-central1.run.app';
       if (shouldLog) console.log('🎯 FORCED backend URL for PRODUCTION:', url);
       break;
     
