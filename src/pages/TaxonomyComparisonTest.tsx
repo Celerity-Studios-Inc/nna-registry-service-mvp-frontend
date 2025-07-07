@@ -62,8 +62,8 @@ const TaxonomyComparisonTest: React.FC = () => {
         let enhancedResult;
         let inspection;
         try {
-          enhancedResult = getSubcategoriesEnhanced(layer, category);
-          inspection = inspectTaxonomyStructure(layer, category);
+          enhancedResult = await getSubcategoriesEnhanced(layer, category);
+          inspection = await inspectTaxonomyStructure(layer, category);
         } catch (err) {
           enhancedResult = { error: err instanceof Error ? err.message : String(err) };
           inspection = { error: err instanceof Error ? err.message : String(err) };
@@ -125,7 +125,7 @@ const TaxonomyComparisonTest: React.FC = () => {
         // Test enhanced conversion
         let enhancedMfa;
         try {
-          enhancedMfa = convertHFNtoMFA(hfn);
+          enhancedMfa = await convertHFNtoMFA(hfn);
         } catch (err) {
           enhancedMfa = { error: err instanceof Error ? err.message : String(err) };
         }

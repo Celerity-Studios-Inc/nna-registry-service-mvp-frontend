@@ -86,8 +86,9 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
 
   // Load layers for filtering
   useEffect(() => {
-    try {
-      const layerCodes = getLayers();
+    const loadLayers = async () => {
+      try {
+        const layerCodes = await getLayers();
       
       // Layer names mapping
       const layerNames: Record<string, string> = {
@@ -111,9 +112,12 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
       }));
       
       setLayers(availableLayers);
-    } catch (error) {
-      console.error('Error loading layers:', error);
-    }
+      } catch (error) {
+        console.error('Error loading layers:', error);
+      }
+    };
+    
+    loadLayers();
   }, []);
 
 
@@ -256,8 +260,9 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
       return;
     }
 
-    try {
-      const taxonomyCategories = getCategories(selectedLayer);
+    const loadCategories = async () => {
+      try {
+        const taxonomyCategories = await getCategories(selectedLayer);
       
       // Transform TaxonomyItem[] to CategoryOption[] format expected by AssetSearch
       const availableCategories = taxonomyCategories.map(category => ({
@@ -268,9 +273,12 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
       }));
       
       setCategories(availableCategories);
-    } catch (error) {
-      console.error('Error loading categories:', error);
-    }
+      } catch (error) {
+        console.error('Error loading categories:', error);
+      }
+    };
+    
+    loadCategories();
   }, [selectedLayer]);
 
   // Load subcategories when category changes
@@ -280,11 +288,12 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
       return;
     }
 
-    try {
-      const taxonomySubcategories = getSubcategories(
-        selectedLayer,
-        selectedCategory
-      );
+    const loadSubcategories = async () => {
+      try {
+        const taxonomySubcategories = await getSubcategories(
+          selectedLayer,
+          selectedCategory
+        );
       
       // Transform TaxonomyItem[] to SubcategoryOption[] format expected by AssetSearch
       const availableSubcategories = taxonomySubcategories.map(subcategory => ({
@@ -326,7 +335,10 @@ const AssetSearch: React.FC<AssetSearchProps> = ({
           errorDetails: error instanceof Error ? error.message : 'Unknown error'
         });
       }
-    }
+      }
+    };
+    
+    loadSubcategories();
   }, [selectedLayer, selectedCategory]);
 
   const performSearch = async (page = currentPage, forceRefresh = false) => {

@@ -1,680 +1,460 @@
 /**
- * Enhanced Taxonomy Service
+ * Enhanced Taxonomy Service - Toggle-Controlled Backend Integration
  * 
- * A complete rewrite of the taxonomy service with a focus on:
- * - Reliability: Multiple fallback mechanisms
- * - Robustness: Thorough error handling
- * - Debugging: Detailed logging
- * - Performance: Optimized data access patterns
+ * This service can operate in two modes based on user settings:
+ * 1. Frontend Mode (default): Uses existing flat file taxonomy service
+ * 2. Backend Mode (experimental): Uses live backend APIs
+ * 
+ * The mode is controlled by the Settings page toggle for backend taxonomy.
  */
 
 import { logger } from '../utils/logger';
 import { TaxonomyItem } from '../types/taxonomy.types';
-
-// Import flattened taxonomy data - this should be the primary source of truth
-import {
-  LAYER_LOOKUPS,
-  LAYER_SUBCATEGORIES
-} from '../taxonomyLookup/constants';
-
-// Import fallback data from the centralized source - used only as last resort
-import { 
-  FALLBACK_SUBCATEGORIES
-} from './taxonomyFallbackData';
-
-// Flattened taxonomy data is loaded - verified on startup
-
-// Layer numeric codes mapping
-const LAYER_NUMERIC_CODES: Record<string, string> = {
-  G: '1',
-  S: '2',
-  L: '3',
-  M: '4',
-  W: '5',
-  B: '6',
-  P: '7',
-  T: '8',
-  C: '9',
-  R: '10',
-};
-
-// Layer alpha codes mapping (reverse of numeric)
-const LAYER_ALPHA_CODES: Record<string, string> = {
-  '1': 'G',
-  '2': 'S',
-  '3': 'L',
-  '4': 'M',
-  '5': 'W',
-  '6': 'B',
-  '7': 'P',
-  '8': 'T',
-  '9': 'C',
-  '10': 'R',
-};
+// Import the original frontend service for fallback
+import { taxonomyService as frontendTaxonomyService } from './simpleTaxonomyService';
 
 /**
- * Helper function to ensure consistent case handling for codes
+ * Check if user has enabled backend taxonomy service via Settings
  */
-function normalizeCode(code: string): string {
-  return code.toUpperCase();
-}
-
-/**
- * Gets all available layers from the taxonomy
- */
-export function getLayers(): string[] {
-  // Get layers from LAYER_LOOKUPS keys
-  const layers = Object.keys(LAYER_LOOKUPS).filter(key => 
-    key.length === 1 && /[A-Z]/.test(key));
-  
-  logger.debug('Available layers:', layers);
-  return layers;
-}
-
-/**
- * Gets categories for a specific layer
- */
-export function getCategories(layer: string): TaxonomyItem[] {
-  logger.debug(`Getting categories for layer: ${layer}`);
-  
+function isBackendTaxonomyEnabled(): boolean {
   try {
-    // Normalize the layer code
-    const normalizedLayer = normalizeCode(layer);
-    
-    // Use LAYER_LOOKUPS as the primary source
-    if (LAYER_LOOKUPS[normalizedLayer]) {
-      logger.info(`Getting categories from LAYER_LOOKUPS for layer ${normalizedLayer}`);
-      
-      const categories: TaxonomyItem[] = [];
-      
-      // Get category entries from LAYER_LOOKUPS (keys without dots)
-      Object.keys(LAYER_LOOKUPS[normalizedLayer])
-        .filter(key => !key.includes('.'))
-        .forEach(categoryCode => {
-          const categoryEntry = LAYER_LOOKUPS[normalizedLayer][categoryCode];
-          categories.push({
-            code: categoryCode,
-            numericCode: categoryEntry.numericCode,
-            name: categoryEntry.name
-          });
-        });
-      
-      logger.debug(`Found ${categories.length} categories for layer ${normalizedLayer} from flattened taxonomy`);
-      return categories;
-    }
-    
-    // If no categories found in LAYER_LOOKUPS, return empty array
-    logger.warn(`No categories found for layer ${normalizedLayer} in flattened taxonomy`);
-    return [];
+    const setting = localStorage.getItem('nna-use-backend-taxonomy');
+    return setting === 'true';
   } catch (error) {
-    logger.error(`Error getting categories for layer ${layer}:`, error);
-    return [];
+    logger.warn('Could not read backend taxonomy setting, defaulting to frontend service');
+    return false;
   }
 }
 
 /**
- * Ensures subcategory format consistency
- * Some subcategories are stored as "CODE" and others as "CATEGORY.CODE"
+ * Environment-aware backend URL selection for when backend mode is enabled
  */
-function normalizeSubcategoryFormat(subcategories: string[], categoryCode: string): string[] {
-  if (!subcategories || subcategories.length === 0) return [];
+function getBackendUrl(): string {
+  // Use environment variables for proper canonical URLs
+  if (process.env.REACT_APP_BACKEND_URL) {
+    return process.env.REACT_APP_BACKEND_URL;
+  }
+
+  // Fallback based on environment detection
+  if (typeof window !== 'undefined') {
+    const hostname = window.location.hostname;
+    
+    if (hostname.includes('localhost') || hostname.includes('127.0.0.1')) {
+      return 'https://registry.dev.reviz.dev';
+    } else if (hostname.includes('dev') || hostname.includes('-dev.')) {
+      return 'https://registry.dev.reviz.dev';
+    } else if (hostname.includes('stg') || hostname.includes('staging')) {
+      return 'https://registry.stg.reviz.dev';
+    } else {
+      return 'https://registry.reviz.dev';
+    }
+  }
+
+  // Default to development
+  return 'https://registry.dev.reviz.dev';
+}
+
+/**
+ * Enhanced fetch wrapper with error handling and logging
+ */
+async function fetchWithErrorHandling(url: string, options?: RequestInit): Promise<any> {
+  try {
+    logger.debug(`API Request: ${url}`);
+    const startTime = Date.now();
+    
+    const response = await fetch(url, {
+      ...options,
+      headers: {
+        'Content-Type': 'application/json',
+        ...options?.headers,
+      },
+    });
+
+    const responseTime = Date.now() - startTime;
+    logger.debug(`API Response: ${url} (${responseTime}ms) - ${response.status}`);
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    logger.debug(`API Data received: ${JSON.stringify(data).substring(0, 200)}...`);
+    
+    return data;
+  } catch (error) {
+    logger.error(`API Error for ${url}:`, error);
+    throw error;
+  }
+}
+
+/**
+ * Simple in-memory cache for API responses
+ * Backend is fast (<100ms) but caching reduces unnecessary calls
+ */
+class TaxonomyCache {
+  private cache = new Map<string, { data: any; timestamp: number }>();
+  private readonly CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
+  set(key: string, data: any): void {
+    this.cache.set(key, { data, timestamp: Date.now() });
+  }
+
+  get(key: string): any | null {
+    const cached = this.cache.get(key);
+    if (!cached) return null;
+
+    if (Date.now() - cached.timestamp > this.CACHE_TTL) {
+      this.cache.delete(key);
+      return null;
+    }
+
+    logger.debug(`Cache hit: ${key}`);
+    return cached.data;
+  }
+
+  clear(): void {
+    this.cache.clear();
+    logger.debug('Taxonomy cache cleared');
+  }
+}
+
+const cache = new TaxonomyCache();
+
+/**
+ * Gets all available layers - toggles between frontend and backend based on user setting
+ */
+export async function getLayers(): Promise<string[]> {
+  // Check if user has enabled backend taxonomy service
+  if (!isBackendTaxonomyEnabled()) {
+    logger.debug('Using frontend taxonomy service for layers');
+    // Return available layers from the frontend service
+    return ['G', 'S', 'L', 'M', 'W', 'B', 'P', 'T', 'C', 'R'];
+  }
+
+  logger.debug('Using backend taxonomy service for layers');
   
-  // Check format of first item to determine if we need to add category prefix
-  const firstItem = subcategories[0];
-  const hasCategoryPrefix = firstItem.includes('.');
+  const cacheKey = 'layers';
+  const cached = cache.get(cacheKey);
+  if (cached) return cached;
+
+  try {
+    const baseUrl = getBackendUrl();
+    const url = `${baseUrl}/api/taxonomy/layers`;
+    
+    const data = await fetchWithErrorHandling(url);
+    
+    // Backend returns object like {"G": "Songs", "S": "Stars", ...}
+    // Convert to array of layer codes
+    const layers = Object.keys(data);
+    
+    logger.debug(`Retrieved ${layers.length} layers from backend:`, layers);
+    
+    cache.set(cacheKey, layers);
+    return layers;
+  } catch (error) {
+    logger.error('Failed to get layers from backend:', error);
+    
+    // Fallback to known layers if backend fails
+    const fallbackLayers = ['G', 'S', 'L', 'M', 'W', 'C', 'B', 'P', 'T', 'R'];
+    logger.warn('Using fallback layers:', fallbackLayers);
+    return fallbackLayers;
+  }
+}
+
+/**
+ * Gets categories for a specific layer - toggles between frontend and backend based on user setting
+ */
+export async function getCategories(layer: string): Promise<TaxonomyItem[]> {
+  // Check if user has enabled backend taxonomy service
+  if (!isBackendTaxonomyEnabled()) {
+    logger.debug(`Using frontend taxonomy service for categories (layer: ${layer})`);
+    return frontendTaxonomyService.getCategories(layer);
+  }
+
+  logger.debug(`Using backend taxonomy service for categories (layer: ${layer})`);
   
-  if (hasCategoryPrefix) {
-    // Already has correct format
+  const cacheKey = `categories-${layer}`;
+  const cached = cache.get(cacheKey);
+  if (cached) return cached;
+
+  try {
+    const baseUrl = getBackendUrl();
+    const url = `${baseUrl}/api/taxonomy/layers/${layer}/categories`;
+    
+    const data = await fetchWithErrorHandling(url);
+    
+    // Backend returns: {"layer": "S", "categories": [{"code": "POP", "name": "Pop", "numericCode": "001"}], "count": 16}
+    const categories: TaxonomyItem[] = data.categories.map((cat: any) => ({
+      code: cat.code,
+      name: cat.name,
+      numericCode: cat.numericCode
+    }));
+    
+    logger.debug(`Retrieved ${categories.length} categories for layer ${layer} from backend`);
+    
+    cache.set(cacheKey, categories);
+    return categories;
+  } catch (error) {
+    logger.error(`Failed to get categories for layer ${layer} from backend:`, error);
+    // Fallback to frontend service on error
+    logger.debug('Falling back to frontend taxonomy service');
+    return frontendTaxonomyService.getCategories(layer);
+  }
+}
+
+/**
+ * Gets subcategories for a specific layer and category - toggles between frontend and backend based on user setting
+ */
+export async function getSubcategories(layer: string, categoryCode: string): Promise<TaxonomyItem[]> {
+  // Check if user has enabled backend taxonomy service
+  if (!isBackendTaxonomyEnabled()) {
+    logger.debug(`Using frontend taxonomy service for subcategories (layer: ${layer}, category: ${categoryCode})`);
+    return frontendTaxonomyService.getSubcategories(layer, categoryCode);
+  }
+
+  logger.debug(`Using backend taxonomy service for subcategories (layer: ${layer}, category: ${categoryCode})`);
+  
+  const cacheKey = `subcategories-${layer}-${categoryCode}`;
+  const cached = cache.get(cacheKey);
+  if (cached) return cached;
+
+  try {
+    const baseUrl = getBackendUrl();
+    const url = `${baseUrl}/api/taxonomy/layers/${layer}/categories/${categoryCode}/subcategories`;
+    
+    const data = await fetchWithErrorHandling(url);
+    
+    // Backend returns: {"layer": "S", "category": "POP", "subcategories": [{"code": "POP.BAS", "name": "Base", "numericCode": "001"}], "count": 16}
+    const subcategories: TaxonomyItem[] = data.subcategories.map((sub: any) => {
+      // Extract subcategory code from full code (e.g., "POP.BAS" → "BAS")
+      const subCode = sub.code.includes('.') ? sub.code.split('.')[1] : sub.code;
+      
+      return {
+        code: subCode,
+        name: sub.name,
+        numericCode: sub.numericCode
+      };
+    });
+    
+    logger.debug(`Retrieved ${subcategories.length} subcategories for ${layer}.${categoryCode}`);
+    
+    cache.set(cacheKey, subcategories);
     return subcategories;
-  } else {
-    // Add category prefix
-    return subcategories.map(subCode => `${categoryCode}.${subCode}`);
-  }
-}
-
-/**
- * Gets subcategories for a specific layer and category
- */
-export function getSubcategories(layer: string, categoryCode: string): TaxonomyItem[] {
-  logger.info(`Getting subcategories for ${layer}.${categoryCode}`);
-  
-  // Tracking info for debugging
-  let source = 'unknown';
-  
-  try {
-    // Normalize inputs for consistent handling
-    const normalizedLayer = normalizeCode(layer);
-    const normalizedCategoryCode = normalizeCode(categoryCode);
-    
-    // Track if we're using normalized codes
-    if (normalizedLayer !== layer || normalizedCategoryCode !== categoryCode) {
-      logger.debug(`Using normalized codes: ${normalizedLayer}.${normalizedCategoryCode}`);
-    }
-    
-    // 1. Use the flattened taxonomy as the primary source (this comes from the files in flattened_taxonomy folder)
-    if (LAYER_SUBCATEGORIES[normalizedLayer]?.[normalizedCategoryCode]) {
-      logger.info(`Using flattened taxonomy data for ${normalizedLayer}.${normalizedCategoryCode}`);
-      source = 'flattened_taxonomy';
-      
-      // Get the raw subcategory codes
-      const rawCodes = LAYER_SUBCATEGORIES[normalizedLayer][normalizedCategoryCode];
-      
-      // Filter out empty/invalid entries and normalize format
-      const validCodes = Array.isArray(rawCodes) 
-        ? rawCodes.filter(code => !!code && typeof code === 'string')
-        : [];
-        
-      logger.debug(`Found ${validCodes.length} subcategory codes in flattened taxonomy`);
-      
-      if (validCodes.length > 0) {
-        // Convert codes to TaxonomyItem objects
-        const subcategories: TaxonomyItem[] = [];
-        
-        validCodes.forEach(code => {
-          // Handle both formats: 'SUBCATEGORY' and 'CATEGORY.SUBCATEGORY'
-          const subCode = code.includes('.') ? code.split('.')[1] : code;
-          const fullCode = code.includes('.') ? code : `${normalizedCategoryCode}.${code}`;
-          
-          // Get entry from LAYER_LOOKUPS (which is the flattened taxonomy)
-          const lookupEntry = LAYER_LOOKUPS[normalizedLayer][fullCode];
-          
-          if (lookupEntry) {
-            subcategories.push({
-              code: subCode,
-              numericCode: lookupEntry.numericCode,
-              name: lookupEntry.name
-            });
-          } else {
-            // This shouldn't happen with properly flattened taxonomy, but add as a failsafe
-            logger.warn(`Inconsistency in flattened taxonomy: No lookup entry for ${fullCode}`);
-            subcategories.push({
-              code: subCode,
-              numericCode: String(subcategories.length + 1).padStart(3, '0'),
-              name: subCode.replace(/_/g, ' ')
-            });
-          }
-        });
-        
-        // Log the subcategory names to verify they're correct
-        logger.debug(`Subcategory names: ${subcategories.map(s => s.name).join(', ')}`);
-        
-        logger.debug(`Returning ${subcategories.length} subcategories from ${source}`);
-        return subcategories;
-      }
-    }
-    
-    // 2. Derive subcategories directly from LAYER_LOOKUPS if not found in LAYER_SUBCATEGORIES
-    logger.info(`Trying to derive subcategories from LAYER_LOOKUPS for ${normalizedLayer}.${normalizedCategoryCode}`);
-    source = 'derived_from_lookups';
-    
-    // Look for entries in LAYER_LOOKUPS that match pattern: "CATEGORY.SUBCATEGORY"
-    const derivedCodes = Object.keys(LAYER_LOOKUPS[normalizedLayer] || {})
-      .filter(key => {
-        // Match entries like 'POP.BAS', 'POP.DIV', etc.
-        return key.startsWith(`${normalizedCategoryCode}.`) && key.split('.').length === 2;
-      });
-      
-    if (derivedCodes.length > 0) {
-      logger.info(`Successfully derived ${derivedCodes.length} subcategories from lookups`);
-      
-      // Convert derived codes to TaxonomyItem objects
-      const subcategories: TaxonomyItem[] = [];
-      
-      derivedCodes.forEach(fullCode => {
-        const subCode = fullCode.split('.')[1];
-        const lookupEntry = LAYER_LOOKUPS[normalizedLayer][fullCode];
-        
-        if (lookupEntry) {
-          subcategories.push({
-            code: subCode,
-            numericCode: lookupEntry.numericCode,
-            name: lookupEntry.name
-          });
-        } else {
-          logger.warn(`No lookup found for derived code ${fullCode}`);
-        }
-      });
-      
-      // Log the subcategory names to verify they're correct
-      logger.debug(`Subcategory names: ${subcategories.map(s => s.name).join(', ')}`);
-      
-      logger.debug(`Returning ${subcategories.length} subcategories from ${source}`);
-      return subcategories;
-    }
-    
-    // 3. Special case handling for known problematic combinations
-    const isKnownSpecialCase = 
-      (normalizedLayer === 'S' && normalizedCategoryCode === 'POP') || 
-      (normalizedLayer === 'W' && normalizedCategoryCode === 'BCH');
-      
-    if (isKnownSpecialCase && FALLBACK_SUBCATEGORIES[normalizedLayer]?.[normalizedCategoryCode]) {
-      logger.info(`Using hardcoded fallback data for special case ${normalizedLayer}.${normalizedCategoryCode}`);
-      source = 'special_case_fallback';
-      
-      // For these special cases, we'll use the fallback data but correct the names
-      // to match the proper naming convention from the flattened taxonomy
-      const fallbackItems = FALLBACK_SUBCATEGORIES[normalizedLayer][normalizedCategoryCode];
-      
-      // Correct specific names for S.POP subcategories using the flattened taxonomy names
-      if (normalizedLayer === 'S' && normalizedCategoryCode === 'POP') {
-        const correctedItems = fallbackItems.map(item => {
-          const fullCode = `POP.${item.code}`;
-          // Try to get the correct name from the flattened taxonomy
-          const correctEntry = LAYER_LOOKUPS['S'][fullCode];
-          if (correctEntry) {
-            return { ...item, name: correctEntry.name };
-          }
-          
-          // Fallback mappings if not found in lookup (shouldn't happen with proper flattened taxonomy)
-          switch(item.code) {
-            case 'DIV': return { ...item, name: "Pop_Diva_Female_Stars" };
-            case 'IDF': return { ...item, name: "Pop_Idol_Female_Stars" };
-            case 'LGF': return { ...item, name: "Pop_Legend_Female_Stars" };
-            case 'LGM': return { ...item, name: "Pop_Legend_Male_Stars" };
-            case 'ICM': return { ...item, name: "Pop_Icon_Male_Stars" };
-            case 'HPM': return { ...item, name: "Pop_Hipster_Male_Stars" };
-            default: return item;
-          }
-        });
-        
-        // Log the corrected names
-        logger.debug(`Corrected S.POP subcategory names: ${correctedItems.map(s => s.name).join(', ')}`);
-        
-        return correctedItems;
-      }
-      
-      // Correct specific names for W.BCH subcategories using the flattened taxonomy names
-      if (normalizedLayer === 'W' && normalizedCategoryCode === 'BCH') {
-        const correctedItems = fallbackItems.map(item => {
-          const fullCode = `BCH.${item.code}`;
-          // Try to get the correct name from the flattened taxonomy
-          const correctEntry = LAYER_LOOKUPS['W'][fullCode];
-          if (correctEntry) {
-            return { ...item, name: correctEntry.name };
-          }
-          
-          // Fallback mappings if not found in lookup (shouldn't happen with proper flattened taxonomy)
-          switch(item.code) {
-            case 'TRO': return { ...item, name: "Tropical" };
-            case 'ISL': return { ...item, name: "Island" };
-            case 'SUN': return { ...item, name: "Sunset" };
-            default: return item;
-          }
-        });
-        
-        // Log the corrected names
-        logger.debug(`Corrected W.BCH subcategory names: ${correctedItems.map(s => s.name).join(', ')}`);
-        
-        return correctedItems;
-      }
-      
-      return fallbackItems;
-    }
-    
-    // 4. Last resort: case insensitive pattern matching
-    logger.info(`Using case-insensitive pattern matching as last resort`);
-    source = 'pattern_matching';
-    
-    // Try a more flexible pattern matching approach
-    const keyPattern = new RegExp(`^${normalizedCategoryCode}\\.\\w+$`, 'i');
-    const matchingKeys = Object.keys(LAYER_LOOKUPS[normalizedLayer] || {})
-      .filter(key => keyPattern.test(key));
-      
-    if (matchingKeys.length > 0) {
-      logger.info(`Found ${matchingKeys.length} subcategory candidates using pattern matching`);
-      
-      // Convert to TaxonomyItem objects
-      const subcategories: TaxonomyItem[] = [];
-      
-      matchingKeys.forEach(fullCode => {
-        const subCode = fullCode.split('.')[1];
-        const lookupEntry = LAYER_LOOKUPS[normalizedLayer][fullCode];
-        
-        if (lookupEntry) {
-          subcategories.push({
-            code: subCode,
-            numericCode: lookupEntry.numericCode,
-            name: lookupEntry.name
-          });
-        } else {
-          logger.warn(`No lookup found for pattern match ${fullCode}`);
-        }
-      });
-      
-      logger.debug(`Returning ${subcategories.length} subcategories from ${source}`);
-      return subcategories;
-    }
-    
-    // 5. As a last resort, if all else fails, use generic hardcoded fallbacks
-    if (FALLBACK_SUBCATEGORIES[normalizedLayer]?.[normalizedCategoryCode]) {
-      logger.info(`All other methods failed. Using hardcoded fallback data for ${normalizedLayer}.${normalizedCategoryCode}`);
-      source = 'generic_fallback';
-      return FALLBACK_SUBCATEGORIES[normalizedLayer][normalizedCategoryCode];
-    }
-    
-    // If all attempts failed, return empty array
-    logger.warn(`No subcategories found for ${normalizedLayer}.${normalizedCategoryCode} after all fallback attempts`);
-    return [];
   } catch (error) {
-    logger.error(`Error getting subcategories for ${layer}.${categoryCode}:`, error);
-    return [];
+    logger.error(`Failed to get subcategories for ${layer}.${categoryCode} from backend:`, error);
+    // Fallback to frontend service on error
+    logger.debug('Falling back to frontend taxonomy service');
+    return frontendTaxonomyService.getSubcategories(layer, categoryCode);
   }
 }
 
 /**
- * Converts a Human-Friendly Name (HFN) to a Machine-Friendly Address (MFA)
+ * Converts a Human-Friendly Name (HFN) to a Machine-Friendly Address (MFA) - toggles between frontend and backend based on user setting
  */
-export function convertHFNtoMFA(hfn: string): string {
-  if (!hfn) {
-    return '';
+export async function convertHFNtoMFA(hfn: string): Promise<string> {
+  if (!hfn) return '';
+
+  // Check if user has enabled backend taxonomy service
+  if (!isBackendTaxonomyEnabled()) {
+    logger.debug(`Using frontend taxonomy service for HFN->MFA conversion: ${hfn}`);
+    return frontendTaxonomyService.convertHFNtoMFA(hfn);
   }
 
+  logger.debug(`Using backend taxonomy service for HFN->MFA conversion: ${hfn}`);
+
   try {
-    // Split the HFN into parts
-    const parts = hfn.split('.');
-    if (parts.length < 3) {
-      throw new Error(`Invalid HFN format: ${hfn}`);
-    }
-
-    const [layer, categoryCode, subcategoryCode, sequential, ...rest] = parts;
-
-    // Normalize case
-    const normalizedLayer = normalizeCode(layer);
-    const normalizedCategoryCode = normalizeCode(categoryCode);
-    const normalizedSubcategoryCode = normalizeCode(subcategoryCode);
-
-    // Handle special cases directly
-    if (
-      normalizedLayer === 'S' &&
-      normalizedCategoryCode === 'POP' &&
-      normalizedSubcategoryCode === 'HPM'
-    ) {
-      // Special case for S.POP.HPM
-      let mfa = `2.001.007.${sequential}`;
-      if (rest.length > 0) {
-        mfa += '.' + rest.join('.');
-      }
-      return mfa;
-    }
+    const baseUrl = getBackendUrl();
+    const url = `${baseUrl}/api/taxonomy/convert/hfn-to-mfa`;
     
-    if (
-      normalizedLayer === 'W' &&
-      normalizedCategoryCode === 'BCH' &&
-      normalizedSubcategoryCode === 'SUN'
-    ) {
-      // Special case for W.BCH.SUN
-      let mfa = `5.004.003.${sequential}`;
-      if (rest.length > 0) {
-        mfa += '.' + rest.join('.');
-      }
-      return mfa;
+    const response = await fetchWithErrorHandling(url, {
+      method: 'POST',
+      body: JSON.stringify({ hfn }),
+    });
+
+    // Backend returns: {"hfn": "S.POP.BAS.001", "mfa": "2.001.001.001", "success": true}
+    if (response.success && response.mfa) {
+      logger.debug(`Converted HFN to MFA: ${hfn} → ${response.mfa}`);
+      return response.mfa;
+    } else {
+      logger.error('Backend conversion failed:', response);
+      // Fallback to frontend service
+      return frontendTaxonomyService.convertHFNtoMFA(hfn);
     }
-
-    // Get the layer number
-    const layerNumeric = LAYER_NUMERIC_CODES[normalizedLayer];
-    if (!layerNumeric) {
-      throw new Error(`Unknown layer: ${layer}`);
-    }
-
-    // Check both original and normalized category code
-    let categoryEntry = LAYER_LOOKUPS[normalizedLayer][normalizedCategoryCode];
-    if (!categoryEntry) {
-      // Try original case
-      categoryEntry = LAYER_LOOKUPS[normalizedLayer][categoryCode];
-      if (!categoryEntry) {
-        throw new Error(`Category not found: ${normalizedLayer}.${categoryCode}`);
-      }
-    }
-
-    // Try different formats for subcategory lookup
-    const possibleKeys = [
-      `${normalizedCategoryCode}.${normalizedSubcategoryCode}`, // normalized
-      `${categoryCode}.${subcategoryCode}`, // original
-      `${normalizedCategoryCode}.${subcategoryCode}`, // mixed 1
-      `${categoryCode}.${normalizedSubcategoryCode}` // mixed 2
-    ];
-
-    let subcategoryEntry = null;
-    for (const key of possibleKeys) {
-      subcategoryEntry = LAYER_LOOKUPS[normalizedLayer][key];
-      if (subcategoryEntry) break;
-    }
-
-    if (!subcategoryEntry) {
-      throw new Error(`Subcategory not found for ${hfn}`);
-    }
-
-    // Build MFA
-    let mfa = `${layerNumeric}.${categoryEntry.numericCode}.${subcategoryEntry.numericCode}.${sequential}`;
-
-    // Add any remaining parts
-    if (rest.length > 0) {
-      mfa += '.' + rest.join('.');
-    }
-
-    logger.debug(`Converted HFN to MFA: ${hfn} → ${mfa}`);
-    return mfa;
   } catch (error) {
-    logger.error(`Error converting HFN to MFA: ${error}`);
-    return '';
+    logger.error(`Failed to convert HFN to MFA via backend: ${hfn}`, error);
+    // Fallback to frontend service on error
+    logger.debug('Falling back to frontend taxonomy service');
+    return frontendTaxonomyService.convertHFNtoMFA(hfn);
   }
 }
 
 /**
- * Converts a Machine-Friendly Address (MFA) to a Human-Friendly Name (HFN)
+ * Converts a Machine-Friendly Address (MFA) to a Human-Friendly Name (HFN) - toggles between frontend and backend based on user setting
  */
-export function convertMFAtoHFN(mfa: string): string {
-  if (!mfa) {
-    return '';
+export async function convertMFAtoHFN(mfa: string): Promise<string> {
+  if (!mfa) return '';
+
+  // Check if user has enabled backend taxonomy service
+  if (!isBackendTaxonomyEnabled()) {
+    logger.debug(`Using frontend taxonomy service for MFA->HFN conversion: ${mfa}`);
+    return frontendTaxonomyService.convertMFAtoHFN(mfa);
   }
 
+  logger.debug(`Using backend taxonomy service for MFA->HFN conversion: ${mfa}`);
+
   try {
-    // Split the MFA into parts
-    const parts = mfa.split('.');
-    if (parts.length < 4) {
-      throw new Error(`Invalid MFA format: ${mfa}`);
+    const baseUrl = getBackendUrl();
+    const url = `${baseUrl}/api/taxonomy/convert/mfa-to-hfn`;
+    
+    const response = await fetchWithErrorHandling(url, {
+      method: 'POST',
+      body: JSON.stringify({ mfa }),
+    });
+
+    // Backend returns: {"mfa": "2.001.001.001", "hfn": "S.POP.BAS.001", "success": true}
+    if (response.success && response.hfn) {
+      logger.debug(`Converted MFA to HFN: ${mfa} → ${response.hfn}`);
+      return response.hfn;
+    } else {
+      logger.error('Backend conversion failed:', response);
+      // Fallback to frontend service
+      return frontendTaxonomyService.convertMFAtoHFN(mfa);
     }
-
-    const [
-      layerNumeric,
-      categoryNumeric,
-      subcategoryNumeric,
-      sequential,
-      ...rest
-    ] = parts;
-
-    // Get the layer code
-    const layer = LAYER_ALPHA_CODES[layerNumeric];
-    if (!layer) {
-      throw new Error(`Unknown layer numeric code: ${layerNumeric}`);
-    }
-
-    // Find the category code
-    let categoryCode = '';
-    for (const [code, entry] of Object.entries(LAYER_LOOKUPS[layer])) {
-      if (!code.includes('.') && entry.numericCode === categoryNumeric) {
-        categoryCode = code;
-        break;
-      }
-    }
-
-    if (!categoryCode) {
-      throw new Error(`Category not found for numeric code: ${categoryNumeric}`);
-    }
-
-    // Find the subcategory code
-    let subcategoryCode = '';
-    for (const [code, entry] of Object.entries(LAYER_LOOKUPS[layer])) {
-      if (
-        code.startsWith(`${categoryCode}.`) &&
-        entry.numericCode === subcategoryNumeric
-      ) {
-        subcategoryCode = code.split('.')[1];
-        break;
-      }
-    }
-
-    if (!subcategoryCode) {
-      throw new Error(`Subcategory not found for numeric code: ${subcategoryNumeric}`);
-    }
-
-    // Build HFN
-    let hfn = `${layer}.${categoryCode}.${subcategoryCode}.${sequential}`;
-
-    // Add any remaining parts
-    if (rest.length > 0) {
-      hfn += '.' + rest.join('.');
-    }
-
-    logger.debug(`Converted MFA to HFN: ${mfa} → ${hfn}`);
-    return hfn;
   } catch (error) {
-    logger.error(`Error converting MFA to HFN: ${error}`);
-    return '';
+    logger.error(`Failed to convert MFA to HFN via backend: ${mfa}`, error);
+    // Fallback to frontend service on error
+    logger.debug('Falling back to frontend taxonomy service');
+    return frontendTaxonomyService.convertMFAtoHFN(mfa);
   }
 }
 
 /**
- * Inspection utility for debugging taxonomy structure using flattened taxonomy
+ * Gets backend taxonomy service health
  */
-export function inspectTaxonomyStructure(layer: string, categoryCode: string): Record<string, any> {
-  console.group(`Taxonomy Structure Inspection: ${layer}.${categoryCode}`);
-  logger.debug(`Taxonomy Structure Inspection: ${layer}.${categoryCode}`);
-  
+export async function getTaxonomyHealth(): Promise<any> {
   try {
-    // Normalize inputs
-    const normalizedLayer = normalizeCode(layer);
-    const normalizedCategoryCode = normalizeCode(categoryCode);
+    const baseUrl = getBackendUrl();
+    const url = `${baseUrl}/api/taxonomy/health`;
     
-    // 1. Check layer existence in LAYER_LOOKUPS
-    logger.debug(`Checking layer: ${normalizedLayer}`);
-    if (!LAYER_LOOKUPS[normalizedLayer]) {
-      logger.debug(`Layer ${normalizedLayer} does not exist in flattened taxonomy`);
-      console.groupEnd();
-      return { exists: false, reason: 'layer_not_found' };
-    }
+    const health = await fetchWithErrorHandling(url);
+    logger.debug('Taxonomy service health:', health);
     
-    logger.debug(`Layer ${normalizedLayer} exists in flattened taxonomy`);
+    return health;
+  } catch (error) {
+    logger.error('Failed to get taxonomy health:', error);
+    return { status: 'unhealthy', error: error instanceof Error ? error.message : String(error) };
+  }
+}
+
+/**
+ * Gets backend taxonomy service version
+ */
+export async function getTaxonomyVersion(): Promise<any> {
+  try {
+    const baseUrl = getBackendUrl();
+    const url = `${baseUrl}/api/taxonomy/version`;
     
-    // 2. Check if category exists
-    logger.debug(`Checking if category ${normalizedCategoryCode} exists`);
-    const categoryEntry = LAYER_LOOKUPS[normalizedLayer][normalizedCategoryCode];
+    const version = await fetchWithErrorHandling(url);
+    logger.debug('Taxonomy service version:', version);
     
-    if (!categoryEntry) {
-      logger.debug(`Category ${normalizedCategoryCode} not found in layer ${normalizedLayer}`);
-      console.groupEnd();
+    return version;
+  } catch (error) {
+    logger.error('Failed to get taxonomy version:', error);
+    return { version: 'unknown', error: error instanceof Error ? error.message : String(error) };
+  }
+}
+
+/**
+ * Clears the taxonomy cache
+ * Useful for refreshing data when backend is updated
+ */
+export function clearTaxonomyCache(): void {
+  cache.clear();
+  logger.info('Taxonomy cache cleared - fresh data will be fetched on next request');
+}
+
+/**
+ * Inspection utility for debugging taxonomy structure (backward compatibility)
+ */
+export async function inspectTaxonomyStructure(layer: string, categoryCode: string): Promise<Record<string, any>> {
+  try {
+    logger.debug(`Inspecting taxonomy structure: ${layer}.${categoryCode}`);
+    
+    // Get categories for the layer
+    const categories = await getCategories(layer);
+    const categoryExists = categories.some(cat => cat.code === categoryCode);
+    
+    if (!categoryExists) {
       return { exists: false, reason: 'category_not_found' };
     }
     
-    logger.debug(`Found category ${normalizedCategoryCode} with numericCode ${categoryEntry.numericCode}`);
+    // Get subcategories for the layer/category
+    const subcategories = await getSubcategories(layer, categoryCode);
     
-    // 3. Check if subcategories exist in LAYER_SUBCATEGORIES
-    logger.debug(`Checking subcategories for ${normalizedLayer}.${normalizedCategoryCode}`);
-    
-    if (!LAYER_SUBCATEGORIES[normalizedLayer] || 
-        !LAYER_SUBCATEGORIES[normalizedLayer][normalizedCategoryCode] || 
-        LAYER_SUBCATEGORIES[normalizedLayer][normalizedCategoryCode].length === 0) {
-      logger.debug(`No subcategories found for category ${normalizedCategoryCode}`);
-      console.groupEnd();
-      return { exists: false, reason: 'no_subcategories' };
-    }
-    
-    // 4. List all subcategories from flattened taxonomy
-    const subcategories: {id: string, code: string, name: string}[] = [];
-    
-    LAYER_SUBCATEGORIES[normalizedLayer][normalizedCategoryCode].forEach(subFullCode => {
-      // Parse to get just the subcategory code (after the dot)
-      const subCode = subFullCode.includes('.') ? subFullCode.split('.')[1] : subFullCode;
-      
-      // Get the lookup entry
-      const lookupEntry = LAYER_LOOKUPS[normalizedLayer][subFullCode];
-      
-      if (lookupEntry) {
-        subcategories.push({
-          id: lookupEntry.numericCode,
-          code: subCode,
-          name: lookupEntry.name
-        });
-      }
-    });
-    
-    logger.debug(`Found ${subcategories.length} subcategories:`, subcategories);
-    console.groupEnd();
-    
-    return { 
-      exists: true, 
-      categoryId: categoryEntry.numericCode, 
-      categoryName: categoryEntry.name,
-      subcategories: subcategories
+    return {
+      exists: true,
+      categoryName: categories.find(cat => cat.code === categoryCode)?.name || categoryCode,
+      subcategories: subcategories.map(sub => ({
+        id: sub.numericCode,
+        code: sub.code,
+        name: sub.name
+      }))
     };
-    
   } catch (error) {
-    logger.error(`Error inspecting taxonomy structure:`, error);
-    console.groupEnd();
+    logger.error('Error inspecting taxonomy structure:', error);
     return { exists: false, reason: 'error', error: String(error) };
   }
 }
 
 /**
- * Debug utility for taxonomy data - useful for console debugging
+ * Debug utility for inspecting API responses
  */
-export function debugTaxonomyData(layer: string, categoryCode: string): void {
-  logger.debug('=== Enhanced Taxonomy Debugging ===');
-  logger.debug(`Layer: ${layer}`);
-  logger.debug(`Category Code: ${categoryCode}`);
+export async function debugTaxonomyAPI(layer?: string, categoryCode?: string): Promise<void> {
+  logger.debug('=== Taxonomy API Debug ===');
   
-  // Use the inspect method to get structured data
-  const inspectionResult = inspectTaxonomyStructure(layer, categoryCode);
-  logger.debug('Inspection result:', inspectionResult);
-  
-  // Output additional useful debugging info
-  if (layer && LAYER_LOOKUPS[layer]) {
-    logger.debug(`LAYER_LOOKUPS[${layer}] entries: ${Object.keys(LAYER_LOOKUPS[layer]).length}`);
+  try {
+    // Test health
+    const health = await getTaxonomyHealth();
+    logger.debug('Health:', health);
     
-    // Show all entries for this layer+category (if provided)
-    if (categoryCode) {
-      const matchingKeys = Object.keys(LAYER_LOOKUPS[layer])
-        .filter(key => key.startsWith(`${categoryCode}.`));
+    // Test version
+    const version = await getTaxonomyVersion();
+    logger.debug('Version:', version);
+    
+    // Test layers
+    const layers = await getLayers();
+    logger.debug('Layers:', layers);
+    
+    if (layer) {
+      // Test categories for specific layer
+      const categories = await getCategories(layer);
+      logger.debug(`Categories for ${layer}:`, categories);
       
-      if (matchingKeys.length > 0) {
-        logger.debug(`Found ${matchingKeys.length} entries for ${layer}.${categoryCode} in LAYER_LOOKUPS:`);
-        
-        const entries = matchingKeys.map(key => {
-          const entry = LAYER_LOOKUPS[layer][key];
-          return `${key}: numericCode=${entry.numericCode}, name=${entry.name}`;
-        });
-        
-        logger.debug(entries.join('\n'));
+      if (categoryCode && categories.length > 0) {
+        // Test subcategories for specific layer/category
+        const subcategories = await getSubcategories(layer, categoryCode);
+        logger.debug(`Subcategories for ${layer}.${categoryCode}:`, subcategories);
       }
     }
-  }
-  
-  if (layer && categoryCode && LAYER_SUBCATEGORIES[layer] && LAYER_SUBCATEGORIES[layer][categoryCode]) {
-    const subcategories = LAYER_SUBCATEGORIES[layer][categoryCode];
-    logger.debug(`LAYER_SUBCATEGORIES[${layer}][${categoryCode}] has ${subcategories.length} entries:`, 
-      subcategories);
     
-    // Show names for each subcategory from LAYER_LOOKUPS
-    const subEntries = subcategories.map(code => {
-      const lookupEntry = LAYER_LOOKUPS[layer][code];
-      return lookupEntry ? 
-        `${code}: numericCode=${lookupEntry.numericCode}, name=${lookupEntry.name}` : 
-        `${code}: [No lookup entry found]`;
-    });
-    
-    logger.debug('Subcategory details:\n' + subEntries.join('\n'));
+    logger.debug('=== End Taxonomy API Debug ===');
+  } catch (error) {
+    logger.error('Debug failed:', error);
   }
 }
 
-// Export all functions as a service object
+// Export all functions as a service object for backward compatibility
 export const enhancedTaxonomyService = {
   getLayers,
   getCategories,
   getSubcategories,
   convertHFNtoMFA,
   convertMFAtoHFN,
-  inspectTaxonomyStructure,
-  debugTaxonomyData
+  getTaxonomyHealth,
+  getTaxonomyVersion,
+  clearTaxonomyCache,
+  debugTaxonomyAPI,
+  inspectTaxonomyStructure
 };
 
 export default enhancedTaxonomyService;
