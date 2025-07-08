@@ -76,8 +76,8 @@ jobs:
       run: vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }}
 
     - name: Deploy to Production (Development Environment)
-      run: vercel --prod --token=${{ secrets.VERCEL_TOKEN }} --alias nna-registry-frontend-dev
-
+      run: vercel --prod --token=${{ secrets.VERCEL_TOKEN }} 
+      
   health-check:
     name: Health Check
     runs-on: ubuntu-latest
