@@ -1127,22 +1127,24 @@ const RegisterAssetPage: React.FC = () => {
 
   // Navigation functions
   const handleNext = () => {
-    // Validate current step before proceeding
-    if (activeStep === 0 && !watchLayer) {
-      setError('Please select a layer');
-      return;
+    // Visual validation: If step is not valid, show error but don't proceed
+    if (!isStepValid(activeStep)) {
+      if (activeStep === 0 && !watchLayer) {
+        setError('Please select a layer');
+        return;
+      }
+      if (activeStep === 1 && (!watchCategoryCode || !watchSubcategoryCode)) {
+        setError('Please select both a category and subcategory');
+        return;
+      }
+      if (activeStep === 2 && (!watchFiles || watchFiles.length === 0)) {
+        setError('Please upload at least one file');
+        return;
+      }
+      return; // Don't proceed if validation fails
     }
-    if (activeStep === 1 && (!watchCategoryCode || !watchSubcategoryCode)) {
-      setError('Please select both a category and subcategory');
-      return;
-    }
-    if (activeStep === 2 && (!watchFiles || watchFiles.length === 0)) {
-      setError('Please upload at least one file');
-      return;
-    }
-    // Step 3 (Review Details) - no validation needed, just proceed
-    // Step 4 (Search & Add Components for composites) - validation handled in component
 
+    // All validations passed, proceed to next step
     setActiveStep((prevActiveStep) => prevActiveStep + 1);
     setError(null);
   };
@@ -2401,17 +2403,13 @@ const RegisterAssetPage: React.FC = () => {
                         variant="contained"
                         onClick={handleNext}
                         endIcon={<NextIcon />}
-                        disabled={!isStepValid(activeStep)}
                         sx={{
                           backgroundColor: isStepValid(activeStep) ? 'primary.main' : 'grey.400',
                           color: isStepValid(activeStep) ? 'white' : 'grey.600',
                           '&:hover': {
-                            backgroundColor: isStepValid(activeStep) ? 'primary.dark' : 'grey.400',
+                            backgroundColor: isStepValid(activeStep) ? 'primary.dark' : 'grey.500',
                           },
-                          '&.Mui-disabled': {
-                            backgroundColor: 'grey.400',
-                            color: 'grey.600',
-                          }
+                          cursor: isStepValid(activeStep) ? 'pointer' : 'default',
                         }}
                       >
                         Next
