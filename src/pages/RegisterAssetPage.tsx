@@ -40,6 +40,7 @@ import FileUpload from '../components/asset/FileUpload';
 import ReviewSubmit from '../components/asset/ReviewSubmit';
 import TrainingDataCollection from '../components/asset/TrainingDataCollection';
 import CompositeAssetSelection from '../components/CompositeAssetSelection';
+import AIMetadataGenerator from '../components/common/AIMetadataGenerator';
 import { TaxonomyConverter } from '../services/taxonomyConverter';
 import { runQuickTaxonomyTest } from '../utils/taxonomyQuickTest';
 import { validateTaxonomyFix } from '../utils/taxonomyFixValidator';
@@ -1107,6 +1108,17 @@ const RegisterAssetPage: React.FC = () => {
     setValue('trainingData', data);
   };
 
+  // AI Generation handlers
+  const handleAIDescriptionGenerated = (description: string) => {
+    setValue('description', description);
+    environmentSafeLog('🤖 AI generated description:', description);
+  };
+
+  const handleAITagsGenerated = (tags: string[]) => {
+    setValue('tags', tags);
+    environmentSafeLog('🤖 AI generated tags:', tags);
+  };
+
   // Helper function to check if current step is valid for navigation
   const isStepValid = (step: number): boolean => {
     switch (step) {
@@ -1264,6 +1276,25 @@ const RegisterAssetPage: React.FC = () => {
               initialSource={getValues('source')}
               onSourceChange={(source) => setValue('source', source)}
             />
+
+            {/* AI Metadata Generation */}
+            {uploadedFiles.length > 0 && (
+              <Box mt={3}>
+                <AIMetadataGenerator
+                  fileUrl={uploadedFiles[0]?.url}
+                  fileName={getValues('files')?.[0]?.name}
+                  fileType={getValues('files')?.[0]?.type}
+                  layer={watchLayer}
+                  categoryCode={watchCategoryCode}
+                  subcategoryCode={watchSubcategoryCode}
+                  onDescriptionGenerated={handleAIDescriptionGenerated}
+                  onTagsGenerated={handleAITagsGenerated}
+                  currentDescription={watch('description')}
+                  currentTags={watch('tags')}
+                  disabled={!watchLayer || !watchCategoryCode || !watchSubcategoryCode}
+                />
+              </Box>
+            )}
             
             <Box mt={3}>
               <Typography variant="h6" gutterBottom>
