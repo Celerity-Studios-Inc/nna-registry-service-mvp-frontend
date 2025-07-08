@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
   Box,
   Typography,
@@ -100,6 +100,12 @@ const CompositeAssetSelection: React.FC<CompositeAssetSelectionProps> = ({
       onValidationChange(errors);
     }
   };
+
+  // Initial validation on component mount and whenever selectedComponents changes
+  useEffect(() => {
+    const errors = validateComponents(selectedComponents);
+    updateValidationErrors(errors);
+  }, [selectedComponents]);
 
   // Validate component compatibility
   const validateComponentCompatibility = (components: Asset[]): string[] => {
