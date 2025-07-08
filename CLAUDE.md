@@ -7,13 +7,31 @@ The NNA Registry Service is a platform for managing digital assets within a Nami
 
 This workspace contains a frontend implementation built with React and TypeScript.
 
-**🎯 STATUS: COMPOSITE VALIDATION FIX - DEVELOPMENT TESTING** (January 2025)
+**🚨 STATUS: CRITICAL ENVIRONMENT CRISIS - IMMEDIATE RECOVERY NEEDED** (July 8, 2025)
 
-### **🚀 LATEST SESSION: NAVIGATION & ENVIRONMENT DETECTION FIXES**
-**Session Results**: Complete resolution of critical navigation and CORS issues
-**Development Status**: ✅ **FULLY WORKING** - All fixes tested and validated
-**Latest Commit**: `cc20415` - Environment detection override with debugging
-**Deployment Strategy**: Production-first (staging preserved for creators)
+### **⚠️ CURRENT SESSION: WEEKEND MISTAKE RECOVERY - SESSION FAILED**
+**Crisis Context**: 2-day outage from weekend CI/CD errors using non-canonical domains
+**Development Status**: ❌ **BROKEN** - CORS failures, backend environment detection failed
+**Latest Session**: Environment detection fix attempts, git branch conflicts, going in circles
+**Recovery Strategy**: Roll back via staging merge, fix CI/CD properly, coordinate backend fixes
+
+### **💥 CRITICAL ISSUES BLOCKING DEVELOPMENT**
+- ❌ **Backend Environment**: Development backend responding as 'production', serving production data
+- ❌ **CORS Blocking**: Frontend accessing production GCS bucket from development domain  
+- ❌ **CI/CD Broken**: Workflows using Git branch URLs instead of canonical domains
+- ❌ **Git Branch Issues**: User on staging branch, conflicts preventing development branch updates
+- ❌ **Claude Limitations**: Bash access lost mid-session, cannot continue fixes
+
+### **🔧 IMMEDIATE ACTION REQUIRED (Next Session)**
+1. **Merge staging → development** (staging has working canonical domain fixes)
+2. **Fix CI/CD development workflow** (use staging pattern as template)
+3. **Coordinate backend environment detection** (development backend must use development database)
+4. **Test complete development environment** (frontend → backend → database → GCS)
+
+### **📊 ENVIRONMENT STATUS**
+- **Development**: 🔴 **CRITICAL FAILURE** - CORS errors, backend detection broken
+- **Staging**: ✅ **WORKING CORRECTLY** - Use as reference for fixes
+- **Production**: ⚠️ **NEEDS RESTORATION** - Also affected by weekend changes
 
 ### **✅ CRITICAL ISSUES RESOLVED**
 
@@ -1586,6 +1604,136 @@ AssetCard → AssetThumbnail → VideoThumbnail → generateVideoThumbnail()
 - Eliminated infinite re-render loops
 - Enhanced error boundary coverage
 - Optimized state management
+
+## ⚠️ **CRITICAL SESSION: Environment Detection Crisis Recovery** (July 8, 2025)
+
+### **🚨 WEEKEND MISTAKE CAUSING 2-DAY OUTAGE**
+
+**Session Context**: Recovering from critical environment detection failures caused by weekend changes that used non-canonical domains instead of canonical domains.
+
+**Crisis Summary**:
+1. **Weekend Error**: CI/CD workflows were incorrectly modified to use runtime Git branch URLs instead of canonical domains
+2. **Impact**: Development environment CORS failures, frontend accessing production resources from random Git URLs
+3. **Recovery Status**: 
+   - ✅ **Staging**: Recovered and working correctly
+   - ❌ **Development**: Still broken with environment detection issues
+   - ❌ **Production**: Still needs restoration
+
+### **🔍 ROOT CAUSE ANALYSIS**
+
+**Development Environment Issues**:
+```
+✅ Frontend Environment Detection: WORKING
+- Hostname: nna-registry-frontend-dev.vercel.app → detects as DEVELOPMENT
+- Backend Routing: Correctly routes to https://registry.dev.reviz.dev
+
+❌ Backend Environment Detection: BROKEN  
+- Backend Response: environment: 'production' (should be 'development')
+- Database: Serving production data instead of development data
+- GCS URLs: Returning production bucket URLs (nna_registry_assets_prod)
+
+🚨 CORS Errors: Development frontend blocked from production GCS bucket
+- Error: "Access-Control-Allow-Origin header is present on the requested resource"
+- Assets loading from: https://storage.googleapis.com/nna_registry_assets_prod/...
+- Should load from: https://storage.googleapis.com/nna_registry_assets_dev/...
+```
+
+**Evidence from Console Logs**:
+```
+environment.config.ts:71 🎯 Hostname-based detection: DEVELOPMENT ✅
+environment.config.ts:166 🎯 FORCED backend URL for DEVELOPMENT: https://registry.dev.reviz.dev ✅
+BackendStatus.tsx:52 Backend status check: environment: 'production' ❌
+VideoThumbnail.tsx:68 🎬 Starting thumbnail generation for: ...nna_registry_assets_prod/... ❌
+```
+
+### **🔧 ATTEMPTED FIXES & ISSUES**
+
+**1. CI/CD Workflow Fixes**:
+- ✅ Attempted to add `--alias` flags to force canonical domain deployment
+- ❌ Vercel CLI syntax was incorrect, deployments failed
+- ✅ Removed `--alias` flags, workflows deploying successfully
+- ⚠️ Still using Git branch URLs instead of canonical domains
+
+**2. Environment Detection Enhancement**:
+- ✅ Added Git branch URL detection patterns to `src/utils/environment.config.ts`
+- ✅ Changes committed locally (commit 26aad55)
+- ❌ Git branch conflicts prevented pushing to development branch
+- ⚠️ User on staging branch instead of development branch
+
+**3. Session Breakdown**:
+- ❌ Claude bash access lost mid-session (known Claude limitation after few days)
+- ❌ Git branch confusion (staging vs development)
+- ❌ Multiple failed attempts to sync branches and push changes
+- ❌ Going in circles without resolving core backend environment issue
+
+### **📋 UNCOMMITTED CHANGES STATUS**
+
+**Local Environment Detection Fix** (Ready for next session):
+```diff
+// File: src/utils/environment.config.ts
+- hostname.includes('development') && hostname.includes('vercel.app')) {
++ hostname.includes('development') && hostname.includes('vercel.app') ||
++ (hostname.includes('nna-registry-service-mvp-git-') && !hostname.includes('staging') && !hostname.includes('main'))) {
+  detectedEnv = 'development';
+- if (shouldLog) console.log('🎯 Hostname-based detection: DEVELOPMENT');
++ if (shouldLog) console.log('🎯 Hostname-based detection: DEVELOPMENT (Git branch URL)');
+```
+
+**Git Status**:
+- Current branch: staging (should be development)
+- Local commits ahead: 14 commits ahead of origin/staging
+- Uncommitted changes: environment.config.ts fix ready
+
+### **🎯 RECOMMENDED RECOVERY PLAN FOR NEXT SESSION**
+
+**Priority 1: Merge Staging → Development**
+1. Merge working staging branch changes into development branch
+2. This brings the canonical domain fixes that are working in staging
+
+**Priority 2: Fix CI/CD Workflows** 
+1. Correctly configure development workflow to deploy to canonical domain
+2. Remove problematic Git branch URL deployments
+3. Ensure proper environment variable configuration
+
+**Priority 3: Backend Environment Detection**
+1. **Root Issue**: Development backend responding with `environment: 'production'`
+2. Backend serving production database instead of development database  
+3. Need backend team coordination to fix development environment detection
+
+**Priority 4: Test Full Environment**
+1. Verify development frontend → development backend → development database
+2. Confirm CORS resolution with proper GCS bucket routing
+3. Validate video thumbnails and asset management workflows
+
+### **⚠️ KNOWN WORKING CONFIGURATION (Staging Reference)**
+
+**Staging Environment Working Correctly**:
+- Frontend: Deploys to canonical staging domain
+- Backend: Staging backend with staging database
+- GCS: Staging bucket with proper CORS configuration
+- Result: No CORS errors, complete functionality
+
+**Apply Staging Pattern to Development**:
+- Use staging configuration as template for development fixes
+- Ensure development backend uses development database
+- Configure development GCS bucket permissions
+
+### **🔗 CRITICAL REFERENCES FOR NEXT SESSION**
+
+**Previous Staging Commits (Working Examples)**:
+- `07dd22f`: Use environment-specific Vercel configurations
+- `57f4a9c`: Revert to canonical domains for all environments
+
+**Files to Focus On**:
+- `.github/workflows/ci-cd-dev.yml`: Fix development deployment
+- `src/utils/environment.config.ts`: Apply environment detection fix  
+- Backend coordination: Fix development environment detection
+
+**Current Branch Status**: staging (needs to be development)
+**Time Lost**: 2 working days
+**User Frustration**: Extremely high - demands immediate resolution
+
+---
 
 ## Current Session: Search Sort & Filter Regression Fixes - COMPLETED (January 2025)
 

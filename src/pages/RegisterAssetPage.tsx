@@ -1127,21 +1127,9 @@ const RegisterAssetPage: React.FC = () => {
 
   // Navigation functions
   const handleNext = () => {
-    // Visual validation: If step is not valid, show error but don't proceed
+    // Only proceed if step is valid (button should be disabled if not valid)
     if (!isStepValid(activeStep)) {
-      if (activeStep === 0 && !watchLayer) {
-        setError('Please select a layer');
-        return;
-      }
-      if (activeStep === 1 && (!watchCategoryCode || !watchSubcategoryCode)) {
-        setError('Please select both a category and subcategory');
-        return;
-      }
-      if (activeStep === 2 && (!watchFiles || watchFiles.length === 0)) {
-        setError('Please upload at least one file');
-        return;
-      }
-      return; // Don't proceed if validation fails
+      return; // This shouldn't happen since button is disabled, but safety check
     }
 
     // All validations passed, proceed to next step
@@ -2399,21 +2387,42 @@ const RegisterAssetPage: React.FC = () => {
                   </Button>
                   <Box>
                     {activeStep < getSteps(isTrainingLayer, isCompositeLayer).length - 1 && (
-                      <Button
-                        variant="contained"
-                        onClick={handleNext}
-                        endIcon={<NextIcon />}
-                        sx={{
-                          backgroundColor: isStepValid(activeStep) ? 'primary.main' : 'grey.400',
-                          color: isStepValid(activeStep) ? 'white' : 'grey.600',
-                          '&:hover': {
-                            backgroundColor: isStepValid(activeStep) ? 'primary.dark' : 'grey.500',
-                          },
-                          cursor: isStepValid(activeStep) ? 'pointer' : 'default',
-                        }}
-                      >
-                        Next
-                      </Button>
+                      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
+                        <Button
+                          variant="contained"
+                          onClick={handleNext}
+                          endIcon={<NextIcon />}
+                          disabled={!isStepValid(activeStep)}
+                          sx={{
+                            backgroundColor: isStepValid(activeStep) ? 'primary.main' : 'grey.400',
+                            color: isStepValid(activeStep) ? 'white' : 'grey.600',
+                            '&:hover': {
+                              backgroundColor: isStepValid(activeStep) ? 'primary.dark' : 'grey.400',
+                            },
+                            '&.Mui-disabled': {
+                              backgroundColor: 'grey.400',
+                              color: 'grey.600',
+                            }
+                          }}
+                        >
+                          Next
+                        </Button>
+                        {!isStepValid(activeStep) && (
+                          <Typography 
+                            variant="caption" 
+                            sx={{ 
+                              color: 'text.secondary', 
+                              mt: 0.5, 
+                              fontSize: '0.75rem',
+                              fontStyle: 'italic'
+                            }}
+                          >
+                            {activeStep === 0 && 'Select a layer to continue'}
+                            {activeStep === 1 && 'Select category and subcategory to continue'}
+                            {activeStep === 2 && 'Upload a file to continue'}
+                          </Typography>
+                        )}
+                      </Box>
                     )}
                   </Box>
                 </Box>
