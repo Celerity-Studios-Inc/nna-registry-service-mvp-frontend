@@ -79,8 +79,8 @@ jobs:
       run: vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }}
 
     - name: Deploy to Production (Development Environment)
-      run: vercel --prod --token=${{ secrets.VERCEL_TOKEN }}
-
+      run: vercel --prod --token=${{ secrets.VERCEL_TOKEN }} 
+      
   health-check:
     name: Health Check
     runs-on: ubuntu-latest
