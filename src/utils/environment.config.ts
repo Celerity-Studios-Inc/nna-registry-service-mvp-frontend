@@ -66,9 +66,10 @@ export function detectEnvironment(): EnvironmentConfig['name'] {
       hostname === '127.0.0.1' ||
       hostname.includes('-dev.vercel.app') ||
       hostname.includes('-git-development-') ||
-      hostname.includes('development') && hostname.includes('vercel.app')) {
+      hostname.includes('development') && hostname.includes('vercel.app') ||
+      (hostname.includes('nna-registry-service-mvp-git-') && !hostname.includes('staging') && !hostname.includes('main'))) {
     detectedEnv = 'development';
-    if (shouldLog) console.log('🎯 Hostname-based detection: DEVELOPMENT');
+    if (shouldLog) console.log('🎯 Hostname-based detection: DEVELOPMENT (Git branch URL)');
   }
   
   // PRIORITY 2: Staging environment detection (canonical domain first)
