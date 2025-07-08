@@ -1107,6 +1107,24 @@ const RegisterAssetPage: React.FC = () => {
     setValue('trainingData', data);
   };
 
+  // Helper function to check if current step is valid for navigation
+  const isStepValid = (step: number): boolean => {
+    switch (step) {
+      case 0: // Step 1: Select Layer
+        return !!watchLayer;
+      case 1: // Step 2: Choose Taxonomy
+        return !!(watchCategoryCode && watchSubcategoryCode);
+      case 2: // Step 3: Upload Files
+        return !!(watchFiles && watchFiles.length > 0);
+      case 3: // Step 4: Review Details
+        return true; // Always valid
+      case 4: // Step 5: Search & Add Components (composite only)
+        return true; // Validation handled in component
+      default:
+        return false;
+    }
+  };
+
   // Navigation functions
   const handleNext = () => {
     // Validate current step before proceeding
@@ -2383,6 +2401,18 @@ const RegisterAssetPage: React.FC = () => {
                         variant="contained"
                         onClick={handleNext}
                         endIcon={<NextIcon />}
+                        disabled={!isStepValid(activeStep)}
+                        sx={{
+                          backgroundColor: isStepValid(activeStep) ? 'primary.main' : 'grey.400',
+                          color: isStepValid(activeStep) ? 'white' : 'grey.600',
+                          '&:hover': {
+                            backgroundColor: isStepValid(activeStep) ? 'primary.dark' : 'grey.400',
+                          },
+                          '&.Mui-disabled': {
+                            backgroundColor: 'grey.400',
+                            color: 'grey.600',
+                          }
+                        }}
                       >
                         Next
                       </Button>
