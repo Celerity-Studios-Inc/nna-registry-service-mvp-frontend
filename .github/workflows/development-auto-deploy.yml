@@ -42,9 +42,13 @@ jobs:
 
     - name: Build Project Artifacts
       run: vercel build --token=${{ secrets.VERCEL_TOKEN }}
+      env:
+        REACT_APP_OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
 
     - name: Deploy to Development Environment
       run: vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }}
+      env:
+        REACT_APP_OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
 
   health-check:
     name: Development Health Check
