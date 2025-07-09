@@ -3,6 +3,9 @@
  * Based on the automation guide and metadata guide for creators
  */
 
+// Import diagnostic utility for troubleshooting
+import { logEnvironmentDiagnostic } from '../utils/envDiagnostic';
+
 interface OpenAIResponse {
   choices: Array<{
     message: {
@@ -29,6 +32,11 @@ class OpenAIService {
     
     if (!this.apiKey) {
       console.warn('⚠️ REACT_APP_OPENAI_API_KEY environment variable is not set. AI metadata generation will not work.');
+      
+      // Run diagnostic to help troubleshoot
+      if (typeof window !== 'undefined' && window.location.hostname.includes('dev')) {
+        logEnvironmentDiagnostic();
+      }
     }
   }
 
