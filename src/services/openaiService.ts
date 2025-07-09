@@ -52,6 +52,9 @@ class OpenAIService {
       const systemPrompt = "Do not use line breaks or any kind of formatting like list items, code blocks, etc. Just a single plain paragraph.";
       const userPrompt = this.getDescriptionPrompt(context.layer);
 
+      // Convert blob URL to base64 data URL for OpenAI API
+      const imageDataUrl = await this.convertBlobToDataUrl(fileUrl);
+
       const response = await fetch(this.baseUrl, {
         method: 'POST',
         headers: {
@@ -75,7 +78,7 @@ class OpenAIService {
                 {
                   type: 'image_url',
                   image_url: {
-                    url: fileUrl
+                    url: imageDataUrl
                   }
                 }
               ]
@@ -112,6 +115,9 @@ class OpenAIService {
       const systemPrompt = "Do not include any formatting.\\n\\nBAD:\\ntag1, tag2, etc.,\\n\\nGOOD:\\ntag1, tag2, etc.";
       const userPrompt = this.getTagsPrompt(context.layer);
 
+      // Convert blob URL to base64 data URL for OpenAI API
+      const imageDataUrl = await this.convertBlobToDataUrl(fileUrl);
+
       const response = await fetch(this.baseUrl, {
         method: 'POST',
         headers: {
@@ -135,7 +141,7 @@ class OpenAIService {
                 {
                   type: 'image_url',
                   image_url: {
-                    url: fileUrl
+                    url: imageDataUrl
                   }
                 }
               ]
@@ -163,6 +169,26 @@ class OpenAIService {
     } catch (error) {
       console.error('Error generating tags:', error);
       throw new Error('Failed to generate tags. Please try again or enter manually.');
+    }
+  }
+
+  /**
+   * Convert blob URL to base64 data URL for OpenAI API
+   */
+  private async convertBlobToDataUrl(blobUrl: string): Promise<string> {
+    try {
+      const response = await fetch(blobUrl);
+      const blob = await response.blob();
+      
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+      });
+    } catch (error) {
+      console.error('Error converting blob to data URL:', error);
+      throw new Error('Failed to convert image for AI processing');
     }
   }
 
