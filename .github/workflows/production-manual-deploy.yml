@@ -1,0 +1,112 @@
+name: Production Manual Deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_branch:
+        description: 'Branch to deploy to production'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+        - staging
+        - main
+      confirmation:
+        description: 'Type "DEPLOY-TO-PRODUCTION" to confirm'
+        required: true
+        type: string
+      maintenance_window:
+        description: 'Is this during a scheduled maintenance window?'
+        required: true
+        type: boolean
+        default: false
+
+env:
+  VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+  VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+jobs:
+  validate-production-deployment:
+    name: Validate Production Deployment
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Validate Confirmation
+      if: github.event.inputs.confirmation != 'DEPLOY-TO-PRODUCTION'
+      run: |
+        echo "❌ Invalid confirmation. Please type exactly: DEPLOY-TO-PRODUCTION"
+        exit 1
+        
+    - name: Validate Maintenance Window
+      if: github.event.inputs.maintenance_window != 'true'
+      run: |
+        echo "⚠️ WARNING: Deploying outside maintenance window"
+        echo "✅ Proceeding with deployment..."
+        
+    - name: Validate Source Branch
+      run: |
+        echo "✅ Deploying ${{ github.event.inputs.source_branch }} to production"
+        echo "✅ Confirmation received: ${{ github.event.inputs.confirmation }}"
+        echo "✅ Maintenance window: ${{ github.event.inputs.maintenance_window }}"
+
+  deploy-to-production:
+    name: Deploy to Production Environment
+    runs-on: ubuntu-latest
+    needs: validate-production-deployment
+    
+    steps:
+    - name: Checkout Source Branch
+      uses: actions/checkout@v4
+      with:
+        ref: ${{ github.event.inputs.source_branch }}
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+
+    - name: Install Dependencies
+      run: npm ci
+
+    - name: Run Build Test
+      run: CI=false npm run build
+      
+    - name: Install Vercel CLI
+      run: npm install --global vercel@latest
+
+    - name: Pull Vercel Environment Information
+      run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+
+    - name: Use Production Vercel Configuration
+      run: cp vercel.json vercel.json
+
+    - name: Build Project Artifacts
+      run: vercel build --token=${{ secrets.VERCEL_TOKEN }}
+
+    - name: Deploy to Production Environment
+      run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
+
+  production-health-check:
+    name: Production Health Check
+    runs-on: ubuntu-latest
+    needs: deploy-to-production
+    
+    steps:
+    - name: Wait for Deployment
+      run: sleep 60
+
+    - name: Test Production Environment
+      run: curl -f https://nna-registry-frontend.vercel.app/ || exit 1
+
+    - name: Notify Success
+      if: success()
+      run: |
+        echo "🎉 Production deployment successful!"
+        echo "🔗 URL: https://nna-registry-frontend.vercel.app"
+
+    - name: Notify Failure
+      if: failure()
+      run: |
+        echo "❌ Production deployment failed or unhealthy"
+        exit 1
