@@ -22,6 +22,70 @@ interface AssetContext {
   fileType: string;
 }
 
+// Enhanced AI Integration: New context interface for Creator's Description + AI collaboration
+interface EnhancedAIContext {
+  // Core identification
+  layer: string;
+  category: string;
+  subcategory: string;
+  
+  // Creator input (repurposed Name field)
+  shortDescription: string;  // <100 characters, layer-specific guidance
+  
+  // File context
+  fileName: string;
+  fileType: string;
+  fileSize?: number;
+  
+  // Layer-specific data
+  thumbnail?: string;        // For M, W, C layers (video thumbnail)
+  image?: string;           // For S, L layers (direct image)
+  componentMetadata?: ComponentMetadata[]; // For C layer (composite components)
+  
+  // Enhanced taxonomy context
+  taxonomy: {
+    layerName: string;       // "Songs", "Stars", "Looks", etc.
+    categoryName: string;    // Full category name
+    subcategoryName: string; // Full subcategory name
+  };
+  
+  // Processing metadata
+  previousAttempts?: number;
+  regenerationContext?: RegenerationContext;
+}
+
+interface ComponentMetadata {
+  layer: string;
+  category: string;
+  subcategory: string;
+  description: string;
+  tags: string[];
+  hfn: string;
+  mfa: string;
+}
+
+interface RegenerationContext {
+  previousAttempts: number;
+  lastResult: any;
+  userRequest: string;
+}
+
+interface LayerProcessingStrategy {
+  type: 'songs' | 'visual-image' | 'visual-thumbnail' | 'composite' | 'generic';
+  requiresWebSearch: boolean;
+  requiresImageAnalysis: boolean;
+  requiresThumbnailGeneration: boolean;
+  requiresComponentAggregation: boolean;
+  musicBrainzIntegration: boolean;
+}
+
+interface ExtractedSongData {
+  songName: string;
+  albumName: string;
+  artistName: string;
+  originalInput: string;
+}
+
 class OpenAIService {
   private apiKey: string;
   private baseUrl = 'https://api.openai.com/v1/chat/completions';
@@ -418,6 +482,606 @@ Comma-separated tag list: `;
 
 Comma-separated tag list: `;
     }
+  }
+
+  // ========================================================================================
+  // ENHANCED AI INTEGRATION: Creator's Description + AI Collaboration Methods
+  // ========================================================================================
+
+  /**
+   * Generate metadata using enhanced context-aware processing
+   * Main entry point for the enhanced AI integration
+   */
+  async generateEnhancedMetadata(context: EnhancedAIContext): Promise<{
+    description: string;
+    tags: string[];
+    additionalMetadata?: any;
+  }> {
+    const strategy = this.determineProcessingStrategy(context.layer);
+    
+    console.log(`[ENHANCED AI] Processing ${context.layer} layer with strategy: ${strategy.type}`);
+    console.log(`[ENHANCED AI] Creator's Description: "${context.shortDescription}"`);
+    
+    try {
+      switch (strategy.type) {
+        case 'songs':
+          return await this.processSongsLayer(context);
+        case 'visual-image':
+          return await this.processVisualWithImage(context);
+        case 'visual-thumbnail':
+          return await this.processVisualWithThumbnail(context);
+        case 'composite':
+          return await this.processCompositeLayer(context);
+        default:
+          return await this.processGenericLayer(context);
+      }
+    } catch (error) {
+      console.error('[ENHANCED AI] Error in enhanced metadata generation:', error);
+      throw new Error(`Enhanced AI processing failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }
+
+  /**
+   * Determine processing strategy based on layer
+   */
+  private determineProcessingStrategy(layer: string): LayerProcessingStrategy {
+    const strategies: Record<string, LayerProcessingStrategy> = {
+      G: { 
+        type: 'songs', 
+        requiresWebSearch: true, 
+        requiresImageAnalysis: false,
+        requiresThumbnailGeneration: false,
+        requiresComponentAggregation: false,
+        musicBrainzIntegration: true 
+      },
+      S: { 
+        type: 'visual-image', 
+        requiresWebSearch: false,
+        requiresImageAnalysis: true,
+        requiresThumbnailGeneration: false,
+        requiresComponentAggregation: false,
+        musicBrainzIntegration: false 
+      },
+      L: { 
+        type: 'visual-image', 
+        requiresWebSearch: false,
+        requiresImageAnalysis: true,
+        requiresThumbnailGeneration: false,
+        requiresComponentAggregation: false,
+        musicBrainzIntegration: false 
+      },
+      M: { 
+        type: 'visual-thumbnail', 
+        requiresWebSearch: false,
+        requiresImageAnalysis: false,
+        requiresThumbnailGeneration: true,
+        requiresComponentAggregation: false,
+        musicBrainzIntegration: false 
+      },
+      W: { 
+        type: 'visual-thumbnail', 
+        requiresWebSearch: false,
+        requiresImageAnalysis: false,
+        requiresThumbnailGeneration: true,
+        requiresComponentAggregation: false,
+        musicBrainzIntegration: false 
+      },
+      C: { 
+        type: 'composite', 
+        requiresWebSearch: false,
+        requiresImageAnalysis: false,
+        requiresThumbnailGeneration: false,
+        requiresComponentAggregation: true,
+        musicBrainzIntegration: false 
+      }
+    };
+    
+    return strategies[layer] || { 
+      type: 'generic', 
+      requiresWebSearch: false,
+      requiresImageAnalysis: false,
+      requiresThumbnailGeneration: false,
+      requiresComponentAggregation: false,
+      musicBrainzIntegration: false 
+    };
+  }
+
+  /**
+   * Enhanced processing for Songs layer with web search capabilities
+   */
+  private async processSongsLayer(context: EnhancedAIContext): Promise<any> {
+    console.log('[ENHANCED AI] Processing Songs layer with MusicBrainz integration');
+    
+    // 1. Claude processing: Extract structured song data
+    const songData = this.extractSongData(context.shortDescription);
+    console.log('[ENHANCED AI] Extracted song data:', songData);
+    
+    // 2. OpenAI processing: Enhanced prompt with web search capabilities
+    const prompt = this.buildEnhancedSongsPrompt(songData, context.taxonomy);
+    
+    // 3. Call OpenAI with enhanced context
+    const response = await this.callOpenAIWithEnhancedContext(prompt, null, context);
+    
+    return this.processSongsResponse(response, songData);
+  }
+
+  /**
+   * Extract structured song information using Claude-like logic
+   */
+  private extractSongData(description: string): ExtractedSongData {
+    console.log(`[ENHANCED AI] Extracting song data from: "${description}"`);
+    
+    // Parse patterns like "Song Name - Album Name - Artist/Band"
+    const patterns = [
+      /^(.+?)\s*-\s*(.+?)\s*-\s*(.+?)$/,  // Full format: Song - Album - Artist
+      /^(.+?)\s*-\s*(.+?)$/,              // Song - Artist format
+      /^(.+?)$/                           // Just song name
+    ];
+    
+    for (const pattern of patterns) {
+      const match = description.match(pattern);
+      if (match) {
+        const result = {
+          songName: match[1]?.trim() || description,
+          albumName: match[2]?.trim() || '',
+          artistName: match[3]?.trim() || match[2]?.trim() || '',
+          originalInput: description
+        };
+        console.log('[ENHANCED AI] Successfully extracted:', result);
+        return result;
+      }
+    }
+    
+    const fallback = {
+      songName: description,
+      albumName: '',
+      artistName: '',
+      originalInput: description
+    };
+    console.log('[ENHANCED AI] Using fallback extraction:', fallback);
+    return fallback;
+  }
+
+  /**
+   * Build enhanced prompt for songs with web search integration
+   */
+  private buildEnhancedSongsPrompt(songData: ExtractedSongData, taxonomy: any): string {
+    return `Research and describe the song "${songData.songName}"${songData.artistName ? ` by "${songData.artistName}"` : ''}${songData.albumName ? ` from the album "${songData.albumName}"` : ''}.
+
+Creator's Context: "${songData.originalInput}"
+Layer: ${taxonomy.layerName} 
+Category: ${taxonomy.categoryName} - ${taxonomy.subcategoryName}
+
+Please provide comprehensive information including:
+
+1. **Single Paragraph Description** (no line breaks, detailed but concise)
+   - Genre and subgenre classification
+   - Tempo, energy level, and BPM if available
+   - Instrumentation and production style  
+   - Vocal characteristics and mood
+   - Cultural/regional influences
+   - Historical context and significance
+
+2. **AlgoRhythm-Optimized Tags** (comma-separated, focus on cross-layer compatibility)
+   - Genre tags (specific and general)
+   - Tempo and energy descriptors
+   - Mood and atmosphere tags
+   - Cross-layer compatibility (pop-suitable, hip-hop-ready, etc.)
+   - Instrumentation and style tags
+   - Cultural and era indicators
+
+3. **Enhanced Metadata** (if available)
+   - MusicBrainz ID for authoritative reference
+   - Album artwork URL
+   - Additional context for music databases
+
+Format your response as JSON:
+{
+  "description": "Single comprehensive paragraph...",
+  "tags": "comma,separated,tag,list,optimized,for,algorhythm",
+  "musicbrainzId": "optional-mbid-if-available",
+  "albumArtUrl": "optional-album-art-url-if-available",
+  "additionalContext": "any-other-relevant-metadata"
+}
+
+Use web search if needed to find accurate information about this song.`;
+  }
+
+  /**
+   * Enhanced processing for visual layers with image + context analysis
+   */
+  private async processVisualWithImage(context: EnhancedAIContext): Promise<any> {
+    console.log(`[ENHANCED AI] Processing ${context.layer} layer with image + context analysis`);
+    
+    // Build enhanced prompt with Creator's Description context
+    const enhancedPrompt = this.buildVisualPrompt(context);
+    
+    // Process with image analysis + context
+    const imageDataUrl = context.image ? await this.convertBlobToDataUrl(context.image) : null;
+    
+    const response = await this.callOpenAIWithEnhancedContext(enhancedPrompt, imageDataUrl, context);
+    
+    return this.processVisualResponse(response, context);
+  }
+
+  /**
+   * Build enhanced visual prompt with Creator's Description context
+   */
+  private buildVisualPrompt(context: EnhancedAIContext): string {
+    const baseDescription = context.shortDescription;
+    const layerContext = context.taxonomy.layerName;
+    const categoryContext = `${context.taxonomy.categoryName} - ${context.taxonomy.subcategoryName}`;
+    
+    const layerSpecificFocus = this.getLayerSpecificFocus(context.layer);
+    
+    return `Analyze this ${layerContext.toLowerCase()} image with the following context:
+
+Creator's Description: "${baseDescription}"
+Category Context: ${categoryContext}
+Layer Purpose: ${this.getLayerPurpose(context.layer)}
+
+Generate:
+1. **Enhanced Description** that combines the creator's input with detailed visual analysis
+2. **AlgoRhythm-Optimized Tags** for cross-layer compatibility and music synchronization
+
+Focus on:
+${layerSpecificFocus}
+
+Ensure tags include:
+- Energy level indicators (high-energy, medium-energy, low-energy)
+- Style descriptors (contemporary, classic, urban, etc.)
+- Genre-compatibility tags (pop-suitable, rock-compatible, etc.)
+- Mood and atmosphere descriptors
+- Visual aesthetic tags
+- Performance context tags
+
+Respond with only the description paragraph and comma-separated tag list in JSON format:
+{
+  "description": "Single enhanced paragraph combining creator context with visual analysis...",
+  "tags": "comma,separated,algorhythm,optimized,tag,list"
+}`;
+  }
+
+  /**
+   * Get layer-specific focus areas for enhanced prompting
+   */
+  private getLayerSpecificFocus(layer: string): string {
+    const focusAreas: Record<string, string> = {
+      S: `- Performance style and energy level
+- Visual aesthetic and personality expression
+- Movement potential and dance compatibility
+- Clothing/costume style and color scheme
+- Facial expressions and emotional projection
+- Cross-layer synchronization potential`,
+      L: `- Style category and fashion era
+- Color scheme and visual impact under stage lighting
+- Formality level and occasion appropriateness
+- Cultural influences and design inspiration
+- Movement compatibility and dance-friendliness
+- Genre and music style compatibility`,
+      M: `- Movement tempo and intensity level
+- Dance style and technical complexity
+- Body engagement and choreographic elements
+- Rhythm synchronization capabilities
+- Cultural dance influences
+- Cross-genre and cross-layer compatibility`,
+      W: `- Setting type and environmental atmosphere
+- Mood and emotional tone
+- Lighting conditions and visual ambiance
+- Scale, grandeur, and production value
+- Cultural context and aesthetic influences
+- Performance suitability and genre compatibility`
+    };
+    
+    return focusAreas[layer] || '- General aesthetic and style characteristics\n- Mood and atmosphere\n- Quality and production value';
+  }
+
+  /**
+   * Get layer purpose description for enhanced context
+   */
+  private getLayerPurpose(layer: string): string {
+    const purposes: Record<string, string> = {
+      G: 'Musical compositions and audio content for entertainment and synchronization',
+      S: 'Performer avatars and character representations for visual performances',
+      L: 'Clothing, costumes, and styling that complement performers and match music aesthetics', 
+      M: 'Dance choreography and movement sequences for performance synchronization',
+      W: 'Environmental settings and backgrounds that enhance performance atmosphere',
+      C: 'Composite assets combining multiple layers for complete performance experiences'
+    };
+    
+    return purposes[layer] || 'Digital asset for creative and entertainment purposes';
+  }
+
+  /**
+   * Enhanced processing for video layers with thumbnail + context analysis
+   */
+  private async processVisualWithThumbnail(context: EnhancedAIContext): Promise<any> {
+    console.log(`[ENHANCED AI] Processing ${context.layer} layer with thumbnail + context analysis`);
+    
+    // Use provided thumbnail or process as image
+    const thumbnailUrl = context.thumbnail || context.image;
+    
+    if (!thumbnailUrl) {
+      throw new Error('No thumbnail or image provided for video layer processing');
+    }
+    
+    // Process with thumbnail analysis + enhanced context
+    const enhancedContext = {
+      ...context,
+      image: thumbnailUrl // Use thumbnail as image for processing
+    };
+    
+    return this.processVisualWithImage(enhancedContext);
+  }
+
+  /**
+   * Enhanced processing for composite layer with component aggregation
+   */
+  private async processCompositeLayer(context: EnhancedAIContext): Promise<any> {
+    console.log('[ENHANCED AI] Processing Composite layer with component aggregation');
+    
+    if (!context.componentMetadata || context.componentMetadata.length === 0) {
+      throw new Error('No component metadata provided for composite layer processing');
+    }
+    
+    // Aggregate component metadata
+    const aggregatedData = this.aggregateComponentMetadata(context.componentMetadata);
+    
+    // Build composite prompt
+    const compositePrompt = this.buildCompositePrompt(aggregatedData, context);
+    
+    // Process composite metadata
+    const response = await this.callOpenAIWithEnhancedContext(compositePrompt, context.thumbnail || null, context);
+    
+    return this.processCompositeResponse(response, aggregatedData);
+  }
+
+  /**
+   * Aggregate component metadata for intelligent composite processing
+   */
+  private aggregateComponentMetadata(components: ComponentMetadata[]): any {
+    const uniqueLayers = new Set(components.map(c => c.layer));
+    const layers = Array.from(uniqueLayers);
+    const allTags = components.flatMap(c => c.tags);
+    const styles = allTags.filter(tag => 
+      tag.includes('style') || tag.includes('energy') || tag.includes('mood')
+    );
+    
+    return {
+      componentCount: components.length,
+      layersUsed: layers,
+      dominantStyles: this.extractDominantStyles(styles),
+      energyLevels: this.analyzeEnergyLevels(components),
+      genreCompatibility: this.analyzeGenreCompatibility(components),
+      summary: this.generateComponentSummary(components)
+    };
+  }
+
+  /**
+   * Call OpenAI with enhanced context and error handling
+   */
+  private async callOpenAIWithEnhancedContext(prompt: string, imageDataUrl: string | null, context: EnhancedAIContext): Promise<any> {
+    if (!this.apiKey) {
+      throw new Error('OpenAI API key is not configured. Please set REACT_APP_OPENAI_API_KEY environment variable.');
+    }
+
+    const messages: any[] = [
+      {
+        role: 'system',
+        content: 'You are an AI expert specializing in entertainment asset metadata generation. Provide accurate, detailed responses in the requested JSON format without additional formatting or explanations.'
+      }
+    ];
+
+    if (imageDataUrl) {
+      messages.push({
+        role: 'user',
+        content: [
+          {
+            type: 'text',
+            text: prompt
+          },
+          {
+            type: 'image_url',
+            image_url: {
+              url: imageDataUrl
+            }
+          }
+        ]
+      });
+    } else {
+      messages.push({
+        role: 'user',
+        content: prompt
+      });
+    }
+
+    const response = await fetch(this.baseUrl, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${this.apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'gpt-4o',
+        messages: messages,
+        max_tokens: 1500,
+        temperature: 0.7
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error(`OpenAI API error: ${response.status} ${response.statusText}`);
+    }
+
+    return response.json();
+  }
+
+  /**
+   * Process songs response with additional metadata handling
+   */
+  private processSongsResponse(response: any, songData: ExtractedSongData): any {
+    const content = response.choices[0]?.message?.content?.trim() || '';
+    
+    try {
+      const parsed = JSON.parse(content);
+      return {
+        description: parsed.description || '',
+        tags: typeof parsed.tags === 'string' ? parsed.tags.split(',').map((t: string) => t.trim()) : parsed.tags || [],
+        additionalMetadata: {
+          musicbrainzId: parsed.musicbrainzId,
+          albumArtUrl: parsed.albumArtUrl,
+          additionalContext: parsed.additionalContext,
+          extractedSongData: songData
+        }
+      };
+    } catch (error) {
+      console.warn('[ENHANCED AI] Failed to parse JSON response, using fallback processing');
+      // Fallback to text processing
+      const lines = content.split('\n').filter((line: string) => line.trim());
+      return {
+        description: lines[0] || songData.originalInput,
+        tags: lines[1] ? lines[1].split(',').map((t: string) => t.trim()) : [],
+        additionalMetadata: { extractedSongData: songData }
+      };
+    }
+  }
+
+  /**
+   * Process visual response with enhanced metadata
+   */
+  private processVisualResponse(response: any, context: EnhancedAIContext): any {
+    const content = response.choices[0]?.message?.content?.trim() || '';
+    
+    try {
+      const parsed = JSON.parse(content);
+      return {
+        description: parsed.description || context.shortDescription,
+        tags: typeof parsed.tags === 'string' ? parsed.tags.split(',').map((t: string) => t.trim()) : parsed.tags || [],
+        additionalMetadata: {
+          layerProcessing: context.layer,
+          creatorContext: context.shortDescription
+        }
+      };
+    } catch (error) {
+      console.warn('[ENHANCED AI] Failed to parse JSON response, using fallback processing');
+      return {
+        description: content || context.shortDescription,
+        tags: [],
+        additionalMetadata: { creatorContext: context.shortDescription }
+      };
+    }
+  }
+
+  /**
+   * Process composite response with component integration
+   */
+  private processCompositeResponse(response: any, aggregatedData: any): any {
+    const content = response.choices[0]?.message?.content?.trim() || '';
+    
+    try {
+      const parsed = JSON.parse(content);
+      return {
+        description: parsed.description || 'Composite asset combining multiple layers',
+        tags: typeof parsed.tags === 'string' ? parsed.tags.split(',').map((t: string) => t.trim()) : parsed.tags || [],
+        additionalMetadata: {
+          compositeData: aggregatedData,
+          processingType: 'component-aggregation'
+        }
+      };
+    } catch (error) {
+      console.warn('[ENHANCED AI] Failed to parse JSON response, using fallback processing');
+      return {
+        description: `Composite asset combining ${aggregatedData.componentCount} components across ${aggregatedData.layersUsed.join(', ')} layers`,
+        tags: aggregatedData.dominantStyles || [],
+        additionalMetadata: { compositeData: aggregatedData }
+      };
+    }
+  }
+
+  /**
+   * Generic layer processing for fallback scenarios
+   */
+  private async processGenericLayer(context: EnhancedAIContext): Promise<any> {
+    console.log(`[ENHANCED AI] Processing ${context.layer} layer with generic strategy`);
+    
+    // Use the original metadata generation as fallback
+    const assetContext: AssetContext = {
+      layer: context.layer,
+      categoryCode: context.category,
+      subcategoryCode: context.subcategory,
+      fileName: context.fileName,
+      fileType: context.fileType
+    };
+    
+    const imageUrl = context.image || context.thumbnail;
+    if (imageUrl) {
+      const result = await this.generateMetadata(imageUrl, assetContext);
+      return {
+        ...result,
+        additionalMetadata: { 
+          creatorContext: context.shortDescription,
+          processingType: 'generic-fallback'
+        }
+      };
+    } else {
+      throw new Error('No image or thumbnail provided for generic processing');
+    }
+  }
+
+  // Helper methods for composite processing
+  private extractDominantStyles(styles: string[]): string[] {
+    // Simple frequency analysis to find dominant styles
+    const styleCounts = styles.reduce((acc, style) => {
+      acc[style] = (acc[style] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+    
+    return Object.entries(styleCounts)
+      .sort(([,a], [,b]) => b - a)
+      .slice(0, 5)
+      .map(([style]) => style);
+  }
+
+  private analyzeEnergyLevels(components: ComponentMetadata[]): string[] {
+    return components.flatMap(c => 
+      c.tags.filter(tag => tag.includes('energy') || tag.includes('tempo'))
+    );
+  }
+
+  private analyzeGenreCompatibility(components: ComponentMetadata[]): string[] {
+    return components.flatMap(c => 
+      c.tags.filter(tag => tag.includes('suitable') || tag.includes('compatible'))
+    );
+  }
+
+  private generateComponentSummary(components: ComponentMetadata[]): string {
+    const layers = components.map(c => c.layer).join(', ');
+    return `${components.length} components across ${layers} layers`;
+  }
+
+  private buildCompositePrompt(aggregatedData: any, context: EnhancedAIContext): string {
+    return `Generate description and tags for a composite asset combining multiple layers:
+
+Creator's Description: "${context.shortDescription}"
+Components Summary: ${aggregatedData.summary}
+Layers Combined: ${aggregatedData.layersUsed.join(', ')}
+Dominant Styles: ${aggregatedData.dominantStyles.join(', ')}
+
+Create:
+1. A cohesive description that explains how these components work together
+2. Tags that capture the composite's overall aesthetic and compatibility
+
+Focus on:
+- Overall aesthetic harmony and production quality
+- Cross-layer compatibility and synchronization
+- Target use cases and performance applications
+- Style coherence and visual balance
+
+Respond in JSON format:
+{
+  "description": "Cohesive description of the composite asset...",
+  "tags": "comma,separated,composite,optimized,tag,list"
+}`;
   }
 }
 

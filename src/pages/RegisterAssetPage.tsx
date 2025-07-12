@@ -51,6 +51,83 @@ import { SubcategoryPreserver } from '../utils/subcategoryPreserver';
 import { LayerOption, CategoryOption, SubcategoryOption } from '../types/taxonomy.types';
 import { FileUploadResponse, Asset, SOURCE_OPTIONS } from '../types/asset.types';
 
+// Enhanced AI Integration: Layer-specific guidance system
+const LAYER_GUIDANCE = {
+  G: {
+    label: "Creator's Description",
+    placeholder: "Song Name - Album Name - Artist/Band",
+    example: "Bohemian Rhapsody - A Night at the Opera - Queen",
+    guidance: "Provide song, album, and artist/band name for accurate music database lookup"
+  },
+  S: {
+    label: "Creator's Description", 
+    placeholder: "Performer/Character Name & Style",
+    example: "Taylor Swift - Red Era Performance Style",
+    guidance: "Describe the performer's identity and performance aesthetic"
+  },
+  L: {
+    label: "Creator's Description",
+    placeholder: "Brand/Collection & Style Description", 
+    example: "Versace Spring 2024 - Casual Streetwear",
+    guidance: "Identify brand/collection and describe the style or occasion"
+  },
+  M: {
+    label: "Creator's Description",
+    placeholder: "Dance/Movement Style & Tempo",
+    example: "Hip-Hop Freestyle - High Energy", 
+    guidance: "Describe the dance style, energy level, and tempo characteristics"
+  },
+  W: {
+    label: "Creator's Description",
+    placeholder: "Setting/Environment Name & Mood",
+    example: "Sunset Beach Campfire - Tropical Paradise",
+    guidance: "Name the setting and describe the atmosphere or mood"
+  },
+  C: {
+    label: "Creator's Description",
+    placeholder: "Composite Description (auto-generated)",
+    example: "Multi-layer performance combining [components]", 
+    guidance: "Description will be generated from selected components"
+  },
+  B: {
+    label: "Creator's Description",
+    placeholder: "Brand Asset Name & Purpose",
+    example: "Nike Air Jordan Logo - Athletic Footwear",
+    guidance: "Describe the brand element and its intended use"
+  },
+  P: {
+    label: "Creator's Description", 
+    placeholder: "Personalization Type & Context",
+    example: "User Avatar Customization - Gaming Profile",
+    guidance: "Describe the personalization purpose and application"
+  },
+  T: {
+    label: "Creator's Description",
+    placeholder: "Training Dataset Type & Purpose", 
+    example: "Dance Movement Recognition - Hip-Hop Styles",
+    guidance: "Describe the training data type and machine learning application"
+  },
+  R: {
+    label: "Creator's Description",
+    placeholder: "Rights Document Type & Scope",
+    example: "Commercial License Agreement - Global Distribution",
+    guidance: "Describe the rights document type and legal scope"
+  }
+};
+
+function getLayerSpecificLabel(layer: string): string {
+  return (LAYER_GUIDANCE as any)[layer]?.label || "Creator's Description";
+}
+
+function getLayerSpecificPlaceholder(layer: string): string {
+  return (LAYER_GUIDANCE as any)[layer]?.placeholder || "Describe this asset";
+}
+
+function getLayerSpecificGuidance(layer: string): string {
+  const guidance = (LAYER_GUIDANCE as any)[layer];
+  return guidance ? `${guidance.guidance}. Example: "${guidance.example}"` : "";
+}
+
 // Define interface for subcategory item for type safety
 interface SubcategoryItem {
   code: string;
@@ -88,7 +165,7 @@ const schema = yup.object({
   subcategoryCode: yup.string().required('Subcategory is required'),
   subcategoryName: yup.string(),
   subcategoryNumericCode: yup.string(),
-  name: yup.string().required('Name is required'),
+  name: yup.string().required('Creator\'s Description is required'),
   description: yup.string(),
   source: yup.string().required('Source is required'),
   tags: yup.array().of(yup.string()),
@@ -1061,11 +1138,21 @@ const RegisterAssetPage: React.FC = () => {
     // This handles both adding new files and removing existing ones
     setValue('files', files);
     
-    // Auto-populate asset name with file name if there's one file
+    // Auto-populate Creator's Description with file name if there's one file and no existing description
     if (files.length === 1 && !getValues('name')) {
-      // Remove file extension from name
+      // Remove file extension from name and clean up for creator's description
       const fileName = files[0].name.split('.').slice(0, -1).join('.');
-      setValue('name', fileName);
+      
+      // Clean up common file naming patterns to make them more user-friendly
+      const cleanedName = fileName
+        .replace(/[-_]/g, ' ')  // Replace hyphens and underscores with spaces
+        .replace(/\s+/g, ' ')   // Replace multiple spaces with single space
+        .trim();
+      
+      setValue('name', cleanedName);
+      
+      // Log the auto-population for debugging
+      environmentSafeLog(`[ENHANCED AI] Auto-populated Creator's Description: "${cleanedName}" from file: "${fileName}"`);
     }
     
     // Show a confirmation if at least one duplicate was found
@@ -1292,6 +1379,15 @@ const RegisterAssetPage: React.FC = () => {
                   currentDescription={watch('description')}
                   currentTags={watch('tags')}
                   disabled={!watchLayer || !watchCategoryCode || !watchSubcategoryCode}
+                  
+                  // Enhanced AI Integration props
+                  shortDescription={watch('name')}  // Creator's Description from the enhanced UI
+                  categoryName={watch('categoryName')}
+                  subcategoryName={watch('subcategoryName')}
+                  layerName={watch('layerName')}
+                  thumbnailUrl={(uploadedFiles[0] as any)?.thumbnailUrl}  // For video layers
+                  imageUrl={uploadedFiles[0]?.url}  // For image layers (same as fileUrl for images)
+                  componentMetadata={watch('layerSpecificData.components')}  // For composite layers
                 />
               </Box>
             )}
@@ -1308,25 +1404,38 @@ const RegisterAssetPage: React.FC = () => {
               <Grid container spacing={3}>
                 <Grid item xs={12}>
                   <Box>
-                    <Typography variant="subtitle1" gutterBottom>
-                      Name
+                    <Typography variant="subtitle1" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      {getLayerSpecificLabel(watchLayer)}
+                      <Tooltip title={getLayerSpecificGuidance(watchLayer)} arrow>
+                        <InfoIcon fontSize="small" color="primary" />
+                      </Tooltip>
                     </Typography>
                     <input
                       {...register('name', { 
-                        required: 'Asset name is required',
-                        maxLength: { value: 100, message: 'Asset name must not exceed 100 characters' },
-                        minLength: { value: 3, message: 'Asset name must be at least 3 characters' }
+                        required: 'Creator\'s Description is required',
+                        maxLength: { value: 100, message: 'Creator\'s Description must not exceed 100 characters' },
+                        minLength: { value: 3, message: 'Creator\'s Description must be at least 3 characters' }
                       })}
-                      placeholder="Asset Name"
+                      placeholder={getLayerSpecificPlaceholder(watchLayer)}
                       style={{
                         width: '100%',
-                        padding: '10px',
+                        padding: '12px',
                         borderRadius: '4px',
                         border: '1px solid #ccc',
+                        fontSize: '14px',
+                        fontFamily: 'inherit'
                       }}
                     />
+                    <Box sx={{ mt: 0.5, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <Typography variant="caption" color="textSecondary">
+                        {getLayerSpecificGuidance(watchLayer)}
+                      </Typography>
+                      <Typography variant="caption" color="textSecondary">
+                        {watch('name')?.length || 0}/100 characters
+                      </Typography>
+                    </Box>
                     {errors.name && (
-                      <Typography color="error" variant="caption">
+                      <Typography color="error" variant="caption" sx={{ display: 'block', mt: 0.5 }}>
                         {errors.name.message}
                       </Typography>
                     )}

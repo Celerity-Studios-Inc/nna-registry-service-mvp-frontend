@@ -7,12 +7,18 @@ import {
   Tooltip,
   Chip,
   Typography,
-  Divider
+  Divider,
+  LinearProgress
 } from '@mui/material';
 import {
   AutoAwesome as AIIcon,
   Refresh as RegenerateIcon,
-  CheckCircle as SuccessIcon
+  CheckCircle as SuccessIcon,
+  Info as InfoIconMui,
+  MusicNote as MusicIcon,
+  Image as ImageIcon,
+  Movie as VideoIcon,
+  ViewComfy as CompositeIcon
 } from '@mui/icons-material';
 import openaiService from '../../services/openaiService';
 
@@ -28,6 +34,36 @@ interface AIMetadataGeneratorProps {
   currentDescription?: string;
   currentTags?: string[];
   disabled?: boolean;
+  
+  // Enhanced AI Integration props
+  shortDescription?: string;  // Creator's Description from the form
+  categoryName?: string;
+  subcategoryName?: string;
+  layerName?: string;
+  thumbnailUrl?: string;      // For video layers
+  imageUrl?: string;          // For image layers
+  componentMetadata?: any[];  // For composite layers
+}
+
+// Enhanced AI Context interface (matching openaiService.ts)
+interface EnhancedAIContext {
+  layer: string;
+  category: string;
+  subcategory: string;
+  shortDescription: string;
+  fileName: string;
+  fileType: string;
+  fileSize?: number;
+  thumbnail?: string;
+  image?: string;
+  componentMetadata?: any[];
+  taxonomy: {
+    layerName: string;
+    categoryName: string;
+    subcategoryName: string;
+  };
+  previousAttempts?: number;
+  regenerationContext?: any;
 }
 
 interface GenerationState {
@@ -36,8 +72,12 @@ interface GenerationState {
     description?: string;
     tags?: string[];
     timestamp?: Date;
+    additionalMetadata?: any;
+    processingType?: string;
   } | null;
   error: string | null;
+  progress: string;
+  useEnhancedAI: boolean;
 }
 
 const AIMetadataGenerator: React.FC<AIMetadataGeneratorProps> = ({
@@ -51,19 +91,92 @@ const AIMetadataGenerator: React.FC<AIMetadataGeneratorProps> = ({
   onTagsGenerated,
   currentDescription,
   currentTags = [],
-  disabled = false
+  disabled = false,
+  // Enhanced AI Integration props
+  shortDescription,
+  categoryName,
+  subcategoryName,
+  layerName,
+  thumbnailUrl,
+  imageUrl,
+  componentMetadata
 }) => {
   const [state, setState] = useState<GenerationState>({
     isGenerating: false,
     lastGenerated: null,
-    error: null
+    error: null,
+    progress: '',
+    useEnhancedAI: !!shortDescription // Use enhanced AI if Creator's Description is provided
   });
 
   // Check if OpenAI API is configured
   const isConfigured = !!process.env.REACT_APP_OPENAI_API_KEY;
 
+  // Helper function to get layer-specific icon
+  const getLayerIcon = (layer: string) => {
+    const icons: Record<string, React.ComponentType<any>> = {
+      G: MusicIcon,
+      S: ImageIcon,
+      L: ImageIcon,
+      M: VideoIcon,
+      W: VideoIcon,
+      C: CompositeIcon
+    };
+    const IconComponent = icons[layer] || AIIcon;
+    return <IconComponent sx={{ mr: 1, color: 'primary.main' }} />;
+  };
+
+  // Helper function to determine if enhanced AI should be used
+  const shouldUseEnhancedAI = () => {
+    return state.useEnhancedAI && shortDescription && shortDescription.trim().length > 0;
+  };
+
+  // Helper function to build enhanced AI context
+  const buildEnhancedContext = (): EnhancedAIContext => {
+    return {
+      layer,
+      category: categoryCode,
+      subcategory: subcategoryCode,
+      shortDescription: shortDescription || fileName || 'uploaded-file',
+      fileName: fileName || 'uploaded-file',
+      fileType: fileType || 'unknown',
+      thumbnail: thumbnailUrl,
+      image: imageUrl || fileUrl,
+      componentMetadata: componentMetadata,
+      taxonomy: {
+        layerName: layerName || layer,
+        categoryName: categoryName || categoryCode,
+        subcategoryName: subcategoryName || subcategoryCode
+      },
+      previousAttempts: 0
+    };
+  };
+
+  // Helper function to set progress with layer-specific messages
+  const setProgress = (message: string) => {
+    setState(prev => ({ ...prev, progress: message }));
+  };
+
+  // Enhanced progress messages for different layers
+  const getProgressMessages = (layer: string): string[] => {
+    const messages: Record<string, string[]> = {
+      G: [
+        'Extracting song information...',
+        'Searching music databases...',
+        'Generating enhanced description and tags...'
+      ],
+      S: ['Analyzing performer image...', 'Generating description and tags...'],
+      L: ['Analyzing look/style image...', 'Generating description and tags...'],
+      M: ['Analyzing movement video...', 'Generating description and tags...'],
+      W: ['Analyzing environment/world...', 'Generating description and tags...'],
+      C: ['Aggregating component metadata...', 'Generating composite description...']
+    };
+    return messages[layer] || ['Analyzing file...', 'Generating description and tags...'];
+  };
+
   const handleGenerateMetadata = async () => {
-    if (!fileUrl) {
+    // Enhanced validation
+    if (!fileUrl && !shouldUseEnhancedAI()) {
       setState(prev => ({ 
         ...prev, 
         error: 'No file available for analysis. Please upload a file first.' 
@@ -71,39 +184,76 @@ const AIMetadataGenerator: React.FC<AIMetadataGeneratorProps> = ({
       return;
     }
 
+    if (shouldUseEnhancedAI() && !shortDescription?.trim()) {
+      setState(prev => ({ 
+        ...prev, 
+        error: 'Please provide a Creator\'s Description to enable enhanced AI generation.' 
+      }));
+      return;
+    }
+
     setState(prev => ({ 
       ...prev, 
       isGenerating: true, 
-      error: null 
+      error: null,
+      progress: 'Initializing AI generation...'
     }));
 
     try {
-      const context = {
-        layer,
-        categoryCode,
-        subcategoryCode,
-        fileName: fileName || 'uploaded-file',
-        fileType: fileType || 'unknown'
-      };
+      let result: { description: string; tags: string[]; additionalMetadata?: any };
+      
+      if (shouldUseEnhancedAI()) {
+        console.log('🚀 [ENHANCED AI] Generation started with Creator\'s Description:', shortDescription);
+        
+        // Enhanced AI processing with layer-specific progress
+        const progressMessages = getProgressMessages(layer);
+        const enhancedContext = buildEnhancedContext();
+        
+        // Show layer-specific progress messages
+        for (let i = 0; i < progressMessages.length; i++) {
+          setProgress(progressMessages[i]);
+          if (i < progressMessages.length - 1) {
+            await new Promise(resolve => setTimeout(resolve, 500));
+          }
+        }
+        
+        result = await openaiService.generateEnhancedMetadata(enhancedContext);
+        
+        console.log('🚀 [ENHANCED AI] Generation completed:', result);
+        
+      } else {
+        console.log('🤖 [LEGACY AI] Generation started for:', { layer, categoryCode, subcategoryCode });
+        
+        // Legacy AI processing
+        const context = {
+          layer,
+          categoryCode,
+          subcategoryCode,
+          fileName: fileName || 'uploaded-file',
+          fileType: fileType || 'unknown'
+        };
 
-      console.log('🤖 AI Generation started for:', context);
-      
-      const result = await openaiService.generateMetadata(fileUrl, context);
-      
-      console.log('🤖 AI Generation completed:', result);
+        setProgress('Analyzing file and generating metadata...');
+        result = await openaiService.generateMetadata(fileUrl!, context);
+        
+        console.log('🤖 [LEGACY AI] Generation completed:', result);
+      }
       
       // Update form fields
       onDescriptionGenerated(result.description);
       onTagsGenerated(result.tags);
       
-      // Update state
+      // Update state with enhanced metadata
       setState(prev => ({
         ...prev,
         isGenerating: false,
+        progress: '',
         lastGenerated: {
           description: result.description,
           tags: result.tags,
-          timestamp: new Date()
+          timestamp: new Date(),
+          additionalMetadata: result.additionalMetadata,
+          processingType: shouldUseEnhancedAI() ? 'enhanced' : 'legacy'
         }
       }));
 
@@ -112,81 +262,103 @@ const AIMetadataGenerator: React.FC<AIMetadataGeneratorProps> = ({
       setState(prev => ({
         ...prev,
         isGenerating: false,
+        progress: '',
         error: error instanceof Error ? error.message : 'Failed to generate metadata'
       }));
     }
   };
 
-  const handleRegenerateDescription = async () => {
-    if (!fileUrl) return;
+  const handleRegenerateMetadata = async (type: 'description' | 'tags' | 'both' = 'both') => {
+    if (!fileUrl && !shouldUseEnhancedAI()) return;
 
-    setState(prev => ({ ...prev, isGenerating: true, error: null }));
-
-    try {
-      const context = {
-        layer,
-        categoryCode,
-        subcategoryCode,
-        fileName: fileName || 'uploaded-file',
-        fileType: fileType || 'unknown'
-      };
-
-      const description = await openaiService.generateDescription(fileUrl, context);
-      onDescriptionGenerated(description);
-      
-      setState(prev => ({
-        ...prev,
-        isGenerating: false,
-        lastGenerated: {
-          ...prev.lastGenerated,
-          description,
-          timestamp: new Date()
-        }
-      }));
-
-    } catch (error) {
-      console.error('🤖 Description regeneration failed:', error);
-      setState(prev => ({
-        ...prev,
-        isGenerating: false,
-        error: error instanceof Error ? error.message : 'Failed to regenerate description'
-      }));
-    }
-  };
-
-  const handleRegenerateTags = async () => {
-    if (!fileUrl) return;
-
-    setState(prev => ({ ...prev, isGenerating: true, error: null }));
+    setState(prev => ({ 
+      ...prev, 
+      isGenerating: true, 
+      error: null,
+      progress: `Regenerating ${type}...`
+    }));
 
     try {
-      const context = {
-        layer,
-        categoryCode,
-        subcategoryCode,
-        fileName: fileName || 'uploaded-file',
-        fileType: fileType || 'unknown'
-      };
+      if (shouldUseEnhancedAI()) {
+        // Enhanced AI regeneration
+        const enhancedContext = buildEnhancedContext();
+        enhancedContext.previousAttempts = (state.lastGenerated?.additionalMetadata?.attempts || 0) + 1;
+        enhancedContext.regenerationContext = {
+          previousAttempts: enhancedContext.previousAttempts,
+          lastResult: state.lastGenerated,
+          userRequest: `regenerate-${type}`
+        };
 
-      const tags = await openaiService.generateTags(fileUrl, context);
-      onTagsGenerated(tags);
-      
-      setState(prev => ({
-        ...prev,
-        isGenerating: false,
-        lastGenerated: {
-          ...prev.lastGenerated,
-          tags,
-          timestamp: new Date()
+        const result = await openaiService.generateEnhancedMetadata(enhancedContext);
+        
+        // Update only the requested fields
+        if (type === 'description' || type === 'both') {
+          onDescriptionGenerated(result.description);
         }
-      }));
+        if (type === 'tags' || type === 'both') {
+          onTagsGenerated(result.tags);
+        }
+        
+        setState(prev => ({
+          ...prev,
+          isGenerating: false,
+          progress: '',
+          lastGenerated: {
+            description: type === 'description' || type === 'both' ? result.description : prev.lastGenerated?.description,
+            tags: type === 'tags' || type === 'both' ? result.tags : prev.lastGenerated?.tags,
+            timestamp: new Date(),
+            additionalMetadata: {
+              ...result.additionalMetadata,
+              attempts: enhancedContext.previousAttempts
+            },
+            processingType: 'enhanced'
+          }
+        }));
+
+      } else {
+        // Legacy AI regeneration
+        const context = {
+          layer,
+          categoryCode,
+          subcategoryCode,
+          fileName: fileName || 'uploaded-file',
+          fileType: fileType || 'unknown'
+        };
+
+        let description = state.lastGenerated?.description;
+        let tags = state.lastGenerated?.tags;
+
+        if (type === 'description' || type === 'both') {
+          description = await openaiService.generateDescription(fileUrl!, context);
+          onDescriptionGenerated(description);
+        }
+        
+        if (type === 'tags' || type === 'both') {
+          tags = await openaiService.generateTags(fileUrl!, context);
+          onTagsGenerated(tags);
+        }
+        
+        setState(prev => ({
+          ...prev,
+          isGenerating: false,
+          progress: '',
+          lastGenerated: {
+            ...prev.lastGenerated,
+            description,
+            tags,
+            timestamp: new Date(),
+            processingType: 'legacy'
+          }
+        }));
+      }
 
     } catch (error) {
-      console.error('🤖 Tags regeneration failed:', error);
+      console.error(`🤖 ${type} regeneration failed:`, error);
       setState(prev => ({
         ...prev,
         isGenerating: false,
-        error: error instanceof Error ? error.message : 'Failed to regenerate tags'
+        progress: '',
+        error: error instanceof Error ? error.message : `Failed to regenerate ${type}`
       }));
     }
   };
@@ -210,53 +382,94 @@ const AIMetadataGenerator: React.FC<AIMetadataGeneratorProps> = ({
 
   return (
     <Box sx={{ mb: 3 }}>
-      {/* AI Generation Header */}
+      {/* Enhanced AI Generation Header */}
       <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-        <AIIcon sx={{ mr: 1, color: 'primary.main' }} />
+        {getLayerIcon(layer)}
         <Typography variant="h6" sx={{ flexGrow: 1 }}>
-          AI-Powered Metadata Generation
+          🤖 Enhanced AI Metadata Generation
         </Typography>
         {hasGenerated && (
-          <Chip 
-            icon={<SuccessIcon />}
-            label="Generated"
-            color="success"
-            size="small"
-          />
+          <Box sx={{ display: 'flex', gap: 1 }}>
+            {state.lastGenerated?.processingType === 'enhanced' && (
+              <Chip 
+                label="Enhanced AI"
+                color="primary"
+                size="small"
+                variant="outlined"
+              />
+            )}
+            <Chip 
+              icon={<SuccessIcon />}
+              label="Generated"
+              color="success"
+              size="small"
+            />
+          </Box>
         )}
       </Box>
 
-      {/* Description */}
+      {/* Enhanced Description with layer-specific guidance */}
       <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-        Let AI analyze your {layer} layer asset and automatically generate 
-        description and tags based on your metadata guide for optimal AlgoRhythm compatibility.
+        {shouldUseEnhancedAI() ? (
+          <>
+            🚀 <strong>Enhanced AI Mode:</strong> Using your Creator's Description "{shortDescription}" 
+            to generate layer-specific, AlgoRhythm-optimized metadata for {layerName || layer} assets.
+          </>
+        ) : (
+          <>
+            Let AI analyze your {layerName || layer} asset and automatically generate 
+            description and tags based on your metadata guide for optimal AlgoRhythm compatibility.
+          </>
+        )}
       </Typography>
 
-      {/* Generation Button */}
+      {/* Creator's Description validation alert */}
+      {!shortDescription?.trim() && (
+        <Alert severity="info" sx={{ mb: 2 }}>
+          <Typography variant="body2">
+            💡 <strong>Tip:</strong> For enhanced AI generation, provide a Creator's Description above. 
+            This enables layer-specific processing with{' '}
+            {layer === 'G' && 'MusicBrainz integration and web search capabilities'}
+            {layer === 'S' && 'performer-focused analysis with image context'}
+            {layer === 'L' && 'style and fashion-aware processing'}
+            {layer === 'M' && 'movement and choreography analysis'}
+            {layer === 'W' && 'environment and atmosphere processing'}
+            {layer === 'C' && 'intelligent component aggregation'}
+            {!['G', 'S', 'L', 'M', 'W', 'C'].includes(layer) && 'context-aware processing'}
+            .
+          </Typography>
+        </Alert>
+      )}
+
+      {/* Enhanced Generation Button */}
       {!hasGenerated && (
         <Button
           variant="contained"
-          startIcon={state.isGenerating ? <CircularProgress size={20} /> : <AIIcon />}
+          startIcon={state.isGenerating ? <CircularProgress size={20} /> : getLayerIcon(layer)}
           onClick={handleGenerateMetadata}
-          disabled={disabled || !fileUrl || state.isGenerating}
+          disabled={disabled || state.isGenerating || (!fileUrl && !shouldUseEnhancedAI())}
           size="large"
           sx={{ mb: 2 }}
         >
-          {state.isGenerating ? 'Analyzing with AI...' : 'Generate Description & Tags with AI'}
+          {state.isGenerating ? (
+            shouldUseEnhancedAI() ? 'Enhanced AI Processing...' : 'Analyzing with AI...'
+          ) : (
+            shouldUseEnhancedAI() ? 'Generate Enhanced Metadata' : 'Generate Description & Tags with AI'
+          )}
         </Button>
       )}
 
-      {/* Regeneration Options */}
+      {/* Enhanced Regeneration Options */}
       {showRegenerateOptions && (
         <Box sx={{ mb: 2 }}>
           <Typography variant="subtitle2" gutterBottom>
-            Regenerate Options:
+            Regeneration Options:
           </Typography>
           <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
             <Button
               variant="outlined"
               startIcon={<RegenerateIcon />}
-              onClick={handleRegenerateDescription}
+              onClick={() => handleRegenerateMetadata('description')}
               disabled={state.isGenerating}
               size="small"
             >
@@ -265,7 +478,7 @@ const AIMetadataGenerator: React.FC<AIMetadataGeneratorProps> = ({
             <Button
               variant="outlined"
               startIcon={<RegenerateIcon />}
-              onClick={handleRegenerateTags}
+              onClick={() => handleRegenerateMetadata('tags')}
               disabled={state.isGenerating}
               size="small"
             >
@@ -273,39 +486,69 @@ const AIMetadataGenerator: React.FC<AIMetadataGeneratorProps> = ({
             </Button>
             <Button
               variant="outlined"
-              startIcon={<AIIcon />}
-              onClick={handleGenerateMetadata}
+              startIcon={shouldUseEnhancedAI() ? getLayerIcon(layer) : <AIIcon />}
+              onClick={() => handleRegenerateMetadata('both')}
               disabled={state.isGenerating}
               size="small"
             >
-              Regenerate Both
+              {shouldUseEnhancedAI() ? 'Enhanced Regenerate' : 'Regenerate Both'}
             </Button>
           </Box>
         </Box>
       )}
 
-      {/* Generation Status */}
+      {/* Enhanced Generation Status with Progress */}
       {state.isGenerating && (
         <Alert severity="info" sx={{ mb: 2 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center' }}>
-            <CircularProgress size={20} sx={{ mr: 1 }} />
-            AI is analyzing your {layer} layer asset to generate optimized metadata...
+          <Box sx={{ mb: 1 }}>
+            <LinearProgress sx={{ mb: 1 }} />
+            <Typography variant="body2" sx={{ display: 'flex', alignItems: 'center' }}>
+              <CircularProgress size={16} sx={{ mr: 1 }} />
+              {state.progress || `AI is analyzing your ${layerName || layer} asset...`}
+            </Typography>
           </Box>
+          {shouldUseEnhancedAI() && (
+            <Typography variant="caption" color="text.secondary">
+              Enhanced AI mode with layer-specific processing
+            </Typography>
+          )}
         </Alert>
       )}
 
-      {/* Success Message */}
+      {/* Enhanced Success Message */}
       {hasGenerated && !state.isGenerating && !state.error && (
         <Alert severity="success" sx={{ mb: 2 }}>
           <Typography variant="body2">
-            ✨ AI has generated metadata optimized for {layer} layer assets! 
+            ✨ {state.lastGenerated?.processingType === 'enhanced' ? 'Enhanced AI' : 'AI'} has generated 
+            metadata optimized for {layerName || layer} layer assets! 
             You can edit the generated content below or regenerate specific parts.
           </Typography>
-          {state.lastGenerated?.timestamp && (
-            <Typography variant="caption" display="block" sx={{ mt: 0.5, opacity: 0.8 }}>
-              Generated: {state.lastGenerated.timestamp.toLocaleTimeString()}
-            </Typography>
+          
+          {/* Enhanced metadata information */}
+          {state.lastGenerated?.additionalMetadata && (
+            <Box sx={{ mt: 1, p: 1, bgcolor: 'rgba(255,255,255,0.1)', borderRadius: 1 }}>
+              <Typography variant="caption" color="text.secondary">
+                <strong>Enhanced Features:</strong>{' '}
+                {layer === 'G' && state.lastGenerated.additionalMetadata.musicbrainzId && 'MusicBrainz integration, '}
+                {layer === 'G' && state.lastGenerated.additionalMetadata.albumArtUrl && 'Album art lookup, '}
+                {state.lastGenerated.additionalMetadata.extractedSongData && 'Song data extraction, '}
+                Layer-specific processing, AlgoRhythm optimization
+              </Typography>
+            </Box>
           )}
+          
+          <Box sx={{ mt: 0.5, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            {state.lastGenerated?.timestamp && (
+              <Typography variant="caption" sx={{ opacity: 0.8 }}>
+                Generated: {state.lastGenerated.timestamp.toLocaleTimeString()}
+              </Typography>
+            )}
+            {state.lastGenerated?.additionalMetadata?.attempts && (
+              <Typography variant="caption" sx={{ opacity: 0.8 }}>
+                Attempt #{state.lastGenerated.additionalMetadata.attempts}
+              </Typography>
+            )}
+          </Box>
         </Alert>
       )}
 
@@ -325,12 +568,29 @@ const AIMetadataGenerator: React.FC<AIMetadataGeneratorProps> = ({
         </Alert>
       )}
 
-      {/* Help Text */}
+      {/* Enhanced Help Text */}
       <Box sx={{ mt: 2, p: 2, bgcolor: 'background.paper', borderRadius: 1, border: '1px solid', borderColor: 'divider' }}>
         <Typography variant="caption" color="text.secondary">
-          <strong>How it works:</strong> AI analyzes your uploaded file using layer-specific prompts 
-          based on your metadata guide. Generated content follows AlgoRhythm optimization 
-          principles for better song-to-asset matching.
+          <strong>How Enhanced AI works:</strong>{' '}
+          {shouldUseEnhancedAI() ? (
+            <>
+              Using your Creator's Description, AI applies layer-specific processing strategies:
+              {layer === 'G' && ' song data extraction + MusicBrainz integration + web search'}
+              {layer === 'S' && ' performer analysis + image context + performance attributes'}
+              {layer === 'L' && ' style analysis + fashion context + aesthetic matching'}
+              {layer === 'M' && ' movement analysis + choreography context + rhythm matching'}
+              {layer === 'W' && ' environment analysis + atmosphere context + mood matching'}
+              {layer === 'C' && ' component aggregation + composite intelligence'}
+              {!['G', 'S', 'L', 'M', 'W', 'C'].includes(layer) && ' context-aware processing'}
+              . All content is AlgoRhythm-optimized for cross-layer compatibility.
+            </>
+          ) : (
+            <>
+              AI analyzes your uploaded file using layer-specific prompts based on your metadata guide. 
+              For enhanced results with layer-specific strategies, provide a Creator's Description above. 
+              Generated content follows AlgoRhythm optimization principles for better song-to-asset matching.
+            </>
+          )}
         </Typography>
       </Box>
 
