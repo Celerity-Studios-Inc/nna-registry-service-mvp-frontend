@@ -611,23 +611,71 @@ Comma-separated tag list: `;
   private extractSongData(description: string): ExtractedSongData {
     console.log(`[ENHANCED AI] Extracting song data from: "${description}"`);
     
-    // Parse patterns like "Song Name - Album Name - Artist/Band"
+    // Handle multiple input formats
     const patterns = [
-      /^(.+?)\s*-\s*(.+?)\s*-\s*(.+?)$/,  // Full format: Song - Album - Artist
-      /^(.+?)\s*-\s*(.+?)$/,              // Song - Artist format
-      /^(.+?)$/                           // Just song name
+      // Pattern 1: "Song Name - Album Name - Artist/Band"
+      /^(.+?)\s*-\s*(.+?)\s*-\s*(.+?)$/,
+      
+      // Pattern 2: "Song Name" by Artist from album Album Name
+      /^[""'](.+?)[""']\s*by\s+(.+?)\s+from\s+album\s+(.+?)(?:\s*\([\d]+\))?(?:\.|$)/i,
+      
+      // Pattern 3: "Song Name" by Artist
+      /^[""'](.+?)[""']\s*by\s+(.+?)(?:\s*\([\d]+\))?(?:\.|$)/i,
+      
+      // Pattern 4: Song Name by Artist
+      /^(.+?)\s*by\s+(.+?)(?:\s*\([\d]+\))?(?:\.|$)/i,
+      
+      // Pattern 5: Song Name - Artist format
+      /^(.+?)\s*-\s*(.+?)$/,
+      
+      // Pattern 6: Just song name
+      /^(.+?)$/
     ];
     
-    for (const pattern of patterns) {
+    for (let i = 0; i < patterns.length; i++) {
+      const pattern = patterns[i];
       const match = description.match(pattern);
       if (match) {
-        const result = {
-          songName: match[1]?.trim() || description,
-          albumName: match[2]?.trim() || '',
-          artistName: match[3]?.trim() || match[2]?.trim() || '',
-          originalInput: description
-        };
-        console.log('[ENHANCED AI] Successfully extracted:', result);
+        let result: ExtractedSongData;
+        
+        if (i === 1) { // "Song Name" by Artist from album Album Name
+          result = {
+            songName: match[1]?.trim() || '',
+            artistName: match[2]?.trim() || '',
+            albumName: match[3]?.trim() || '',
+            originalInput: description
+          };
+        } else if (i === 2 || i === 3) { // "Song Name" by Artist or Song Name by Artist
+          result = {
+            songName: match[1]?.trim() || '',
+            artistName: match[2]?.trim() || '',
+            albumName: '',
+            originalInput: description
+          };
+        } else if (i === 0) { // Song - Album - Artist
+          result = {
+            songName: match[1]?.trim() || '',
+            albumName: match[2]?.trim() || '',
+            artistName: match[3]?.trim() || '',
+            originalInput: description
+          };
+        } else if (i === 4) { // Song - Artist
+          result = {
+            songName: match[1]?.trim() || '',
+            artistName: match[2]?.trim() || '',
+            albumName: '',
+            originalInput: description
+          };
+        } else { // Just song name
+          result = {
+            songName: match[1]?.trim() || description,
+            albumName: '',
+            artistName: '',
+            originalInput: description
+          };
+        }
+        
+        console.log(`[ENHANCED AI] Pattern ${i + 1} matched. Extracted:`, result);
         return result;
       }
     }
@@ -638,7 +686,7 @@ Comma-separated tag list: `;
       artistName: '',
       originalInput: description
     };
-    console.log('[ENHANCED AI] Using fallback extraction:', fallback);
+    console.log('[ENHANCED AI] No patterns matched, using fallback:', fallback);
     return fallback;
   }
 

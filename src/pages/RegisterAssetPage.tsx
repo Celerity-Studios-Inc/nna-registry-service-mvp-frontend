@@ -1364,33 +1364,6 @@ const RegisterAssetPage: React.FC = () => {
               onSourceChange={(source) => setValue('source', source)}
             />
 
-            {/* AI Metadata Generation */}
-            {uploadedFiles.length > 0 && (
-              <Box mt={3}>
-                <AIMetadataGenerator
-                  fileUrl={uploadedFiles[0]?.url}
-                  fileName={getValues('files')?.[0]?.name}
-                  fileType={getValues('files')?.[0]?.type}
-                  layer={watchLayer}
-                  categoryCode={watchCategoryCode}
-                  subcategoryCode={watchSubcategoryCode}
-                  onDescriptionGenerated={handleAIDescriptionGenerated}
-                  onTagsGenerated={handleAITagsGenerated}
-                  currentDescription={watch('description')}
-                  currentTags={watch('tags')}
-                  disabled={!watchLayer || !watchCategoryCode || !watchSubcategoryCode}
-                  
-                  // Enhanced AI Integration props
-                  shortDescription={watch('name')}  // Creator's Description from the enhanced UI
-                  categoryName={watch('categoryName')}
-                  subcategoryName={watch('subcategoryName')}
-                  layerName={watch('layerName')}
-                  thumbnailUrl={(uploadedFiles[0] as any)?.thumbnailUrl}  // For video layers
-                  imageUrl={uploadedFiles[0]?.url}  // For image layers (same as fileUrl for images)
-                  componentMetadata={watch('layerSpecificData.components')}  // For composite layers
-                />
-              </Box>
-            )}
             
             <Box mt={3}>
               <Typography variant="h6" gutterBottom>
@@ -1441,6 +1414,34 @@ const RegisterAssetPage: React.FC = () => {
                     )}
                   </Box>
                 </Grid>
+                
+                {/* AI Metadata Generation - Moved after Creator's Description */}
+                {uploadedFiles.length > 0 && watch('name')?.trim() && (
+                  <Grid item xs={12}>
+                    <AIMetadataGenerator
+                      fileUrl={uploadedFiles[0]?.url}
+                      fileName={getValues('files')?.[0]?.name}
+                      fileType={getValues('files')?.[0]?.type}
+                      layer={watchLayer}
+                      categoryCode={watchCategoryCode}
+                      subcategoryCode={watchSubcategoryCode}
+                      onDescriptionGenerated={handleAIDescriptionGenerated}
+                      onTagsGenerated={handleAITagsGenerated}
+                      currentDescription={watch('description')}
+                      currentTags={watch('tags')}
+                      disabled={!watchLayer || !watchCategoryCode || !watchSubcategoryCode}
+                      
+                      // Enhanced AI Integration props
+                      shortDescription={watch('name')}  // Creator's Description from the enhanced UI
+                      categoryName={watch('categoryName')}
+                      subcategoryName={watch('subcategoryName')}
+                      layerName={watch('layerName')}
+                      thumbnailUrl={(uploadedFiles[0] as any)?.thumbnailUrl}  // For video layers
+                      imageUrl={uploadedFiles[0]?.url}  // For image layers (same as fileUrl for images)
+                      componentMetadata={watch('layerSpecificData.components')}  // For composite layers
+                    />
+                  </Grid>
+                )}
                 
                 <Grid item xs={12}>
                   <Box>
