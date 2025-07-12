@@ -5,6 +5,8 @@
 
 // Import diagnostic utility for troubleshooting
 import { logEnvironmentDiagnostic } from '../utils/envDiagnostic';
+// Phase 2A: Import album art service
+import albumArtService from './albumArtService';
 
 interface OpenAIResponse {
   choices: Array<{
@@ -602,7 +604,25 @@ Comma-separated tag list: `;
     // 3. Call OpenAI with enhanced context
     const response = await this.callOpenAIWithEnhancedContext(prompt, null, context);
     
-    return this.processSongsResponse(response, songData);
+    const processedResponse = this.processSongsResponse(response, songData);
+    
+    // Phase 2A: Fetch album art asynchronously using dedicated service
+    albumArtService.fetchAlbumArt({
+      songName: songData.songName,
+      artistName: songData.artistName,
+      albumName: songData.albumName
+    }).then(albumArtResult => {
+      if (albumArtResult) {
+        processedResponse.additionalMetadata.albumArtUrl = albumArtResult.url;
+        processedResponse.additionalMetadata.albumArtSource = albumArtResult.source;
+        processedResponse.additionalMetadata.albumArtQuality = albumArtResult.quality;
+        console.log('[PHASE 2A] Album art added to metadata:', albumArtResult);
+      }
+    }).catch(error => {
+      console.warn('[PHASE 2A] Album art fetch error:', error);
+    });
+    
+    return processedResponse;
   }
 
   /**
@@ -995,14 +1015,25 @@ Respond with only the description paragraph and comma-separated tag list in JSON
     
     try {
       const parsed = JSON.parse(content);
+      const baseTags = typeof parsed.tags === 'string' ? parsed.tags.split(',').map((t: string) => t.trim()) : parsed.tags || [];
+      
+      // Phase 2A: Extract BPM and enhanced metadata from description and tags
+      const enhancedMetadata = this.extractEnhancedSongMetadata(parsed.description || '', baseTags, songData);
+      
       return {
         description: parsed.description || '',
-        tags: typeof parsed.tags === 'string' ? parsed.tags.split(',').map((t: string) => t.trim()) : parsed.tags || [],
+        tags: enhancedMetadata.enhancedTags,
         additionalMetadata: {
           musicbrainzId: parsed.musicbrainzId,
-          albumArtUrl: parsed.albumArtUrl,
+          albumArtUrl: parsed.albumArtUrl || enhancedMetadata.albumArtUrl,
           additionalContext: parsed.additionalContext,
-          extractedSongData: songData
+          extractedSongData: songData,
+          // Phase 2A: Enhanced song metadata
+          bpm: enhancedMetadata.bpm,
+          energy: enhancedMetadata.energy,
+          mood: enhancedMetadata.mood,
+          tempo: enhancedMetadata.tempo,
+          algorhythmTags: enhancedMetadata.algorhythmTags
         }
       };
     } catch (error) {
@@ -1010,12 +1041,125 @@ Respond with only the description paragraph and comma-separated tag list in JSON
       console.log('[ENHANCED AI] Raw content:', content);
       // Fallback to text processing
       const lines = content.split('\n').filter((line: string) => line.trim());
+      const fallbackTags = lines[1] ? lines[1].split(',').map((t: string) => t.trim()) : [];
+      const enhancedFallback = this.extractEnhancedSongMetadata(lines[0] || '', fallbackTags, songData);
+      
       return {
         description: lines[0] || songData.originalInput,
-        tags: lines[1] ? lines[1].split(',').map((t: string) => t.trim()) : [],
-        additionalMetadata: { extractedSongData: songData }
+        tags: enhancedFallback.enhancedTags,
+        additionalMetadata: { 
+          extractedSongData: songData,
+          bpm: enhancedFallback.bpm,
+          energy: enhancedFallback.energy,
+          mood: enhancedFallback.mood,
+          tempo: enhancedFallback.tempo,
+          algorhythmTags: enhancedFallback.algorhythmTags
+        }
       };
     }
+  }
+  
+  /**
+   * Phase 2A: Extract enhanced song metadata from description and tags
+   */
+  private extractEnhancedSongMetadata(description: string, baseTags: string[], songData: ExtractedSongData): any {
+    console.log('[PHASE 2A] Extracting enhanced song metadata');
+    
+    // Extract BPM from description
+    const bpmMatch = description.match(/(\d+)\s*BPM/i);
+    const bpm = bpmMatch ? parseInt(bpmMatch[1]) : null;
+    
+    // Extract energy level
+    const energyPatterns = {
+      'high-energy': /high[\s-]?energy|energetic|intense|powerful|driving/i,
+      'medium-energy': /medium[\s-]?energy|moderate|balanced/i,
+      'low-energy': /low[\s-]?energy|calm|mellow|gentle|soft/i
+    };
+    
+    let energy = 'medium-energy'; // default
+    for (const [level, pattern] of Object.entries(energyPatterns)) {
+      if (pattern.test(description) || baseTags.some(tag => pattern.test(tag))) {
+        energy = level;
+        break;
+      }
+    }
+    
+    // Extract mood
+    const moodPatterns = {
+      'romantic': /romantic|love|intimate|sensual|sultry/i,
+      'upbeat': /upbeat|happy|cheerful|joyful|positive/i,
+      'dramatic': /dramatic|emotional|intense|powerful/i,
+      'playful': /playful|fun|lighthearted|whimsical/i,
+      'melancholic': /sad|melancholic|nostalgic|wistful/i
+    };
+    
+    const moods: string[] = [];
+    for (const [moodType, pattern] of Object.entries(moodPatterns)) {
+      if (pattern.test(description) || baseTags.some(tag => pattern.test(tag))) {
+        moods.push(moodType);
+      }
+    }
+    
+    // Determine tempo category
+    let tempo = 'medium-tempo';
+    if (bpm) {
+      if (bpm >= 120) tempo = 'fast-tempo';
+      else if (bpm <= 80) tempo = 'slow-tempo';
+    }
+    
+    // Generate enhanced tags
+    const enhancedTags = [...baseTags];
+    
+    // Add BPM tag if extracted
+    if (bpm && !enhancedTags.some(tag => tag.includes('bpm'))) {
+      enhancedTags.push(`${bpm}bpm`);
+    }
+    
+    // Add tempo tag if not present
+    if (!enhancedTags.some(tag => tag.includes('tempo'))) {
+      enhancedTags.push(tempo);
+    }
+    
+    // Add energy tag if not present
+    if (!enhancedTags.some(tag => tag.includes('energy'))) {
+      enhancedTags.push(energy);
+    }
+    
+    // Add mood tags if not present
+    moods.forEach(mood => {
+      if (!enhancedTags.includes(mood)) {
+        enhancedTags.push(mood);
+      }
+    });
+    
+    // Generate AlgoRhythm-specific tags
+    const algorhythmTags = [
+      `tempo-${tempo}`,
+      `energy-${energy}`,
+      ...moods.map(mood => `mood-${mood}`)
+    ];
+    
+    if (bpm) {
+      algorhythmTags.push(`bpm-range-${Math.floor(bpm / 10) * 10}`);
+    }
+    
+    console.log('[PHASE 2A] Enhanced metadata extracted:', {
+      bpm,
+      energy,
+      mood: moods.join(', '),
+      tempo,
+      enhancedTagsAdded: enhancedTags.length - baseTags.length
+    });
+    
+    return {
+      bpm,
+      energy,
+      mood: moods.join(', '),
+      tempo,
+      enhancedTags,
+      algorhythmTags,
+      albumArtUrl: null // Will be populated by album art service
+    };
   }
   
   /**

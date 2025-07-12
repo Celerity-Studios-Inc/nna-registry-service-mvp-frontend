@@ -524,16 +524,46 @@ const AIMetadataGenerator: React.FC<AIMetadataGeneratorProps> = ({
             You can edit the generated content below or regenerate specific parts.
           </Typography>
           
-          {/* Enhanced metadata information */}
+          {/* Phase 2A: Enhanced metadata information */}
           {state.lastGenerated?.additionalMetadata && (
             <Box sx={{ mt: 1, p: 1, bgcolor: 'rgba(255,255,255,0.1)', borderRadius: 1 }}>
               <Typography variant="caption" color="text.secondary">
                 <strong>Enhanced Features:</strong>{' '}
                 {layer === 'G' && state.lastGenerated.additionalMetadata.musicbrainzId && 'MusicBrainz integration, '}
                 {layer === 'G' && state.lastGenerated.additionalMetadata.albumArtUrl && 'Album art lookup, '}
+                {layer === 'G' && state.lastGenerated.additionalMetadata.bpm && `BPM detection (${state.lastGenerated.additionalMetadata.bpm}), `}
+                {layer === 'G' && state.lastGenerated.additionalMetadata.energy && `Energy analysis (${state.lastGenerated.additionalMetadata.energy}), `}
+                {layer === 'G' && state.lastGenerated.additionalMetadata.mood && `Mood detection (${state.lastGenerated.additionalMetadata.mood}), `}
                 {state.lastGenerated.additionalMetadata.extractedSongData && 'Song data extraction, '}
                 Layer-specific processing, AlgoRhythm optimization
               </Typography>
+              
+              {/* Phase 2A: Display enhanced song metadata for G layer */}
+              {layer === 'G' && state.lastGenerated.additionalMetadata.extractedSongData && (
+                <Box sx={{ mt: 1, p: 1, bgcolor: 'rgba(255,255,255,0.05)', borderRadius: 1 }}>
+                  <Typography variant="caption" color="text.secondary">
+                    <strong>🎵 Song Data:</strong>{' '}
+                    {state.lastGenerated.additionalMetadata.extractedSongData.songName && 
+                      `"${state.lastGenerated.additionalMetadata.extractedSongData.songName}"`}
+                    {state.lastGenerated.additionalMetadata.extractedSongData.artistName && 
+                      ` by ${state.lastGenerated.additionalMetadata.extractedSongData.artistName}`}
+                    {state.lastGenerated.additionalMetadata.extractedSongData.albumName && 
+                      ` from "${state.lastGenerated.additionalMetadata.extractedSongData.albumName}"`}
+                  </Typography>
+                </Box>
+              )}
+              
+              {/* Phase 2A: Display AlgoRhythm tags */}
+              {layer === 'G' && state.lastGenerated.additionalMetadata.algorhythmTags && (
+                <Box sx={{ mt: 1, p: 1, bgcolor: 'rgba(255,255,255,0.05)', borderRadius: 1 }}>
+                  <Typography variant="caption" color="text.secondary">
+                    <strong>🎯 AlgoRhythm Tags:</strong>{' '}
+                    {state.lastGenerated.additionalMetadata.algorhythmTags.slice(0, 3).join(', ')}
+                    {state.lastGenerated.additionalMetadata.algorhythmTags.length > 3 && 
+                      ` + ${state.lastGenerated.additionalMetadata.algorhythmTags.length - 3} more`}
+                  </Typography>
+                </Box>
+              )}
             </Box>
           )}
           
@@ -575,14 +605,14 @@ const AIMetadataGenerator: React.FC<AIMetadataGeneratorProps> = ({
           {shouldUseEnhancedAI() ? (
             <>
               Using your Creator's Description, AI applies layer-specific processing strategies:
-              {layer === 'G' && ' song data extraction + MusicBrainz integration + web search'}
+              {layer === 'G' && ' song data extraction + BPM detection + energy analysis + mood detection + album art lookup + MusicBrainz integration'}
               {layer === 'S' && ' performer analysis + image context + performance attributes'}
               {layer === 'L' && ' style analysis + fashion context + aesthetic matching'}
               {layer === 'M' && ' movement analysis + choreography context + rhythm matching'}
               {layer === 'W' && ' environment analysis + atmosphere context + mood matching'}
               {layer === 'C' && ' component aggregation + composite intelligence'}
               {!['G', 'S', 'L', 'M', 'W', 'C'].includes(layer) && ' context-aware processing'}
-              . All content is AlgoRhythm-optimized for cross-layer compatibility.
+              . All content is AlgoRhythm-optimized for cross-layer compatibility with enhanced metadata extraction.
             </>
           ) : (
             <>
