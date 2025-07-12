@@ -71,19 +71,42 @@ This document serves as the single source of truth for transforming the NNA Regi
 
 ### **PHASE 3: ADVANCED INTEGRATION (Weeks 9-12)**
 
-#### **Gen-AI Integration**
-- [ ] **Gen-AI Pipeline Integration** (Weeks 9-10)
-  - [ ] Design unified creation workflow (Generate → Curate → Register)
-  - [ ] Implement Gen-AI service integration layer
-  - [ ] Create real-time generation status tracking
-  - [ ] Build asset preview and editing capabilities
-  - [ ] Add generation metadata and version tracking
+#### **Enhanced AI Integration** 
+- [x] **Basic AI Integration** ✅ **COMPLETED (July 2025)**
+  - [x] OpenAI GPT-4o integration working for Looks (L) layer
+  - [x] Development environment configured with API key
+  - [x] 3-tier deployment strategy maintained
+  - [x] Basic description and tags generation functional
 
-- [ ] **Unified Creation Experience** (Weeks 11-12)
-  - [ ] Enhance creation wizard with generation options
-  - [ ] Implement seamless transition from generation to registration
-  - [ ] Add quality assurance and curation tools
-  - [ ] Create workflow automation and notifications
+- [ ] **Enhanced AI Architecture Implementation** (Weeks 9-10)
+  - [ ] **Phase 1: Foundation Enhancement**
+    - [ ] Implement Creator's Description field (repurpose Name field)
+    - [ ] Add layer-specific guidance system with smart examples
+    - [ ] Enhance OpenAI service with context-aware processing
+    - [ ] Build hybrid Claude + OpenAI processing architecture
+  - [ ] **Phase 2: Layer-Specific Processing**
+    - [ ] Implement Songs (G) layer with MusicBrainz integration
+    - [ ] Enhance Stars (S) and Looks (L) with image + context analysis
+    - [ ] Implement Moves (M) and Worlds (W) with thumbnail + context
+    - [ ] Build Composites (C) with component metadata aggregation
+  - [ ] **Phase 3: Music Enhancement**
+    - [ ] Integrate MusicBrainz API for authoritative song data
+    - [ ] Implement OpenAI web search tools for songs research
+    - [ ] Add album art lookup and caching system
+    - [ ] Include MOAT reference integration
+  - [ ] **Phase 4: Advanced Features**
+    - [ ] Implement regeneration options with context preservation
+    - [ ] Add quality assurance and validation tools
+    - [ ] Create AlgoRhythm-optimized tag generation
+    - [ ] Build comprehensive testing across all layers
+
+- [ ] **Production Deployment & Optimization** (Weeks 11-12)
+  - [ ] Complete testing across all layers for reliability
+  - [ ] Deploy enhanced AI to staging environment
+  - [ ] Conduct comprehensive quality assurance testing
+  - [ ] Deploy to production with monitoring and rollback capabilities
+  - [ ] Performance optimization and caching strategies
+  - [ ] User training and documentation completion
 
 #### **Optimization & Scaling**
 - [ ] **Performance Optimization** (Week 12)
@@ -412,62 +435,204 @@ Authentication: JWT with role-based access
 
 ### **PHASE 3 SPECIFICATIONS**
 
-#### **3.1 Gen-AI Integration Specification**
+#### **3.1 Enhanced AI Integration Specification**
 
-**Architecture:**
+**Core Architecture: Creator's Description + AI Collaboration**
 ```typescript
-Integration Layer: NestJS service with Gen-AI API clients
-Queue System: Redis Bull for job processing
-Storage: Cloud storage for generated assets
-WebSocket: Real-time status updates
+// Hybrid Processing Architecture
+Interface: React-based Creator's Description UI with layer-specific guidance
+Processing: Claude (local parsing) + OpenAI GPT-4o (rich generation)
+Integration: Enhanced openaiService.ts with context-aware processing
+Storage: Existing asset storage with enhanced metadata
 ```
 
-**Unified Creation Workflow:**
+**Enhanced Data Architecture:**
 ```typescript
-interface CreationWorkflow {
-  step: 'configure' | 'generate' | 'preview' | 'curate' | 'register';
-  generationParams: {
-    type: 'image' | 'audio' | 'video' | 'text';
-    prompts: string[];
-    style: object;
-    quality: string;
-  };
-  generationResults: {
-    jobId: string;
-    status: 'pending' | 'processing' | 'completed' | 'failed';
-    results: GeneratedAsset[];
-    metadata: object;
-  };
-  curationData: {
-    selectedVariants: string[];
-    edits: object[];
-    approvals: boolean;
-  };
-  registrationData: {
-    taxonomy: TaxonomyPath;
-    metadata: AssetMetadata;
-    rights: RightsData;
+interface EnhancedAIContext {
+  layer: string;
+  category: string;
+  subcategory: string;
+  shortDescription: string;  // Creator-provided context (repurposed Name field)
+  fileType: string;
+  fileName: string;
+  
+  // Layer-specific data
+  thumbnail?: string;        // For M, W, C layers
+  image?: string;           // For S, L layers
+  componentMetadata?: ComponentMetadata[]; // For C layer
+  
+  // Enhanced context
+  taxonomy: {
+    layerName: string;
+    categoryName: string;
+    subcategoryName: string;
   };
 }
 ```
 
-**API Endpoints:**
+**Layer-Specific Processing Strategies:**
 ```typescript
-// Generation endpoints
-POST /api/generation/start - Start generation job
-GET /api/generation/status/:jobId - Check job status
-GET /api/generation/results/:jobId - Get generation results
-POST /api/generation/curate - Apply curation changes
-POST /api/generation/register - Register curated asset
-
-// WebSocket events
-generation:started - Job started
-generation:progress - Progress update
-generation:completed - Job completed
-generation:failed - Job failed
+interface LayerProcessingStrategy {
+  G: "Short Description + MusicBrainz lookup → Description + Tags + Album Art"
+  S: "Image + Short Description + Taxonomy → Description + Tags"  
+  L: "Image + Short Description + Taxonomy → Description + Tags"
+  M: "Thumbnail + Short Description + Taxonomy → Description + Tags"
+  W: "Thumbnail + Short Description + Taxonomy → Description + Tags"
+  C: "Component Metadata Aggregation + Thumbnail → Description + Tags"
+}
 ```
 
-#### **3.2 Performance Optimization Specification**
+**Layer-Specific Guidance System:**
+```typescript
+const LAYER_GUIDANCE = {
+  G: "Song Name - Album Name - Artist/Band (e.g., 'Bohemian Rhapsody - A Night at the Opera - Queen')",
+  S: "Performer/Character Name & Style (e.g., 'Taylor Swift - Red Era Performance Style')",
+  L: "Brand/Collection & Style (e.g., 'Versace Spring 2024 - Casual Streetwear')", 
+  M: "Dance/Movement Style & Tempo (e.g., 'Hip-Hop Freestyle - High Energy')",
+  W: "Setting/Environment Name (e.g., 'Sunset Beach Campfire - Tropical Paradise')",
+  C: "Composite Description (auto-generated from components)"
+};
+```
+
+**MusicBrainz Integration (Songs Layer):**
+```typescript
+// Enhanced Songs Processing with Web Search
+interface SongsProcessingFlow {
+  input: {
+    shortDescription: string; // "Bohemian Rhapsody - A Night at the Opera - Queen"
+    extractedData: {
+      songName: string;
+      albumName: string;
+      artistName: string;
+    }
+  };
+  processing: {
+    claudeExtraction: boolean;     // Parse structured information
+    openaiWebSearch: boolean;      // Use web search tools
+    musicbrainzLookup: boolean;    // Get authoritative references
+    albumArtLookup: boolean;       // Fetch album artwork URLs
+  };
+  output: {
+    description: string;           // Rich, detailed description
+    tags: string[];               // AlgoRhythm-optimized tags
+    musicbrainzId?: string;       // Authoritative reference
+    albumArtUrl?: string;         // Album artwork URL
+  }
+}
+```
+
+**Enhanced API Methods:**
+```typescript
+// Enhanced OpenAI Service Methods
+class EnhancedOpenAIService {
+  // Core enhanced methods
+  async generateMetadataWithContext(context: EnhancedAIContext): Promise<AIMetadata>
+  async generateSongsMetadata(shortDescription: string): Promise<SongsMetadata>
+  async generateComponentComposite(components: ComponentMetadata[]): Promise<CompositeMetadata>
+  
+  // Layer-specific processing
+  private async processWithThumbnail(layer: string, context: EnhancedAIContext): Promise<AIMetadata>
+  private async processWithImage(layer: string, context: EnhancedAIContext): Promise<AIMetadata>
+  private async processWithWebSearch(context: EnhancedAIContext): Promise<SongsMetadata>
+  
+  // Utility methods
+  private extractSongData(shortDescription: string): ExtractedSongData
+  private aggregateComponentData(components: ComponentMetadata[]): AggregatedData
+}
+```
+
+**Quality Assurance & Testing Framework:**
+```typescript
+interface QualityMetrics {
+  layerReliability: {
+    G: 'Revolutionary improvement with MusicBrainz + web search';
+    S: 'Dramatic improvement from Creator\'s Description + image analysis';
+    L: 'Maintain current excellent quality';
+    M: 'Major improvement from thumbnail + context vs raw video';
+    W: 'Major improvement from thumbnail + context vs raw video';
+    C: 'Intelligent composite descriptions from component aggregation';
+  };
+  
+  userExperience: {
+    guidedInput: 'Layer-specific examples help creators write better descriptions';
+    onDemandGeneration: 'User control over when AI runs';
+    regenerationOptions: 'Can regenerate after editing descriptions';
+    contextAware: 'AI understands taxonomy and layer purpose';
+  };
+  
+  performanceTargets: {
+    responseTime: '<3 seconds for description + tags generation';
+    reliability: '>95% success rate across all layers';
+    accuracy: 'AlgoRhythm-optimized tags for cross-layer compatibility';
+  }
+}
+```
+
+#### **3.2 Enhanced AI Implementation Phases**
+
+**Phase 1: Foundation Enhancement (Week 9)**
+```typescript
+// UI Enhancement
+- Repurpose Name field to "Creator's Description" with <100 character limit
+- Add layer-specific guidance tooltips and examples
+- Implement pre-population with filename, user-editable
+- Add "Generate AI Metadata" button in Step 3 after description field
+
+// Service Enhancement  
+- Enhance openaiService.ts with EnhancedAIContext support
+- Add Claude-based text parsing and extraction utilities
+- Implement layer-specific prompt generation with taxonomy context
+- Add error handling and graceful degradation
+```
+
+**Phase 2: Layer-Specific Processing (Week 9-10)**
+```typescript
+// Songs Layer (G) - Revolutionary Enhancement
+- Implement structured song data extraction from Creator's Description
+- Add OpenAI web search tools integration for music research
+- Integrate MusicBrainz API for authoritative song references
+- Implement album art lookup and caching system
+
+// Visual Layers (S, L) - Dramatic Improvement
+- Enhance image analysis with Creator's Description context
+- Add taxonomy-aware prompt generation
+- Implement AlgoRhythm-optimized tag generation
+
+// Video Layers (M, W) - Major Improvement  
+- Implement thumbnail-based processing (vs raw video analysis)
+- Add movement/environment context from Creator's Description
+- Enhanced synchronization and atmosphere analysis
+
+// Composite Layer (C) - Intelligent Aggregation
+- Implement component metadata aggregation
+- Add intelligent composite description generation
+- Include component compatibility analysis
+```
+
+**Phase 3: Testing & Quality Assurance (Week 10)**
+```typescript
+// Comprehensive Testing Framework
+- Test all layers for reliability and quality improvements
+- Validate AlgoRhythm tag optimization
+- Performance testing with concurrent users
+- Error handling and graceful degradation testing
+
+// User Experience Testing
+- Creator guidance system validation
+- Regeneration options testing
+- Context-aware processing verification
+```
+
+**Phase 4: Production Deployment (Week 11-12)**
+```typescript
+// Staged Deployment
+- Deploy to development environment for comprehensive testing
+- Staged rollout to staging with user acceptance testing
+- Production deployment with monitoring and rollback capabilities
+- Performance optimization and monitoring setup
+```
+
+#### **3.3 Performance Optimization Specification**
 
 **CDN Integration:**
 ```typescript

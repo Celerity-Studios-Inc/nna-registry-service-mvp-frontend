@@ -7,32 +7,68 @@ The NNA Registry Service is a platform for managing digital assets within a Nami
 
 This workspace contains a frontend implementation built with React and TypeScript.
 
-**🎉 STATUS: AI INTEGRATION SUCCESSFULLY COMPLETED** (July 9, 2025)
+**🚀 STATUS: ENHANCED AI INTEGRATION ARCHITECTURE APPROVED** (July 12, 2025)
 
-### **✅ MAJOR ACHIEVEMENT: OpenAI GPT-4o Integration Operational**
-**Development Status**: ✅ **FULLY OPERATIONAL** - AI metadata generation working perfectly
-**Latest Session**: Complete AI integration with OpenAI GPT-4o Vision API
-**Integration Complete**: AI-powered description and tags generation for all asset layers
-**Testing Phase**: Development environment ready, comprehensive testing before staging deployment
+### **🎯 CURRENT SESSION: Enhanced AI Integration Planning & Documentation**
+**Development Status**: ✅ **ARCHITECTURE DESIGNED** - Comprehensive enhancement plan approved for implementation
+**Latest Session**: Enhanced AI integration architecture planning with Creator's Description + AI collaboration
+**Critical Discovery**: Basic AI working for Looks (L) layer but reliability issues identified for other layers
+**Solution Approved**: Revolutionary Creator's Description + AI collaboration architecture
+**Documentation Phase**: Comprehensive session context preserved, Master Development Roadmap updated
 
-### **🤖 AI INTEGRATION FEATURES IMPLEMENTED**
-- ✅ **OpenAI GPT-4o Vision API**: Full integration with layer-specific prompts
-- ✅ **Environment Variable Configuration**: GitHub secrets and Vercel environment setup
-- ✅ **Blob URL Processing**: Automatic conversion to base64 data URLs for API compatibility
-- ✅ **Layer-Specific Optimization**: Specialized prompts for S, L, M, W, G layers
-- ✅ **AlgoRhythm Compatibility**: Generated tags optimized for song-to-asset matching
-- ✅ **3-Tier Deployment Strategy**: Proper development → staging → production workflow
+### **🏗️ ENHANCED AI INTEGRATION ARCHITECTURE APPROVED**
+- ✅ **Basic AI Integration**: OpenAI GPT-4o working for Looks (L) layer with excellent quality
+- ✅ **Reliability Analysis**: Identified need for enhanced architecture for consistent cross-layer performance
+- ✅ **Revolutionary Design**: Creator's Description + AI collaboration approach approved
+- ✅ **Layer-Specific Strategies**: Custom processing for G (MusicBrainz), S/L (image+context), M/W (thumbnail+context), C (component aggregation)
+- ✅ **Hybrid Processing**: Claude (parsing) + OpenAI (generation) architecture designed
+- ✅ **Documentation Complete**: Comprehensive session context preserved for implementation
 
-### **🔧 TECHNICAL IMPLEMENTATION COMPLETE**
-1. **GitHub Repository Secrets**: `OPENAI_API_KEY` configured for secure API access
-2. **Development Workflow**: Modified to inject environment variables during build
-3. **Blob URL Conversion**: Added `convertBlobToDataUrl` method for API compatibility
-4. **Error Handling**: Comprehensive error recovery and user feedback systems
+### **📋 ENHANCED AI ARCHITECTURE SPECIFICATIONS**
+1. **Creator's Description Field**: Repurpose Name field with layer-specific guidance system
+2. **Layer-Specific Processing**: G (MusicBrainz+WebSearch), S/L (image+context), M/W (thumbnail+context), C (component aggregation)
+3. **Hybrid Processing**: Claude text parsing + OpenAI rich generation with AlgoRhythm optimization
+4. **Music Enhancement**: MusicBrainz integration, web search tools, album art lookup for songs layer
+5. **Context Integration**: Taxonomy awareness, file type optimization, enhanced prompting
 
-### **📊 ENVIRONMENT STATUS**
-- **Development**: ✅ **FULLY OPERATIONAL** - AI integration working, ready for comprehensive testing
-- **Staging**: ⚠️ **PENDING DEPLOYMENT** - Awaiting development testing completion
-- **Production**: ⚠️ **PENDING DEPLOYMENT** - Awaiting staged deployment validation
+### **🔍 CURRENT SESSION: Enhanced AI Integration Planning (July 12, 2025)**
+
+**Session Context**: Comprehensive enhancement planning session building on basic AI integration success
+**Key Discovery**: Basic AI integration working for Looks but needs enhanced architecture for reliability across all layers
+**User Requirements Captured**: Detailed answers to implementation questions with layer-specific strategies
+**Documentation Priority**: User emphasized preserving session context to prevent losing critical planning work
+
+#### **Enhanced Architecture Key Components**
+1. **Creator's Description + AI Collaboration**: Human input + AI enhancement vs direct file analysis
+2. **Layer-Specific Guidance**: Smart examples and prompts to help creators write effective descriptions  
+3. **Hybrid Processing Model**: Claude (parsing) + OpenAI (generation) for optimal quality and performance
+4. **MusicBrainz Integration**: Revolutionary songs layer enhancement with authoritative music data
+5. **Component Aggregation**: Intelligent composite asset descriptions from component metadata
+
+#### **Implementation Sequence Approved**
+- **Phase 1**: Foundation enhancement with Creator's Description UI and enhanced OpenAI service
+- **Phase 2**: Layer-specific processing implementation with thumbnail/image analysis improvements
+- **Phase 3**: Music enhancement with MusicBrainz and web search integration  
+- **Phase 4**: Composite intelligence and comprehensive testing
+
+#### **Quality Improvement Targets**
+- **G Layer**: Revolutionary improvement with MusicBrainz + web search integration
+- **S Layer**: Dramatic improvement from Creator's Description + image analysis context
+- **L Layer**: Maintain current excellent quality while enhancing consistency
+- **M/W Layers**: Major improvement from thumbnail + context vs raw video analysis
+- **C Layer**: Intelligent composite descriptions from component metadata aggregation
+
+#### **Critical Session Documents**
+- ✅ **Enhanced AI Integration Session Documentation**: Complete context preservation
+- ✅ **Master Development Roadmap**: Updated with comprehensive enhanced AI plans
+- ✅ **Architecture References**: AlgoRhythm guide, metadata guide, songs layer OpenAI guide reviewed
+- ⏳ **Implementation Specification**: Detailed technical specification document (next priority)
+
+### **📊 ENHANCED AI IMPLEMENTATION READINESS**
+- **Architecture**: ✅ **DESIGNED & APPROVED** - Comprehensive enhancement plan with user requirements captured
+- **Documentation**: ✅ **COMPLETED** - Session context preserved, Master Development Roadmap updated
+- **Implementation**: ⚠️ **READY TO BEGIN** - Phase 1 Foundation enhancement ready for development
+- **Quality Targets**: Revolutionary G layer improvement, dramatic S layer enhancement, maintain L layer excellence
 
 ### **🚀 AI INTEGRATION IMPLEMENTATION (July 9, 2025)**
 
