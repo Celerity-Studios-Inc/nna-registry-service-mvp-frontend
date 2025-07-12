@@ -619,16 +619,22 @@ Comma-separated tag list: `;
       // Pattern 2: "Song Name" by Artist from album Album Name
       /^[""'](.+?)[""']\s*by\s+(.+?)\s+from\s+album\s+(.+?)(?:\s*\([\d]+\))?(?:\.|$)/i,
       
-      // Pattern 3: "Song Name" by Artist
+      // Pattern 3: Song Name by Artist from the album Album Name (specific for current format)
+      /^(.+?)\s+by\s+(.+?)\s+from\s+the\s+album\s+(.+?)(?:\s*\([\d]+\))?(?:\.|$)/i,
+      
+      // Pattern 4: Song Name by Artist from album Album Name
+      /^(.+?)\s+by\s+(.+?)\s+from\s+album\s+(.+?)(?:\s*\([\d]+\))?(?:\.|$)/i,
+      
+      // Pattern 5: "Song Name" by Artist
       /^[""'](.+?)[""']\s*by\s+(.+?)(?:\s*\([\d]+\))?(?:\.|$)/i,
       
-      // Pattern 4: Song Name by Artist
+      // Pattern 6: Song Name by Artist
       /^(.+?)\s*by\s+(.+?)(?:\s*\([\d]+\))?(?:\.|$)/i,
       
-      // Pattern 5: Song Name - Artist format
+      // Pattern 7: Song Name - Artist format
       /^(.+?)\s*-\s*(.+?)$/,
       
-      // Pattern 6: Just song name
+      // Pattern 8: Just song name
       /^(.+?)$/
     ];
     
@@ -645,7 +651,21 @@ Comma-separated tag list: `;
             albumName: match[3]?.trim() || '',
             originalInput: description
           };
-        } else if (i === 2 || i === 3) { // "Song Name" by Artist or Song Name by Artist
+        } else if (i === 2) { // Song Name by Artist from the album Album Name
+          result = {
+            songName: match[1]?.trim() || '',
+            artistName: match[2]?.trim() || '',
+            albumName: match[3]?.trim() || '',
+            originalInput: description
+          };
+        } else if (i === 3) { // Song Name by Artist from album Album Name
+          result = {
+            songName: match[1]?.trim() || '',
+            artistName: match[2]?.trim() || '',
+            albumName: match[3]?.trim() || '',
+            originalInput: description
+          };
+        } else if (i === 4 || i === 5) { // "Song Name" by Artist or Song Name by Artist
           result = {
             songName: match[1]?.trim() || '',
             artistName: match[2]?.trim() || '',
@@ -659,7 +679,7 @@ Comma-separated tag list: `;
             artistName: match[3]?.trim() || '',
             originalInput: description
           };
-        } else if (i === 4) { // Song - Artist
+        } else if (i === 6) { // Song - Artist
           result = {
             songName: match[1]?.trim() || '',
             artistName: match[2]?.trim() || '',
@@ -968,7 +988,10 @@ Respond with only the description paragraph and comma-separated tag list in JSON
    * Process songs response with additional metadata handling
    */
   private processSongsResponse(response: any, songData: ExtractedSongData): any {
-    const content = response.choices[0]?.message?.content?.trim() || '';
+    let content = response.choices[0]?.message?.content?.trim() || '';
+    
+    // Clean up markdown code blocks if present
+    content = this.cleanJsonResponse(content);
     
     try {
       const parsed = JSON.parse(content);
@@ -984,6 +1007,7 @@ Respond with only the description paragraph and comma-separated tag list in JSON
       };
     } catch (error) {
       console.warn('[ENHANCED AI] Failed to parse JSON response, using fallback processing');
+      console.log('[ENHANCED AI] Raw content:', content);
       // Fallback to text processing
       const lines = content.split('\n').filter((line: string) => line.trim());
       return {
@@ -993,12 +1017,32 @@ Respond with only the description paragraph and comma-separated tag list in JSON
       };
     }
   }
+  
+  /**
+   * Clean JSON response by removing markdown code blocks
+   */
+  private cleanJsonResponse(content: string): string {
+    // Remove markdown code blocks like ```json ... ``` or ``` ... ```
+    content = content.replace(/^```(?:json)?\s*\n?/i, '').replace(/\n?```\s*$/i, '');
+    
+    // Handle cases where response starts with markdown but no closing
+    if (content.startsWith('```json')) {
+      content = content.substring(7);
+    } else if (content.startsWith('```')) {
+      content = content.substring(3);
+    }
+    
+    return content.trim();
+  }
 
   /**
    * Process visual response with enhanced metadata
    */
   private processVisualResponse(response: any, context: EnhancedAIContext): any {
-    const content = response.choices[0]?.message?.content?.trim() || '';
+    let content = response.choices[0]?.message?.content?.trim() || '';
+    
+    // Clean up markdown code blocks if present
+    content = this.cleanJsonResponse(content);
     
     try {
       const parsed = JSON.parse(content);
@@ -1024,7 +1068,10 @@ Respond with only the description paragraph and comma-separated tag list in JSON
    * Process composite response with component integration
    */
   private processCompositeResponse(response: any, aggregatedData: any): any {
-    const content = response.choices[0]?.message?.content?.trim() || '';
+    let content = response.choices[0]?.message?.content?.trim() || '';
+    
+    // Clean up markdown code blocks if present
+    content = this.cleanJsonResponse(content);
     
     try {
       const parsed = JSON.parse(content);
