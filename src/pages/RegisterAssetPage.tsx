@@ -606,6 +606,8 @@ const RegisterAssetPage: React.FC = () => {
             '001' // Default sequential for display
         ).mfa,
         metadata: {
+          // CRITICAL FIX: Preserve Creator's Description - backend overwrites 'name' with HFN
+          creatorDescription: data.name, // Store original Creator's Description input
           layerName: data.layerName,
           categoryName: data.categoryName,
           subcategoryName: data.subcategoryName,

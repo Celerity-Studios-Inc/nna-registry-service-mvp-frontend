@@ -283,11 +283,12 @@ const AssetDetail: React.FC = () => {
                   borderRadius: 1,
                   border: '1px solid rgba(25, 118, 210, 0.2)'
                 }}>
-                  {asset.name || 'No creator description provided'}
+                  {/* CRITICAL FIX: Read Creator's Description from metadata, fallback to name field for backwards compatibility */}
+                  {asset.metadata?.creatorDescription || asset.name || 'No creator description provided'}
                 </Typography>
 
                 {/* AI-Generated Description (Secondary) */}
-                {asset.description && asset.description !== asset.name && (
+                {asset.description && asset.description !== (asset.metadata?.creatorDescription || asset.name) && (
                   <>
                     <Typography variant="body1" gutterBottom sx={{ mt: 2 }}>
                       <strong>AI-Generated Description:</strong>
