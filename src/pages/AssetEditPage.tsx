@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Container, Typography, TextField, Button, Box, CircularProgress, Alert, Chip } from '@mui/material';
+import { Container, Typography, TextField, Button, Box, CircularProgress, Alert, Chip, Paper, Divider } from '@mui/material';
 import { Asset } from '../types/asset.types';
 import assetService from '../api/assetService';
 
@@ -8,6 +8,7 @@ const AssetEditPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [asset, setAsset] = useState<Asset | null>(null);
+  const [creatorDescription, setCreatorDescription] = useState('');
   const [description, setDescription] = useState('');
   const [tags, setTags] = useState<string[]>([]);
   const [newTag, setNewTag] = useState('');
@@ -28,6 +29,8 @@ const AssetEditPage: React.FC = () => {
         setError(null);
         const assetData = await assetService.getAssetById(id);
         setAsset(assetData);
+        // Set Creator's Description from metadata or fallback to name field
+        setCreatorDescription(assetData.metadata?.creatorDescription || assetData.friendlyName || assetData.name || '');
         setDescription(assetData.description || '');
         setTags(assetData.tags || []);
       } catch (error) {
@@ -50,7 +53,15 @@ const AssetEditPage: React.FC = () => {
       // Use asset.name for the backend API (which expects asset name, not MongoDB ID)
       const assetIdentifier = asset.name || id;
       console.log('🔍 Update attempt - using asset identifier:', assetIdentifier, 'for asset:', asset.name);
-      await assetService.updateAsset(assetIdentifier, { description, tags });
+      // Include Creator's Description in the update payload
+      await assetService.updateAsset(assetIdentifier, { 
+        description, 
+        tags,
+        metadata: {
+          ...asset.metadata,
+          creatorDescription: creatorDescription
+        }
+      });
       navigate(`/assets/${id}`);
     } catch (error) {
       console.error('Error updating asset:', error);
@@ -104,60 +115,112 @@ const AssetEditPage: React.FC = () => {
         Edit Asset: {asset.name}
       </Typography>
       
-      <Box sx={{ mb: 3 }}>
-        <TextField
-          label="Description"
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          fullWidth
-          multiline
-          rows={4}
-          placeholder="Enter asset description..."
-          variant="outlined"
-        />
-      </Box>
-
-      <Box sx={{ mb: 3 }}>
-        <Typography variant="h6" gutterBottom>
-          Tags
-        </Typography>
-        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>
-          {tags.map((tag, index) => (
-            <Chip
-              key={index}
-              label={tag}
-              onDelete={() => setTags(tags.filter((_, i) => i !== index))}
-              variant="outlined"
-            />
-          ))}
-        </Box>
-        <Box sx={{ display: 'flex', gap: 1 }}>
+      <Paper sx={{ p: 3, mb: 3 }}>
+        {/* Creator's Description Section */}
+        <Box sx={{ mb: 4 }}>
+          <Typography variant="h6" gutterBottom sx={{ fontWeight: 600, color: 'primary.main' }}>
+            Creator's Description
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            This is the original description provided by the creator when the asset was registered.
+          </Typography>
           <TextField
-            label="Add Tag"
-            value={newTag}
-            onChange={(e) => setNewTag(e.target.value)}
-            size="small"
-            onKeyPress={(e) => {
-              if (e.key === 'Enter' && newTag.trim()) {
-                setTags([...tags, newTag.trim()]);
-                setNewTag('');
+            value={creatorDescription}
+            onChange={(e) => setCreatorDescription(e.target.value)}
+            fullWidth
+            multiline
+            rows={3}
+            placeholder="Enter creator's description..."
+            variant="outlined"
+            sx={{
+              '& .MuiOutlinedInput-root': {
+                bgcolor: 'rgba(25, 118, 210, 0.04)',
+                '&:hover': {
+                  bgcolor: 'rgba(25, 118, 210, 0.06)',
+                },
+                '&.Mui-focused': {
+                  bgcolor: 'rgba(25, 118, 210, 0.08)',
+                }
               }
             }}
           />
-          <Button
-            onClick={() => {
-              if (newTag.trim()) {
-                setTags([...tags, newTag.trim()]);
-                setNewTag('');
-              }
-            }}
-            variant="outlined"
-            size="small"
-          >
-            Add
-          </Button>
         </Box>
-      </Box>
+
+        <Divider sx={{ mb: 3 }} />
+
+        {/* AI-Generated Description Section */}
+        <Box sx={{ mb: 3 }}>
+          <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
+            AI-Generated Description
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            This description was generated by AI to enhance searchability and provide additional context.
+          </Typography>
+          <TextField
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            fullWidth
+            multiline
+            rows={4}
+            placeholder="Enter AI-generated description..."
+            variant="outlined"
+          />
+        </Box>
+
+        <Divider sx={{ mb: 3 }} />
+
+        {/* Tags Section */}
+        <Box sx={{ mb: 2 }}>
+          <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
+            Tags
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            Add tags to improve searchability and categorization of this asset.
+          </Typography>
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>
+            {tags.map((tag, index) => (
+              <Chip
+                key={index}
+                label={tag}
+                onDelete={() => setTags(tags.filter((_, i) => i !== index))}
+                variant="outlined"
+                sx={{
+                  '&:hover': {
+                    bgcolor: 'primary.light',
+                    color: 'white'
+                  }
+                }}
+              />
+            ))}
+          </Box>
+          <Box sx={{ display: 'flex', gap: 1 }}>
+            <TextField
+              label="Add Tag"
+              value={newTag}
+              onChange={(e) => setNewTag(e.target.value)}
+              size="small"
+              onKeyPress={(e) => {
+                if (e.key === 'Enter' && newTag.trim()) {
+                  setTags([...tags, newTag.trim()]);
+                  setNewTag('');
+                }
+              }}
+            />
+            <Button
+              onClick={() => {
+                if (newTag.trim()) {
+                  setTags([...tags, newTag.trim()]);
+                  setNewTag('');
+                }
+              }}
+              variant="outlined"
+              size="small"
+            >
+              Add
+            </Button>
+          </Box>
+        </Box>
+      </Paper>
       
       <Box sx={{ display: 'flex', gap: 2 }}>
         <Button 
