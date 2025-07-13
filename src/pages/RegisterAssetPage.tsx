@@ -23,6 +23,7 @@ import {
   FormHelperText,
   Tooltip,
   CircularProgress,
+  Stack,
 } from '@mui/material';
 import {
   ChevronLeft as PreviousIcon,
@@ -2101,28 +2102,30 @@ const RegisterAssetPage: React.FC = () => {
           </Typography>
         </Box>
         
-        <Box sx={{ mt: 0, p: 3, border: '1px solid #e0e0e0', borderRadius: 2, maxWidth: '900px', mx: 'auto' }}>
-          {/* Remove redundant asset name since it's displayed above */}
-
+        <Box sx={{ mt: 0, p: 3, border: '1px solid #e0e0e0', borderRadius: 2, maxWidth: '1200px', mx: 'auto' }}>
+          {/* SUCCESS PAGE 3-CARD REDESIGN */}
           <Grid container spacing={3} sx={{ mt: 2 }}>
-            {/* Asset Preview Column */}
-            <Grid item xs={12} md={6}>
-              <Paper 
-                variant="outlined" 
-                sx={{ 
-                  p: 2, 
-                  height: '100%',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  minHeight: 300,
-                  mb: { xs: 3, md: 0 }
-                }}
-              >
-                <Typography variant="subtitle1" gutterBottom fontWeight="bold">
-                  Asset Preview
-                </Typography>
+            
+            {/* LEFT COLUMN: Asset Preview + Asset Address */}
+            <Grid item xs={12} lg={6}>
+              <Stack spacing={3}>
+                
+                {/* CARD 1: Asset Preview (Top Left, Reduced Height) */}
+                <Paper 
+                  variant="outlined" 
+                  sx={{ 
+                    p: 2, 
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    minHeight: 200, // Reduced from 300
+                    mb: 0
+                  }}
+                >
+                  <Typography variant="subtitle1" gutterBottom fontWeight="bold">
+                    Asset Preview
+                  </Typography>
                 
                 {displayFile ? (
                   <Box
@@ -2296,153 +2299,306 @@ const RegisterAssetPage: React.FC = () => {
                     )}
                   </Box>
                 )}
+                </Paper>
+                
+                {/* CARD 2: Asset Address (Bottom Left) */}
+                <Paper 
+                  variant="outlined" 
+                  sx={{ 
+                    p: 3,
+                    background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
+                    border: '1px solid #e0e7ff'
+                  }}
+                >
+                  <Typography 
+                    variant="h6" 
+                    fontWeight="bold" 
+                    gutterBottom
+                    sx={{ color: 'primary.main', mb: 2 }}
+                  >
+                    🔗 NNA Addressing
+                  </Typography>
+                  
+                  {/* HFN Display */}
+                  <Box sx={{ mb: 2 }}>
+                    <Typography 
+                      variant="body2" 
+                      color="text.secondary"
+                      sx={{ mb: 1, fontWeight: 600 }}
+                    >
+                      Human-Friendly Name (HFN)
+                    </Typography>
+                    <Typography
+                      variant="body1"
+                      fontWeight="medium"
+                      sx={{ 
+                        wordBreak: 'break-word',
+                        fontFamily: 'monospace',
+                        fontSize: '0.9rem',
+                        color: 'success.main',
+                        bgcolor: '#f8f9fa',
+                        p: 1.5,
+                        borderRadius: 1,
+                        border: '1px dashed #dee2e6'
+                      }}
+                    >
+                      {displayHfn || createdAsset.metadata?.hfn || createdAsset.metadata?.humanFriendlyName || createdAsset.name}
+                    </Typography>
+                  </Box>
+                  
+                  {/* MFA Display */}
+                  <Box sx={{ mb: 2 }}>
+                    <Typography 
+                      variant="body2" 
+                      color="text.secondary"
+                      sx={{ mb: 1, fontWeight: 600 }}
+                    >
+                      Machine-Friendly Address (MFA)
+                    </Typography>
+                    <Typography
+                      variant="body1"
+                      fontFamily="monospace"
+                      sx={{ 
+                        wordBreak: 'break-word',
+                        fontSize: '0.9rem',
+                        color: 'info.main',
+                        bgcolor: '#f8f9fa',
+                        p: 1.5,
+                        borderRadius: 1,
+                        border: '1px dashed #dee2e6'
+                      }}
+                    >
+                      {displayMfa || createdAsset.nnaAddress || createdAsset.metadata?.machineFriendlyAddress || createdAsset.metadata?.mfa}
+                    </Typography>
+                  </Box>
+                  
+                  {/* Composite Components Display (if applicable) */}
+                  {isCompositeAsset && (
+                    <Box sx={{ mt: 2 }}>
+                      <Typography 
+                        variant="body2" 
+                        color="text.secondary"
+                        sx={{ mb: 1, fontWeight: 600 }}
+                      >
+                        Composite Components
+                      </Typography>
+                      {createdAsset.components && createdAsset.components.length > 0 ? (
+                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                          {createdAsset.components.map((component: string, index: number) => (
+                            <Chip 
+                              key={index} 
+                              label={component} 
+                              size="small" 
+                              variant="outlined"
+                              sx={{ fontSize: '0.75rem' }}
+                            />
+                          ))}
+                        </Box>
+                      ) : (
+                        <Typography variant="body2" color="text.secondary">
+                          No components specified
+                        </Typography>
+                      )}
+                    </Box>
+                  )}
+                </Paper>
+                
+              </Stack>
+            </Grid>
+            
+            {/* RIGHT COLUMN: Asset Metadata (Full Height) */}
+            <Grid item xs={12} lg={6}>
+              
+              {/* CARD 3: Asset Metadata (Full Height Right Column) */}
+              <Paper variant="outlined" sx={{ p: 3, height: '100%' }}>
+                <Typography variant="h6" gutterBottom fontWeight="bold" sx={{ color: 'primary.main', mb: 3 }}>
+                  📋 Asset Metadata
+                </Typography>
+                
+                {/* Creator's Description (Primary - Blue Background) */}
+                <Box sx={{ mb: 3 }}>
+                  <Typography variant="body1" gutterBottom sx={{ fontWeight: 600 }}>
+                    Creator's Description:
+                  </Typography>
+                  <Typography 
+                    variant="body2" 
+                    sx={{ 
+                      fontWeight: 500,
+                      p: 2,
+                      bgcolor: 'rgba(25, 118, 210, 0.08)',
+                      borderRadius: 1,
+                      border: '1px solid rgba(25, 118, 210, 0.2)',
+                      color: 'text.primary',
+                      lineHeight: 1.5
+                    }}
+                  >
+                    {/* CRITICAL FIX: Display Creator's Description from metadata */}
+                    {createdAsset.metadata?.creatorDescription || createdAsset.friendlyName || createdAsset.name || 'No creator description provided'}
+                  </Typography>
+                </Box>
+
+                {/* AI-Generated Description (Secondary, when different) */}
+                {createdAsset.description && createdAsset.description !== (createdAsset.metadata?.creatorDescription || createdAsset.friendlyName || createdAsset.name) && (
+                  <Box sx={{ mb: 3 }}>
+                    <Typography variant="body1" gutterBottom sx={{ fontWeight: 600 }}>
+                      AI-Generated Description:
+                    </Typography>
+                    <Typography 
+                      variant="body2" 
+                      sx={{ 
+                        p: 2,
+                        bgcolor: 'grey.50',
+                        borderRadius: 1,
+                        border: '1px solid',
+                        borderColor: 'grey.300',
+                        color: 'text.secondary',
+                        lineHeight: 1.5
+                      }}
+                    >
+                      {createdAsset.description}
+                    </Typography>
+                  </Box>
+                )}
+
+                {/* Tags */}
+                {createdAsset.tags && createdAsset.tags.length > 0 && (
+                  <Box sx={{ mb: 3 }}>
+                    <Typography variant="body1" gutterBottom sx={{ fontWeight: 600 }}>
+                      Tags:
+                    </Typography>
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                      {createdAsset.tags.map((tag, i) => (
+                        <Chip 
+                          key={i} 
+                          label={tag} 
+                          size="small" 
+                          variant="outlined"
+                          sx={{ 
+                            fontSize: '0.75rem',
+                            '&:hover': {
+                              bgcolor: 'primary.light',
+                              color: 'white'
+                            }
+                          }}
+                        />
+                      ))}
+                    </Box>
+                  </Box>
+                )}
+
+                {/* Layer Information */}
+                <Box sx={{ mb: 3 }}>
+                  <Typography variant="body1" gutterBottom sx={{ fontWeight: 600 }}>
+                    Layer:
+                  </Typography>
+                  <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                    {(() => {
+                      // Map layer codes to full names
+                      const layerNames: Record<string, string> = {
+                        'G': 'Songs',
+                        'S': 'Stars',
+                        'L': 'Looks',
+                        'M': 'Moves',
+                        'W': 'Worlds',
+                        'B': 'Branded Assets',
+                        'C': 'Composites',
+                        'T': 'Training Data',
+                        'P': 'Personalize',
+                        'R': 'Rights',
+                      };
+                      const layer = createdAsset.layer;
+                      return `${layerNames[layer] || `Layer ${layer}`} (${layer})`;
+                    })()}
+                  </Typography>
+                </Box>
+
+                {/* Category & Subcategory */}
+                <Grid container spacing={2} sx={{ mb: 3 }}>
+                  <Grid item xs={6}>
+                    <Typography variant="body1" gutterBottom sx={{ fontWeight: 600 }}>
+                      Category:
+                    </Typography>
+                    <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                      {createdAsset.category || createdAsset.categoryName || 'Unknown'}
+                    </Typography>
+                  </Grid>
+                  <Grid item xs={6}>
+                    <Typography variant="body1" gutterBottom sx={{ fontWeight: 600 }}>
+                      Subcategory:
+                    </Typography>
+                    <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                      {createdAsset.subcategory || createdAsset.subcategoryName || 'Unknown'}
+                    </Typography>
+                  </Grid>
+                </Grid>
+
+                {/* Phase 2A: Album Art Display for Songs Layer */}
+                {createdAsset.layer === 'G' && createdAsset.metadata?.albumArtUrl && (
+                  <Box sx={{ mb: 3 }}>
+                    <Typography variant="body1" gutterBottom sx={{ fontWeight: 600 }}>
+                      Album Art:
+                    </Typography>
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 2,
+                        p: 2,
+                        border: '1px solid',
+                        borderColor: 'divider',
+                        borderRadius: 1,
+                        bgcolor: 'background.paper'
+                      }}
+                    >
+                      <img
+                        src={createdAsset.metadata.albumArtUrl}
+                        alt="Album Art"
+                        style={{
+                          width: 60,
+                          height: 60,
+                          objectFit: 'cover',
+                          borderRadius: '4px'
+                        }}
+                        onError={(e) => {
+                          console.warn('Album art failed to load:', createdAsset.metadata?.albumArtUrl);
+                          (e.target as HTMLImageElement).style.display = 'none';
+                        }}
+                      />
+                      <Box>
+                        <Typography variant="caption" color="text.secondary">
+                          Source: {createdAsset.metadata.albumArtSource || 'iTunes'}
+                        </Typography>
+                        {createdAsset.metadata.extractedSongData && (
+                          <>
+                            <br />
+                            <Typography variant="caption" color="text.primary">
+                              {createdAsset.metadata.extractedSongData.songName} - {createdAsset.metadata.extractedSongData.artistName}
+                            </Typography>
+                          </>
+                        )}
+                      </Box>
+                    </Box>
+                  </Box>
+                )}
+
+                {/* Additional Files */}
+                {createdAsset.files && createdAsset.files.length > 1 && (
+                  <Box sx={{ mb: 2 }}>
+                    <Typography variant="body1" gutterBottom sx={{ fontWeight: 600 }}>
+                      Additional Files:
+                    </Typography>
+                    <Box>
+                      {createdAsset.files.slice(1).map((file, i) => (
+                        <Typography key={i} variant="body2" sx={{ color: 'text.secondary' }}>
+                          {file.filename || `File ${i+2}`}
+                        </Typography>
+                      ))}
+                    </Box>
+                  </Box>
+                )}
               </Paper>
             </Grid>
             
-            {/* Asset Metadata Column */}
-            <Grid item xs={12} md={6}>
-              <Paper variant="outlined" sx={{ p: 2, height: '100%' }}>
-                <Typography variant="subtitle1" gutterBottom fontWeight="bold">
-                  Asset Details
-                </Typography>
-                
-                <Box sx={{ mt: 2 }}>
-                  <Grid container spacing={2}>
-                    <Grid item xs={12}>
-                      <Typography variant="subtitle2" color="text.secondary">
-                        Layer
-                      </Typography>
-                      <Typography variant="body1" fontWeight="bold">
-                        {(() => {
-                          // Map layer codes to full names
-                          const layerNames: Record<string, string> = {
-                            'G': 'Songs',
-                            'S': 'Stars',
-                            'L': 'Looks',
-                            'M': 'Moves',
-                            'W': 'Worlds',
-                            'V': 'Videos',
-                            'B': 'Branded Assets',
-                            'C': 'Composites',
-                            'T': 'Training Data',
-                            'P': 'Patterns',
-                          };
-                          const layer = createdAsset.layer;
-                          return `${layerNames[layer] || layerName || `Layer ${layer}`} (${layer})`;
-                        })()}
-                      </Typography>
-                    </Grid>
-                    
-                    <Grid item xs={12}>
-                      <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>
-                        Human-Friendly Name (HFN)
-                      </Typography>
-                      <Box sx={{ 
-                        p: 2, 
-                        bgcolor: 'success.light', 
-                        borderRadius: 2,
-                        border: '1px solid',
-                        borderColor: 'success.main',
-                        mb: 2
-                      }}>
-                        <Typography 
-                          variant="body1" 
-                          fontWeight="bold"
-                          fontFamily="monospace"
-                          sx={{
-                            wordBreak: 'break-all',
-                            whiteSpace: 'pre-wrap',
-                            fontSize: '0.9rem',
-                            lineHeight: 1.4,
-                            color: 'success.dark'
-                          }}
-                        >
-                          {displayHfn || createdAsset.metadata?.hfn || createdAsset.metadata?.humanFriendlyName || ''}
-                        </Typography>
-                        <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
-                          <Tooltip title="Using consistent NNA format from the unified formatter">
-                            <InfoIcon color="info" fontSize="small" sx={{ mr: 1, width: 16, height: 16 }} />
-                          </Tooltip>
-                        </Box>
-                      </Box>
-                    </Grid>
-                    
-                    <Grid item xs={12}>
-                      <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>
-                        Machine-Friendly Address (MFA)
-                      </Typography>
-                      <Box sx={{ 
-                        p: 2, 
-                        bgcolor: 'info.light', 
-                        borderRadius: 2,
-                        border: '1px solid',
-                        borderColor: 'info.main',
-                        mb: 2
-                      }}>
-                        <Typography 
-                          variant="body1" 
-                          fontFamily="monospace" 
-                          fontWeight="medium"
-                          sx={{
-                            wordBreak: 'break-all',
-                            whiteSpace: 'pre-wrap',
-                            fontSize: '0.9rem',
-                            lineHeight: 1.4,
-                            color: 'info.dark'
-                          }}
-                        >
-                          {displayMfa || createdAsset.nnaAddress || createdAsset.metadata?.machineFriendlyAddress || createdAsset.metadata?.mfa || ''}
-                        </Typography>
-                        <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
-                          <Tooltip title="Using consistent NNA format from the unified formatter">
-                            <InfoIcon color="info" fontSize="small" sx={{ mr: 1, width: 16, height: 16 }} />
-                          </Tooltip>
-                        </Box>
-                      </Box>
-                    </Grid>
-                    
-                    {createdAsset.description && (
-                      <Grid item xs={12}>
-                        <Typography variant="subtitle2" color="text.secondary">
-                          Description
-                        </Typography>
-                        <Typography variant="body2" sx={{ mt: 0.5 }}>
-                          {createdAsset.description}
-                        </Typography>
-                      </Grid>
-                    )}
-                    
-                    {createdAsset.tags && createdAsset.tags.length > 0 && (
-                      <Grid item xs={12}>
-                        <Typography variant="subtitle2" color="text.secondary">
-                          Tags
-                        </Typography>
-                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mt: 0.5 }}>
-                          {createdAsset.tags.map((tag, i) => (
-                            <Chip key={i} label={tag} size="small" />
-                          ))}
-                        </Box>
-                      </Grid>
-                    )}
-                    
-                    {createdAsset.files && createdAsset.files.length > 1 && (
-                      <Grid item xs={12}>
-                        <Typography variant="subtitle2" color="text.secondary">
-                          Additional Files
-                        </Typography>
-                        <Box sx={{ mt: 0.5 }}>
-                          {createdAsset.files.slice(1).map((file, i) => (
-                            <Typography key={i} variant="body2">
-                              {file.filename || `File ${i+2}`}
-                            </Typography>
-                          ))}
-                        </Box>
-                      </Grid>
-                    )}
-                  </Grid>
-                </Box>
-              </Paper>
-            </Grid>
           </Grid>
         </Box>
         
