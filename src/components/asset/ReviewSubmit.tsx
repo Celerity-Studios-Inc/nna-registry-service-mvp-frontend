@@ -360,20 +360,22 @@ const ReviewSubmit: React.FC<ReviewSubmitProps> = ({
         </Alert>
       )}
 
+      {/* ENHANCED REVIEW DETAILS LAYOUT: Asset Metadata full left column, other cards stacked right */}
       <Grid container spacing={4}>
-        {/* Asset Information */}
-        <Grid item xs={12} md={6}>
-          <Paper variant="outlined" sx={{ p: 2, mb: 3 }}>
+        
+        {/* LEFT COLUMN: Asset Metadata (Full Height) */}
+        <Grid item xs={12} lg={8}>
+          <Paper variant="outlined" sx={{ p: 3, height: 'fit-content' }}>
             <Box
               sx={{
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
-                mb: 2,
+                mb: 3,
               }}
             >
-              <Typography variant="subtitle1" fontWeight="bold">
-                Asset Information
+              <Typography variant="h6" fontWeight="bold" sx={{ color: 'primary.main' }}>
+                📋 Asset Metadata
               </Typography>
               <IconButton
                 size="small"
@@ -383,562 +385,375 @@ const ReviewSubmit: React.FC<ReviewSubmitProps> = ({
                 <EditIcon fontSize="small" />
               </IconButton>
             </Box>
-            <Divider sx={{ mb: 2 }} />
+            <Divider sx={{ mb: 3 }} />
 
-            <List disablePadding>
-              <ListItem disablePadding sx={{ mb: 1 }}>
-                <ListItemIcon sx={{ minWidth: 40 }}>
-                  <DescriptionIcon />
-                </ListItemIcon>
-                <ListItemText
-                  primary="Name"
-                  secondary={name || 'Not specified'}
-                  primaryTypographyProps={{
-                    variant: 'body2',
+            {/* Creator's Description (Primary - Blue Background) */}
+            <Box sx={{ mb: 3 }}>
+              <Typography variant="body1" gutterBottom sx={{ fontWeight: 600 }}>
+                Creator's Description:
+              </Typography>
+              <Typography 
+                variant="body2" 
+                sx={{ 
+                  fontWeight: 500,
+                  p: 2,
+                  bgcolor: 'rgba(25, 118, 210, 0.08)',
+                  borderRadius: 1,
+                  border: '1px solid rgba(25, 118, 210, 0.2)',
+                  color: 'text.primary',
+                  lineHeight: 1.5
+                }}
+              >
+                {name || 'No creator description provided'}
+              </Typography>
+            </Box>
+
+            {/* AI-Generated Description (Secondary, when different) */}
+            {description && description !== name && (
+              <Box sx={{ mb: 3 }}>
+                <Typography variant="body1" gutterBottom sx={{ fontWeight: 600 }}>
+                  AI-Generated Description:
+                </Typography>
+                <Typography 
+                  variant="body2" 
+                  sx={{ 
+                    p: 2,
+                    bgcolor: 'grey.50',
+                    borderRadius: 1,
+                    border: '1px solid',
+                    borderColor: 'grey.300',
                     color: 'text.secondary',
+                    lineHeight: 1.5
                   }}
-                  secondaryTypographyProps={{ variant: 'body1' }}
-                />
-              </ListItem>
+                >
+                  {description}
+                </Typography>
+              </Box>
+            )}
 
-              {description && (
-                <ListItem disablePadding sx={{ mb: 1 }}>
-                  <ListItemIcon sx={{ minWidth: 40 }}>
-                    <DescriptionIcon />
-                  </ListItemIcon>
-                  <ListItemText
-                    primary="Description"
-                    secondary={description}
-                    primaryTypographyProps={{
-                      variant: 'body2',
-                      color: 'text.secondary',
-                    }}
-                    secondaryTypographyProps={{ variant: 'body1' }}
-                  />
-                </ListItem>
-              )}
-
-              {source && (
-                <ListItem disablePadding sx={{ mb: 1 }}>
-                  <ListItemIcon sx={{ minWidth: 40 }}>
-                    <PublicIcon />
-                  </ListItemIcon>
-                  <ListItemText
-                    primary="Source"
-                    secondary={source}
-                    primaryTypographyProps={{
-                      variant: 'body2',
-                      color: 'text.secondary',
-                    }}
-                    secondaryTypographyProps={{ variant: 'body1' }}
-                  />
-                </ListItem>
-              )}
-
-              {tags && tags.length > 0 && (
-                <ListItem disablePadding sx={{ mb: 1 }}>
-                  <ListItemIcon sx={{ minWidth: 40 }}>
-                    <TagIcon />
-                  </ListItemIcon>
-                  <ListItemText
-                    primary="Tags"
-                    primaryTypographyProps={{
-                      variant: 'body2',
-                      color: 'text.secondary',
-                    }}
-                  />
-                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                    {tags.map((tag, index) => (
-                      <Chip
-                        key={index}
-                        label={tag}
-                        size="small"
-                        color="primary"
-                        variant="outlined"
-                      />
-                    ))}
-                  </Box>
-                </ListItem>
-              )}
-
-              {/* Phase 2A: Album Art Display for Songs Layer - will be added when backend supports metadata */}
-              {layer === 'G' && (assetData as any).albumArtUrl && (
-                <ListItem disablePadding sx={{ mb: 1 }}>
-                  <ListItemIcon sx={{ minWidth: 40 }}>
-                    <ImageIcon />
-                  </ListItemIcon>
-                  <ListItemText
-                    primary="Album Art"
-                    primaryTypographyProps={{
-                      variant: 'body2',
-                      color: 'text.secondary',
-                    }}
-                  />
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <img
-                      src={(assetData as any).albumArtUrl}
-                      alt="Album Art"
-                      style={{
-                        width: 40,
-                        height: 40,
-                        objectFit: 'cover',
-                        borderRadius: '4px',
-                        border: '1px solid #ddd'
-                      }}
-                      onError={(e) => {
-                        console.warn('Album art failed to load in review');
-                        (e.target as HTMLImageElement).style.display = 'none';
+            {/* Tags */}
+            {tags && tags.length > 0 && (
+              <Box sx={{ mb: 3 }}>
+                <Typography variant="body1" gutterBottom sx={{ fontWeight: 600 }}>
+                  Tags:
+                </Typography>
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                  {tags.map((tag, index) => (
+                    <Chip
+                      key={index}
+                      label={tag}
+                      size="small"
+                      variant="outlined"
+                      sx={{ 
+                        fontSize: '0.75rem',
+                        '&:hover': {
+                          bgcolor: 'primary.light',
+                          color: 'white'
+                        }
                       }}
                     />
-                    <Box>
-                      <Typography variant="caption" color="text.secondary">
-                        {(assetData as any).albumArtSource || 'iTunes'}
-                      </Typography>
-                    </Box>
+                  ))}
+                </Box>
+              </Box>
+            )}
+
+            {/* Source */}
+            {source && (
+              <Box sx={{ mb: 3 }}>
+                <Typography variant="body1" gutterBottom sx={{ fontWeight: 600 }}>
+                  Source:
+                </Typography>
+                <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                  {source}
+                </Typography>
+              </Box>
+            )}
+
+            {/* Layer Information */}
+            <Box sx={{ mb: 3 }}>
+              <Typography variant="body1" gutterBottom sx={{ fontWeight: 600 }}>
+                Layer:
+              </Typography>
+              <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                {layerName ? `${layerName} (${layer})` : layer || 'Not specified'}
+              </Typography>
+            </Box>
+
+            {/* Category & Subcategory */}
+            <Grid container spacing={2} sx={{ mb: 3 }}>
+              <Grid item xs={6}>
+                <Typography variant="body1" gutterBottom sx={{ fontWeight: 600 }}>
+                  Category:
+                </Typography>
+                <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                  {categoryCode ? `${getCategoryDisplayName(categoryCode, categoryName)} (${categoryCode})` : 'Not specified'}
+                </Typography>
+              </Grid>
+              <Grid item xs={6}>
+                <Typography variant="body1" gutterBottom sx={{ fontWeight: 600 }}>
+                  Subcategory:
+                </Typography>
+                <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                  {subcategoryCode ? `${getCategoryDisplayName(subcategoryCode, subcategoryName)} (${subcategoryCode})` : 'Not specified'}
+                </Typography>
+              </Grid>
+            </Grid>
+
+            {/* Phase 2A: Album Art Display for Songs Layer */}
+            {layer === 'G' && (assetData as any).albumArtUrl && (
+              <Box sx={{ mb: 3 }}>
+                <Typography variant="body1" gutterBottom sx={{ fontWeight: 600 }}>
+                  Album Art:
+                </Typography>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 2,
+                    p: 2,
+                    border: '1px solid',
+                    borderColor: 'divider',
+                    borderRadius: 1,
+                    bgcolor: 'background.paper'
+                  }}
+                >
+                  <img
+                    src={(assetData as any).albumArtUrl}
+                    alt="Album Art"
+                    style={{
+                      width: 60,
+                      height: 60,
+                      objectFit: 'cover',
+                      borderRadius: '4px'
+                    }}
+                    onError={(e) => {
+                      console.warn('Album art failed to load in review');
+                      (e.target as HTMLImageElement).style.display = 'none';
+                    }}
+                  />
+                  <Box>
+                    <Typography variant="caption" color="text.secondary">
+                      Source: {(assetData as any).albumArtSource || 'iTunes'}
+                    </Typography>
                   </Box>
-                </ListItem>
-              )}
-            </List>
+                </Box>
+              </Box>
+            )}
           </Paper>
+        </Grid>
 
-          {/* Taxonomy Information */}
-          <Paper variant="outlined" sx={{ p: 2, mb: 3 }}>
-            <Box
-              sx={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                mb: 2,
-              }}
-            >
-              <Typography variant="subtitle1" fontWeight="bold">
-                Taxonomy Information
-              </Typography>
-              <IconButton
-                size="small"
-                onClick={() => onEditStep(1)}
-                color="primary"
+        {/* RIGHT COLUMN: Taxonomy Information + NNA Address + Files (Stacked) */}
+        <Grid item xs={12} lg={4}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+            
+            {/* Taxonomy Information Card */}
+            <Paper variant="outlined" sx={{ p: 2 }}>
+              <Box
+                sx={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  mb: 2,
+                }}
               >
-                <EditIcon fontSize="small" />
-              </IconButton>
-            </Box>
-            <Divider sx={{ mb: 2 }} />
+                <Typography variant="subtitle1" fontWeight="bold">
+                  Taxonomy
+                </Typography>
+                <IconButton
+                  size="small"
+                  onClick={() => onEditStep(1)}
+                  color="primary"
+                >
+                  <EditIcon fontSize="small" />
+                </IconButton>
+              </Box>
+              <Divider sx={{ mb: 2 }} />
+              
+              <Grid container spacing={1}>
+                <Grid item xs={12}>
+                  <Typography variant="caption" color="text.secondary">Layer</Typography>
+                  <Typography variant="body2" fontWeight="bold">{layer || '-'}</Typography>
+                </Grid>
+                <Grid item xs={12}>
+                  <Typography variant="caption" color="text.secondary">Category</Typography>
+                  <Typography variant="body2" fontWeight="bold">{categoryCode || '-'}</Typography>
+                </Grid>
+                <Grid item xs={12}>
+                  <Typography variant="caption" color="text.secondary">Subcategory</Typography>
+                  <Typography variant="body2" fontWeight="bold">{subcategoryCode || '-'}</Typography>
+                </Grid>
+              </Grid>
+            </Paper>
 
-            <List disablePadding>
-              <ListItem disablePadding sx={{ mb: 1 }}>
-                <ListItemIcon sx={{ minWidth: 40 }}>
-                  <CategoryIcon />
-                </ListItemIcon>
-                <ListItemText
-                  primary="Layer"
-                  secondary={
-                    layerName
-                      ? `${layerName} (${layer})`
-                      : layer || 'Not specified'
-                  }
-                  primaryTypographyProps={{
-                    variant: 'body2',
-                    color: 'text.secondary',
-                  }}
-                  secondaryTypographyProps={{ variant: 'body1' }}
-                />
-              </ListItem>
-
-              <ListItem disablePadding sx={{ mb: 1 }}>
-                <ListItemIcon sx={{ minWidth: 40 }}>
-                  <CategoryIcon />
-                </ListItemIcon>
-                <ListItemText
-                  primary="Category"
-                  secondary={
-                    <>
-                      {categoryCode ? (
-                        <Box component="span" fontWeight="medium">
-                          {getCategoryDisplayName(categoryCode, categoryName)} ({categoryCode})
-                        </Box>
-                      ) : (
-                        <Box
-                          component="span"
-                          sx={{ color: 'error.main', fontWeight: 'medium' }}
-                        >
-                          Not specified (Required)
-                        </Box>
-                      )}
-
-                      {/* Category validation indicator */}
-                      {!categoryCode && (
-                        <Box
-                          sx={{
-                            mt: 1,
-                            display: 'flex',
-                            alignItems: 'center',
-                            color: 'error.main',
-                            fontSize: '0.8rem',
-                          }}
-                        >
-                          <Box
-                            component="span"
-                            sx={{
-                              mr: 0.5,
-                              width: 16,
-                              height: 16,
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              borderRadius: '50%',
-                              bgcolor: 'error.main',
-                              color: 'white',
-                              fontSize: '10px',
-                              fontWeight: 'bold',
-                            }}
-                          >
-                            !
-                          </Box>
-                          <Box component="span">
-                            Required field - Please go back and select a
-                            category
-                          </Box>
-                        </Box>
-                      )}
-                    </>
-                  }
-                  primaryTypographyProps={{
-                    variant: 'body2',
-                    color: 'text.secondary',
-                  }}
-                  secondaryTypographyProps={{ variant: 'body1' }}
-                />
-              </ListItem>
-
-              <ListItem disablePadding sx={{ mb: 1 }}>
-                <ListItemIcon sx={{ minWidth: 40 }}>
-                  <CategoryIcon />
-                </ListItemIcon>
-                <ListItemText
-                  primary="Subcategory"
-                  secondary={
-                    <>
-                      {subcategoryCode ? (
-                        <Box component="span" fontWeight="medium">
-                          {getCategoryDisplayName(subcategoryCode, subcategoryName)} ({subcategoryCode})
-                        </Box>
-                      ) : (
-                        <Box
-                          component="span"
-                          sx={{ color: 'error.main', fontWeight: 'medium' }}
-                        >
-                          Not specified (Required)
-                        </Box>
-                      )}
-
-                      {/* Subcategory validation indicator */}
-                      {!subcategoryCode && (
-                        <Box
-                          sx={{
-                            mt: 1,
-                            display: 'flex',
-                            alignItems: 'center',
-                            color: 'error.main',
-                            fontSize: '0.8rem',
-                          }}
-                        >
-                          <Box
-                            component="span"
-                            sx={{
-                              mr: 0.5,
-                              width: 16,
-                              height: 16,
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              borderRadius: '50%',
-                              bgcolor: 'error.main',
-                              color: 'white',
-                              fontSize: '10px',
-                              fontWeight: 'bold',
-                            }}
-                          >
-                            !
-                          </Box>
-                          <Box component="span">
-                            Required field - Please go back and select a
-                            subcategory
-                          </Box>
-                        </Box>
-                      )}
-
-                      {/* Session storage recovery hint */}
-                      {categoryCode && !subcategoryCode && (
-                        <Box sx={{ mt: 1 }}>
-                          <Button
-                            size="small"
-                            variant="outlined"
-                            color="primary"
-                            onClick={() => {
-                              // Try to recover from session storage
-                              try {
-                                const storedSubcategory =
-                                  sessionStorage.getItem(
-                                    `originalSubcategory_${layer}_${categoryCode}`
-                                  );
-                                if (storedSubcategory) {
-                                  onEditStep(1); // Go back to taxonomy selection step
-                                } else {
-                                  onEditStep(1); // Go back to taxonomy selection step anyway
-                                }
-                              } catch (e) {
-                                console.warn(
-                                  'Error accessing session storage:',
-                                  e
-                                );
-                                onEditStep(1); // Go back to taxonomy selection step
-                              }
-                            }}
-                          >
-                            Select Subcategory
-                          </Button>
-                        </Box>
-                      )}
-                    </>
-                  }
-                  primaryTypographyProps={{
-                    variant: 'body2',
-                    color: 'text.secondary',
-                  }}
-                  secondaryTypographyProps={{ variant: 'body1' }}
-                />
-              </ListItem>
-            </List>
-          </Paper>
-
-          {/* NNA Address Information - Enhanced */}
-          <Paper variant="outlined" sx={{ p: 2, mb: 3 }}>
-            <Box
-              sx={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                mb: 2,
-              }}
-            >
-              <Typography variant="subtitle1" fontWeight="bold">
-                NNA Address
-              </Typography>
-              <IconButton
-                size="small"
-                onClick={() => onEditStep(1)}
-                color="primary"
+            {/* NNA Address Card */}
+            <Paper variant="outlined" sx={{ p: 2 }}>
+              <Box
+                sx={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  mb: 2,
+                }}
               >
-                <EditIcon fontSize="small" />
-              </IconButton>
-            </Box>
-            <Divider sx={{ mb: 2 }} />
+                <Typography variant="subtitle1" fontWeight="bold">
+                  NNA Address
+                </Typography>
+                <IconButton
+                  size="small"
+                  onClick={() => onEditStep(1)}
+                  color="primary"
+                >
+                  <EditIcon fontSize="small" />
+                </IconButton>
+              </Box>
+              <Divider sx={{ mb: 2 }} />
 
-            <Box
-              sx={{
-                mb: 3,
-                p: 2,
-                bgcolor: '#f0f7ff',
-                borderRadius: 1,
-                border: '1px solid #d6e4ff',
-              }}
-            >
-              <Typography variant="subtitle2" align="center" gutterBottom>
-                Human-Friendly Name (HFN)
-              </Typography>
-              <Typography
-                variant="h5"
-                align="center"
-                fontWeight="bold"
-                gutterBottom
-                sx={{ color: '#1976d2' }}
-              >
-                {displayHfn || 'Not generated yet'}
-              </Typography>
+              <Box sx={{ mb: 2 }}>
+                <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.5 }}>
+                  Human-Friendly Name (HFN)
+                </Typography>
+                <Typography
+                  variant="body2"
+                  fontWeight="medium"
+                  fontFamily="monospace"
+                  sx={{ 
+                    wordBreak: 'break-word',
+                    color: 'success.main',
+                    bgcolor: '#f8f9fa',
+                    p: 1,
+                    borderRadius: 1,
+                    fontSize: '0.8rem'
+                  }}
+                >
+                  {displayHfn || 'Not generated yet'}
+                </Typography>
+              </Box>
 
-              <Box sx={{ mt: 3 }}>
-                <Typography variant="subtitle2" align="center" gutterBottom>
+              <Box>
+                <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.5 }}>
                   Machine-Friendly Address (MFA)
                 </Typography>
                 <Typography
-                  variant="h5"
-                  align="center"
+                  variant="body2"
                   fontFamily="monospace"
-                  gutterBottom
-                  sx={{ color: '#4a148c' }}
+                  sx={{ 
+                    wordBreak: 'break-word',
+                    color: 'info.main',
+                    bgcolor: '#f8f9fa',
+                    p: 1,
+                    borderRadius: 1,
+                    fontSize: '0.8rem'
+                  }}
                 >
                   {displayMfa || 'Not generated yet'}
                 </Typography>
               </Box>
-            </Box>
+            </Paper>
 
-            <Grid container spacing={2}>
-              <Grid item xs={4}>
-                <Paper variant="outlined" sx={{ p: 1, textAlign: 'center' }}>
-                  <Typography variant="caption" color="text.secondary">
-                    Layer
-                  </Typography>
-                  <Typography variant="body1" fontWeight="bold">
-                    {layer || '-'}
-                  </Typography>
-                </Paper>
-              </Grid>
-              <Grid item xs={4}>
-                <Paper variant="outlined" sx={{ p: 1, textAlign: 'center' }}>
-                  <Typography variant="caption" color="text.secondary">
-                    Category
-                  </Typography>
-                  <Typography variant="body1" fontWeight="bold">
-                    {categoryCode || '-'}
-                  </Typography>
-                </Paper>
-              </Grid>
-              <Grid item xs={4}>
-                <Paper variant="outlined" sx={{ p: 1, textAlign: 'center' }}>
-                  <Typography variant="caption" color="text.secondary">
-                    Subcategory
-                  </Typography>
-                  <Typography variant="body1" fontWeight="bold">
-                    {subcategoryCode || '-'}
-                  </Typography>
-                </Paper>
-              </Grid>
-            </Grid>
-
-            <Box sx={{ mt: 2, textAlign: 'center' }}>
-              <Typography variant="caption" color="text.secondary">
-                Sequential Number
-              </Typography>
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Typography variant="body1" fontWeight="bold">
-                  .000
-                </Typography>
-                <Tooltip title="The .000 will be replaced with an assigned sequential number after submission">
-                  <IconButton size="small" sx={{ ml: 0.5, p: 0 }}>
-                    <InfoIcon fontSize="small" color="info" />
-                  </IconButton>
-                </Tooltip>
-              </Box>
-              <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
-                Will be replaced after submission
-              </Typography>
-            </Box>
-          </Paper>
-        </Grid>
-
-        {/* Files Section */}
-        <Grid item xs={12} md={6}>
-          <Paper variant="outlined" sx={{ p: 2, mb: 3 }}>
-            <Box
-              sx={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                mb: 2,
-              }}
-            >
-              <Typography variant="subtitle1" fontWeight="bold">
-                Asset Files
-              </Typography>
-              <IconButton
-                size="small"
-                onClick={() => onEditStep(2)}
-                color="primary"
+            {/* Files Card */}
+            <Paper variant="outlined" sx={{ p: 2 }}>
+              <Box
+                sx={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  mb: 2,
+                }}
               >
-                <EditIcon fontSize="small" />
-              </IconButton>
-            </Box>
-            <Divider sx={{ mb: 2 }} />
-
-            {files.length === 0 ? (
-              <Alert severity="warning">
-                <Typography variant="body1" fontWeight="medium">
-                  No files have been uploaded.
+                <Typography variant="subtitle1" fontWeight="bold">
+                  Asset Files
                 </Typography>
-                <Typography variant="body2" sx={{ mt: 1 }}>
-                  Please go back to Step 3 to upload at least one file for your
-                  asset.
-                </Typography>
-                <Button
-                  variant="outlined"
+                <IconButton
                   size="small"
                   onClick={() => onEditStep(2)}
-                  sx={{ mt: 2 }}
+                  color="primary"
                 >
-                  Go to Upload Files
-                </Button>
-              </Alert>
-            ) : (
-              <Box>
-                {/* Enhanced File Preview with FilePreview component */}
-                {files.length > 0 && (
-                  <Box sx={{ mb: 3 }}>
-                    <Typography variant="subtitle2" gutterBottom>
-                      File Preview
-                    </Typography>
-
-                    <Paper
-                      variant="outlined"
-                      sx={{
-                        overflow: 'hidden',
-                        borderRadius: 1,
-                        height: '220px',
-                        backgroundColor: '#fafafa',
-                      }}
-                    >
-                      <FilePreview
-                        file={files[0]}
-                        height="220px"
-                        showControls={false}
-                      />
-                    </Paper>
-
-                    <Typography
-                      variant="caption"
-                      color="text.secondary"
-                      align="center"
-                      sx={{ display: 'block', mt: 1 }}
-                    >
-                      {files[0].name} ({formatBytes(files[0].size)})
-                    </Typography>
-                  </Box>
-                )}
-
-                <List>
-                  {files.map((file, index) => {
-                    // Check if the file has been uploaded
-                    const uploadedFile = uploadedFiles.find(
-                      uf => uf.originalName === file.name
-                    );
-
-                    const isUploaded = !!uploadedFile;
-
-                    return (
-                      <ListItem key={index} divider={index < files.length - 1}>
-                        <ListItemIcon>{getFileIcon(file.type)}</ListItemIcon>
-                        <ListItemText
-                          primary={file.name}
-                          secondary={`${formatBytes(file.size)} - ${file.type}`}
-                          primaryTypographyProps={{ noWrap: true }}
-                        />
-                        <ListItemSecondaryAction>
-                          <Chip
-                            label={isUploaded ? 'Uploaded' : 'Pending'}
-                            color={isUploaded ? 'success' : 'warning'}
-                            size="small"
-                          />
-                        </ListItemSecondaryAction>
-                      </ListItem>
-                    );
-                  })}
-                </List>
+                  <EditIcon fontSize="small" />
+                </IconButton>
               </Box>
-            )}
-          </Paper>
+              <Divider sx={{ mb: 2 }} />
 
-          {/* Component Assets section removed - Step 5 should only show the composite asset preview */}
+              {files.length === 0 ? (
+                <Alert severity="warning">
+                  <Typography variant="body2" fontWeight="medium">
+                    No files uploaded
+                  </Typography>
+                  <Button
+                    variant="outlined"
+                    size="small"
+                    onClick={() => onEditStep(2)}
+                    sx={{ mt: 1 }}
+                  >
+                    Upload Files
+                  </Button>
+                </Alert>
+              ) : (
+                <Box>
+                  {/* Compact File Preview */}
+                  {files.length > 0 && (
+                    <Box sx={{ mb: 2 }}>
+                      <Paper
+                        variant="outlined"
+                        sx={{
+                          overflow: 'hidden',
+                          borderRadius: 1,
+                          height: '120px',
+                          backgroundColor: '#fafafa',
+                        }}
+                      >
+                        <FilePreview
+                          file={files[0]}
+                          height="120px"
+                          showControls={false}
+                        />
+                      </Paper>
+                      <Typography
+                        variant="caption"
+                        color="text.secondary"
+                        align="center"
+                        sx={{ display: 'block', mt: 1 }}
+                      >
+                        {files[0].name} ({formatBytes(files[0].size)})
+                      </Typography>
+                    </Box>
+                  )}
 
-          {/* Second NNA Address card removed to avoid duplication */}
+                  {/* File List - Compact */}
+                  <Box>
+                    {files.map((file, index) => {
+                      const uploadedFile = uploadedFiles.find(
+                        uf => uf.originalName === file.name
+                      );
+                      const isUploaded = !!uploadedFile;
+
+                      return (
+                        <Box key={index} sx={{ mb: 1, p: 1, bgcolor: 'grey.50', borderRadius: 1 }}>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            {getFileIcon(file.type)}
+                            <Box sx={{ flex: 1, minWidth: 0 }}>
+                              <Typography variant="caption" noWrap sx={{ display: 'block' }}>
+                                {file.name}
+                              </Typography>
+                              <Typography variant="caption" color="text.secondary">
+                                {formatBytes(file.size)}
+                              </Typography>
+                            </Box>
+                            <Chip
+                              label={isUploaded ? 'Ready' : 'Pending'}
+                              color={isUploaded ? 'success' : 'warning'}
+                              size="small"
+                              sx={{ fontSize: '0.6rem', height: '20px' }}
+                            />
+                          </Box>
+                        </Box>
+                      );
+                    })}
+                  </Box>
+                </Box>
+              )}
+            </Paper>
+            
+          </Box>
         </Grid>
       </Grid>
 
