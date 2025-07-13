@@ -2519,7 +2519,7 @@ const RegisterAssetPage: React.FC = () => {
                       Category:
                     </Typography>
                     <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                      {createdAsset.category || createdAsset.categoryName || 'Unknown'}
+                      {createdAsset.category || 'Unknown'}
                     </Typography>
                   </Grid>
                   <Grid item xs={6}>
@@ -2527,7 +2527,7 @@ const RegisterAssetPage: React.FC = () => {
                       Subcategory:
                     </Typography>
                     <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                      {createdAsset.subcategory || createdAsset.subcategoryName || 'Unknown'}
+                      {createdAsset.subcategory || 'Unknown'}
                     </Typography>
                   </Grid>
                 </Grid>
