@@ -175,6 +175,12 @@ const schema = yup.object({
   mfa: yup.string(), // machine friendly address
   sequential: yup.string(), // sequential number
   trainingData: yup.object().nullable().optional(),
+  // Phase 2A: Album art and enhanced metadata fields
+  albumArtUrl: yup.string().optional(),
+  albumArtSource: yup.string().optional(),
+  albumArtQuality: yup.string().optional(),
+  extractedSongData: yup.object().optional(),
+  bpm: yup.number().optional(),
 });
 
 // Form data interface
@@ -229,6 +235,12 @@ interface FormData {
   layerSpecificData?: {
     components: any[]; // Only for C layer
   };
+  // Phase 2A: Album art and enhanced metadata fields
+  albumArtUrl?: string;
+  albumArtSource?: string;
+  albumArtQuality?: string;
+  extractedSongData?: any;
+  bpm?: number;
 }
 
 const RegisterAssetPage: React.FC = () => {
