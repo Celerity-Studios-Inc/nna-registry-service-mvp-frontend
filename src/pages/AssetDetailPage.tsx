@@ -272,12 +272,31 @@ const AssetDetail: React.FC = () => {
                 )}
               </Box>
               <CardContent>
+                {/* Creator's Description (Primary) */}
                 <Typography variant="body1" gutterBottom>
-                  <strong>Description:</strong>
+                  <strong>Creator's Description:</strong>
                 </Typography>
-                <Typography variant="body2" color="text.secondary" paragraph>
-                  {asset.description || 'No description provided'}
+                <Typography variant="body2" color="text.primary" paragraph sx={{ 
+                  fontWeight: 500,
+                  p: 1.5,
+                  bgcolor: 'rgba(25, 118, 210, 0.08)',
+                  borderRadius: 1,
+                  border: '1px solid rgba(25, 118, 210, 0.2)'
+                }}>
+                  {asset.name || 'No creator description provided'}
                 </Typography>
+
+                {/* AI-Generated Description (Secondary) */}
+                {asset.description && asset.description !== asset.name && (
+                  <>
+                    <Typography variant="body1" gutterBottom sx={{ mt: 2 }}>
+                      <strong>AI-Generated Description:</strong>
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary" paragraph>
+                      {asset.description}
+                    </Typography>
+                  </>
+                )}
 
                 {/* Phase 2A: Album Art Display for Songs Layer */}
                 {asset.layer === 'G' && asset.metadata?.albumArtUrl && (
