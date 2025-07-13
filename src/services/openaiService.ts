@@ -606,21 +606,27 @@ Comma-separated tag list: `;
     
     const processedResponse = this.processSongsResponse(response, songData);
     
-    // Phase 2A: Fetch album art asynchronously using dedicated service
-    albumArtService.fetchAlbumArt({
-      songName: songData.songName,
-      artistName: songData.artistName,
-      albumName: songData.albumName
-    }).then(albumArtResult => {
+    // Phase 2A: Fetch album art synchronously to ensure it's included in response
+    try {
+      const albumArtResult = await albumArtService.fetchAlbumArt({
+        songName: songData.songName,
+        artistName: songData.artistName,
+        albumName: songData.albumName
+      });
+      
       if (albumArtResult) {
         processedResponse.additionalMetadata.albumArtUrl = albumArtResult.url;
         processedResponse.additionalMetadata.albumArtSource = albumArtResult.source;
         processedResponse.additionalMetadata.albumArtQuality = albumArtResult.quality;
         console.log('[PHASE 2A] Album art added to metadata:', albumArtResult);
+      } else {
+        console.log('[PHASE 2A] No album art found for this song');
+        processedResponse.additionalMetadata.albumArtUrl = null;
       }
-    }).catch(error => {
+    } catch (error) {
       console.warn('[PHASE 2A] Album art fetch error:', error);
-    });
+      processedResponse.additionalMetadata.albumArtUrl = null;
+    }
     
     return processedResponse;
   }
