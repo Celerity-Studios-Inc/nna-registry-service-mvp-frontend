@@ -2373,7 +2373,7 @@ const RegisterAssetPage: React.FC = () => {
                   </Box>
                   
                   {/* Composite Components Display (if applicable) */}
-                  {isCompositeAsset && (
+                  {createdAsset.layer === 'C' && (
                     <Box sx={{ mt: 2 }}>
                       <Typography 
                         variant="body2" 
