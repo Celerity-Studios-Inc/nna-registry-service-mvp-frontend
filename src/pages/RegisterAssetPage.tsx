@@ -599,6 +599,14 @@ const RegisterAssetPage: React.FC = () => {
           subcategoryName: data.subcategoryName,
           uploadedFiles: uploadedFiles,
           trainingData: data.trainingData,
+          // Phase 2A: Include album art and enhanced metadata for Songs layer
+          ...(data.layer === 'G' && {
+            albumArtUrl: (data as any).albumArtUrl,
+            albumArtSource: (data as any).albumArtSource,
+            albumArtQuality: (data as any).albumArtQuality,
+            extractedSongData: (data as any).extractedSongData,
+            bpm: (data as any).bpm
+          }),
           // Use our enhanced formatter to generate consistent addresses
           // This eliminates the need for special cases while ensuring correct display
           // Use a self-invoking function for cleaner code
@@ -1206,6 +1214,31 @@ const RegisterAssetPage: React.FC = () => {
     environmentSafeLog('🤖 AI generated tags:', tags);
   };
 
+  // Phase 2A: Handle additional metadata (album art, BPM, etc.)
+  const handleAIAdditionalMetadataGenerated = (metadata: any) => {
+    environmentSafeLog('🎵 [PHASE 2A] Additional metadata received:', metadata);
+    
+    // Store album art URL in form data for later use
+    if (metadata.albumArtUrl) {
+      setValue('albumArtUrl', metadata.albumArtUrl);
+      setValue('albumArtSource', metadata.albumArtSource || 'iTunes');
+      setValue('albumArtQuality', metadata.albumArtQuality || 'high');
+      environmentSafeLog('🖼️ [PHASE 2A] Album art URL set in form:', metadata.albumArtUrl);
+    }
+    
+    // Store enhanced song metadata
+    if (metadata.extractedSongData) {
+      setValue('extractedSongData', metadata.extractedSongData);
+      environmentSafeLog('🎵 [PHASE 2A] Song data extracted:', metadata.extractedSongData);
+    }
+    
+    // Store BPM and other enhanced metadata
+    if (metadata.bpm) {
+      setValue('bpm', metadata.bpm);
+      environmentSafeLog('🥁 [PHASE 2A] BPM set in form:', metadata.bpm);
+    }
+  };
+
   // Helper function to check if current step is valid for navigation
   const isStepValid = (step: number): boolean => {
     switch (step) {
@@ -1427,6 +1460,7 @@ const RegisterAssetPage: React.FC = () => {
                       subcategoryCode={watchSubcategoryCode}
                       onDescriptionGenerated={handleAIDescriptionGenerated}
                       onTagsGenerated={handleAITagsGenerated}
+                      onAdditionalMetadataGenerated={handleAIAdditionalMetadataGenerated}  // Phase 2A
                       currentDescription={watch('description')}
                       currentTags={watch('tags')}
                       disabled={!watchLayer || !watchCategoryCode || !watchSubcategoryCode}

@@ -31,6 +31,7 @@ interface AIMetadataGeneratorProps {
   subcategoryCode: string;
   onDescriptionGenerated: (description: string) => void;
   onTagsGenerated: (tags: string[]) => void;
+  onAdditionalMetadataGenerated?: (metadata: any) => void;  // Phase 2A: Album art and enhanced metadata
   currentDescription?: string;
   currentTags?: string[];
   disabled?: boolean;
@@ -89,6 +90,7 @@ const AIMetadataGenerator: React.FC<AIMetadataGeneratorProps> = ({
   subcategoryCode,
   onDescriptionGenerated,
   onTagsGenerated,
+  onAdditionalMetadataGenerated,
   currentDescription,
   currentTags = [],
   disabled = false,
@@ -243,6 +245,12 @@ const AIMetadataGenerator: React.FC<AIMetadataGeneratorProps> = ({
       onDescriptionGenerated(result.description);
       onTagsGenerated(result.tags);
       
+      // Phase 2A: Pass additional metadata (including album art) to parent form
+      if (result.additionalMetadata && onAdditionalMetadataGenerated) {
+        onAdditionalMetadataGenerated(result.additionalMetadata);
+        console.log('[PHASE 2A] Additional metadata passed to form:', result.additionalMetadata);
+      }
+      
       // Update state with enhanced metadata
       setState(prev => ({
         ...prev,
@@ -297,6 +305,12 @@ const AIMetadataGenerator: React.FC<AIMetadataGeneratorProps> = ({
         }
         if (type === 'tags' || type === 'both') {
           onTagsGenerated(result.tags);
+        }
+        
+        // Phase 2A: Pass additional metadata on regeneration too
+        if (result.additionalMetadata && onAdditionalMetadataGenerated) {
+          onAdditionalMetadataGenerated(result.additionalMetadata);
+          console.log('[PHASE 2A] Additional metadata passed to form (regeneration):', result.additionalMetadata);
         }
         
         setState(prev => ({
