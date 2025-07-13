@@ -279,6 +279,59 @@ const AssetDetail: React.FC = () => {
                   {asset.description || 'No description provided'}
                 </Typography>
 
+                {/* Phase 2A: Album Art Display for Songs Layer */}
+                {asset.layer === 'G' && asset.metadata?.albumArtUrl && (
+                  <Box sx={{ mt: 2, mb: 2 }}>
+                    <Typography variant="body2" gutterBottom>
+                      <strong>Album Art:</strong>
+                    </Typography>
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 2,
+                        p: 2,
+                        border: '1px solid',
+                        borderColor: 'divider',
+                        borderRadius: 1,
+                        bgcolor: 'background.paper'
+                      }}
+                    >
+                      <img
+                        src={asset.metadata.albumArtUrl}
+                        alt="Album Art"
+                        style={{
+                          width: 80,
+                          height: 80,
+                          objectFit: 'cover',
+                          borderRadius: '4px'
+                        }}
+                        onError={(e) => {
+                          console.warn('Album art failed to load:', asset.metadata?.albumArtUrl);
+                          (e.target as HTMLImageElement).style.display = 'none';
+                        }}
+                      />
+                      <Box>
+                        <Typography variant="caption" color="text.secondary">
+                          Source: {asset.metadata.albumArtSource || 'iTunes'}
+                        </Typography>
+                        <br />
+                        <Typography variant="caption" color="text.secondary">
+                          Quality: {asset.metadata.albumArtQuality || 'High'}
+                        </Typography>
+                        {asset.metadata.extractedSongData && (
+                          <>
+                            <br />
+                            <Typography variant="caption" color="text.primary">
+                              {asset.metadata.extractedSongData.songName} - {asset.metadata.extractedSongData.artistName}
+                            </Typography>
+                          </>
+                        )}
+                      </Box>
+                    </Box>
+                  </Box>
+                )}
+
                 {/* Tags */}
                 {asset.tags && asset.tags.length > 0 && (
                   <Box sx={{ mt: 2 }}>

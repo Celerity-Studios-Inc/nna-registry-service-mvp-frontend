@@ -631,7 +631,7 @@ Comma-separated tag list: `;
   private extractSongData(description: string): ExtractedSongData {
     console.log(`[ENHANCED AI] Extracting song data from: "${description}"`);
     
-    // Handle multiple input formats
+    // Handle multiple input formats - Enhanced with song description patterns
     const patterns = [
       // Pattern 1: "Song Name - Album Name - Artist/Band"
       /^(.+?)\s*-\s*(.+?)\s*-\s*(.+?)$/,
@@ -639,22 +639,25 @@ Comma-separated tag list: `;
       // Pattern 2: "Song Name" by Artist from album Album Name
       /^[""'](.+?)[""']\s*by\s+(.+?)\s+from\s+album\s+(.+?)(?:\s*\([\d]+\))?(?:\.|$)/i,
       
-      // Pattern 3: Song Name by Artist from the album Album Name (specific for current format)
+      // Pattern 3: "Song Name is a song by Artist... from the album Album Name" (ENHANCED)
+      /^(.+?)\s+is\s+a\s+song\s+by\s+(.+?)\.\s*.*?from\s+the\s+album\s+(.+?)(?:\s*\([\d]+\))?(?:\.|$)/i,
+      
+      // Pattern 4: Song Name by Artist from the album Album Name
       /^(.+?)\s+by\s+(.+?)\s+from\s+the\s+album\s+(.+?)(?:\s*\([\d]+\))?(?:\.|$)/i,
       
-      // Pattern 4: Song Name by Artist from album Album Name
+      // Pattern 5: Song Name by Artist from album Album Name
       /^(.+?)\s+by\s+(.+?)\s+from\s+album\s+(.+?)(?:\s*\([\d]+\))?(?:\.|$)/i,
       
-      // Pattern 5: "Song Name" by Artist
+      // Pattern 6: "Song Name" by Artist
       /^[""'](.+?)[""']\s*by\s+(.+?)(?:\s*\([\d]+\))?(?:\.|$)/i,
       
-      // Pattern 6: Song Name by Artist
+      // Pattern 7: Song Name by Artist
       /^(.+?)\s*by\s+(.+?)(?:\s*\([\d]+\))?(?:\.|$)/i,
       
-      // Pattern 7: Song Name - Artist format
+      // Pattern 8: Song Name - Artist format
       /^(.+?)\s*-\s*(.+?)$/,
       
-      // Pattern 8: Just song name
+      // Pattern 9: Just song name
       /^(.+?)$/
     ];
     
@@ -671,21 +674,21 @@ Comma-separated tag list: `;
             albumName: match[3]?.trim() || '',
             originalInput: description
           };
-        } else if (i === 2) { // Song Name by Artist from the album Album Name
+        } else if (i === 2) { // "Song Name is a song by Artist... from the album Album Name" (ENHANCED)
           result = {
             songName: match[1]?.trim() || '',
             artistName: match[2]?.trim() || '',
             albumName: match[3]?.trim() || '',
             originalInput: description
           };
-        } else if (i === 3) { // Song Name by Artist from album Album Name
+        } else if (i === 3 || i === 4) { // Song Name by Artist from the album Album Name / from album Album Name
           result = {
             songName: match[1]?.trim() || '',
             artistName: match[2]?.trim() || '',
             albumName: match[3]?.trim() || '',
             originalInput: description
           };
-        } else if (i === 4 || i === 5) { // "Song Name" by Artist or Song Name by Artist
+        } else if (i === 5 || i === 6) { // "Song Name" by Artist or Song Name by Artist
           result = {
             songName: match[1]?.trim() || '',
             artistName: match[2]?.trim() || '',
@@ -699,14 +702,14 @@ Comma-separated tag list: `;
             artistName: match[3]?.trim() || '',
             originalInput: description
           };
-        } else if (i === 6) { // Song - Artist
+        } else if (i === 7) { // Song - Artist
           result = {
             songName: match[1]?.trim() || '',
             artistName: match[2]?.trim() || '',
             albumName: '',
             originalInput: description
           };
-        } else { // Just song name
+        } else { // Just song name (pattern 8)
           result = {
             songName: match[1]?.trim() || description,
             albumName: '',
@@ -1065,9 +1068,27 @@ Respond with only the description paragraph and comma-separated tag list in JSON
   private extractEnhancedSongMetadata(description: string, baseTags: string[], songData: ExtractedSongData): any {
     console.log('[PHASE 2A] Extracting enhanced song metadata');
     
-    // Extract BPM from description
-    const bpmMatch = description.match(/(\d+)\s*BPM/i);
-    const bpm = bpmMatch ? parseInt(bpmMatch[1]) : null;
+    // Extract BPM from description with enhanced patterns
+    const bpmPatterns = [
+      /(\d+)\s*BPM/i,                    // "117 BPM"
+      /BPM\s*(?:of\s*)?(\d+)/i,          // "BPM of 117"
+      /(\d+)[\s-]*beats?\s*per\s*minute/i, // "117 beats per minute"
+      /tempo.*?(\d+)/i,                  // "tempo of 117"
+      /(\d+)[\s-]*bpm/i                  // "117-bpm" or "117bpm"
+    ];
+    
+    let bpm = null;
+    for (const pattern of bpmPatterns) {
+      const match = description.match(pattern);
+      if (match) {
+        const extractedBpm = parseInt(match[1]);
+        if (extractedBpm >= 60 && extractedBpm <= 200) { // Valid BPM range
+          bpm = extractedBpm;
+          console.log(`[BPM EXTRACTION] Found BPM: ${bpm} using pattern: ${pattern}`);
+          break;
+        }
+      }
+    }
     
     // Extract energy level
     const energyPatterns = {
@@ -1110,9 +1131,19 @@ Respond with only the description paragraph and comma-separated tag list in JSON
     // Generate enhanced tags
     const enhancedTags = [...baseTags];
     
-    // Add BPM tag if extracted
-    if (bpm && !enhancedTags.some(tag => tag.includes('bpm'))) {
-      enhancedTags.push(`${bpm}bpm`);
+    // Add BPM tag if extracted (enhanced with debugging)
+    if (bpm) {
+      const bpmTag = `${bpm}bpm`;
+      // Check if BPM tag already exists
+      const hasBpmTag = enhancedTags.some(tag => tag.toLowerCase().includes('bpm'));
+      if (!hasBpmTag) {
+        enhancedTags.push(bpmTag);
+        console.log(`[BPM TAGS] Added BPM tag: ${bpmTag}`);
+      } else {
+        console.log(`[BPM TAGS] BPM tag already exists in tags:`, enhancedTags.filter(tag => tag.toLowerCase().includes('bpm')));
+      }
+    } else {
+      console.log(`[BPM TAGS] No BPM detected in description: "${description.substring(0, 100)}..."`);
     }
     
     // Add tempo tag if not present

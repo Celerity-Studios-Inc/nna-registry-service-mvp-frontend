@@ -62,8 +62,34 @@ const AssetThumbnail: React.FC<AssetThumbnailProps> = ({
     );
   }
 
-  // Handle audio assets with layer icon fallback
+  // Handle audio assets with album art support for Songs layer (G)
   if (asset.gcpStorageUrl && isAudioUrl(asset.gcpStorageUrl)) {
+    // Phase 2A: Album art support for Songs layer
+    if (asset.layer === 'G' && asset.metadata?.albumArtUrl && !imageError) {
+      return (
+        <Box sx={containerStyle}>
+          <img
+            src={asset.metadata.albumArtUrl}
+            alt={`Album art for ${asset.friendlyName || asset.name}`}
+            style={{
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover',
+              borderRadius: '4px'
+            }}
+            onError={() => {
+              // Fallback to layer icon if album art fails to load
+              setImageError(true);
+            }}
+            onLoad={() => {
+              setImageError(false);
+            }}
+          />
+        </Box>
+      );
+    }
+    
+    // Fallback to layer icon for audio assets without album art or when album art fails
     return (
       <Box sx={containerStyle}>
         {getLayerIcon(asset.layer)}

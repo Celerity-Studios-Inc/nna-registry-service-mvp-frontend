@@ -460,6 +460,44 @@ const ReviewSubmit: React.FC<ReviewSubmitProps> = ({
                   </Box>
                 </ListItem>
               )}
+
+              {/* Phase 2A: Album Art Display for Songs Layer - will be added when backend supports metadata */}
+              {layer === 'G' && (assetData as any).albumArtUrl && (
+                <ListItem disablePadding sx={{ mb: 1 }}>
+                  <ListItemIcon sx={{ minWidth: 40 }}>
+                    <ImageIcon />
+                  </ListItemIcon>
+                  <ListItemText
+                    primary="Album Art"
+                    primaryTypographyProps={{
+                      variant: 'body2',
+                      color: 'text.secondary',
+                    }}
+                  />
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <img
+                      src={(assetData as any).albumArtUrl}
+                      alt="Album Art"
+                      style={{
+                        width: 40,
+                        height: 40,
+                        objectFit: 'cover',
+                        borderRadius: '4px',
+                        border: '1px solid #ddd'
+                      }}
+                      onError={(e) => {
+                        console.warn('Album art failed to load in review');
+                        (e.target as HTMLImageElement).style.display = 'none';
+                      }}
+                    />
+                    <Box>
+                      <Typography variant="caption" color="text.secondary">
+                        {(assetData as any).albumArtSource || 'iTunes'}
+                      </Typography>
+                    </Box>
+                  </Box>
+                </ListItem>
+              )}
             </List>
           </Paper>
 
