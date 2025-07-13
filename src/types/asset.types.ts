@@ -19,6 +19,7 @@ export interface Asset {
   category?: string;
   subcategory?: string;
   description?: string;
+  creatorDescription?: string; // Enhanced AI Integration: Original creator's description
   tags?: string[];
   status: 'active' | 'inactive' | 'draft' | 'archived';
   version?: VersionInfo;

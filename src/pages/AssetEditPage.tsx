@@ -30,7 +30,7 @@ const AssetEditPage: React.FC = () => {
         const assetData = await assetService.getAssetById(id);
         setAsset(assetData);
         // Set Creator's Description from metadata or fallback to name field
-        setCreatorDescription(assetData.metadata?.creatorDescription || assetData.friendlyName || assetData.name || '');
+        setCreatorDescription(assetData.creatorDescription || assetData.metadata?.creatorDescription || assetData.friendlyName || assetData.name || '');
         setDescription(assetData.description || '');
         setTags(assetData.tags || []);
       } catch (error) {

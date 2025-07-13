@@ -606,9 +606,9 @@ const RegisterAssetPage: React.FC = () => {
             data.subcategoryCode,
             '001' // Default sequential for display
         ).mfa,
+        // CRITICAL FIX: Store Creator's Description at root level to prevent backend overwrite
+        creatorDescription: data.name, // Store original Creator's Description input separately
         metadata: {
-          // CRITICAL FIX: Preserve Creator's Description - backend overwrites 'name' with HFN
-          creatorDescription: data.name, // Store original Creator's Description input
           layerName: data.layerName,
           categoryName: data.categoryName,
           subcategoryName: data.subcategoryName,
@@ -2433,12 +2433,12 @@ const RegisterAssetPage: React.FC = () => {
                     }}
                   >
                     {/* CRITICAL FIX: Display Creator's Description from metadata */}
-                    {createdAsset.metadata?.creatorDescription || createdAsset.friendlyName || createdAsset.name || 'No creator description provided'}
+                    {createdAsset.creatorDescription || createdAsset.metadata?.creatorDescription || createdAsset.friendlyName || createdAsset.name || 'No creator description provided'}
                   </Typography>
                 </Box>
 
                 {/* AI-Generated Description (Secondary, when different) */}
-                {createdAsset.description && createdAsset.description !== (createdAsset.metadata?.creatorDescription || createdAsset.friendlyName || createdAsset.name) && (
+                {createdAsset.description && createdAsset.description !== (createdAsset.creatorDescription || createdAsset.metadata?.creatorDescription || createdAsset.friendlyName || createdAsset.name) && (
                   <Box sx={{ mb: 3 }}>
                     <Typography variant="body1" gutterBottom sx={{ fontWeight: 600 }}>
                       AI-Generated Description:
