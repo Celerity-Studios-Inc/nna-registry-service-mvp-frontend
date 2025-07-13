@@ -469,35 +469,7 @@ const ReviewSubmit: React.FC<ReviewSubmitProps> = ({
               </Box>
             )}
 
-            {/* Layer Information */}
-            <Box sx={{ mb: 3 }}>
-              <Typography variant="body1" gutterBottom sx={{ fontWeight: 600 }}>
-                Layer:
-              </Typography>
-              <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                {layerName ? `${layerName} (${layer})` : layer || 'Not specified'}
-              </Typography>
-            </Box>
-
-            {/* Category & Subcategory */}
-            <Grid container spacing={2} sx={{ mb: 3 }}>
-              <Grid item xs={6}>
-                <Typography variant="body1" gutterBottom sx={{ fontWeight: 600 }}>
-                  Category:
-                </Typography>
-                <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                  {categoryCode ? `${getCategoryDisplayName(categoryCode, categoryName)} (${categoryCode})` : 'Not specified'}
-                </Typography>
-              </Grid>
-              <Grid item xs={6}>
-                <Typography variant="body1" gutterBottom sx={{ fontWeight: 600 }}>
-                  Subcategory:
-                </Typography>
-                <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                  {subcategoryCode ? `${getCategoryDisplayName(subcategoryCode, subcategoryName)} (${subcategoryCode})` : 'Not specified'}
-                </Typography>
-              </Grid>
-            </Grid>
+            {/* Layer, Category, Subcategory information removed - displayed in Taxonomy card on the right */}
 
             {/* Phase 2A: Album Art Display for Songs Layer */}
             {layer === 'G' && (assetData as any).albumArtUrl && (
