@@ -648,10 +648,13 @@ Comma-separated tag list: `;
       // Pattern 5: Song Name by Artist from album Album Name
       /^(.+?)\s+by\s+(.+?)\s+from\s+album\s+(.+?)(?:\s*\([\d]+\))?(?:\.|$)/i,
       
-      // Pattern 6: "Song Name" by Artist
-      /^[""'](.+?)[""']\s*by\s+(.+?)(?:\s*\([\d]+\))?(?:\.|$)/i,
+      // Pattern 6: "Song Name" by Artist (enhanced to stop at sentence break)
+      /^[""'](.+?)[""']\s*by\s+([^.]+?)(?:\s+is\s|\s+was\s|\.\s|\s*\([\d]+\))?(?:\.|$)/i,
       
-      // Pattern 7: Song Name by Artist
+      // Pattern 7: "Song Name" by Artist with Released/album info (ENHANCED for your format)
+      /^[""'](.+?)[""']\s*by\s+([^.]+?)\s+(?:is\s+a\s+.*?\.?\s*)?(?:Released|Album|From)/i,
+      
+      // Pattern 8: Song Name by Artist
       /^(.+?)\s*by\s+(.+?)(?:\s*\([\d]+\))?(?:\.|$)/i,
       
       // Pattern 8: Song Name - Artist format
@@ -688,7 +691,7 @@ Comma-separated tag list: `;
             albumName: match[3]?.trim() || '',
             originalInput: description
           };
-        } else if (i === 5 || i === 6) { // "Song Name" by Artist or Song Name by Artist
+        } else if (i === 5 || i === 6 || i === 7) { // "Song Name" by Artist patterns
           result = {
             songName: match[1]?.trim() || '',
             artistName: match[2]?.trim() || '',
@@ -702,7 +705,7 @@ Comma-separated tag list: `;
             artistName: match[3]?.trim() || '',
             originalInput: description
           };
-        } else if (i === 7) { // Song - Artist
+        } else if (i === 8) { // Song - Artist
           result = {
             songName: match[1]?.trim() || '',
             artistName: match[2]?.trim() || '',
