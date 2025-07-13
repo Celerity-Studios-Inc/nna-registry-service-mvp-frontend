@@ -41,8 +41,42 @@ class AlbumArtService {
         return iTunesResult;
       }
       
+      // Try alternative search patterns if the main search failed
+      if (songData.artistName && songData.songName) {
+        console.log('[ALBUM ART] Trying alternative search patterns...');
+        
+        // Try just artist name
+        const artistOnlyResult = await this.fetchFromItunes({
+          songName: '',
+          artistName: songData.artistName,
+          albumName: songData.albumName
+        });
+        if (artistOnlyResult) {
+          console.log('[ALBUM ART] Found result using artist-only search');
+          this.cache.set(cacheKey, artistOnlyResult);
+          return artistOnlyResult;
+        }
+        
+        // Try without special characters
+        const cleanedSongData = {
+          songName: songData.songName.replace(/["""''']/g, '').replace(/[^\w\s]/g, ' ').trim(),
+          artistName: songData.artistName.replace(/[&]/g, 'and').replace(/[^\w\s]/g, ' ').trim(),
+          albumName: songData.albumName
+        };
+        
+        if (cleanedSongData.songName !== songData.songName || cleanedSongData.artistName !== songData.artistName) {
+          console.log('[ALBUM ART] Trying cleaned search terms:', cleanedSongData);
+          const cleanedResult = await this.fetchFromItunes(cleanedSongData);
+          if (cleanedResult) {
+            console.log('[ALBUM ART] Found result using cleaned search terms');
+            this.cache.set(cacheKey, cleanedResult);
+            return cleanedResult;
+          }
+        }
+      }
+      
       // Could add additional sources here (Last.fm, Spotify, etc.)
-      console.log('[ALBUM ART] No album art found for:', songData.songName);
+      console.log('[ALBUM ART] No album art found for:', songData.songName, 'by', songData.artistName);
       return null;
       
     } catch (error) {

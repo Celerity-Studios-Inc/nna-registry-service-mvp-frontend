@@ -701,8 +701,10 @@ Comma-separated tag list: `;
             originalInput: description
           };
         } else if (i === 5 || i === 6 || i === 7 || i === 8) { // "Song Name" by Artist patterns
+          // Clean up song name - remove quotes and trailing "song"
+          let cleanSongName = (match[1]?.trim() || '').replace(/^["'"]|["'"]$/g, '').replace(/\s+song$/i, '');
           result = {
-            songName: match[1]?.trim() || '',
+            songName: cleanSongName,
             artistName: match[2]?.trim() || '',
             albumName: '',
             originalInput: description
