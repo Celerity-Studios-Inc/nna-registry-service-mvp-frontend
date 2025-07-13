@@ -633,7 +633,10 @@ Comma-separated tag list: `;
     
     // Handle multiple input formats - Enhanced with song description patterns
     const patterns = [
-      // Pattern 1: "Song Name - Album Name - Artist/Band"
+      // Pattern 1: Song = "Song Name", Artist = "Artist", Album = "Album" (SPECIFIC for structured format)
+      /Song\s*=\s*[""'](.+?)[""']\s*,\s*Artist\s*=\s*[""'](.+?)[""']\s*,\s*Album\s*=\s*[""'](.+?)[""']/i,
+      
+      // Pattern 2: "Song Name - Album Name - Artist/Band"
       /^(.+?)\s*-\s*(.+?)\s*-\s*(.+?)$/,
       
       // Pattern 2: "Song Name" by Artist from album Album Name
@@ -679,28 +682,35 @@ Comma-separated tag list: `;
         });
         let result: ExtractedSongData;
         
-        if (i === 1) { // "Song Name" by Artist from album Album Name
+        if (i === 0) { // Song = "Song Name", Artist = "Artist", Album = "Album"
           result = {
             songName: match[1]?.trim() || '',
             artistName: match[2]?.trim() || '',
             albumName: match[3]?.trim() || '',
             originalInput: description
           };
-        } else if (i === 2) { // "Song Name is a song by Artist... from the album Album Name" (ENHANCED)
+        } else if (i === 2) { // "Song Name" by Artist from album Album Name
           result = {
             songName: match[1]?.trim() || '',
             artistName: match[2]?.trim() || '',
             albumName: match[3]?.trim() || '',
             originalInput: description
           };
-        } else if (i === 3 || i === 4) { // Song Name by Artist from the album Album Name / from album Album Name
+        } else if (i === 3) { // "Song Name is a song by Artist... from the album Album Name" (ENHANCED)
           result = {
             songName: match[1]?.trim() || '',
             artistName: match[2]?.trim() || '',
             albumName: match[3]?.trim() || '',
             originalInput: description
           };
-        } else if (i === 5 || i === 6 || i === 7 || i === 8) { // "Song Name" by Artist patterns
+        } else if (i === 4 || i === 5) { // Song Name by Artist from the album Album Name / from album Album Name
+          result = {
+            songName: match[1]?.trim() || '',
+            artistName: match[2]?.trim() || '',
+            albumName: match[3]?.trim() || '',
+            originalInput: description
+          };
+        } else if (i === 6 || i === 7 || i === 8 || i === 9) { // "Song Name" by Artist patterns
           // Clean up song name - remove quotes and trailing "song"
           let cleanSongName = (match[1]?.trim() || '').replace(/^["'"]|["'"]$/g, '').replace(/\s+song$/i, '');
           result = {
@@ -709,28 +719,28 @@ Comma-separated tag list: `;
             albumName: '',
             originalInput: description
           };
-        } else if (i === 0) { // Song - Album - Artist
+        } else if (i === 1) { // Song - Album - Artist
           result = {
             songName: match[1]?.trim() || '',
             albumName: match[2]?.trim() || '',
             artistName: match[3]?.trim() || '',
             originalInput: description
           };
-        } else if (i === 9) { // Song by Artist (general)
+        } else if (i === 10) { // Song by Artist (general)
           result = {
             songName: match[1]?.trim() || '',
             artistName: match[2]?.trim() || '',
             albumName: '',
             originalInput: description
           };
-        } else if (i === 10) { // Song - Artist
+        } else if (i === 11) { // Song - Artist
           result = {
             songName: match[1]?.trim() || '',
             artistName: match[2]?.trim() || '',
             albumName: '',
             originalInput: description
           };
-        } else { // Just song name (pattern 11)
+        } else { // Just song name (pattern 12)
           result = {
             songName: match[1]?.trim() || description,
             albumName: '',
