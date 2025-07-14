@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Container, Typography, TextField, Button, Box, CircularProgress, Alert, Chip, Paper, Divider } from '@mui/material';
 import { Asset } from '../types/asset.types';
 import assetService from '../api/assetService';
+import TaxonomyContext from '../components/asset/TaxonomyContext';
 
 const AssetEditPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -111,6 +112,15 @@ const AssetEditPage: React.FC = () => {
       <Typography variant="h4" gutterBottom>
         Edit Asset: {asset.name}
       </Typography>
+      
+      {/* Taxonomy Context - Consistent with View Details page */}
+      <TaxonomyContext
+        layer={asset.layer}
+        categoryCode={asset.category || asset.categoryCode}
+        subcategoryCode={asset.subcategory || asset.subcategoryCode}
+        hfn={asset.name}
+        mfa={asset.nnaAddress}
+      />
       
       <Paper sx={{ p: 3, mb: 3 }}>
         {/* Creator's Description Section */}

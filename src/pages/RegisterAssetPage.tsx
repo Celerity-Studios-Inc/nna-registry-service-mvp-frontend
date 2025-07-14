@@ -2103,6 +2103,15 @@ const RegisterAssetPage: React.FC = () => {
         </Box>
         
         <Box sx={{ mt: 0, p: 3, border: '1px solid #e0e0e0', borderRadius: 2, maxWidth: '1200px', mx: 'auto' }}>
+          {/* Taxonomy Context - Consistent with View Details and Edit Details pages */}
+          <TaxonomyContext
+            layer={createdAsset.layer}
+            categoryCode={createdAsset.category || createdAsset.categoryCode}
+            subcategoryCode={createdAsset.subcategory || createdAsset.subcategoryCode}
+            hfn={displayHfn || createdAsset.name}
+            mfa={displayMfa || createdAsset.nnaAddress}
+          />
+          
           {/* SUCCESS PAGE 3-CARD REDESIGN */}
           <Grid container spacing={3} sx={{ mt: 2 }}>
             
