@@ -7,6 +7,8 @@
 import { logEnvironmentDiagnostic } from '../utils/envDiagnostic';
 // Phase 2A: Import album art service
 import albumArtService from './albumArtService';
+// CRITICAL FIX: Import video processing utilities
+import { generateVideoThumbnail, isVideoUrl } from '../utils/videoThumbnail';
 
 interface OpenAIResponse {
   choices: Array<{
@@ -118,8 +120,15 @@ class OpenAIService {
       const systemPrompt = "Do not use line breaks or any kind of formatting like list items, code blocks, etc. Just a single plain paragraph.";
       const userPrompt = this.getDescriptionPrompt(context.layer);
 
-      // Convert blob URL to base64 data URL for OpenAI API
-      const imageDataUrl = await this.convertBlobToDataUrl(fileUrl);
+      // CRITICAL FIX: Handle video files by generating thumbnails
+      let imageDataUrl: string;
+      if (this.isVideoFile(fileUrl)) {
+        console.log(`[OPENAI FIX] Detected video file for description generation, creating thumbnail`);
+        imageDataUrl = await this.generateVideoThumbnail(fileUrl);
+      } else {
+        // Convert blob URL to base64 data URL for OpenAI API (images only)
+        imageDataUrl = await this.convertBlobToDataUrl(fileUrl);
+      }
 
       const response = await fetch(this.baseUrl, {
         method: 'POST',
@@ -181,8 +190,15 @@ class OpenAIService {
       const systemPrompt = "Do not include any formatting.\\n\\nBAD:\\ntag1, tag2, etc.,\\n\\nGOOD:\\ntag1, tag2, etc.";
       const userPrompt = this.getTagsPrompt(context.layer);
 
-      // Convert blob URL to base64 data URL for OpenAI API
-      const imageDataUrl = await this.convertBlobToDataUrl(fileUrl);
+      // CRITICAL FIX: Handle video files by generating thumbnails
+      let imageDataUrl: string;
+      if (this.isVideoFile(fileUrl)) {
+        console.log(`[OPENAI FIX] Detected video file for tags generation, creating thumbnail`);
+        imageDataUrl = await this.generateVideoThumbnail(fileUrl);
+      } else {
+        // Convert blob URL to base64 data URL for OpenAI API (images only)
+        imageDataUrl = await this.convertBlobToDataUrl(fileUrl);
+      }
 
       const response = await fetch(this.baseUrl, {
         method: 'POST',
@@ -834,8 +850,22 @@ Use web search if needed to find accurate information about this song.`;
     // Build enhanced prompt with Creator's Description context
     const enhancedPrompt = this.buildVisualPrompt(context);
     
-    // Process with image analysis + context
-    const imageDataUrl = context.image ? await this.convertBlobToDataUrl(context.image) : null;
+    // CRITICAL FIX: For video layers (M, W, C), generate thumbnail instead of sending full video
+    let imageDataUrl: string | null = null;
+    
+    if (context.image) {
+      // Check if this is a video file by URL or content type
+      const isVideo = this.isVideoFile(context.image);
+      
+      if (isVideo) {
+        console.log(`[ENHANCED AI] Detected video file, generating thumbnail for ${context.layer} layer`);
+        // Generate thumbnail from video instead of sending full video to OpenAI
+        imageDataUrl = await this.generateVideoThumbnail(context.image);
+      } else {
+        // Process as image normally
+        imageDataUrl = await this.convertBlobToDataUrl(context.image);
+      }
+    }
     
     const response = await this.callOpenAIWithEnhancedContext(enhancedPrompt, imageDataUrl, context);
     
@@ -1399,6 +1429,42 @@ Respond in JSON format:
   "description": "Cohesive description of the composite asset...",
   "tags": "comma,separated,composite,optimized,tag,list"
 }`;
+  }
+
+  // ========================================================================================
+  // CRITICAL FIX: Video Processing Helper Methods
+  // ========================================================================================
+
+  /**
+   * Check if a URL or file path points to a video file
+   * @param fileUrl The URL or file path to check
+   * @returns True if the file appears to be a video
+   */
+  private isVideoFile(fileUrl: string): boolean {
+    if (!fileUrl) return false;
+    
+    // Use the existing utility from videoThumbnail.ts
+    return isVideoUrl(fileUrl);
+  }
+
+  /**
+   * Generate a thumbnail from a video file for OpenAI processing
+   * @param videoUrl The video URL to generate thumbnail from
+   * @returns Promise resolving to base64 data URL of thumbnail
+   */
+  private async generateVideoThumbnail(videoUrl: string): Promise<string> {
+    try {
+      console.log(`[OPENAI FIX] Generating thumbnail for video: ${videoUrl}`);
+      
+      // Use the existing video thumbnail utility
+      const thumbnailDataUrl = await generateVideoThumbnail(videoUrl, 1);
+      
+      console.log(`[OPENAI FIX] Successfully generated thumbnail (${thumbnailDataUrl.length} chars)`);
+      return thumbnailDataUrl;
+    } catch (error) {
+      console.error('[OPENAI FIX] Error generating video thumbnail:', error);
+      throw new Error(`Failed to generate video thumbnail: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
   }
 }
 
