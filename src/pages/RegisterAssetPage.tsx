@@ -587,7 +587,7 @@ const RegisterAssetPage: React.FC = () => {
         // CRITICAL FIX: Let backend generate the name field with HFN
         // Store Creator's Description in description field instead
         name: `${data.layer}.TEMP.TEMP.001`, // Temporary name, backend will override with generated HFN
-        description: data.name, // Store Creator's Description in description field
+        description: data.description, // Store AI-generated description in description field (renamed back per user request)
         layer: data.layer,
         // IMPORTANT: Use category and subcategory instead of categoryCode and subcategoryCode
         // These are the field names the backend API expects
@@ -595,12 +595,11 @@ const RegisterAssetPage: React.FC = () => {
         // Use the pre-converted values to ensure consistency
         category: convertedCategory,
         subcategory: convertedSubcategory,
-        aiDescription: data.description, // Store AI-generated description separately
         // NEW: Phase 2B Backend Integration Fields
-        creatorDescription: data.name, // NEW: Dedicated creator description field
+        creatorDescription: data.name, // NEW: Dedicated creator description field (user input)
         albumArt: (data as any).albumArtUrl, // NEW: Album art URL from Phase 2A
         aiMetadata: { // NEW: AI metadata object for enhanced functionality
-          generatedDescription: data.description,
+          generatedDescription: data.description, // AI-generated content
           mood: (data as any).mood || 'neutral',
           genre: (data as any).genre,
           bpm: (data as any).bpm,

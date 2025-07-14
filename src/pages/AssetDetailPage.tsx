@@ -283,19 +283,19 @@ const AssetDetail: React.FC = () => {
                   borderRadius: 1,
                   border: '1px solid rgba(25, 118, 210, 0.2)'
                 }}>
-                  {/* Phase 2B: Use new backend creatorDescription field, fallback to description */}
-                  {asset.creatorDescription || asset.description || 'No creator description provided'}
+                  {/* Phase 2B: Use new backend creatorDescription field only */}
+                  {asset.creatorDescription || 'No creator description provided'}
                 </Typography>
 
-                {/* AI-Generated Description (Secondary) */}
-                {(asset.aiDescription || asset.aiMetadata?.generatedDescription) && (
+                {/* Description (AI-Generated) */}
+                {(asset.description || asset.aiMetadata?.generatedDescription || asset.aiDescription) && (
                   <>
                     <Typography variant="body1" gutterBottom sx={{ mt: 2 }}>
-                      <strong>AI-Generated Description:</strong>
+                      <strong>Description:</strong>
                     </Typography>
                     <Typography variant="body2" color="text.secondary" paragraph>
-                      {/* Phase 2B: Use new backend aiMetadata.generatedDescription, fallback to aiDescription */}
-                      {asset.aiMetadata?.generatedDescription || asset.aiDescription}
+                      {/* Phase 2B: Show AI-generated description from description field, with fallbacks */}
+                      {asset.description || asset.aiMetadata?.generatedDescription || asset.aiDescription}
                     </Typography>
                   </>
                 )}
