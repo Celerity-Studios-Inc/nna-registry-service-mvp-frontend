@@ -2466,15 +2466,15 @@ const RegisterAssetPage: React.FC = () => {
                       lineHeight: 1.5
                     }}
                   >
-                    {/* CRITICAL FIX: Display Creator's Description from description field */}
-                    {createdAsset.description || 'No creator description provided'}
+                    {/* Phase 2B: Display Creator's Description from creatorDescription field */}
+                    {createdAsset.creatorDescription || createdAsset.name || 'No creator description provided'}
                   </Typography>
                 </Box>
 
-                {/* AI-Generated Description (Secondary) - RESTORED: Remove restrictive condition */}
+                {/* Description (AI-Generated) */}
                 <Box sx={{ mb: 3 }}>
                   <Typography variant="body1" gutterBottom sx={{ fontWeight: 600 }}>
-                    AI-Generated Description:
+                    Description:
                   </Typography>
                   <Typography 
                     variant="body2" 
@@ -2488,11 +2488,11 @@ const RegisterAssetPage: React.FC = () => {
                       lineHeight: 1.5
                     }}
                   >
-                    {/* DEBUG: Check multiple possible locations for AI description */}
-                    {createdAsset.aiDescription || 
-                     (createdAsset.metadata as any)?.aiDescription || 
-                     (createdAsset as any).description || // Fallback to description field
-                     'No AI description generated'}
+                    {/* Phase 2B: Display AI description from description field with fallbacks */}
+                    {createdAsset.description || 
+                     createdAsset.aiMetadata?.generatedDescription || 
+                     createdAsset.aiDescription || 
+                     'No description generated'}
                   </Typography>
                 </Box>
 

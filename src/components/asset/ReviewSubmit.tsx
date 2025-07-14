@@ -408,11 +408,11 @@ const ReviewSubmit: React.FC<ReviewSubmitProps> = ({
               </Typography>
             </Box>
 
-            {/* AI-Generated Description (Secondary, when different) */}
+            {/* Description (AI-Generated, when different) */}
             {description && description !== name && (
               <Box sx={{ mb: 3 }}>
                 <Typography variant="body1" gutterBottom sx={{ fontWeight: 600 }}>
-                  AI-Generated Description:
+                  Description:
                 </Typography>
                 <Typography 
                   variant="body2" 
