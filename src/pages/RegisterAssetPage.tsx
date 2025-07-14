@@ -2103,38 +2103,145 @@ const RegisterAssetPage: React.FC = () => {
         </Box>
         
         <Box sx={{ mt: 0, p: 3, border: '1px solid #e0e0e0', borderRadius: 2, maxWidth: '1200px', mx: 'auto' }}>
-          {/* Taxonomy Context - Consistent with View Details and Edit Details pages */}
-          <TaxonomyContext
-            layer={createdAsset.layer}
-            categoryCode={createdAsset.category || createdAsset.categoryCode}
-            subcategoryCode={createdAsset.subcategory || createdAsset.subcategoryCode}
-            hfn={displayHfn || createdAsset.name}
-            mfa={displayMfa || createdAsset.nnaAddress}
-          />
           
-          {/* SUCCESS PAGE 3-CARD REDESIGN */}
-          <Grid container spacing={3} sx={{ mt: 2 }}>
+          {/* SUCCESS PAGE REDESIGN: 2-column first row */}
+          <Grid container spacing={3}>
             
-            {/* LEFT COLUMN: Asset Preview + Asset Address */}
+            {/* FIRST ROW - LEFT: Taxonomy Information */}
             <Grid item xs={12} lg={6}>
-              <Stack spacing={3}>
-                
-                {/* CARD 1: Asset Preview (Top Left, Reduced Height) */}
-                <Paper 
-                  variant="outlined" 
-                  sx={{ 
-                    p: 2, 
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    minHeight: 200, // Reduced from 300
-                    mb: 0
-                  }}
+              <TaxonomyContext
+                layer={createdAsset.layer}
+                categoryCode={createdAsset.category || createdAsset.categoryCode}
+                subcategoryCode={createdAsset.subcategory || createdAsset.subcategoryCode}
+                hfn={displayHfn || createdAsset.name}
+                mfa={displayMfa || createdAsset.nnaAddress}
+              />
+            </Grid>
+            
+            {/* FIRST ROW - RIGHT: NNA Addressing Only */}
+            <Grid item xs={12} lg={6}>
+              <Paper 
+                variant="outlined" 
+                sx={{ 
+                  p: 3,
+                  background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
+                  border: '1px solid #e0e7ff',
+                  height: 'fit-content'
+                }}
+              >
+                <Typography 
+                  variant="h6" 
+                  fontWeight="bold" 
+                  gutterBottom
+                  sx={{ color: 'primary.main', mb: 2 }}
                 >
-                  <Typography variant="subtitle1" gutterBottom fontWeight="bold">
-                    Asset Preview
+                  🔗 NNA Addressing
+                </Typography>
+                
+                {/* HFN Display */}
+                <Box sx={{ mb: 2 }}>
+                  <Typography 
+                    variant="body2" 
+                    color="text.secondary"
+                    sx={{ mb: 1, fontWeight: 600 }}
+                  >
+                    Human-Friendly Name (HFN)
                   </Typography>
+                  <Typography
+                    variant="body1"
+                    fontWeight="medium"
+                    sx={{ 
+                      wordBreak: 'break-word',
+                      fontFamily: 'monospace',
+                      fontSize: '0.9rem',
+                      color: 'success.main',
+                      bgcolor: '#f8f9fa',
+                      p: 1.5,
+                      borderRadius: 1,
+                      border: '1px dashed #dee2e6'
+                    }}
+                  >
+                    {displayHfn || createdAsset.metadata?.hfn || createdAsset.metadata?.humanFriendlyName || createdAsset.name}
+                  </Typography>
+                </Box>
+                
+                {/* MFA Display */}
+                <Box sx={{ mb: 2 }}>
+                  <Typography 
+                    variant="body2" 
+                    color="text.secondary"
+                    sx={{ mb: 1, fontWeight: 600 }}
+                  >
+                    Machine-Friendly Address (MFA)
+                  </Typography>
+                  <Typography
+                    variant="body1"
+                    fontFamily="monospace"
+                    sx={{ 
+                      wordBreak: 'break-word',
+                      fontSize: '0.9rem',
+                      color: 'info.main',
+                      bgcolor: '#f8f9fa',
+                      p: 1.5,
+                      borderRadius: 1,
+                      border: '1px dashed #dee2e6'
+                    }}
+                  >
+                    {displayMfa || createdAsset.nnaAddress || createdAsset.metadata?.machineFriendlyAddress || createdAsset.metadata?.mfa}
+                  </Typography>
+                </Box>
+                
+                {/* Composite Components Display (if applicable) */}
+                {createdAsset.layer === 'C' && (
+                  <Box sx={{ mt: 2 }}>
+                    <Typography 
+                      variant="body2" 
+                      color="text.secondary"
+                      sx={{ mb: 1, fontWeight: 600 }}
+                    >
+                      Composite Components
+                    </Typography>
+                    {createdAsset.components && createdAsset.components.length > 0 ? (
+                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                        {createdAsset.components.map((component: string, index: number) => (
+                          <Chip 
+                            key={index} 
+                            label={component} 
+                            size="small" 
+                            variant="outlined"
+                            sx={{ fontSize: '0.75rem' }}
+                          />
+                        ))}
+                      </Box>
+                    ) : (
+                      <Typography variant="body2" color="text.secondary">
+                        No components specified
+                      </Typography>
+                    )}
+                  </Box>
+                )}
+              </Paper>
+            </Grid>
+            
+            {/* SECOND ROW - LEFT: Asset Preview */}
+            <Grid item xs={12} lg={6}>
+              
+              {/* Asset Preview Card */}
+              <Paper 
+                variant="outlined" 
+                sx={{ 
+                  p: 2, 
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  minHeight: 300,
+                  height: 'fit-content'
+                }}
+              >
+                <Typography variant="subtitle1" gutterBottom fontWeight="bold">
+                  Asset Preview
+                </Typography>
                 
                 {displayFile ? (
                   <Box
@@ -2308,117 +2415,13 @@ const RegisterAssetPage: React.FC = () => {
                     )}
                   </Box>
                 )}
-                </Paper>
-                
-                {/* CARD 2: Asset Address (Bottom Left) */}
-                <Paper 
-                  variant="outlined" 
-                  sx={{ 
-                    p: 3,
-                    background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
-                    border: '1px solid #e0e7ff'
-                  }}
-                >
-                  <Typography 
-                    variant="h6" 
-                    fontWeight="bold" 
-                    gutterBottom
-                    sx={{ color: 'primary.main', mb: 2 }}
-                  >
-                    🔗 NNA Addressing
-                  </Typography>
-                  
-                  {/* HFN Display */}
-                  <Box sx={{ mb: 2 }}>
-                    <Typography 
-                      variant="body2" 
-                      color="text.secondary"
-                      sx={{ mb: 1, fontWeight: 600 }}
-                    >
-                      Human-Friendly Name (HFN)
-                    </Typography>
-                    <Typography
-                      variant="body1"
-                      fontWeight="medium"
-                      sx={{ 
-                        wordBreak: 'break-word',
-                        fontFamily: 'monospace',
-                        fontSize: '0.9rem',
-                        color: 'success.main',
-                        bgcolor: '#f8f9fa',
-                        p: 1.5,
-                        borderRadius: 1,
-                        border: '1px dashed #dee2e6'
-                      }}
-                    >
-                      {displayHfn || createdAsset.metadata?.hfn || createdAsset.metadata?.humanFriendlyName || createdAsset.name}
-                    </Typography>
-                  </Box>
-                  
-                  {/* MFA Display */}
-                  <Box sx={{ mb: 2 }}>
-                    <Typography 
-                      variant="body2" 
-                      color="text.secondary"
-                      sx={{ mb: 1, fontWeight: 600 }}
-                    >
-                      Machine-Friendly Address (MFA)
-                    </Typography>
-                    <Typography
-                      variant="body1"
-                      fontFamily="monospace"
-                      sx={{ 
-                        wordBreak: 'break-word',
-                        fontSize: '0.9rem',
-                        color: 'info.main',
-                        bgcolor: '#f8f9fa',
-                        p: 1.5,
-                        borderRadius: 1,
-                        border: '1px dashed #dee2e6'
-                      }}
-                    >
-                      {displayMfa || createdAsset.nnaAddress || createdAsset.metadata?.machineFriendlyAddress || createdAsset.metadata?.mfa}
-                    </Typography>
-                  </Box>
-                  
-                  {/* Composite Components Display (if applicable) */}
-                  {createdAsset.layer === 'C' && (
-                    <Box sx={{ mt: 2 }}>
-                      <Typography 
-                        variant="body2" 
-                        color="text.secondary"
-                        sx={{ mb: 1, fontWeight: 600 }}
-                      >
-                        Composite Components
-                      </Typography>
-                      {createdAsset.components && createdAsset.components.length > 0 ? (
-                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                          {createdAsset.components.map((component: string, index: number) => (
-                            <Chip 
-                              key={index} 
-                              label={component} 
-                              size="small" 
-                              variant="outlined"
-                              sx={{ fontSize: '0.75rem' }}
-                            />
-                          ))}
-                        </Box>
-                      ) : (
-                        <Typography variant="body2" color="text.secondary">
-                          No components specified
-                        </Typography>
-                      )}
-                    </Box>
-                  )}
-                </Paper>
-                
-              </Stack>
+              </Paper>
             </Grid>
             
-            {/* RIGHT COLUMN: Asset Metadata (Full Height) */}
+            {/* SECOND ROW - RIGHT: Asset Metadata */}
             <Grid item xs={12} lg={6}>
               
-              {/* CARD 3: Asset Metadata (Full Height Right Column) */}
+              {/* Asset Metadata Card */}
               <Paper variant="outlined" sx={{ p: 3, height: '100%' }}>
                 <Typography variant="h6" gutterBottom fontWeight="bold" sx={{ color: 'primary.main', mb: 3 }}>
                   📋 Asset Metadata
@@ -2446,28 +2449,26 @@ const RegisterAssetPage: React.FC = () => {
                   </Typography>
                 </Box>
 
-                {/* AI-Generated Description (Secondary, when different) */}
-                {createdAsset.aiDescription && createdAsset.aiDescription !== createdAsset.description && (
-                  <Box sx={{ mb: 3 }}>
-                    <Typography variant="body1" gutterBottom sx={{ fontWeight: 600 }}>
-                      AI-Generated Description:
-                    </Typography>
-                    <Typography 
-                      variant="body2" 
-                      sx={{ 
-                        p: 2,
-                        bgcolor: 'grey.50',
-                        borderRadius: 1,
-                        border: '1px solid',
-                        borderColor: 'grey.300',
-                        color: 'text.secondary',
-                        lineHeight: 1.5
-                      }}
-                    >
-                      {createdAsset.aiDescription}
-                    </Typography>
-                  </Box>
-                )}
+                {/* AI-Generated Description (Secondary) - RESTORED: Remove restrictive condition */}
+                <Box sx={{ mb: 3 }}>
+                  <Typography variant="body1" gutterBottom sx={{ fontWeight: 600 }}>
+                    AI-Generated Description:
+                  </Typography>
+                  <Typography 
+                    variant="body2" 
+                    sx={{ 
+                      p: 2,
+                      bgcolor: 'grey.50',
+                      borderRadius: 1,
+                      border: '1px solid',
+                      borderColor: 'grey.300',
+                      color: 'text.secondary',
+                      lineHeight: 1.5
+                    }}
+                  >
+                    {createdAsset.aiDescription || 'No AI description generated'}
+                  </Typography>
+                </Box>
 
                 {/* Tags */}
                 {createdAsset.tags && createdAsset.tags.length > 0 && (

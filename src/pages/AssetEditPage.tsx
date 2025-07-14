@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Container, Typography, TextField, Button, Box, CircularProgress, Alert, Chip, Paper, Divider } from '@mui/material';
+import { Container, Typography, TextField, Button, Box, CircularProgress, Alert, Chip, Paper, Divider, Grid } from '@mui/material';
 import { Asset } from '../types/asset.types';
 import assetService from '../api/assetService';
-import TaxonomyContext from '../components/asset/TaxonomyContext';
+import { taxonomyService } from '../services/simpleTaxonomyService';
 
 const AssetEditPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -16,6 +16,61 @@ const AssetEditPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Get taxonomy path for breadcrumb display (manual implementation)
+  const getTaxonomyPath = () => {
+    if (!asset) return '';
+
+    const layer = asset.layer;
+    const category = asset.category || asset.categoryCode;
+    const subcategory = asset.subcategory || asset.subcategoryCode;
+
+    // Layer name mapping
+    const layerNames: Record<string, string> = {
+      'G': 'Songs',
+      'S': 'Stars', 
+      'L': 'Looks',
+      'M': 'Moves',
+      'W': 'Worlds',
+      'C': 'Composites',
+      'B': 'Branded',
+      'P': 'Personalize',
+      'T': 'Training Data',
+      'R': 'Rights'
+    };
+
+    // Simple category name mapping  
+    const categoryNames: Record<string, string> = {
+      'POP': 'Pop',
+      'ROK': 'Rock',
+      'DNC': 'Dance Electronic',
+      'HIP': 'Hip Hop',
+      'CAS': 'Casual',
+      'PRF': 'Performance',
+      'BCH': 'Beach',
+      'LAT': 'Latin'
+    };
+
+    // Simple subcategory name mapping
+    const subcategoryNames: Record<string, string> = {
+      'BAS': 'Base',
+      'STR': 'Streetwear',
+      'EXP': 'Experimental',
+      'RSM': 'Romantic'
+    };
+
+    const layerName = layerNames[layer] || layer;
+    const categoryName = categoryNames[category] || category;
+    const subcategoryName = subcategoryNames[subcategory] || subcategory;
+
+    return `${layerName} > ${categoryName} > ${subcategoryName}`;
+  };
+
+  // Get MFA (same logic as AssetDetailPage)
+  const getMFA = () => {
+    if (!asset) return '';
+    return (asset as any).nna_address || asset.nnaAddress || asset.metadata?.machineFriendlyAddress || asset.metadata?.mfa || '';
+  };
 
   useEffect(() => {
     const loadAsset = async () => {
@@ -113,14 +168,53 @@ const AssetEditPage: React.FC = () => {
         Edit Asset: {asset.name}
       </Typography>
       
-      {/* Taxonomy Context - Consistent with View Details page */}
-      <TaxonomyContext
-        layer={asset.layer}
-        categoryCode={asset.category || asset.categoryCode}
-        subcategoryCode={asset.subcategory || asset.subcategoryCode}
-        hfn={asset.name}
-        mfa={asset.nnaAddress}
-      />
+      {/* Breadcrumb - Consistent with View Details page */}
+      <Chip label={getTaxonomyPath()} variant="outlined" sx={{ mb: 3 }} />
+      
+      {/* NNA Addressing - Same as View Details page */}
+      <Paper variant="outlined" sx={{ p: 2, mb: 3, bgcolor: '#f8f9fa' }}>
+        <Typography variant="h6" gutterBottom sx={{ color: 'primary.main' }}>
+          🔗 NNA Addressing
+        </Typography>
+        <Grid container spacing={2}>
+          <Grid item xs={12} sm={6}>
+            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', fontWeight: 600 }}>
+              Human-Friendly Name (HFN)
+            </Typography>
+            <Typography 
+              variant="body2" 
+              fontFamily="monospace" 
+              sx={{ 
+                bgcolor: '#ffffff', 
+                p: 1, 
+                borderRadius: 1, 
+                border: '1px solid #e0e0e0',
+                color: 'success.main'
+              }}
+            >
+              {asset.name}
+            </Typography>
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', fontWeight: 600 }}>
+              Machine-Friendly Address (MFA)
+            </Typography>
+            <Typography 
+              variant="body2" 
+              fontFamily="monospace" 
+              sx={{ 
+                bgcolor: '#ffffff', 
+                p: 1, 
+                borderRadius: 1, 
+                border: '1px solid #e0e0e0',
+                color: 'info.main'
+              }}
+            >
+              {getMFA() || 'Not available'}
+            </Typography>
+          </Grid>
+        </Grid>
+      </Paper>
       
       <Paper sx={{ p: 3, mb: 3 }}>
         {/* Creator's Description Section */}
