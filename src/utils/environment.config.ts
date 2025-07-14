@@ -163,9 +163,8 @@ export function getBackendUrl(environment?: EnvironmentConfig['name']): string {
     
     case 'development':
     default:
-      // PHASE 2B TESTING: Temporarily use localhost backend for testing
-      url = 'http://localhost:8080';
-      if (shouldLog) console.log('🎯 PHASE 2B TESTING backend URL for DEVELOPMENT:', url);
+      url = 'https://registry.dev.reviz.dev';
+      if (shouldLog) console.log('🎯 CANONICAL backend URL for DEVELOPMENT:', url);
       break;
   }
 

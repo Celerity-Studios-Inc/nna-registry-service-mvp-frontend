@@ -1,0 +1,26 @@
+{
+  "testCase": "Test Plan A: Stars Layer (S) Asset Creation",
+  "testData": {
+    "layer": "S",
+    "category": "POP",
+    "subcategory": "BAS",
+    "name": "Kelly performing on stage with dynamic lighting",
+    "description": "Kelly performing on stage with dynamic lighting",
+    "creatorDescription": "Kelly performing on stage with dynamic lighting",
+    "source": "ReViz",
+    "tags": ["performance", "stage", "dynamic", "lighting"],
+    "aiMetadata": {
+      "generatedDescription": "A dynamic performance featuring Kelly on stage with dramatic lighting effects",
+      "mood": "energetic",
+      "genre": "pop",
+      "tags": ["performance", "stage", "dynamic", "lighting"]
+    }
+  },
+  "expectedResults": {
+    "creatorDescription": "Kelly performing on stage with dynamic lighting",
+    "aiMetadataPresent": true,
+    "backendFieldsPopulated": true,
+    "uiDisplayWorking": true,
+    "searchIntegration": true
+  }
+}
