@@ -772,6 +772,19 @@ class AssetService {
     // Empty array for components using array bracket format
     formData.append('components[]', '');
 
+    // NEW: Phase 2B Backend Integration Fields
+    if (assetData.creatorDescription) {
+      formData.append('creatorDescription', assetData.creatorDescription);
+    }
+    
+    if (assetData.albumArt) {
+      formData.append('albumArt', assetData.albumArt);
+    }
+    
+    if (assetData.aiMetadata) {
+      formData.append('aiMetadata', JSON.stringify(assetData.aiMetadata));
+    }
+
 
     // Get auth token
     const token = localStorage.getItem('accessToken') || '';

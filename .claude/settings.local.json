@@ -20,9 +20,6 @@
       "Bash(git merge:*)",
       "Bash(rm:*)",
       "Bash(mv:*)",
-      "Bash(npm install:*)",
-      "Bash(vercel:*)",
-      "Bash(curl:*)",
       "Bash(echo:*)",
       "Bash(ls:*)",
       "Bash(node:*)",
@@ -50,7 +47,6 @@
       "Bash(pkill:*)",
       "Bash(touch:*)",
       "Bash(NODE_OPTIONS=--max_old_space_size=4096 npm test)",
-      "Bash(npm test:*)",
       "Bash(git pull:*)",
       "WebFetch(domain:github.com)",
       "Bash(if [ -f \"/Users/ajaymadhok/nna-registry-workspace/nna-registry-service-mvp-frontend/SUBCATEGORY_GRID_LAYOUT_FIX.md\" ])",
@@ -81,7 +77,12 @@
       "Bash(BROWSER=none npm start)",
       "WebFetch(domain:localhost)",
       "WebFetch(domain:nna-registry-frontend-dev.vercel.app)",
-      "WebFetch(domain:registry.dev.reviz.dev)"
+      "WebFetch(domain:registry.dev.reviz.dev)",
+      "Bash(git -C ../nna-registry-service-mvp-backend log --oneline --since=\"2025-07-13\")",
+      "Bash(git -C ../nna-registry-service-mvp-backend log --oneline --since=\"2025-07-01\")",
+      "Bash(git -C ../nna-registry-service-mvp-backend log --oneline -10)",
+      "Bash(git -C ../nna-registry-service-mvp-backend branch -a)",
+      "Bash(git -C ../nna-registry-service-mvp-backend show --format=\"%an %ae %ad\" --date=short HEAD)"
     ],
     "deny": []
   }

@@ -283,24 +283,25 @@ const AssetDetail: React.FC = () => {
                   borderRadius: 1,
                   border: '1px solid rgba(25, 118, 210, 0.2)'
                 }}>
-                  {/* CRITICAL FIX: Read Creator's Description from description field */}
-                  {asset.description || 'No creator description provided'}
+                  {/* Phase 2B: Use new backend creatorDescription field, fallback to description */}
+                  {asset.creatorDescription || asset.description || 'No creator description provided'}
                 </Typography>
 
                 {/* AI-Generated Description (Secondary) */}
-                {asset.aiDescription && asset.aiDescription !== asset.description && (
+                {(asset.aiDescription || asset.aiMetadata?.generatedDescription) && (
                   <>
                     <Typography variant="body1" gutterBottom sx={{ mt: 2 }}>
                       <strong>AI-Generated Description:</strong>
                     </Typography>
                     <Typography variant="body2" color="text.secondary" paragraph>
-                      {asset.aiDescription}
+                      {/* Phase 2B: Use new backend aiMetadata.generatedDescription, fallback to aiDescription */}
+                      {asset.aiMetadata?.generatedDescription || asset.aiDescription}
                     </Typography>
                   </>
                 )}
 
-                {/* Phase 2A: Album Art Display for Songs Layer */}
-                {asset.layer === 'G' && asset.metadata?.albumArtUrl && (
+                {/* Phase 2B: Album Art Display for Songs Layer */}
+                {asset.layer === 'G' && (asset.albumArt || asset.metadata?.albumArtUrl) && (
                   <Box sx={{ mt: 2, mb: 2 }}>
                     <Typography variant="body2" gutterBottom>
                       <strong>Album Art:</strong>
@@ -318,7 +319,7 @@ const AssetDetail: React.FC = () => {
                       }}
                     >
                       <img
-                        src={asset.metadata.albumArtUrl}
+                        src={asset.albumArt || asset.metadata.albumArtUrl}
                         alt="Album Art"
                         style={{
                           width: 80,
@@ -348,6 +349,66 @@ const AssetDetail: React.FC = () => {
                           </>
                         )}
                       </Box>
+                    </Box>
+                  </Box>
+                )}
+
+                {/* Phase 2B: AI Metadata Display */}
+                {asset.aiMetadata && (
+                  <Box sx={{ mt: 2 }}>
+                    <Typography variant="body2" gutterBottom>
+                      <strong>AI Metadata:</strong>
+                    </Typography>
+                    <Box sx={{ 
+                      p: 2, 
+                      bgcolor: 'rgba(76, 175, 80, 0.05)',
+                      borderRadius: 1,
+                      border: '1px solid rgba(76, 175, 80, 0.2)'
+                    }}>
+                      {asset.aiMetadata.mood && (
+                        <Typography variant="caption" display="block">
+                          <strong>Mood:</strong> {asset.aiMetadata.mood}
+                        </Typography>
+                      )}
+                      {asset.aiMetadata.genre && (
+                        <Typography variant="caption" display="block">
+                          <strong>Genre:</strong> {asset.aiMetadata.genre}
+                        </Typography>
+                      )}
+                      {asset.aiMetadata.bpm && (
+                        <Typography variant="caption" display="block">
+                          <strong>BPM:</strong> {asset.aiMetadata.bpm}
+                        </Typography>
+                      )}
+                      {asset.aiMetadata.key && (
+                        <Typography variant="caption" display="block">
+                          <strong>Key:</strong> {asset.aiMetadata.key}
+                        </Typography>
+                      )}
+                      {asset.aiMetadata.tempo && (
+                        <Typography variant="caption" display="block">
+                          <strong>Tempo:</strong> {asset.aiMetadata.tempo}
+                        </Typography>
+                      )}
+                      {asset.aiMetadata.tags && asset.aiMetadata.tags.length > 0 && (
+                        <Box sx={{ mt: 1 }}>
+                          <Typography variant="caption" display="block">
+                            <strong>AI Tags:</strong>
+                          </Typography>
+                          <Stack direction="row" spacing={0.5} flexWrap="wrap" useFlexGap sx={{ mt: 0.5 }}>
+                            {asset.aiMetadata.tags.map((tag, index) => (
+                              <Chip
+                                key={index}
+                                label={tag}
+                                size="small"
+                                variant="outlined"
+                                color="success"
+                                sx={{ fontSize: '0.65rem', height: '20px' }}
+                              />
+                            ))}
+                          </Stack>
+                        </Box>
+                      )}
                     </Box>
                   </Box>
                 )}

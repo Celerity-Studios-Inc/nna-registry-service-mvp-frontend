@@ -596,6 +596,22 @@ const RegisterAssetPage: React.FC = () => {
         category: convertedCategory,
         subcategory: convertedSubcategory,
         aiDescription: data.description, // Store AI-generated description separately
+        // NEW: Phase 2B Backend Integration Fields
+        creatorDescription: data.name, // NEW: Dedicated creator description field
+        albumArt: (data as any).albumArtUrl, // NEW: Album art URL from Phase 2A
+        aiMetadata: { // NEW: AI metadata object for enhanced functionality
+          generatedDescription: data.description,
+          mood: (data as any).mood || 'neutral',
+          genre: (data as any).genre,
+          bpm: (data as any).bpm,
+          tags: data.tags || [],
+          // Include other AI-generated metadata if available
+          ...(data.layer === 'G' && {
+            duration: (data as any).duration,
+            key: (data as any).key,
+            tempo: (data as any).tempo,
+          })
+        },
         source: data.source || 'ReViz', // Include source field with default
         tags: data.tags || [],
         files: data.files,  // Pass the original files

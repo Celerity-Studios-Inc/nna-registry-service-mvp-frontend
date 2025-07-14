@@ -20,7 +20,20 @@ export interface Asset {
   subcategory?: string;
   description?: string; // Enhanced AI Integration: Creator's Description (stored in description field)
   aiDescription?: string; // Enhanced AI Integration: AI-generated description
-  creatorDescription?: string; // Legacy field for backwards compatibility
+  // NEW: Phase 2B Backend Integration Fields
+  creatorDescription?: string; // NEW: Dedicated creator description field from backend
+  albumArt?: string; // NEW: Album art URL or base64 from backend
+  aiMetadata?: { // NEW: AI-generated metadata object from backend
+    generatedDescription?: string;
+    mood?: string;
+    genre?: string;
+    tempo?: string;
+    key?: string;
+    duration?: number;
+    bpm?: number;
+    tags?: string[];
+    [key: string]: any;
+  };
   tags?: string[];
   status: 'active' | 'inactive' | 'draft' | 'archived';
   version?: VersionInfo;
@@ -100,6 +113,20 @@ export interface AssetCreateRequest {
   source?: string; // REQUIRED by backend API: Source of asset (e.g., "ReViz")
   description?: string; // Creator's Description
   aiDescription?: string; // AI-generated description
+  // NEW: Phase 2B Backend Integration Fields
+  creatorDescription?: string; // NEW: Dedicated creator description field
+  albumArt?: string; // NEW: Album art URL or base64
+  aiMetadata?: { // NEW: AI-generated metadata object
+    generatedDescription?: string;
+    mood?: string;
+    genre?: string;
+    tempo?: string;
+    key?: string;
+    duration?: number;
+    bpm?: number;
+    tags?: string[];
+    [key: string]: any;
+  };
   tags?: string[]; // Optional tags
   metadata?: Record<string, unknown>; // Optional metadata
   files?: File[]; // Files to upload
@@ -120,6 +147,20 @@ export interface AssetUpdateRequest {
   name?: string;
   description?: string; // Creator's Description
   aiDescription?: string; // AI-generated description
+  // NEW: Phase 2B Backend Integration Fields
+  creatorDescription?: string; // NEW: Dedicated creator description field
+  albumArt?: string; // NEW: Album art URL or base64
+  aiMetadata?: { // NEW: AI-generated metadata object
+    generatedDescription?: string;
+    mood?: string;
+    genre?: string;
+    tempo?: string;
+    key?: string;
+    duration?: number;
+    bpm?: number;
+    tags?: string[];
+    [key: string]: any;
+  };
   tags?: string[];
   layer?: string;
   category?: string;
