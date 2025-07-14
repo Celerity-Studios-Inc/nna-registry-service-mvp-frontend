@@ -1033,6 +1033,16 @@ Respond with only the description paragraph and comma-separated tag list in JSON
       throw new Error('OpenAI API key is not configured. Please set REACT_APP_OPENAI_API_KEY environment variable.');
     }
 
+    // CRITICAL FIX: Handle video processing in enhanced context
+    let processedImageDataUrl = imageDataUrl;
+    if (imageDataUrl && context.image) {
+      const isVideo = this.isVideoFile(context.image);
+      if (isVideo) {
+        console.log(`[OPENAI ENHANCED FIX] Detected video in enhanced context, generating thumbnail for ${context.layer} layer`);
+        processedImageDataUrl = await this.generateVideoThumbnail(context.image);
+      }
+    }
+
     const messages: any[] = [
       {
         role: 'system',
@@ -1040,7 +1050,7 @@ Respond with only the description paragraph and comma-separated tag list in JSON
       }
     ];
 
-    if (imageDataUrl) {
+    if (processedImageDataUrl) {
       messages.push({
         role: 'user',
         content: [
@@ -1051,7 +1061,7 @@ Respond with only the description paragraph and comma-separated tag list in JSON
           {
             type: 'image_url',
             image_url: {
-              url: imageDataUrl
+              url: processedImageDataUrl
             }
           }
         ]
