@@ -695,6 +695,15 @@ const RegisterAssetPage: React.FC = () => {
         environmentSafeLog('🔍 COMPOSITE DEBUG: Form validation - components exist:', !!(data.layerSpecificData?.components && data.layerSpecificData.components.length > 0));
       }
 
+      // CRITICAL DEBUG: Log Phase 2B field mapping before sending to backend
+      console.log("%c=== PHASE 2B FIELD MAPPING DEBUG ===", "background: #ff9800; color: white; font-size: 14px; padding: 5px;");
+      console.log(`✅ Creator's Description (data.name): "${data.name}"`);
+      console.log(`✅ AI Description (data.description): "${data.description}"`);
+      console.log(`✅ Payload creatorDescription: "${assetData.creatorDescription}"`);
+      console.log(`✅ Payload description: "${assetData.description}"`);
+      console.log(`✅ Payload name (backend will override): "${assetData.name}"`);
+      console.log("%c=======================================", "background: #ff9800; color: white; font-size: 14px; padding: 5px;");
+      
       // Add a small delay for better user experience
       await new Promise(resolve => setTimeout(resolve, 800));
 
