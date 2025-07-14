@@ -584,8 +584,10 @@ const RegisterAssetPage: React.FC = () => {
       }
 
       const assetData = {
-        name: data.name,
-        friendlyName: data.name,
+        // CRITICAL FIX: Let backend generate the name field with HFN
+        // Store Creator's Description in description field instead
+        name: `${data.layer}.TEMP.TEMP.001`, // Temporary name, backend will override with generated HFN
+        description: data.name, // Store Creator's Description in description field
         layer: data.layer,
         // IMPORTANT: Use category and subcategory instead of categoryCode and subcategoryCode
         // These are the field names the backend API expects
@@ -593,7 +595,7 @@ const RegisterAssetPage: React.FC = () => {
         // Use the pre-converted values to ensure consistency
         category: convertedCategory,
         subcategory: convertedSubcategory,
-        description: data.description,
+        aiDescription: data.description, // Store AI-generated description separately
         source: data.source || 'ReViz', // Include source field with default
         tags: data.tags || [],
         files: data.files,  // Pass the original files
@@ -606,8 +608,6 @@ const RegisterAssetPage: React.FC = () => {
             data.subcategoryCode,
             '001' // Default sequential for display
         ).mfa,
-        // CRITICAL FIX: Store Creator's Description at root level to prevent backend overwrite
-        creatorDescription: data.name, // Store original Creator's Description input separately
         metadata: {
           layerName: data.layerName,
           categoryName: data.categoryName,
@@ -2432,13 +2432,13 @@ const RegisterAssetPage: React.FC = () => {
                       lineHeight: 1.5
                     }}
                   >
-                    {/* CRITICAL FIX: Display Creator's Description from metadata */}
-                    {createdAsset.creatorDescription || createdAsset.metadata?.creatorDescription || createdAsset.friendlyName || createdAsset.name || 'No creator description provided'}
+                    {/* CRITICAL FIX: Display Creator's Description from description field */}
+                    {createdAsset.description || 'No creator description provided'}
                   </Typography>
                 </Box>
 
                 {/* AI-Generated Description (Secondary, when different) */}
-                {createdAsset.description && createdAsset.description !== (createdAsset.creatorDescription || createdAsset.metadata?.creatorDescription || createdAsset.friendlyName || createdAsset.name) && (
+                {createdAsset.aiDescription && createdAsset.aiDescription !== createdAsset.description && (
                   <Box sx={{ mb: 3 }}>
                     <Typography variant="body1" gutterBottom sx={{ fontWeight: 600 }}>
                       AI-Generated Description:
@@ -2455,7 +2455,7 @@ const RegisterAssetPage: React.FC = () => {
                         lineHeight: 1.5
                       }}
                     >
-                      {createdAsset.description}
+                      {createdAsset.aiDescription}
                     </Typography>
                   </Box>
                 )}
@@ -2486,51 +2486,7 @@ const RegisterAssetPage: React.FC = () => {
                   </Box>
                 )}
 
-                {/* Layer Information */}
-                <Box sx={{ mb: 3 }}>
-                  <Typography variant="body1" gutterBottom sx={{ fontWeight: 600 }}>
-                    Layer:
-                  </Typography>
-                  <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                    {(() => {
-                      // Map layer codes to full names
-                      const layerNames: Record<string, string> = {
-                        'G': 'Songs',
-                        'S': 'Stars',
-                        'L': 'Looks',
-                        'M': 'Moves',
-                        'W': 'Worlds',
-                        'B': 'Branded Assets',
-                        'C': 'Composites',
-                        'T': 'Training Data',
-                        'P': 'Personalize',
-                        'R': 'Rights',
-                      };
-                      const layer = createdAsset.layer;
-                      return `${layerNames[layer] || `Layer ${layer}`} (${layer})`;
-                    })()}
-                  </Typography>
-                </Box>
-
-                {/* Category & Subcategory */}
-                <Grid container spacing={2} sx={{ mb: 3 }}>
-                  <Grid item xs={6}>
-                    <Typography variant="body1" gutterBottom sx={{ fontWeight: 600 }}>
-                      Category:
-                    </Typography>
-                    <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                      {createdAsset.category || 'Unknown'}
-                    </Typography>
-                  </Grid>
-                  <Grid item xs={6}>
-                    <Typography variant="body1" gutterBottom sx={{ fontWeight: 600 }}>
-                      Subcategory:
-                    </Typography>
-                    <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                      {createdAsset.subcategory || 'Unknown'}
-                    </Typography>
-                  </Grid>
-                </Grid>
+                {/* Layer, Category, Subcategory information moved to TaxonomyContext component in first column for better UX */}
 
                 {/* Phase 2A: Album Art Display for Songs Layer */}
                 {createdAsset.layer === 'G' && createdAsset.metadata?.albumArtUrl && (

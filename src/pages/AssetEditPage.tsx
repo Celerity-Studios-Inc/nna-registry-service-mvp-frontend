@@ -30,8 +30,8 @@ const AssetEditPage: React.FC = () => {
         const assetData = await assetService.getAssetById(id);
         setAsset(assetData);
         // Set Creator's Description from metadata or fallback to name field
-        setCreatorDescription(assetData.creatorDescription || assetData.metadata?.creatorDescription || assetData.friendlyName || assetData.name || '');
-        setDescription(assetData.description || '');
+        setCreatorDescription(assetData.description || '');
+        setDescription(assetData.aiDescription || '');
         setTags(assetData.tags || []);
       } catch (error) {
         console.error('Error loading asset:', error);
@@ -55,12 +55,9 @@ const AssetEditPage: React.FC = () => {
       console.log('🔍 Update attempt - using asset identifier:', assetIdentifier, 'for asset:', asset.name);
       // Include Creator's Description in the update payload
       await assetService.updateAsset(assetIdentifier, { 
-        description, 
-        tags,
-        metadata: {
-          ...asset.metadata,
-          creatorDescription: creatorDescription
-        }
+        description: creatorDescription, // Store Creator's Description in description field
+        aiDescription: description, // Store AI description in aiDescription field
+        tags
       });
       navigate(`/assets/${id}`);
     } catch (error) {

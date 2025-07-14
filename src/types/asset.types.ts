@@ -18,8 +18,9 @@ export interface Asset {
   groupId?: string;
   category?: string;
   subcategory?: string;
-  description?: string;
-  creatorDescription?: string; // Enhanced AI Integration: Original creator's description
+  description?: string; // Enhanced AI Integration: Creator's Description (stored in description field)
+  aiDescription?: string; // Enhanced AI Integration: AI-generated description
+  creatorDescription?: string; // Legacy field for backwards compatibility
   tags?: string[];
   status: 'active' | 'inactive' | 'draft' | 'archived';
   version?: VersionInfo;
@@ -97,7 +98,8 @@ export interface AssetCreateRequest {
   subcategory?: string; // Subcategory code (not subcategoryCode)
   nnaAddress?: string; // Machine Friendly Address (at the root level for consistent access)
   source?: string; // REQUIRED by backend API: Source of asset (e.g., "ReViz")
-  description?: string; // Optional description
+  description?: string; // Creator's Description
+  aiDescription?: string; // AI-generated description
   tags?: string[]; // Optional tags
   metadata?: Record<string, unknown>; // Optional metadata
   files?: File[]; // Files to upload
@@ -116,7 +118,8 @@ export interface AssetCreateRequest {
 
 export interface AssetUpdateRequest {
   name?: string;
-  description?: string;
+  description?: string; // Creator's Description
+  aiDescription?: string; // AI-generated description
   tags?: string[];
   layer?: string;
   category?: string;
