@@ -769,8 +769,8 @@ class AssetService {
       })
     );
 
-    // Empty array for components using array bracket format
-    formData.append('components[]', '');
+    // BACKEND FIX: Omit components field entirely when empty - backend defaults to []
+    // formData.append('components[]', ''); // Removed - backend team recommendation
 
     // NEW: Phase 2B Backend Integration Fields
     console.log('%c=== FORMDATA PHASE 2B DEBUG ===', 'background: #e91e63; color: white; font-size: 14px; padding: 5px;');
@@ -978,9 +978,9 @@ class AssetService {
           const componentId = component.nna_address || component.friendlyName || component.name || component;
           formData.append('components[]', componentId);
         });
-      } else {
-        formData.append('components[]', '');
       }
+      // BACKEND FIX: Omit components field entirely when empty - backend defaults to []
+      // else { formData.append('components[]', ''); } // Removed - backend team recommendation
 
       // === PHASE 2B FIELDS (NEW) ===
       console.log('%c=== FORMDATA PHASE 2B DEBUG ===', 'background: #e91e63; color: white;');
