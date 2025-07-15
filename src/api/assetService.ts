@@ -982,6 +982,33 @@ class AssetService {
         formData.append('components[]', '');
       }
 
+      // === PHASE 2B FIELDS (NEW) ===
+      console.log('%c=== FORMDATA PHASE 2B DEBUG ===', 'background: #e91e63; color: white;');
+      console.log('🔍 assetData.creatorDescription:', assetData.creatorDescription);
+      console.log('🔍 typeof creatorDescription:', typeof assetData.creatorDescription);
+      console.log('🔍 truthy check:', !!assetData.creatorDescription);
+      
+      if (assetData.creatorDescription) {
+        formData.append('creatorDescription', assetData.creatorDescription);
+        console.log('✅ Added creatorDescription to FormData:', assetData.creatorDescription);
+      } else {
+        console.log('❌ creatorDescription is falsy, not added to FormData');
+      }
+
+      if (assetData.albumArt) {
+        formData.append('albumArt', assetData.albumArt);
+        console.log('✅ Added albumArt to FormData:', assetData.albumArt);
+      } else {
+        console.log('⚠️ albumArt is falsy, not added to FormData');
+      }
+
+      if (assetData.aiMetadata) {
+        formData.append('aiMetadata', JSON.stringify(assetData.aiMetadata));
+        console.log('✅ Added aiMetadata to FormData:', JSON.stringify(assetData.aiMetadata));
+      } else {
+        console.log('⚠️ aiMetadata is falsy, not added to FormData');
+      }
+
       // Make the API request using fetch for better FormData handling
       // SMART ROUTING: Use proxy for small files, direct backend for large files
       // Environment-aware routing for staging vs production backends
