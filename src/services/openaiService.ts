@@ -653,147 +653,124 @@ Comma-separated tag list: `;
   private extractSongData(description: string): ExtractedSongData {
     console.log(`[ENHANCED AI] Extracting song data from: "${description}"`);
     
-    // Handle multiple input formats - Enhanced with song description patterns
+    // Simplified and robust pattern matching for common song formats
     const patterns = [
-      // Pattern 1: Song = "Song Name", Artist = "Artist", Album = "Album" (SPECIFIC for structured format)
-      /Song\s*=\s*[""'](.+?)[""']\s*,\s*Artist\s*=\s*[""'](.+?)[""']\s*,\s*Album\s*=\s*[""'](.+?)[""']/i,
+      // Pattern 1: "Song Name - Album Name - Artist Name" (recommended format)
+      {
+        regex: /^(.+?)\s*-\s*(.+?)\s*-\s*(.+?)$/,
+        extract: (match: RegExpMatchArray) => ({
+          songName: match[1]?.trim() || '',
+          albumName: match[2]?.trim() || '',
+          artistName: match[3]?.trim() || ''
+        })
+      },
       
-      // Pattern 2: Simple "Song Name" by Artist (MOST COMMON format)
-      /^[""'](.+?)[""']\s*by\s+(.+?)$/i,
+      // Pattern 2: "Song Name" by Artist from album "Album Name"  
+      {
+        regex: /^[""'](.+?)[""']\s*by\s+(.+?)\s+from\s+(?:album\s+)?[""'](.+?)[""']/i,
+        extract: (match: RegExpMatchArray) => ({
+          songName: match[1]?.trim() || '',
+          artistName: match[2]?.trim() || '',
+          albumName: match[3]?.trim() || ''
+        })
+      },
       
-      // Pattern 3: "Song Name - Album Name - Artist/Band"
-      /^(.+?)\s*-\s*(.+?)\s*-\s*(.+?)$/,
+      // Pattern 3: "Song Name" by Artist from album Album Name (no quotes)
+      {
+        regex: /^[""'](.+?)[""']\s*by\s+(.+?)\s+from\s+(?:album\s+)?(.+?)$/i,
+        extract: (match: RegExpMatchArray) => ({
+          songName: match[1]?.trim() || '',
+          artistName: match[2]?.trim() || '',
+          albumName: match[3]?.trim() || ''
+        })
+      },
       
-      // Pattern 2: "Song Name" by Artist from album Album Name
-      /^[""'](.+?)[""']\s*by\s+(.+?)\s+from\s+album\s+(.+?)(?:\s*\([\d]+\))?(?:\.|$)/i,
+      // Pattern 4: Song Name by Artist from album Album Name (no quotes on song)
+      {
+        regex: /^(.+?)\s+by\s+(.+?)\s+from\s+(?:album\s+)?(.+?)$/i,
+        extract: (match: RegExpMatchArray) => ({
+          songName: match[1]?.trim() || '',
+          artistName: match[2]?.trim() || '',
+          albumName: match[3]?.trim() || ''
+        })
+      },
       
-      // Pattern 3: "Song Name is a song by Artist... from the album Album Name" (ENHANCED)
-      /^(.+?)\s+is\s+a\s+song\s+by\s+(.+?)\.\s*.*?from\s+the\s+album\s+(.+?)(?:\s*\([\d]+\))?(?:\.|$)/i,
+      // Pattern 5: "Song Name" by Artist (no album info)
+      {
+        regex: /^[""'](.+?)[""']\s*by\s+(.+?)$/i,
+        extract: (match: RegExpMatchArray) => ({
+          songName: match[1]?.trim() || '',
+          artistName: match[2]?.trim() || '',
+          albumName: ''
+        })
+      },
       
-      // Pattern 4: Song Name by Artist from the album Album Name
-      /^(.+?)\s+by\s+(.+?)\s+from\s+the\s+album\s+(.+?)(?:\s*\([\d]+\))?(?:\.|$)/i,
+      // Pattern 6: Song Name by Artist (no quotes, no album)
+      {
+        regex: /^(.+?)\s*by\s+(.+?)$/i,
+        extract: (match: RegExpMatchArray) => ({
+          songName: match[1]?.trim() || '',
+          artistName: match[2]?.trim() || '',
+          albumName: ''
+        })
+      },
       
-      // Pattern 5: Song Name by Artist from album Album Name
-      /^(.+?)\s+by\s+(.+?)\s+from\s+album\s+(.+?)(?:\s*\([\d]+\))?(?:\.|$)/i,
+      // Pattern 7: Song Name - Artist (simple dash format)
+      {
+        regex: /^(.+?)\s*-\s*(.+?)$/,
+        extract: (match: RegExpMatchArray) => ({
+          songName: match[1]?.trim() || '',
+          artistName: match[2]?.trim() || '',
+          albumName: ''
+        })
+      },
       
-      // Pattern 6: "Song Name" by Artist (enhanced to stop at sentence break)
-      /^[""'](.+?)[""']\s*by\s+([^.]+?)(?:\s+is\s|\s+was\s|\.\s|\s*\([\d]+\))?(?:\.|$)/i,
-      
-      // Pattern 7: "Song Name" by Artist with features/description (ENHANCED for your format)
-      /^[""'](.+?)[""']\s*(?:song\s+)?by\s+([^.]+?)\s+(?:features|is\s+an?|and\s+)/i,
-      
-      // Pattern 8: "Song Name" song by Artist features ... (SPECIFIC for your input format)
-      /^[""'](.+?)[""']\s*song\s+by\s+([^,]+(?:,\s*[^,]+)*?)\s+features\s+/i,
-      
-      // Pattern 9: Song Name by Artist
-      /^(.+?)\s*by\s+(.+?)(?:\s*\([\d]+\))?(?:\.|$)/i,
-      
-      // Pattern 8: Song Name - Artist format
-      /^(.+?)\s*-\s*(.+?)$/,
-      
-      // Pattern 9: Just song name
-      /^(.+?)$/
+      // Pattern 8: Just song name (fallback)
+      {
+        regex: /^(.+?)$/,
+        extract: (match: RegExpMatchArray) => ({
+          songName: match[1]?.trim() || '',
+          artistName: '',
+          albumName: ''
+        })
+      }
     ];
     
     for (let i = 0; i < patterns.length; i++) {
       const pattern = patterns[i];
-      const match = description.match(pattern);
+      const match = description.match(pattern.regex);
       if (match) {
+        const extracted = pattern.extract(match);
         console.log(`[ENHANCED AI] Pattern ${i + 1} matched. Extracted:`, {
-          songName: match[1]?.trim(),
-          artistName: match[2]?.trim(),
-          albumName: match[3]?.trim() || '',
+          ...extracted,
           originalInput: description
         });
-        let result: ExtractedSongData;
         
-        if (i === 0) { // Song = "Song Name", Artist = "Artist", Album = "Album"
-          result = {
-            songName: match[1]?.trim() || '',
-            artistName: match[2]?.trim() || '',
-            albumName: match[3]?.trim() || '',
-            originalInput: description
-          };
-        } else if (i === 1) { // Simple "Song Name" by Artist (MOST COMMON)
-          result = {
-            songName: match[1]?.trim() || '',
-            artistName: match[2]?.trim() || '',
-            albumName: '', // No album in this format
-            originalInput: description
-          };
-        } else if (i === 3) { // "Song Name" by Artist from album Album Name
-          result = {
-            songName: match[1]?.trim() || '',
-            artistName: match[2]?.trim() || '',
-            albumName: match[3]?.trim() || '',
-            originalInput: description
-          };
-        } else if (i === 4) { // "Song Name is a song by Artist... from the album Album Name" (ENHANCED)
-          result = {
-            songName: match[1]?.trim() || '',
-            artistName: match[2]?.trim() || '',
-            albumName: match[3]?.trim() || '',
-            originalInput: description
-          };
-        } else if (i === 5 || i === 6) { // Song Name by Artist from the album Album Name / from album Album Name
-          result = {
-            songName: match[1]?.trim() || '',
-            artistName: match[2]?.trim() || '',
-            albumName: match[3]?.trim() || '',
-            originalInput: description
-          };
-        } else if (i === 7 || i === 8 || i === 9 || i === 10) { // "Song Name" by Artist patterns
-          // Clean up song name - remove quotes and trailing "song"
-          let cleanSongName = (match[1]?.trim() || '').replace(/^["'"]|["'"]$/g, '').replace(/\s+song$/i, '');
-          result = {
-            songName: cleanSongName,
-            artistName: match[2]?.trim() || '',
-            albumName: '',
-            originalInput: description
-          };
-        } else if (i === 2) { // Song - Album - Artist
-          result = {
-            songName: match[1]?.trim() || '',
-            albumName: match[2]?.trim() || '',
-            artistName: match[3]?.trim() || '',
-            originalInput: description
-          };
-        } else if (i === 11) { // Song by Artist (general)
-          result = {
-            songName: match[1]?.trim() || '',
-            artistName: match[2]?.trim() || '',
-            albumName: '',
-            originalInput: description
-          };
-        } else if (i === 12) { // Song - Artist
-          result = {
-            songName: match[1]?.trim() || '',
-            artistName: match[2]?.trim() || '',
-            albumName: '',
-            originalInput: description
-          };
-        } else { // Just song name (pattern 13)
-          result = {
-            songName: match[1]?.trim() || description,
-            albumName: '',
-            artistName: '',
-            originalInput: description
-          };
+        const result: ExtractedSongData = {
+          songName: extracted.songName,
+          artistName: extracted.artistName,
+          albumName: extracted.albumName,
+          originalInput: description
+        };
+        
+        // Validate extraction - ensure we have at least a song name
+        if (result.songName && result.songName.length > 0) {
+          console.log(`[ENHANCED AI] Successfully extracted song data:`, result);
+          return result;
         }
-        
-        console.log(`[ENHANCED AI] Pattern ${i + 1} matched. Extracted:`, result);
-        return result;
       }
     }
     
-    const fallback = {
-      songName: description,
-      albumName: '',
+    // If no patterns match, create fallback result
+    console.log(`[ENHANCED AI] No patterns matched, using fallback extraction`);
+    const result: ExtractedSongData = {
+      songName: description.trim(),
       artistName: '',
+      albumName: '',
       originalInput: description
     };
-    console.log('[ENHANCED AI] No patterns matched, using fallback:', fallback);
-    return fallback;
+    
+    return result;
   }
 
   /**
@@ -859,8 +836,27 @@ Use web search if needed to find accurate information about this song.`;
       
       if (isVideo) {
         console.log(`[ENHANCED AI] Detected video file, generating thumbnail for ${context.layer} layer`);
-        // Generate thumbnail from video instead of sending full video to OpenAI
-        imageDataUrl = await this.generateVideoThumbnail(context.image);
+        try {
+          // TIMING FIX: Generate thumbnail with extended timeout and validation
+          console.log(`[VIDEO TIMING] Starting thumbnail generation for ${context.layer} layer...`);
+          const startTime = Date.now();
+          
+          imageDataUrl = await this.generateVideoThumbnail(context.image);
+          
+          const endTime = Date.now();
+          console.log(`[VIDEO TIMING] Thumbnail generation completed in ${endTime - startTime}ms for ${context.layer} layer`);
+          
+          // Validate that thumbnail was generated successfully
+          if (!imageDataUrl || imageDataUrl.length < 1000) {
+            throw new Error('Generated thumbnail appears to be invalid or too small');
+          }
+          
+          console.log(`[VIDEO TIMING] Valid thumbnail generated (${imageDataUrl.length} chars) for ${context.layer} layer`);
+        } catch (error) {
+          console.error(`[VIDEO TIMING] Thumbnail generation failed for ${context.layer} layer:`, error);
+          // For M/W layers, this is critical - don't proceed with invalid data
+          throw new Error(`Video thumbnail generation failed for ${context.layer} layer: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        }
       } else {
         // Process as image normally
         imageDataUrl = await this.convertBlobToDataUrl(context.image);
@@ -1008,21 +1004,51 @@ Respond with only the description paragraph and comma-separated tag list in JSON
    * Aggregate component metadata for intelligent composite processing
    */
   private aggregateComponentMetadata(components: ComponentMetadata[]): any {
+    console.log('[COMPOSITE TAGS] Starting component metadata aggregation for', components.length, 'components');
+    
     const uniqueLayers = new Set(components.map(c => c.layer));
     const layers = Array.from(uniqueLayers);
-    const allTags = components.flatMap(c => c.tags);
+    
+    // Enhanced tag aggregation with deduplication and ranking
+    const allTags = components.flatMap(c => c.tags || []);
+    const uniqueTags = [...new Set(allTags)]; // Remove duplicates
+    
+    console.log('[COMPOSITE TAGS] All unique tags from components:', uniqueTags);
+    
+    // Tag frequency analysis for ranking importance
+    const tagFrequency = allTags.reduce((acc, tag) => {
+      acc[tag] = (acc[tag] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+    
+    // Extract style-related tags
     const styles = allTags.filter(tag => 
-      tag.includes('style') || tag.includes('energy') || tag.includes('mood')
+      tag.includes('style') || tag.includes('energy') || tag.includes('mood') ||
+      tag.includes('tempo') || tag.includes('genre') || tag.includes('aesthetic')
     );
     
-    return {
+    // Extract performance tags
+    const performanceTags = allTags.filter(tag =>
+      tag.includes('performance') || tag.includes('dance') || tag.includes('movement') ||
+      tag.includes('rhythm') || tag.includes('compatibility') || tag.includes('suitable')
+    );
+    
+    const aggregatedData = {
       componentCount: components.length,
       layersUsed: layers,
+      allTags: uniqueTags,
+      tagFrequency: tagFrequency,
+      mostFrequentTags: this.getRankedTags(tagFrequency, 10),
       dominantStyles: this.extractDominantStyles(styles),
+      performanceTags: [...new Set(performanceTags)],
       energyLevels: this.analyzeEnergyLevels(components),
       genreCompatibility: this.analyzeGenreCompatibility(components),
-      summary: this.generateComponentSummary(components)
+      summary: this.generateComponentSummary(components),
+      componentDescriptions: components.map(c => c.description).filter(Boolean)
     };
+    
+    console.log('[COMPOSITE TAGS] Aggregated metadata:', aggregatedData);
+    return aggregatedData;
   }
 
   /**
@@ -1033,14 +1059,13 @@ Respond with only the description paragraph and comma-separated tag list in JSON
       throw new Error('OpenAI API key is not configured. Please set REACT_APP_OPENAI_API_KEY environment variable.');
     }
 
-    // CRITICAL FIX: Handle video processing in enhanced context
+    // VIDEO PROCESSING FIX: Use the already processed imageDataUrl (no double processing)
+    // The video thumbnail generation should have already happened in processVisualWithImage
     let processedImageDataUrl = imageDataUrl;
-    if (imageDataUrl && context.image) {
-      const isVideo = this.isVideoFile(context.image);
-      if (isVideo) {
-        console.log(`[OPENAI ENHANCED FIX] Detected video in enhanced context, generating thumbnail for ${context.layer} layer`);
-        processedImageDataUrl = await this.generateVideoThumbnail(context.image);
-      }
+    
+    // Only log if we received a video thumbnail
+    if (imageDataUrl && context.image && this.isVideoFile(context.image)) {
+      console.log(`[VIDEO TIMING] Using pre-generated thumbnail for ${context.layer} layer (${imageDataUrl.length} chars)`);
     }
 
     const messages: any[] = [
@@ -1398,6 +1423,13 @@ Respond with only the description paragraph and comma-separated tag list in JSON
       .slice(0, 5)
       .map(([style]) => style);
   }
+  
+  private getRankedTags(tagFrequency: Record<string, number>, limit: number = 10): string[] {
+    return Object.entries(tagFrequency)
+      .sort(([,a], [,b]) => b - a)
+      .slice(0, limit)
+      .map(([tag]) => tag);
+  }
 
   private analyzeEnergyLevels(components: ComponentMetadata[]): string[] {
     return components.flatMap(c => 
@@ -1417,27 +1449,40 @@ Respond with only the description paragraph and comma-separated tag list in JSON
   }
 
   private buildCompositePrompt(aggregatedData: any, context: EnhancedAIContext): string {
+    console.log('[COMPOSITE PROMPT] Building enhanced prompt with aggregated data');
+    
     return `Generate description and tags for a composite asset combining multiple layers:
 
 Creator's Description: "${context.shortDescription}"
 Components Summary: ${aggregatedData.summary}
 Layers Combined: ${aggregatedData.layersUsed.join(', ')}
-Dominant Styles: ${aggregatedData.dominantStyles.join(', ')}
+
+Component Analysis:
+- Most Frequent Tags: ${aggregatedData.mostFrequentTags?.slice(0, 8).join(', ') || 'none'}
+- Dominant Styles: ${aggregatedData.dominantStyles?.join(', ') || 'none'}
+- Performance Tags: ${aggregatedData.performanceTags?.slice(0, 5).join(', ') || 'none'}
+- Energy Levels: ${aggregatedData.energyLevels?.join(', ') || 'balanced'}
+
+Component Descriptions:
+${aggregatedData.componentDescriptions?.slice(0, 3).map((desc: string, i: number) => `${i + 1}. ${desc.substring(0, 100)}...`).join('\n') || 'No component descriptions available'}
 
 Create:
-1. A cohesive description that explains how these components work together
-2. Tags that capture the composite's overall aesthetic and compatibility
+1. A cohesive description that explains how these ${aggregatedData.componentCount} components work together as a unified composite asset
+2. Enhanced tags that combine the most relevant component tags with composite-specific metadata
 
 Focus on:
-- Overall aesthetic harmony and production quality
-- Cross-layer compatibility and synchronization
+- Overall aesthetic harmony and production quality across all ${aggregatedData.layersUsed.join('/')} layers
+- Cross-layer compatibility and synchronization potential
 - Target use cases and performance applications
-- Style coherence and visual balance
+- Style coherence and visual/audio balance
+- AlgoRhythm optimization for cross-layer matching
+
+Tag Strategy: Combine the most frequent component tags with composite-specific tags like "multi-layer", "composite", "cross-layer-compatible", etc.
 
 Respond in JSON format:
 {
-  "description": "Cohesive description of the composite asset...",
-  "tags": "comma,separated,composite,optimized,tag,list"
+  "description": "Cohesive description of the composite asset highlighting layer integration...",
+  "tags": "comma,separated,composite,optimized,tag,list,including,component,tags"
 }`;
   }
 
