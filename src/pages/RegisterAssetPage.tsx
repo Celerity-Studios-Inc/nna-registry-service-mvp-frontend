@@ -2565,54 +2565,7 @@ const RegisterAssetPage: React.FC = () => {
 
                 {/* Layer, Category, Subcategory information moved to TaxonomyContext component in first column for better UX */}
 
-                {/* Phase 2B: Album Art Display for Songs Layer */}
-                {createdAsset.layer === 'G' && (createdAsset.albumArt || createdAsset.metadata?.albumArtUrl) && (
-                  <Box sx={{ mb: 3 }}>
-                    <Typography variant="body1" gutterBottom sx={{ fontWeight: 600 }}>
-                      Album Art:
-                    </Typography>
-                    <Box
-                      sx={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 2,
-                        p: 2,
-                        border: '1px solid',
-                        borderColor: 'divider',
-                        borderRadius: 1,
-                        bgcolor: 'background.paper'
-                      }}
-                    >
-                      <img
-                        src={createdAsset.albumArt || createdAsset.metadata?.albumArtUrl}
-                        alt="Album Art"
-                        style={{
-                          width: 60,
-                          height: 60,
-                          objectFit: 'cover',
-                          borderRadius: '4px'
-                        }}
-                        onError={(e) => {
-                          console.warn('Album art failed to load:', createdAsset.albumArt || createdAsset.metadata?.albumArtUrl);
-                          (e.target as HTMLImageElement).style.display = 'none';
-                        }}
-                      />
-                      <Box>
-                        <Typography variant="caption" color="text.secondary">
-                          Source: {createdAsset.metadata?.albumArtSource || 'iTunes'}
-                        </Typography>
-                        {createdAsset.metadata?.extractedSongData && (
-                          <>
-                            <br />
-                            <Typography variant="caption" color="text.primary">
-                              {createdAsset.metadata.extractedSongData.songName} - {createdAsset.metadata.extractedSongData.artistName}
-                            </Typography>
-                          </>
-                        )}
-                      </Box>
-                    </Box>
-                  </Box>
-                )}
+                {/* Album Art removed from second column - now displayed prominently in Asset Preview section */}
 
                 {/* Additional Files */}
                 {createdAsset.files && createdAsset.files.length > 1 && (

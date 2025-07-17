@@ -226,48 +226,39 @@ const AssetDetail: React.FC = () => {
                   p: 2,
                 }}
               >
-                {previewUrl ? (
-                  // Use smart AssetThumbnail component for proper video/image handling
-                  isVideoUrl(previewUrl) ? (
-                    <AssetThumbnail 
-                      asset={asset} 
-                      width={280} 
-                      height={280} 
-                    />
-                  ) : (
-                    <img
-                      src={previewUrl}
-                      alt={asset.name}
-                      style={{
-                        maxWidth: '100%',
-                        maxHeight: '100%',
-                        objectFit: 'contain',
-                        borderRadius: '4px'
-                      }}
-                      onError={(e) => {
-                        console.warn(`Image failed to load: ${previewUrl}`);
-                        // Fallback to AssetThumbnail on image load error
-                        const target = e.target as HTMLImageElement;
-                        const parent = target.parentElement;
-                        if (parent) {
-                          target.style.display = 'none';
-                          // Create fallback thumbnail
-                          const fallback = document.createElement('div');
-                          fallback.style.display = 'flex';
-                          fallback.style.alignItems = 'center';
-                          fallback.style.justifyContent = 'center';
-                          fallback.innerHTML = `<span style="color: #666; font-size: 14px;">Preview not available</span>`;
-                          parent.appendChild(fallback);
-                        }
-                      }}
-                    />
-                  )
-                ) : (
-                  // Use AssetThumbnail as fallback for assets without preview URL
+                {/* Use AssetThumbnail for Songs layer (album art), videos, and fallback cases */}
+                {(asset.layer === 'G' || !previewUrl || isVideoUrl(previewUrl)) ? (
                   <AssetThumbnail 
                     asset={asset} 
                     width={280} 
                     height={280} 
+                  />
+                ) : (
+                  <img
+                    src={previewUrl}
+                    alt={asset.name}
+                    style={{
+                      maxWidth: '100%',
+                      maxHeight: '100%',
+                      objectFit: 'contain',
+                      borderRadius: '4px'
+                    }}
+                    onError={(e) => {
+                      console.warn(`Image failed to load: ${previewUrl}`);
+                      // Fallback to AssetThumbnail on image load error
+                      const target = e.target as HTMLImageElement;
+                      const parent = target.parentElement;
+                      if (parent) {
+                        target.style.display = 'none';
+                        // Create fallback thumbnail
+                        const fallback = document.createElement('div');
+                        fallback.style.display = 'flex';
+                        fallback.style.alignItems = 'center';
+                        fallback.style.justifyContent = 'center';
+                        fallback.innerHTML = `<span style="color: #666; font-size: 14px;">Preview not available</span>`;
+                        parent.appendChild(fallback);
+                      }
+                    }}
                   />
                 )}
               </Box>
