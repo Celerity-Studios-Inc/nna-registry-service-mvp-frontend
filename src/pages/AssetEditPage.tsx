@@ -13,6 +13,9 @@ const AssetEditPage: React.FC = () => {
   const [description, setDescription] = useState('');
   const [tags, setTags] = useState<string[]>([]);
   const [newTag, setNewTag] = useState('');
+  const [albumArtUrl, setAlbumArtUrl] = useState('');
+  const [albumArtLoading, setAlbumArtLoading] = useState(false);
+  const [albumArtError, setAlbumArtError] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -89,6 +92,8 @@ const AssetEditPage: React.FC = () => {
         setCreatorDescription(assetData.creatorDescription || assetData.name || '');
         setDescription(assetData.description || assetData.aiMetadata?.generatedDescription || assetData.aiDescription || '');
         setTags(assetData.tags || []);
+        // Initialize album art URL for Songs layer assets
+        setAlbumArtUrl(assetData.albumArt || assetData.metadata?.albumArtUrl || '');
       } catch (error) {
         console.error('Error loading asset:', error);
         setError('Failed to load asset');
@@ -110,11 +115,19 @@ const AssetEditPage: React.FC = () => {
       const assetIdentifier = asset.name || id;
       console.log('🔍 Update attempt - using asset identifier:', assetIdentifier, 'for asset:', asset.name);
       // Phase 2B: Send correct field mapping to backend
-      await assetService.updateAsset(assetIdentifier, { 
+      const updateData: any = { 
         description: description, // Store AI-generated description in description field
         creatorDescription: creatorDescription, // Store Creator's Description in dedicated field
         tags
-      });
+      };
+      
+      // Include album art URL for Songs layer assets
+      if (asset.layer === 'G' && albumArtUrl !== (asset.albumArt || asset.metadata?.albumArtUrl || '')) {
+        updateData.albumArt = albumArtUrl;
+        console.log('🖼️ [ALBUM ART] Updating album art URL:', albumArtUrl);
+      }
+      
+      await assetService.updateAsset(assetIdentifier, updateData);
       navigate(`/assets/${id}`);
     } catch (error) {
       console.error('Error updating asset:', error);
@@ -246,6 +259,134 @@ const AssetEditPage: React.FC = () => {
             }}
           />
         </Box>
+
+        {/* Album Art Section - Only for Songs Layer (G) */}
+        {asset.layer === 'G' && (
+          <>
+            <Divider sx={{ mb: 3 }} />
+            <Box sx={{ mb: 4 }}>
+              <Typography variant="h6" gutterBottom sx={{ fontWeight: 600, color: 'secondary.main' }}>
+                🎵 Album Art
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                Album art URL for this song. Leave empty to remove album art or enter a new URL to update it.
+              </Typography>
+              
+              {/* Current Album Art Display */}
+              {(albumArtUrl || asset.albumArt || asset.metadata?.albumArtUrl) && (
+                <Box sx={{ mb: 3 }}>
+                  <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 600 }}>
+                    Current Album Art:
+                  </Typography>
+                  <Box sx={{ 
+                    width: 200, 
+                    height: 200, 
+                    border: '1px solid #e0e0e0', 
+                    borderRadius: 1, 
+                    overflow: 'hidden',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    bgcolor: '#f5f5f5',
+                    mb: 2
+                  }}>
+                    {albumArtLoading ? (
+                      <CircularProgress size={40} />
+                    ) : albumArtError ? (
+                      <Typography variant="body2" color="error" sx={{ textAlign: 'center', p: 2 }}>
+                        ❌ Failed to load album art
+                      </Typography>
+                    ) : (
+                      <img
+                        src={albumArtUrl || asset.albumArt || asset.metadata?.albumArtUrl}
+                        alt="Album art"
+                        style={{
+                          width: '100%',
+                          height: '100%',
+                          objectFit: 'cover'
+                        }}
+                        onLoad={() => {
+                          setAlbumArtLoading(false);
+                          setAlbumArtError(false);
+                        }}
+                        onError={() => {
+                          setAlbumArtLoading(false);
+                          setAlbumArtError(true);
+                        }}
+                      />
+                    )}
+                  </Box>
+                </Box>
+              )}
+              
+              {/* Album Art URL Input */}
+              <TextField
+                label="Album Art URL"
+                value={albumArtUrl}
+                onChange={(e) => {
+                  setAlbumArtUrl(e.target.value);
+                  if (e.target.value) {
+                    setAlbumArtLoading(true);
+                    setAlbumArtError(false);
+                  }
+                }}
+                fullWidth
+                placeholder="https://example.com/album-art.jpg"
+                variant="outlined"
+                helperText="Enter a valid image URL for the album art"
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    bgcolor: 'rgba(156, 39, 176, 0.04)',
+                    '&:hover': {
+                      bgcolor: 'rgba(156, 39, 176, 0.06)',
+                    },
+                    '&.Mui-focused': {
+                      bgcolor: 'rgba(156, 39, 176, 0.08)',
+                    }
+                  }
+                }}
+              />
+              
+              {/* Album Art Preview */}
+              {albumArtUrl && albumArtUrl !== (asset.albumArt || asset.metadata?.albumArtUrl || '') && (
+                <Box sx={{ mt: 2 }}>
+                  <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 600 }}>
+                    Preview New Album Art:
+                  </Typography>
+                  <Box sx={{ 
+                    width: 150, 
+                    height: 150, 
+                    border: '2px solid #9c27b0', 
+                    borderRadius: 1, 
+                    overflow: 'hidden',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    bgcolor: '#f5f5f5'
+                  }}>
+                    <img
+                      src={albumArtUrl}
+                      alt="New album art preview"
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover'
+                      }}
+                      onLoad={() => {
+                        setAlbumArtLoading(false);
+                        setAlbumArtError(false);
+                      }}
+                      onError={() => {
+                        setAlbumArtLoading(false);
+                        setAlbumArtError(true);
+                      }}
+                    />
+                  </Box>
+                </Box>
+              )}
+            </Box>
+          </>
+        )}
 
         <Divider sx={{ mb: 3 }} />
 

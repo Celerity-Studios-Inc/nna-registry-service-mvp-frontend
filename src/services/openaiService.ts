@@ -651,13 +651,17 @@ Comma-separated tag list: `;
    * Extract structured song information using Claude-like logic
    */
   private extractSongData(description: string): ExtractedSongData {
-    console.log(`[ENHANCED AI] Extracting song data from: "${description}"`);
+    console.log(`[SONGS ENHANCED] Extracting song data from: "${description}"`);
     
-    // Simplified and robust pattern matching for common song formats
+    // Comprehensive pattern matching for all common song description formats
     const patterns = [
-      // Pattern 1: "Song Name - Album Name - Artist Name" (recommended format)
+      // === CANONICAL RECOMMENDED FORMATS (Highest Priority) ===
+      
+      // Pattern 1: "Song Name - Album Name - Artist Name" (RECOMMENDED #1)
       {
         regex: /^(.+?)\s*-\s*(.+?)\s*-\s*(.+?)$/,
+        priority: 'high',
+        canonical: true,
         extract: (match: RegExpMatchArray) => ({
           songName: match[1]?.trim() || '',
           albumName: match[2]?.trim() || '',
@@ -665,29 +669,11 @@ Comma-separated tag list: `;
         })
       },
       
-      // Pattern 2: "Song Name" by Artist from album "Album Name"  
-      {
-        regex: /^[""'](.+?)[""']\s*by\s+(.+?)\s+from\s+(?:album\s+)?[""'](.+?)[""']/i,
-        extract: (match: RegExpMatchArray) => ({
-          songName: match[1]?.trim() || '',
-          artistName: match[2]?.trim() || '',
-          albumName: match[3]?.trim() || ''
-        })
-      },
-      
-      // Pattern 3: "Song Name" by Artist from album Album Name (no quotes)
-      {
-        regex: /^[""'](.+?)[""']\s*by\s+(.+?)\s+from\s+(?:album\s+)?(.+?)$/i,
-        extract: (match: RegExpMatchArray) => ({
-          songName: match[1]?.trim() || '',
-          artistName: match[2]?.trim() || '',
-          albumName: match[3]?.trim() || ''
-        })
-      },
-      
-      // Pattern 4: Song Name by Artist from album Album Name (no quotes on song)
+      // Pattern 2: "Song Name by Artist from Album Name" (RECOMMENDED #2)
       {
         regex: /^(.+?)\s+by\s+(.+?)\s+from\s+(?:album\s+)?(.+?)$/i,
+        priority: 'high',
+        canonical: true,
         extract: (match: RegExpMatchArray) => ({
           songName: match[1]?.trim() || '',
           artistName: match[2]?.trim() || '',
@@ -695,9 +681,34 @@ Comma-separated tag list: `;
         })
       },
       
-      // Pattern 5: "Song Name" by Artist (no album info)
+      // === QUOTED FORMATS ===
+      
+      // Pattern 3: "Song Name" by Artist from album "Album Name"  
+      {
+        regex: /^[""'](.+?)[""']\s*by\s+(.+?)\s+from\s+(?:album\s+)?[""'](.+?)[""']/i,
+        priority: 'high',
+        extract: (match: RegExpMatchArray) => ({
+          songName: match[1]?.trim() || '',
+          artistName: match[2]?.trim() || '',
+          albumName: match[3]?.trim() || ''
+        })
+      },
+      
+      // Pattern 4: "Song Name" by Artist from album Album Name (no quotes on album)
+      {
+        regex: /^[""'](.+?)[""']\s*by\s+(.+?)\s+from\s+(?:album\s+)?(.+?)$/i,
+        priority: 'high',
+        extract: (match: RegExpMatchArray) => ({
+          songName: match[1]?.trim() || '',
+          artistName: match[2]?.trim() || '',
+          albumName: match[3]?.trim() || ''
+        })
+      },
+      
+      // Pattern 5: "Song Name" by Artist (no album)
       {
         regex: /^[""'](.+?)[""']\s*by\s+(.+?)$/i,
+        priority: 'medium',
         extract: (match: RegExpMatchArray) => ({
           songName: match[1]?.trim() || '',
           artistName: match[2]?.trim() || '',
@@ -705,9 +716,154 @@ Comma-separated tag list: `;
         })
       },
       
-      // Pattern 6: Song Name by Artist (no quotes, no album)
+      // === ARTIST FIRST FORMATS ===
+      
+      // Pattern 6: Artist Name - Song Name (artist first)
+      {
+        regex: /^([A-Z][^-]+?)\s*-\s*(.+?)$/,
+        priority: 'medium',
+        extract: (match: RegExpMatchArray) => ({
+          songName: match[2]?.trim() || '',
+          artistName: match[1]?.trim() || '',
+          albumName: ''
+        })
+      },
+      
+      // Pattern 7: Artist Name: Song Name (colon format)
+      {
+        regex: /^(.+?)\s*:\s*(.+?)$/,
+        priority: 'medium',
+        extract: (match: RegExpMatchArray) => ({
+          songName: match[2]?.trim() || '',
+          artistName: match[1]?.trim() || '',
+          albumName: ''
+        })
+      },
+      
+      // === PARENTHESES AND BRACKETS FORMATS ===
+      
+      // Pattern 8: Song Name (Artist Name)
+      {
+        regex: /^(.+?)\s*\((.+?)\)$/,
+        priority: 'medium',
+        extract: (match: RegExpMatchArray) => ({
+          songName: match[1]?.trim() || '',
+          artistName: match[2]?.trim() || '',
+          albumName: ''
+        })
+      },
+      
+      // Pattern 9: Song Name [Artist Name]
+      {
+        regex: /^(.+?)\s*\[(.+?)\]$/,
+        priority: 'medium',
+        extract: (match: RegExpMatchArray) => ({
+          songName: match[1]?.trim() || '',
+          artistName: match[2]?.trim() || '',
+          albumName: ''
+        })
+      },
+      
+      // Pattern 10: Song Name - Artist Name (Album Name)
+      {
+        regex: /^(.+?)\s*-\s*(.+?)\s*\((.+?)\)$/,
+        priority: 'high',
+        extract: (match: RegExpMatchArray) => ({
+          songName: match[1]?.trim() || '',
+          artistName: match[2]?.trim() || '',
+          albumName: match[3]?.trim() || ''
+        })
+      },
+      
+      // Pattern 11: Song Name (from Album Name) by Artist Name
+      {
+        regex: /^(.+?)\s*\(from\s+(.+?)\)\s*by\s+(.+?)$/i,
+        priority: 'high',
+        extract: (match: RegExpMatchArray) => ({
+          songName: match[1]?.trim() || '',
+          artistName: match[3]?.trim() || '',
+          albumName: match[2]?.trim() || ''
+        })
+      },
+      
+      // === ALTERNATIVE SEPARATORS ===
+      
+      // Pattern 12: Song Name | Artist Name (pipe format)
+      {
+        regex: /^(.+?)\s*\|\s*(.+?)$/,
+        priority: 'medium',
+        extract: (match: RegExpMatchArray) => ({
+          songName: match[1]?.trim() || '',
+          artistName: match[2]?.trim() || '',
+          albumName: ''
+        })
+      },
+      
+      // Pattern 13: Song Name / Artist Name (slash format)
+      {
+        regex: /^(.+?)\s*\/\s*(.+?)$/,
+        priority: 'medium',
+        extract: (match: RegExpMatchArray) => ({
+          songName: match[1]?.trim() || '',
+          artistName: match[2]?.trim() || '',
+          albumName: ''
+        })
+      },
+      
+      // === FEATURING AND COLLABORATION FORMATS ===
+      
+      // Pattern 14: Song Name feat. Artist Name
+      {
+        regex: /^(.+?)\s+feat\.?\s+(.+?)$/i,
+        priority: 'medium',
+        extract: (match: RegExpMatchArray) => ({
+          songName: match[1]?.trim() || '',
+          artistName: match[2]?.trim() || '',
+          albumName: ''
+        })
+      },
+      
+      // Pattern 15: Song Name featuring Artist Name
+      {
+        regex: /^(.+?)\s+featuring\s+(.+?)$/i,
+        priority: 'medium',
+        extract: (match: RegExpMatchArray) => ({
+          songName: match[1]?.trim() || '',
+          artistName: match[2]?.trim() || '',
+          albumName: ''
+        })
+      },
+      
+      // Pattern 16: Song Name with Artist Name
+      {
+        regex: /^(.+?)\s+with\s+(.+?)$/i,
+        priority: 'medium',
+        extract: (match: RegExpMatchArray) => ({
+          songName: match[1]?.trim() || '',
+          artistName: match[2]?.trim() || '',
+          albumName: ''
+        })
+      },
+      
+      // === ALBUM FIRST FORMATS ===
+      
+      // Pattern 17: Album Name - Artist Name - Song Name (album first)
+      {
+        regex: /^(.+?)\s*-\s*([A-Z][^-]+?)\s*-\s*(.+?)$/,
+        priority: 'low',
+        extract: (match: RegExpMatchArray) => ({
+          songName: match[3]?.trim() || '',
+          artistName: match[2]?.trim() || '',
+          albumName: match[1]?.trim() || ''
+        })
+      },
+      
+      // === SIMPLE FORMATS ===
+      
+      // Pattern 18: Song Name by Artist (simple, no quotes)
       {
         regex: /^(.+?)\s*by\s+(.+?)$/i,
+        priority: 'medium',
         extract: (match: RegExpMatchArray) => ({
           songName: match[1]?.trim() || '',
           artistName: match[2]?.trim() || '',
@@ -715,9 +871,10 @@ Comma-separated tag list: `;
         })
       },
       
-      // Pattern 7: Song Name - Artist (simple dash format)
+      // Pattern 19: Song Name - Artist (simple dash)
       {
         regex: /^(.+?)\s*-\s*(.+?)$/,
+        priority: 'low',
         extract: (match: RegExpMatchArray) => ({
           songName: match[1]?.trim() || '',
           artistName: match[2]?.trim() || '',
@@ -725,9 +882,10 @@ Comma-separated tag list: `;
         })
       },
       
-      // Pattern 8: Just song name (fallback)
+      // Pattern 20: Just song name (fallback)
       {
         regex: /^(.+?)$/,
+        priority: 'lowest',
         extract: (match: RegExpMatchArray) => ({
           songName: match[1]?.trim() || '',
           artistName: '',
@@ -736,15 +894,28 @@ Comma-separated tag list: `;
       }
     ];
     
-    for (let i = 0; i < patterns.length; i++) {
-      const pattern = patterns[i];
+    // Sort patterns by priority for better matching
+    const priorityOrder: Record<string, number> = { 'high': 1, 'medium': 2, 'low': 3, 'lowest': 4 };
+    const sortedPatterns = patterns.map((pattern, index) => ({ ...pattern, originalIndex: index }))
+      .sort((a, b) => (priorityOrder[a.priority] || 5) - (priorityOrder[b.priority] || 5));
+    
+    for (let i = 0; i < sortedPatterns.length; i++) {
+      const pattern = sortedPatterns[i];
       const match = description.match(pattern.regex);
       if (match) {
         const extracted = pattern.extract(match);
-        console.log(`[ENHANCED AI] Pattern ${i + 1} matched. Extracted:`, {
-          ...extracted,
+        
+        // Enhanced logging with pattern information
+        const patternInfo = {
+          patternNumber: pattern.originalIndex + 1,
+          priority: pattern.priority,
+          canonical: pattern.canonical || false,
+          extracted: extracted,
           originalInput: description
-        });
+        };
+        
+        console.log(`[SONGS ENHANCED] Pattern ${patternInfo.patternNumber} matched (Priority: ${patternInfo.priority}${patternInfo.canonical ? ', CANONICAL' : ''}):`);
+        console.log(`[SONGS ENHANCED] Extracted:`, extracted);
         
         const result: ExtractedSongData = {
           songName: extracted.songName,
@@ -753,16 +924,32 @@ Comma-separated tag list: `;
           originalInput: description
         };
         
-        // Validate extraction - ensure we have at least a song name
+        // Enhanced validation - ensure we have at least a song name
         if (result.songName && result.songName.length > 0) {
-          console.log(`[ENHANCED AI] Successfully extracted song data:`, result);
+          console.log(`[SONGS ENHANCED] Successfully extracted song data using ${patternInfo.canonical ? 'CANONICAL' : 'standard'} pattern:`, result);
+          
+          // Provide feedback on pattern quality
+          if (patternInfo.canonical) {
+            console.log(`[SONGS ENHANCED] ✅ Used recommended canonical format!`);
+          } else if (patternInfo.priority === 'high') {
+            console.log(`[SONGS ENHANCED] ✅ High-quality pattern match`);
+          } else if (patternInfo.priority === 'medium') {
+            console.log(`[SONGS ENHANCED] ⚠️ Medium-quality pattern match - consider using canonical format`);
+          } else {
+            console.log(`[SONGS ENHANCED] ⚠️ Low-quality pattern match - recommend using: "Song Name - Album Name - Artist Name"`);
+          }
+          
           return result;
         }
       }
     }
     
-    // If no patterns match, create fallback result
-    console.log(`[ENHANCED AI] No patterns matched, using fallback extraction`);
+    // If no patterns match, create fallback result with helpful guidance
+    console.log(`[SONGS ENHANCED] ❌ No patterns matched, using fallback extraction`);
+    console.log(`[SONGS ENHANCED] 💡 Recommended formats:`);
+    console.log(`[SONGS ENHANCED]    1. "Song Name - Album Name - Artist Name"`);
+    console.log(`[SONGS ENHANCED]    2. "Song Name by Artist from Album Name"`);
+    
     const result: ExtractedSongData = {
       songName: description.trim(),
       artistName: '',
@@ -1011,7 +1198,7 @@ Respond with only the description paragraph and comma-separated tag list in JSON
     
     // Enhanced tag aggregation with deduplication and ranking
     const allTags = components.flatMap(c => c.tags || []);
-    const uniqueTags = [...new Set(allTags)]; // Remove duplicates
+    const uniqueTags = Array.from(new Set(allTags)); // Remove duplicates
     
     console.log('[COMPOSITE TAGS] All unique tags from components:', uniqueTags);
     
@@ -1040,7 +1227,7 @@ Respond with only the description paragraph and comma-separated tag list in JSON
       tagFrequency: tagFrequency,
       mostFrequentTags: this.getRankedTags(tagFrequency, 10),
       dominantStyles: this.extractDominantStyles(styles),
-      performanceTags: [...new Set(performanceTags)],
+      performanceTags: Array.from(new Set(performanceTags)),
       energyLevels: this.analyzeEnergyLevels(components),
       genreCompatibility: this.analyzeGenreCompatibility(components),
       summary: this.generateComponentSummary(components),
