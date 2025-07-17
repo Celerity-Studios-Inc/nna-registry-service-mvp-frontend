@@ -16,6 +16,10 @@ const AssetEditPage: React.FC = () => {
   const [albumArtUrl, setAlbumArtUrl] = useState('');
   const [albumArtLoading, setAlbumArtLoading] = useState(false);
   const [albumArtError, setAlbumArtError] = useState(false);
+  // Separate state for preview to avoid conflicts with original display
+  const [previewLoading, setPreviewLoading] = useState(false);
+  const [previewError, setPreviewError] = useState(false);
+  const [originalAlbumArtUrl, setOriginalAlbumArtUrl] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -93,7 +97,9 @@ const AssetEditPage: React.FC = () => {
         setDescription(assetData.description || assetData.aiMetadata?.generatedDescription || assetData.aiDescription || '');
         setTags(assetData.tags || []);
         // Initialize album art URL for Songs layer assets
-        setAlbumArtUrl(assetData.albumArt || assetData.metadata?.albumArtUrl || '');
+        const initialAlbumArtUrl = assetData.albumArt || assetData.metadata?.albumArtUrl || '';
+        setAlbumArtUrl(initialAlbumArtUrl);
+        setOriginalAlbumArtUrl(initialAlbumArtUrl);
       } catch (error) {
         console.error('Error loading asset:', error);
         setError('Failed to load asset');
@@ -122,9 +128,9 @@ const AssetEditPage: React.FC = () => {
       };
       
       // Include album art URL for Songs layer assets
-      if (asset.layer === 'G' && albumArtUrl !== (asset.albumArt || asset.metadata?.albumArtUrl || '')) {
+      if (asset.layer === 'G' && albumArtUrl !== originalAlbumArtUrl) {
         updateData.albumArt = albumArtUrl;
-        console.log('🖼️ [ALBUM ART] Updating album art URL:', albumArtUrl);
+        console.log('🖼️ [ALBUM ART] Updating album art URL from:', originalAlbumArtUrl, 'to:', albumArtUrl);
       }
       
       await assetService.updateAsset(assetIdentifier, updateData);
@@ -279,10 +285,15 @@ const AssetEditPage: React.FC = () => {
                 label="Album Art URL"
                 value={albumArtUrl}
                 onChange={(e) => {
-                  setAlbumArtUrl(e.target.value);
-                  if (e.target.value) {
-                    setAlbumArtLoading(true);
-                    setAlbumArtError(false);
+                  const newUrl = e.target.value;
+                  setAlbumArtUrl(newUrl);
+                  // Only trigger preview loading if URL is different from original
+                  if (newUrl && newUrl !== originalAlbumArtUrl) {
+                    setPreviewLoading(true);
+                    setPreviewError(false);
+                  } else {
+                    setPreviewLoading(false);
+                    setPreviewError(false);
                   }
                 }}
                 fullWidth
@@ -303,15 +314,46 @@ const AssetEditPage: React.FC = () => {
               />
               
               {/* Album Art Preview */}
-              {albumArtUrl && (
+              {albumArtUrl && albumArtUrl !== originalAlbumArtUrl && (
                 <Box sx={{ mt: 2 }}>
-                  <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 600 }}>
-                    Album Art Preview:
-                  </Typography>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+                    <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 600, mb: 0 }}>
+                      Preview New Album Art:
+                    </Typography>
+                    <Box sx={{ display: 'flex', gap: 1 }}>
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        color="success"
+                        onClick={() => {
+                          // Accept the new URL - keep current albumArtUrl
+                          setOriginalAlbumArtUrl(albumArtUrl);
+                          setPreviewError(false);
+                          setPreviewLoading(false);
+                        }}
+                        disabled={previewError}
+                      >
+                        Accept
+                      </Button>
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        color="warning"
+                        onClick={() => {
+                          // Restore original URL
+                          setAlbumArtUrl(originalAlbumArtUrl);
+                          setPreviewError(false);
+                          setPreviewLoading(false);
+                        }}
+                      >
+                        Restore
+                      </Button>
+                    </Box>
+                  </Box>
                   <Box sx={{ 
                     width: 150, 
                     height: 150, 
-                    border: '2px solid #9c27b0', 
+                    border: previewError ? '2px solid #f44336' : '2px solid #9c27b0', 
                     borderRadius: 1, 
                     overflow: 'hidden',
                     display: 'flex',
@@ -319,23 +361,31 @@ const AssetEditPage: React.FC = () => {
                     justifyContent: 'center',
                     bgcolor: '#f5f5f5'
                   }}>
-                    <img
-                      src={albumArtUrl}
-                      alt="New album art preview"
-                      style={{
-                        width: '100%',
-                        height: '100%',
-                        objectFit: 'cover'
-                      }}
-                      onLoad={() => {
-                        setAlbumArtLoading(false);
-                        setAlbumArtError(false);
-                      }}
-                      onError={() => {
-                        setAlbumArtLoading(false);
-                        setAlbumArtError(true);
-                      }}
-                    />
+                    {previewLoading ? (
+                      <CircularProgress size={40} />
+                    ) : previewError ? (
+                      <Typography variant="body2" color="error" sx={{ textAlign: 'center', p: 1, fontSize: '0.75rem' }}>
+                        ❌ Failed to load new album art
+                      </Typography>
+                    ) : (
+                      <img
+                        src={albumArtUrl}
+                        alt="New album art preview"
+                        style={{
+                          width: '100%',
+                          height: '100%',
+                          objectFit: 'cover'
+                        }}
+                        onLoad={() => {
+                          setPreviewLoading(false);
+                          setPreviewError(false);
+                        }}
+                        onError={() => {
+                          setPreviewLoading(false);
+                          setPreviewError(true);
+                        }}
+                      />
+                    )}
                   </Box>
                 </Box>
               )}
