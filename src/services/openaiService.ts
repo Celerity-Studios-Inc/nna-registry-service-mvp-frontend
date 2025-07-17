@@ -655,9 +655,23 @@ Comma-separated tag list: `;
     
     // Comprehensive pattern matching for all common song description formats
     const patterns = [
-      // === CANONICAL RECOMMENDED FORMATS (Highest Priority) ===
+      // === STRUCTURED KEY=VALUE FORMATS (Highest Priority) ===
       
-      // Pattern 1: "Song Name - Album Name - Artist Name" (RECOMMENDED #1)
+      // Pattern 1: "Song = Song Name, Artist = Artist Name, Album = Album Name" (STRUCTURED FORMAT)
+      {
+        regex: /(?:song\s*=\s*([^,]+))?(?:,\s*artist\s*=\s*([^,]+))?(?:,\s*album\s*=\s*([^,]+))?/i,
+        priority: 'high',
+        canonical: true,
+        extract: (match: RegExpMatchArray) => ({
+          songName: match[1]?.trim() || '',
+          artistName: match[2]?.trim() || '',
+          albumName: match[3]?.trim() || ''
+        })
+      },
+      
+      // === CANONICAL RECOMMENDED FORMATS (High Priority) ===
+      
+      // Pattern 2: "Song Name - Album Name - Artist Name" (RECOMMENDED #1)
       {
         regex: /^(.+?)\s*-\s*(.+?)\s*-\s*(.+?)$/,
         priority: 'high',
@@ -1067,7 +1081,32 @@ Use web search if needed to find accurate information about this song.`;
       }
     }
     
-    const response = await this.callOpenAIWithEnhancedContext(enhancedPrompt, imageDataUrl, context);
+    // CRITICAL FIX: For Moves layer, implement comprehensive content policy handling
+    let response;
+    if (context.layer === 'M') {
+      try {
+        response = await this.callOpenAIWithEnhancedContext(enhancedPrompt, imageDataUrl, context);
+      } catch (error) {
+        // If OpenAI returns 400 error for Moves layer, retry without image
+        if (error instanceof Error && error.message.includes('400')) {
+          console.log(`[CONTENT POLICY] Moves layer OpenAI 400 error detected, retrying without image for content policy compliance`);
+          console.log(`[CONTENT POLICY] Original error:`, error.message);
+          
+          // Retry with text-only analysis
+          try {
+            response = await this.callOpenAIWithEnhancedContext(enhancedPrompt, null, context);
+            console.log(`[CONTENT POLICY] Moves layer text-only retry successful`);
+          } catch (retryError) {
+            console.error(`[CONTENT POLICY] Moves layer text-only retry also failed:`, retryError);
+            throw new Error(`Moves layer processing failed even with text-only fallback: ${retryError instanceof Error ? retryError.message : 'Unknown error'}`);
+          }
+        } else {
+          throw error;
+        }
+      }
+    } else {
+      response = await this.callOpenAIWithEnhancedContext(enhancedPrompt, imageDataUrl, context);
+    }
     
     return this.processVisualResponse(response, context);
   }
