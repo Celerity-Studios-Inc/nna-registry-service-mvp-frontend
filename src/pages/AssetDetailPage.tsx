@@ -334,17 +334,17 @@ const AssetDetail: React.FC = () => {
                       />
                       <Box>
                         <Typography variant="caption" color="text.secondary">
-                          Source: {asset.metadata.albumArtSource || 'iTunes'}
+                          Source: {asset.metadata?.albumArtSource || 'iTunes'}
                         </Typography>
                         <br />
                         <Typography variant="caption" color="text.secondary">
-                          Quality: {asset.metadata.albumArtQuality || 'High'}
+                          Quality: {asset.metadata?.albumArtQuality || 'High'}
                         </Typography>
-                        {asset.metadata.extractedSongData && (
+                        {asset.metadata?.extractedSongData && (
                           <>
                             <br />
                             <Typography variant="caption" color="text.primary">
-                              {asset.metadata.extractedSongData.songName} - {asset.metadata.extractedSongData.artistName}
+                              {asset.metadata?.extractedSongData?.songName} - {asset.metadata?.extractedSongData?.artistName}
                             </Typography>
                           </>
                         )}
