@@ -374,6 +374,165 @@ export const isAudioUrl = (url: string): boolean => {
 };
 
 /**
+ * Generate multiple frames from a video for enhanced analysis (Moves layer)
+ * @param videoUrl The URL of the video
+ * @param frameCount Number of frames to capture (default: 5)
+ * @returns Promise resolving to array of base64 data URLs
+ */
+export const generateVideoFrameSequence = async (
+  videoUrl: string,
+  frameCount: number = 5
+): Promise<string[]> => {
+  return new Promise((resolve, reject) => {
+    debugLog(`🎬 Starting multi-frame generation for: ${videoUrl} (${frameCount} frames)`);
+    
+    const video = document.createElement('video');
+    video.crossOrigin = 'anonymous';
+    video.muted = true;
+    video.preload = 'auto';
+    video.playsInline = true;
+    video.autoplay = false;
+    video.controls = false;
+    video.volume = 0;
+    
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d', { willReadFrequently: false });
+    
+    if (!ctx) {
+      reject(new Error('Canvas context not available'));
+      return;
+    }
+    
+    canvas.width = 320;
+    canvas.height = 180;
+    
+    let hasResolved = false;
+    const frames: string[] = [];
+    let currentFrameIndex = 0;
+    
+    const cleanup = () => {
+      video.removeEventListener('loadedmetadata', onLoadedMetadata);
+      video.removeEventListener('seeked', onSeeked);
+      video.removeEventListener('error', onError);
+      video.src = '';
+      video.load();
+    };
+    
+    const captureFrame = async (): Promise<string> => {
+      // Clear canvas with black background
+      ctx.fillStyle = '#000000';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      
+      // Draw video frame to canvas with proper scaling
+      const aspectRatio = video.videoWidth / video.videoHeight;
+      let drawWidth = canvas.width;
+      let drawHeight = canvas.height;
+      let offsetX = 0;
+      let offsetY = 0;
+      
+      if (aspectRatio > canvas.width / canvas.height) {
+        drawHeight = canvas.width / aspectRatio;
+        offsetY = (canvas.height - drawHeight) / 2;
+      } else {
+        drawWidth = canvas.height * aspectRatio;
+        offsetX = (canvas.width - drawWidth) / 2;
+      }
+      
+      ctx.drawImage(video, offsetX, offsetY, drawWidth, drawHeight);
+      
+      // Convert to base64
+      return canvas.toDataURL('image/jpeg', 0.8);
+    };
+    
+    const captureNextFrame = async () => {
+      if (currentFrameIndex >= frameCount) {
+        if (hasResolved) return;
+        hasResolved = true;
+        cleanup();
+        debugLog(`✅ Multi-frame capture complete: ${frames.length} frames`);
+        resolve(frames);
+        return;
+      }
+      
+      // Calculate frame time positions
+      const duration = video.duration;
+      const framePositions = [];
+      
+      if (frameCount === 1) {
+        framePositions.push(duration * 0.5); // Center frame
+      } else {
+        // Distribute frames across the video duration
+        // Start at 10% and end at 90% to avoid black frames
+        const startPercent = 0.1;
+        const endPercent = 0.9;
+        const range = endPercent - startPercent;
+        
+        for (let i = 0; i < frameCount; i++) {
+          const percent = startPercent + (range * i / (frameCount - 1));
+          framePositions.push(duration * percent);
+        }
+      }
+      
+      const targetTime = framePositions[currentFrameIndex];
+      debugLog(`📸 Capturing frame ${currentFrameIndex + 1}/${frameCount} at ${targetTime.toFixed(2)}s`);
+      
+      video.currentTime = targetTime;
+    };
+    
+    const onSeeked = async () => {
+      try {
+        const frameData = await captureFrame();
+        frames.push(frameData);
+        currentFrameIndex++;
+        
+        // Small delay to ensure frame is fully rendered
+        setTimeout(captureNextFrame, 100);
+      } catch (error) {
+        console.error('Error capturing frame:', error);
+        // Continue with next frame instead of failing completely
+        currentFrameIndex++;
+        setTimeout(captureNextFrame, 100);
+      }
+    };
+    
+    const onLoadedMetadata = () => {
+      debugLog(`📹 Video metadata loaded: ${video.duration}s, ${video.videoWidth}x${video.videoHeight}`);
+      captureNextFrame();
+    };
+    
+    const onError = (error: any) => {
+      console.error('Video loading error:', error);
+      if (hasResolved) return;
+      hasResolved = true;
+      cleanup();
+      reject(new Error('Failed to load video for frame extraction'));
+    };
+    
+    // Set up event listeners
+    video.addEventListener('loadedmetadata', onLoadedMetadata);
+    video.addEventListener('seeked', onSeeked);
+    video.addEventListener('error', onError);
+    
+    // Start loading
+    video.src = videoUrl;
+    video.load();
+    
+    // Timeout fallback
+    setTimeout(() => {
+      if (!hasResolved) {
+        console.warn('Multi-frame generation timeout, falling back to single frame');
+        hasResolved = true;
+        cleanup();
+        // Fallback to single frame
+        generateVideoThumbnail(videoUrl, 1)
+          .then(singleFrame => resolve([singleFrame]))
+          .catch(reject);
+      }
+    }, 15000); // 15 second timeout for multi-frame
+  });
+};
+
+/**
  * Get cache size for debugging
  */
 export const getThumbnailCacheSize = (): number => {

@@ -8,7 +8,7 @@ import { logEnvironmentDiagnostic } from '../utils/envDiagnostic';
 // Phase 2A: Import album art service
 import albumArtService from './albumArtService';
 // CRITICAL FIX: Import video processing utilities
-import { generateVideoThumbnail, isVideoUrl } from '../utils/videoThumbnail';
+import { generateVideoThumbnail, generateVideoFrameSequence, isVideoUrl } from '../utils/videoThumbnail';
 
 interface OpenAIResponse {
   choices: Array<{
@@ -1159,7 +1159,7 @@ Respond with only the description paragraph and comma-separated tag list in JSON
     const analysisTypes: Record<string, string> = {
       S: 'Analyze this visual content focusing on style, aesthetic elements, artistic presentation, and performance attributes',
       L: 'Analyze this fashion and styling content focusing on clothing, accessories, color schemes, and aesthetic elements',
-      M: 'Analyze this dance and movement content focusing on choreography style, rhythm patterns, energy levels, and artistic technique without identifying individuals',
+      M: 'Analyze this dance and movement content focusing on choreography style, rhythm patterns, energy levels, movement transitions, and artistic technique without identifying individuals. If multiple frames are provided, analyze the progression and flow of movement across the sequence.',
       W: 'Analyze this environmental and setting content focusing on atmosphere, mood, lighting, and aesthetic elements',
       C: 'Analyze this composite visual content focusing on artistic elements, style coordination, and aesthetic harmony'
     };
@@ -1186,11 +1186,12 @@ Respond with only the description paragraph and comma-separated tag list in JSON
 - Genre and music style compatibility`,
       M: `- Movement style and choreographic approach
 - Dance technique and artistic expression (without person identification)
-- Rhythm and tempo characteristics
-- Energy level and intensity
-- Cultural dance influences
+- Rhythm and tempo characteristics throughout the sequence
+- Energy level and intensity changes across frames
+- Cultural dance influences and style evolution
 - Cross-genre and cross-layer compatibility
-- Focus on movement patterns, not individuals`,
+- Focus on movement patterns, transitions, and flow (not individuals)
+- Analyze the progression and development of movement across time`,
       W: `- Environmental atmosphere and setting
 - Mood and emotional tone
 - Lighting conditions and visual ambiance
@@ -1321,13 +1322,26 @@ Respond with only the description paragraph and comma-separated tag list in JSON
       throw new Error('OpenAI API key is not configured. Please set REACT_APP_OPENAI_API_KEY environment variable.');
     }
 
-    // VIDEO PROCESSING FIX: Use the already processed imageDataUrl (no double processing)
-    // The video thumbnail generation should have already happened in processVisualWithImage
+    // MOVES LAYER ENHANCEMENT: Handle multiple frames for dance/choreography analysis
     let processedImageDataUrl = imageDataUrl;
+    let multipleFrames: string[] = [];
     
-    // Only log if we received a video thumbnail
-    if (imageDataUrl && context.image && this.isVideoFile(context.image)) {
+    // Check if this is a Moves layer (dance/choreography) that needs multiple frames
+    if (context.layer === 'M' && context.image && this.isVideoFile(context.image)) {
+      console.log(`[MOVES ENHANCEMENT] Generating multiple frames for dance analysis`);
+      try {
+        multipleFrames = await generateVideoFrameSequence(context.image, 5);
+        console.log(`[MOVES ENHANCEMENT] Generated ${multipleFrames.length} frames for choreography analysis`);
+      } catch (error) {
+        console.warn(`[MOVES ENHANCEMENT] Multi-frame generation failed, falling back to single frame:`, error);
+        // Fall back to single frame
+        if (imageDataUrl) {
+          processedImageDataUrl = imageDataUrl;
+        }
+      }
+    } else if (imageDataUrl && context.image && this.isVideoFile(context.image)) {
       console.log(`[VIDEO TIMING] Using pre-generated thumbnail for ${context.layer} layer (${imageDataUrl.length} chars)`);
+      processedImageDataUrl = imageDataUrl;
     }
 
     const messages: any[] = [
@@ -1337,7 +1351,26 @@ Respond with only the description paragraph and comma-separated tag list in JSON
       }
     ];
 
-    if (processedImageDataUrl) {
+    // MOVES LAYER: Send multiple frames for better dance analysis
+    if (multipleFrames.length > 0) {
+      const imageContent = multipleFrames.map((frame, index) => ({
+        type: 'image_url',
+        image_url: {
+          url: frame
+        }
+      }));
+      
+      messages.push({
+        role: 'user',
+        content: [
+          {
+            type: 'text',
+            text: `${prompt}\n\nNOTE: You are analyzing ${multipleFrames.length} frames from a dance/choreography video to capture the movement sequence. Frame 1 is at 10% of the video, frames progress evenly through the video, and the last frame is at 90% of the video duration.`
+          },
+          ...imageContent
+        ]
+      });
+    } else if (processedImageDataUrl) {
       messages.push({
         role: 'user',
         content: [
@@ -1372,6 +1405,8 @@ Respond with only the description paragraph and comma-separated tag list in JSON
       model: requestBody.model,
       messageCount: messages.length,
       hasImage: messages.some(msg => msg.content && Array.isArray(msg.content)),
+      multipleFrames: multipleFrames.length > 0 ? multipleFrames.length : false,
+      layer: context.layer,
       promptLength: messages[messages.length - 1]?.content?.length || 0
     });
     
