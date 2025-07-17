@@ -272,52 +272,7 @@ const AssetEditPage: React.FC = () => {
                 Album art URL for this song. Leave empty to remove album art or enter a new URL to update it.
               </Typography>
               
-              {/* Current Album Art Display */}
-              {(albumArtUrl || asset.albumArt || asset.metadata?.albumArtUrl) && (
-                <Box sx={{ mb: 3 }}>
-                  <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 600 }}>
-                    Current Album Art:
-                  </Typography>
-                  <Box sx={{ 
-                    width: 200, 
-                    height: 200, 
-                    border: '1px solid #e0e0e0', 
-                    borderRadius: 1, 
-                    overflow: 'hidden',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    bgcolor: '#f5f5f5',
-                    mb: 2
-                  }}>
-                    {albumArtLoading ? (
-                      <CircularProgress size={40} />
-                    ) : albumArtError ? (
-                      <Typography variant="body2" color="error" sx={{ textAlign: 'center', p: 2 }}>
-                        ❌ Failed to load album art
-                      </Typography>
-                    ) : (
-                      <img
-                        src={albumArtUrl || asset.albumArt || asset.metadata?.albumArtUrl}
-                        alt="Album art"
-                        style={{
-                          width: '100%',
-                          height: '100%',
-                          objectFit: 'cover'
-                        }}
-                        onLoad={() => {
-                          setAlbumArtLoading(false);
-                          setAlbumArtError(false);
-                        }}
-                        onError={() => {
-                          setAlbumArtLoading(false);
-                          setAlbumArtError(true);
-                        }}
-                      />
-                    )}
-                  </Box>
-                </Box>
-              )}
+              {/* Current Album Art display removed - redundant with album art visible at top of page */}
               
               {/* Album Art URL Input */}
               <TextField
@@ -348,10 +303,10 @@ const AssetEditPage: React.FC = () => {
               />
               
               {/* Album Art Preview */}
-              {albumArtUrl && albumArtUrl !== (asset.albumArt || asset.metadata?.albumArtUrl || '') && (
+              {albumArtUrl && (
                 <Box sx={{ mt: 2 }}>
                   <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 600 }}>
-                    Preview New Album Art:
+                    Album Art Preview:
                   </Typography>
                   <Box sx={{ 
                     width: 150, 
