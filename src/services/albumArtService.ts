@@ -57,10 +57,10 @@ class AlbumArtService {
           return artistOnlyResult;
         }
         
-        // Try without special characters
+        // ENHANCED CLEANING: Better handling of extracted song data
         const cleanedSongData = {
-          songName: songData.songName.replace(/["""''']/g, '').replace(/[^\w\s]/g, ' ').trim(),
-          artistName: songData.artistName.replace(/[&]/g, 'and').replace(/[^\w\s]/g, ' ').trim(),
+          songName: this.cleanSongName(songData.songName),
+          artistName: this.cleanArtistName(songData.artistName),
           albumName: songData.albumName
         };
         
@@ -227,6 +227,37 @@ class AlbumArtService {
       .replace(/30x30/, '600x600');
   }
   
+  /**
+   * Clean song name for better iTunes API search results
+   * Removes common patterns that interfere with search
+   */
+  private cleanSongName(songName: string): string {
+    return songName
+      .replace(/^["'`]|["'`]$/g, '') // Remove leading/trailing quotes
+      .replace(/\s*song\s*$/i, '') // Remove " song" suffix
+      .replace(/\s*track\s*$/i, '') // Remove " track" suffix
+      .replace(/\s*-\s*official\s*/i, '') // Remove "- official"
+      .replace(/\s*\(official[^)]*\)/i, '') // Remove "(official...)"
+      .replace(/\s*\[official[^\]]*\]/i, '') // Remove "[official...]"
+      .replace(/\s+/g, ' ') // Normalize whitespace
+      .trim();
+  }
+  
+  /**
+   * Clean artist name for better iTunes API search results
+   * Removes common patterns that interfere with search
+   */
+  private cleanArtistName(artistName: string): string {
+    return artistName
+      .replace(/^["'`]|["'`]$/g, '') // Remove leading/trailing quotes
+      .replace(/\s*-\s*topic$/i, '') // Remove "- Topic" suffix
+      .replace(/\s*official$/i, '') // Remove "Official" suffix
+      .replace(/\s*\(official[^)]*\)/i, '') // Remove "(official...)"
+      .replace(/\s*\[official[^\]]*\]/i, '') // Remove "[official...]"
+      .replace(/\s+/g, ' ') // Normalize whitespace
+      .trim();
+  }
+
   /**
    * Clear the cache (useful for testing)
    */

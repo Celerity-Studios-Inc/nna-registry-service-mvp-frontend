@@ -705,7 +705,18 @@ Comma-separated tag list: `;
         })
       },
       
-      // Pattern 5: "Song Name" by Artist (no album)
+      // Pattern 5: "Song Name" song by "Artist". Released in album "Album Name" (complex format)
+      {
+        regex: /^[""'](.+?)[""']\s*song\s+by\s+[""'](.+?)[""']\.\s*Released\s+in\s+(?:her\s+)?(?:album\s+)?[""'](.+?)[""']/i,
+        priority: 'high',
+        extract: (match: RegExpMatchArray) => ({
+          songName: match[1]?.trim() || '',
+          artistName: match[2]?.trim() || '',
+          albumName: match[3]?.trim() || ''
+        })
+      },
+      
+      // Pattern 6: "Song Name" by Artist (no album)
       {
         regex: /^[""'](.+?)[""']\s*by\s+(.+?)$/i,
         priority: 'medium',
@@ -1065,7 +1076,10 @@ Use web search if needed to find accurate information about this song.`;
     
     const layerSpecificFocus = this.getLayerSpecificFocus(context.layer);
     
-    return `Analyze this ${layerContext.toLowerCase()} image with the following context:
+    // CRITICAL FIX: Content policy compliant prompts - focus on attributes, not people
+    const analysisType = this.getContentPolicyCompliantAnalysisType(context.layer);
+    
+    return `${analysisType} with the following context:
 
 Creator's Description: "${baseDescription}"
 Category Context: ${categoryContext}
@@ -1094,29 +1108,44 @@ Respond with only the description paragraph and comma-separated tag list in JSON
   }
 
   /**
+   * CRITICAL FIX: Get content policy compliant analysis type to avoid person identification
+   */
+  private getContentPolicyCompliantAnalysisType(layer: string): string {
+    const analysisTypes: Record<string, string> = {
+      S: 'Analyze this visual content focusing on style, aesthetic elements, artistic presentation, and performance attributes',
+      L: 'Analyze this fashion and styling content focusing on clothing, accessories, color schemes, and aesthetic elements',
+      M: 'Analyze this movement and choreography content focusing on dance style, rhythm, energy, and artistic expression',
+      W: 'Analyze this environmental and setting content focusing on atmosphere, mood, lighting, and aesthetic elements',
+      C: 'Analyze this composite visual content focusing on artistic elements, style coordination, and aesthetic harmony'
+    };
+    
+    return analysisTypes[layer] || 'Analyze this visual content focusing on artistic and aesthetic elements';
+  }
+
+  /**
    * Get layer-specific focus areas for enhanced prompting
    */
   private getLayerSpecificFocus(layer: string): string {
     const focusAreas: Record<string, string> = {
-      S: `- Performance style and energy level
-- Visual aesthetic and personality expression
-- Movement potential and dance compatibility
-- Clothing/costume style and color scheme
-- Facial expressions and emotional projection
-- Cross-layer synchronization potential`,
-      L: `- Style category and fashion era
+      S: `- Artistic style and visual presentation
+- Aesthetic elements and design approach
+- Color palette and visual composition
+- Styling and costume elements
+- Artistic expression and creative attributes
+- Performance context and genre compatibility`,
+      L: `- Fashion style and clothing design
 - Color scheme and visual impact under stage lighting
 - Formality level and occasion appropriateness
 - Cultural influences and design inspiration
 - Movement compatibility and dance-friendliness
 - Genre and music style compatibility`,
-      M: `- Movement tempo and intensity level
-- Dance style and technical complexity
-- Body engagement and choreographic elements
-- Rhythm synchronization capabilities
+      M: `- Movement style and choreographic approach
+- Dance technique and artistic expression
+- Rhythm and tempo characteristics
+- Energy level and intensity
 - Cultural dance influences
 - Cross-genre and cross-layer compatibility`,
-      W: `- Setting type and environmental atmosphere
+      W: `- Environmental atmosphere and setting
 - Mood and emotional tone
 - Lighting conditions and visual ambiance
 - Scale, grandeur, and production value
@@ -1133,11 +1162,11 @@ Respond with only the description paragraph and comma-separated tag list in JSON
   private getLayerPurpose(layer: string): string {
     const purposes: Record<string, string> = {
       G: 'Musical compositions and audio content for entertainment and synchronization',
-      S: 'Performer avatars and character representations for visual performances',
-      L: 'Clothing, costumes, and styling that complement performers and match music aesthetics', 
-      M: 'Dance choreography and movement sequences for performance synchronization',
-      W: 'Environmental settings and backgrounds that enhance performance atmosphere',
-      C: 'Composite assets combining multiple layers for complete performance experiences'
+      S: 'Visual style and artistic presentation elements for creative performances',
+      L: 'Fashion, clothing, and styling elements that complement visual aesthetics and match music styles', 
+      M: 'Movement style and choreographic elements for artistic expression and synchronization',
+      W: 'Environmental settings and atmospheric elements that enhance visual presentations',
+      C: 'Composite visual elements combining multiple artistic layers for complete creative experiences'
     };
     
     return purposes[layer] || 'Digital asset for creative and entertainment purposes';
