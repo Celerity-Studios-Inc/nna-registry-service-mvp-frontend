@@ -659,13 +659,13 @@ Comma-separated tag list: `;
       
       // Pattern 1: "Song = Song Name, Artist = Artist Name, Album = Album Name" (STRUCTURED FORMAT)
       {
-        regex: /(?:song\s*=\s*([^,]+))?(?:,\s*artist\s*=\s*([^,]+))?(?:,\s*album\s*=\s*([^,]+))?/i,
+        regex: /(?:song\s*=\s*[""']?([^,"'"]+)[""']?)?(?:,\s*artist\s*=\s*[""']?([^,"'"]+)[""']?)?(?:,\s*album\s*=\s*[""']?([^,"'"]+)[""']?)?/i,
         priority: 'high',
         canonical: true,
         extract: (match: RegExpMatchArray) => ({
-          songName: match[1]?.trim() || '',
-          artistName: match[2]?.trim() || '',
-          albumName: match[3]?.trim() || ''
+          songName: match[1]?.trim().replace(/^[""']|[""']$/g, '') || '',
+          artistName: match[2]?.trim().replace(/^[""']|[""']$/g, '') || '',
+          albumName: match[3]?.trim().replace(/^[""']|[""']$/g, '') || ''
         })
       },
       
@@ -1360,22 +1360,48 @@ Respond with only the description paragraph and comma-separated tag list in JSON
       });
     }
 
+    const requestBody = {
+      model: 'gpt-4o',
+      messages: messages,
+      max_tokens: 1500,
+      temperature: 0.7
+    };
+    
+    // Debug logging for OpenAI request
+    console.log('[OPENAI REQUEST] Sending request to OpenAI:', {
+      model: requestBody.model,
+      messageCount: messages.length,
+      hasImage: messages.some(msg => msg.content && Array.isArray(msg.content)),
+      promptLength: messages[messages.length - 1]?.content?.length || 0
+    });
+    
     const response = await fetch(this.baseUrl, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${this.apiKey}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        model: 'gpt-4o',
-        messages: messages,
-        max_tokens: 1500,
-        temperature: 0.7
-      })
+      body: JSON.stringify(requestBody)
     });
 
     if (!response.ok) {
-      throw new Error(`OpenAI API error: ${response.status} ${response.statusText}`);
+      // Enhanced error handling for different HTTP status codes
+      let errorMessage = `OpenAI API error: ${response.status}`;
+      
+      if (response.status === 500) {
+        errorMessage += ' (Internal Server Error) - This may be due to malformed request data or OpenAI service issues';
+      } else if (response.status === 400) {
+        errorMessage += ' (Bad Request) - Content may violate OpenAI usage policies';
+      } else if (response.status === 429) {
+        errorMessage += ' (Rate Limit) - Too many requests to OpenAI API';
+      } else if (response.status === 401) {
+        errorMessage += ' (Unauthorized) - OpenAI API key may be invalid';
+      } else {
+        errorMessage += ` ${response.statusText}`;
+      }
+      
+      console.error('[OPENAI ERROR]', errorMessage);
+      throw new Error(errorMessage);
     }
 
     return response.json();
