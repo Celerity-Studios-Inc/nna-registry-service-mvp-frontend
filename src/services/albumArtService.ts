@@ -123,6 +123,12 @@ class AlbumArtService {
       // Get high-resolution artwork URL
       const artworkUrl = this.getHighResolutionUrl(bestMatch.artworkUrl100);
       
+      // CRITICAL FIX: Validate URL before returning
+      if (!artworkUrl || !this.isValidImageUrl(artworkUrl)) {
+        console.warn('[ALBUM ART] Generated artwork URL is invalid:', artworkUrl);
+        return null;
+      }
+      
       console.log('[ALBUM ART] iTunes match found:', {
         track: bestMatch.trackName,
         artist: bestMatch.artistName,
@@ -256,6 +262,39 @@ class AlbumArtService {
       .replace(/\s*\[official[^\]]*\]/i, '') // Remove "[official...]"
       .replace(/\s+/g, ' ') // Normalize whitespace
       .trim();
+  }
+
+  /**
+   * Validate that a URL is a proper image URL
+   */
+  private isValidImageUrl(url: string): boolean {
+    try {
+      const urlObj = new URL(url);
+      
+      // Check if it's HTTPS
+      if (urlObj.protocol !== 'https:') {
+        return false;
+      }
+      
+      // Check if it's from a trusted domain
+      const trustedDomains = ['is1-ssl.mzstatic.com', 'is2-ssl.mzstatic.com', 'is3-ssl.mzstatic.com', 'is4-ssl.mzstatic.com', 'is5-ssl.mzstatic.com'];
+      if (!trustedDomains.some(domain => urlObj.hostname.includes(domain))) {
+        console.warn('[ALBUM ART] URL from untrusted domain:', urlObj.hostname);
+        return false;
+      }
+      
+      // Check if it looks like an image URL
+      const pathname = urlObj.pathname.toLowerCase();
+      if (!pathname.includes('.jpg') && !pathname.includes('.jpeg') && !pathname.includes('.png')) {
+        console.warn('[ALBUM ART] URL does not appear to be an image:', pathname);
+        return false;
+      }
+      
+      return true;
+    } catch (error) {
+      console.warn('[ALBUM ART] Invalid URL format:', url, error);
+      return false;
+    }
   }
 
   /**

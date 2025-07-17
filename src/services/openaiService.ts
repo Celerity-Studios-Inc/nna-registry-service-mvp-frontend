@@ -871,10 +871,10 @@ Comma-separated tag list: `;
       
       // === SIMPLE FORMATS ===
       
-      // Pattern 18: Song Name by Artist (simple, no quotes)
+      // Pattern 18: Song Name by Artist (simple, no quotes) - REDUCED PRIORITY
       {
         regex: /^(.+?)\s*by\s+(.+?)$/i,
-        priority: 'medium',
+        priority: 'lowest',
         extract: (match: RegExpMatchArray) => ({
           songName: match[1]?.trim() || '',
           artistName: match[2]?.trim() || '',
@@ -1052,8 +1052,14 @@ Use web search if needed to find accurate information about this song.`;
           console.log(`[VIDEO TIMING] Valid thumbnail generated (${imageDataUrl.length} chars) for ${context.layer} layer`);
         } catch (error) {
           console.error(`[VIDEO TIMING] Thumbnail generation failed for ${context.layer} layer:`, error);
-          // For M/W layers, this is critical - don't proceed with invalid data
-          throw new Error(`Video thumbnail generation failed for ${context.layer} layer: ${error instanceof Error ? error.message : 'Unknown error'}`);
+          // CRITICAL FIX: For Moves layer, fall back to text-only analysis to avoid content policy issues
+          if (context.layer === 'M') {
+            console.log(`[CONTENT POLICY] Moves layer falling back to text-only analysis to avoid OpenAI content policy violations`);
+            imageDataUrl = null; // Force text-only processing
+          } else {
+            // For other layers, this is still critical
+            throw new Error(`Video thumbnail generation failed for ${context.layer} layer: ${error instanceof Error ? error.message : 'Unknown error'}`);
+          }
         }
       } else {
         // Process as image normally
@@ -1114,7 +1120,7 @@ Respond with only the description paragraph and comma-separated tag list in JSON
     const analysisTypes: Record<string, string> = {
       S: 'Analyze this visual content focusing on style, aesthetic elements, artistic presentation, and performance attributes',
       L: 'Analyze this fashion and styling content focusing on clothing, accessories, color schemes, and aesthetic elements',
-      M: 'Analyze this movement and choreography content focusing on dance style, rhythm, energy, and artistic expression',
+      M: 'Analyze this dance and movement content focusing on choreography style, rhythm patterns, energy levels, and artistic technique without identifying individuals',
       W: 'Analyze this environmental and setting content focusing on atmosphere, mood, lighting, and aesthetic elements',
       C: 'Analyze this composite visual content focusing on artistic elements, style coordination, and aesthetic harmony'
     };
@@ -1140,11 +1146,12 @@ Respond with only the description paragraph and comma-separated tag list in JSON
 - Movement compatibility and dance-friendliness
 - Genre and music style compatibility`,
       M: `- Movement style and choreographic approach
-- Dance technique and artistic expression
+- Dance technique and artistic expression (without person identification)
 - Rhythm and tempo characteristics
 - Energy level and intensity
 - Cultural dance influences
-- Cross-genre and cross-layer compatibility`,
+- Cross-genre and cross-layer compatibility
+- Focus on movement patterns, not individuals`,
       W: `- Environmental atmosphere and setting
 - Mood and emotional tone
 - Lighting conditions and visual ambiance
