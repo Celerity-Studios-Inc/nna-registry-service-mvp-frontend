@@ -64,12 +64,13 @@ const AssetThumbnail: React.FC<AssetThumbnailProps> = ({
 
   // Handle audio assets with album art support for Songs layer (G)
   if (asset.gcpStorageUrl && isAudioUrl(asset.gcpStorageUrl)) {
-    // Phase 2A: Album art support for Songs layer
-    if (asset.layer === 'G' && asset.metadata?.albumArtUrl && !imageError) {
+    // Phase 2B: Album art support for Songs layer - check both new albumArt field and legacy metadata.albumArtUrl
+    const albumArtUrl = asset.albumArt || asset.metadata?.albumArtUrl;
+    if (asset.layer === 'G' && albumArtUrl && !imageError) {
       return (
         <Box sx={containerStyle}>
           <img
-            src={asset.metadata.albumArtUrl}
+            src={albumArtUrl}
             alt={`Album art for ${asset.friendlyName || asset.name}`}
             style={{
               width: '100%',

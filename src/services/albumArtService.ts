@@ -45,6 +45,20 @@ class AlbumArtService {
       if (songData.artistName && songData.songName) {
         console.log('[ALBUM ART] Trying alternative search patterns...');
         
+        // ENHANCED: Try album + artist search first (most likely to get correct album art)
+        if (songData.albumName) {
+          const albumArtistResult = await this.fetchFromItunes({
+            songName: '',
+            artistName: songData.artistName,
+            albumName: songData.albumName
+          });
+          if (albumArtistResult) {
+            console.log('[ALBUM ART] Found result using album + artist search');
+            this.cache.set(cacheKey, albumArtistResult);
+            return albumArtistResult;
+          }
+        }
+        
         // Try just artist name
         const artistOnlyResult = await this.fetchFromItunes({
           songName: '',
@@ -90,13 +104,27 @@ class AlbumArtService {
    */
   private async fetchFromItunes(songData: SongSearchData): Promise<AlbumArtResult | null> {
     try {
-      // Build search query
-      let searchTerm = songData.songName;
-      if (songData.artistName) {
-        searchTerm += ` ${songData.artistName}`;
+      // Build search query with enhanced logic
+      let searchTerm = '';
+      let entity = 'song';
+      
+      if (songData.songName && songData.artistName) {
+        // Standard song + artist search
+        searchTerm = `${songData.songName} ${songData.artistName}`;
+      } else if (songData.albumName && songData.artistName) {
+        // Album + artist search (useful when no song name)
+        searchTerm = `${songData.albumName} ${songData.artistName}`;
+        entity = 'album'; // Search for albums instead of songs
+      } else if (songData.artistName) {
+        // Artist-only search
+        searchTerm = songData.artistName;
+        entity = 'album'; // Search for albums by artist
+      } else {
+        // Fallback to song name only
+        searchTerm = songData.songName;
       }
       
-      const url = `https://itunes.apple.com/search?term=${encodeURIComponent(searchTerm)}&media=music&limit=10&entity=song`;
+      const url = `https://itunes.apple.com/search?term=${encodeURIComponent(searchTerm)}&media=music&limit=10&entity=${entity}`;
       
       console.log('[ALBUM ART] iTunes API request:', url);
       
@@ -115,13 +143,14 @@ class AlbumArtService {
       
       // Find best match
       const bestMatch = this.findBestMatch(data.results, songData);
-      if (!bestMatch || !bestMatch.artworkUrl100) {
+      if (!bestMatch || (!bestMatch.artworkUrl100 && !bestMatch.artworkUrl60)) {
         console.log('[ALBUM ART] No suitable iTunes match found');
         return null;
       }
       
-      // Get high-resolution artwork URL
-      const artworkUrl = this.getHighResolutionUrl(bestMatch.artworkUrl100);
+      // Get high-resolution artwork URL (handle both song and album results)
+      const baseArtworkUrl = bestMatch.artworkUrl100 || bestMatch.artworkUrl60 || bestMatch.artworkUrl512;
+      const artworkUrl = this.getHighResolutionUrl(baseArtworkUrl);
       
       // CRITICAL FIX: Validate URL before returning
       if (!artworkUrl || !this.isValidImageUrl(artworkUrl)) {
@@ -130,8 +159,9 @@ class AlbumArtService {
       }
       
       console.log('[ALBUM ART] iTunes match found:', {
-        track: bestMatch.trackName,
+        track: bestMatch.trackName || bestMatch.collectionName,
         artist: bestMatch.artistName,
+        album: bestMatch.collectionName || bestMatch.albumName,
         artwork: artworkUrl
       });
       
@@ -149,12 +179,14 @@ class AlbumArtService {
   }
   
   /**
-   * Find the best matching result from iTunes API
+   * Find the best matching result from iTunes API with enhanced scoring
    */
   private findBestMatch(results: any[], songData: SongSearchData): any | null {
-    // Scoring algorithm to find best match
+    // Enhanced scoring algorithm to find best match
     let bestMatch = null;
     let bestScore = 0;
+    
+    console.log('[ALBUM ART] Evaluating', results.length, 'iTunes results for best match');
     
     for (const result of results) {
       let score = 0;
@@ -166,6 +198,11 @@ class AlbumArtService {
           result.trackName.toLowerCase()
         );
         score += trackSimilarity * 3; // Weight track name heavily
+        
+        // BONUS: Exact match gets extra points
+        if (result.trackName.toLowerCase() === songData.songName.toLowerCase()) {
+          score += 1;
+        }
       }
       
       // Check artist name match
@@ -175,16 +212,48 @@ class AlbumArtService {
           result.artistName.toLowerCase()
         );
         score += artistSimilarity * 2; // Weight artist name moderately
+        
+        // BONUS: Exact match gets extra points
+        if (result.artistName.toLowerCase() === songData.artistName.toLowerCase()) {
+          score += 0.5;
+        }
       }
       
-      // Check album name match if available
-      if (result.collectionName && songData.albumName) {
+      // Check album name match if available - ENHANCED WEIGHTING
+      const albumField = result.collectionName || result.albumName;
+      if (albumField && songData.albumName) {
         const albumSimilarity = this.calculateSimilarity(
           songData.albumName.toLowerCase(),
-          result.collectionName.toLowerCase()
+          albumField.toLowerCase()
         );
-        score += albumSimilarity; // Weight album name lightly
+        score += albumSimilarity * 2; // Increased weight for album name match
+        
+        // BONUS: Exact album match gets significant bonus
+        if (albumField.toLowerCase() === songData.albumName.toLowerCase()) {
+          score += 1;
+        }
       }
+      
+      // PENALTY: Reduce score for "Live" versions unless specifically requested
+      if (result.trackName && result.trackName.toLowerCase().includes('live') && 
+          !songData.songName.toLowerCase().includes('live')) {
+        score -= 0.5;
+        console.log('[ALBUM ART] Applied penalty for Live version:', result.trackName);
+      }
+      
+      // PENALTY: Reduce score for "Remix" versions unless specifically requested
+      if (result.trackName && result.trackName.toLowerCase().includes('remix') && 
+          !songData.songName.toLowerCase().includes('remix')) {
+        score -= 0.3;
+        console.log('[ALBUM ART] Applied penalty for Remix version:', result.trackName);
+      }
+      
+      console.log('[ALBUM ART] Match candidate:', {
+        track: result.trackName || result.collectionName,
+        artist: result.artistName,
+        album: result.collectionName || result.albumName,
+        score: score.toFixed(2)
+      });
       
       if (score > bestScore) {
         bestScore = score;
@@ -192,8 +261,15 @@ class AlbumArtService {
       }
     }
     
+    console.log('[ALBUM ART] Best match selected:', bestMatch ? {
+      track: bestMatch.trackName || bestMatch.collectionName,
+      artist: bestMatch.artistName,
+      album: bestMatch.collectionName || bestMatch.albumName,
+      score: bestScore.toFixed(2)
+    } : 'No suitable match found');
+    
     // Only return match if score is reasonable
-    return bestScore > 0.3 ? bestMatch : null;
+    return bestScore > 0.4 ? bestMatch : null; // Slightly higher threshold
   }
   
   /**
