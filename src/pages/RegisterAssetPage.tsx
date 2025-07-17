@@ -2210,6 +2210,38 @@ const RegisterAssetPage: React.FC = () => {
 
                     {isAudio && displayFile?.url && (
                       <Box sx={{ width: '100%', mt: 2 }}>
+                        {/* Album Art Preview for Songs Layer */}
+                        {formData.layer === 'G' && (createdAsset?.albumArt || createdAsset?.metadata?.albumArtUrl) && (
+                          <Box sx={{ 
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            justifyContent: 'center',
+                            mb: 2,
+                            p: 2,
+                            bgcolor: 'grey.50',
+                            borderRadius: 1,
+                            border: '1px solid #e0e0e0'
+                          }}>
+                            <img
+                              src={createdAsset.albumArt || createdAsset.metadata?.albumArtUrl}
+                              alt="Album Art"
+                              style={{
+                                maxWidth: '200px',
+                                maxHeight: '200px',
+                                objectFit: 'cover',
+                                borderRadius: '8px',
+                                boxShadow: '0 4px 8px rgba(0,0,0,0.1)'
+                              }}
+                              onError={(e) => {
+                                // Hide album art if it fails to load
+                                const target = e.target as HTMLElement;
+                                if (target.parentElement) {
+                                  target.parentElement.style.display = 'none';
+                                }
+                              }}
+                            />
+                          </Box>
+                        )}
                         <Box component="audio" controls sx={{ width: '100%' }}>
                           <source
                             src={displayFile.url}
