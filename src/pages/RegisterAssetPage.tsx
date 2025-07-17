@@ -2211,7 +2211,7 @@ const RegisterAssetPage: React.FC = () => {
                     {isAudio && displayFile?.url && (
                       <Box sx={{ width: '100%', mt: 2 }}>
                         {/* Album Art Preview for Songs Layer */}
-                        {formData.layer === 'G' && (createdAsset?.albumArt || createdAsset?.metadata?.albumArtUrl) && (
+                        {createdAsset?.layer === 'G' && (createdAsset?.albumArt || createdAsset?.metadata?.albumArtUrl) && (
                           <Box sx={{ 
                             display: 'flex', 
                             alignItems: 'center', 
