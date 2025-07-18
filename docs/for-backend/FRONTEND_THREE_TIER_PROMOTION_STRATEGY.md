@@ -1,31 +1,47 @@
 # Frontend Three-Tier Promotion Strategy
 
-**Document Version:** 1.0  
-**Date:** January 2025  
-**Status:** ✅ **IMPLEMENTED - Ready for Backend Alignment**  
-**Priority:** HIGH - Release 1.2.0 Coordination
+**Document Version:** 2.0  
+**Date:** July 18, 2025  
+**Status:** 🔧 **CRITICAL - Integration Recovery Required**  
+**Priority:** URGENT - Frontend API Routing Fix Required
 
 ## Executive Summary
 
-The frontend has implemented a comprehensive three-tier promotion strategy (Development → Staging → Production) with automated CI/CD workflows. This document outlines the strategy for backend team alignment and provides recommendations for synchronized releases.
+The frontend has implemented a comprehensive three-tier promotion strategy (Development → Staging → Production) with automated CI/CD workflows. However, a critical API routing issue is preventing proper integration with the backend systems.
 
 ## Problem Statement
+
+**Current Issue:** Frontend is making API requests to frontend domains instead of backend domains, causing authentication and asset operation failures.
 
 **Previous Issue:** Frontend was pushing directly to main branch, causing immediate deployment to all environments without proper testing through development and staging phases.
 
 **User Feedback:** "As a best practice, you should be pushing to development for testing before pushing onto staging and production. That's the purpose of the three-tier environment."
 
-**Solution:** Implemented proper three-tier promotion workflow with branch-based deployments and approval gates.
+**Solution:** Implemented proper three-tier promotion workflow with branch-based deployments and approval gates. **CRITICAL**: Now need to fix API routing configuration.
 
 ## Frontend Three-Tier Architecture
 
 ### **Environment Structure**
 
-| Environment | Branch | URL | Backend URL | Purpose |
-|-------------|--------|-----|-------------|---------|
-| **Development** | `development` | `https://nna-registry-frontend-dev.vercel.app` | `https://nna-registry-service-dev-297923701246.us-central1.run.app` | Active development and integration |
-| **Staging** | `staging` | `https://nna-registry-frontend-stg.vercel.app` | `https://nna-registry-service-staging-297923701246.us-central1.run.app` | Pre-production validation and QA |
-| **Production** | `main` | `https://nna-registry-frontend.vercel.app` | `https://nna-registry-service-297923701246.us-central1.run.app` | Live production environment |
+| Environment | Branch | URL | Backend URL | Purpose | Status |
+|-------------|--------|-----|-------------|---------|--------|
+| **Development** | `development` | `https://nna-registry-frontend-dev.vercel.app` | `https://registry.dev.reviz.dev` | Active development and integration | 🔧 **API Routing Issue** |
+| **Staging** | `staging` | `https://nna-registry-frontend-stg.vercel.app` | `https://registry.stg.reviz.dev` | Pre-production validation and QA | ⏳ **Pending Fix** |
+| **Production** | `main` | `https://nna-registry-frontend.vercel.app` | `https://registry.reviz.dev` | Live production environment | ⏳ **Pending Fix** |
+
+### **⚠️ CRITICAL: API Routing Issue**
+
+**Current Problem:**
+```
+✅ Environment Detection: https://registry.dev.reviz.dev
+❌ API Requests: https://nna-registry-frontend-dev.vercel.app/api/auth/login
+```
+
+**Required Fix:**
+```
+✅ Environment Detection: https://registry.dev.reviz.dev
+✅ API Requests: https://registry.dev.reviz.dev/api/auth/login
+```
 
 ### **Promotion Flow**
 
@@ -35,6 +51,8 @@ Feature Development → Development → Staging → Production
    feature/* branch → development → staging → main
         ↓                ↓           ↓          ↓
     Local Testing    → Dev Deploy → Stg Deploy → Prod Deploy
+        ↓                ↓           ↓          ↓
+   API Routing Fix → Integration → Validation → Production
 ```
 
 ## Implementation Details
@@ -49,6 +67,7 @@ Deployment: Automatic
 Health Checks: Basic
 Approval Required: None
 Purpose: Continuous integration for active development
+Status: 🔧 Needs API routing fix
 ```
 
 #### **Staging Workflow** (`ci-cd-stg.yml`)
@@ -59,6 +78,7 @@ Deployment: Automatic after tests pass
 Health Checks: Extended backend connectivity tests
 Approval Required: Manual approval gate for production promotion
 Purpose: Pre-production validation and QA testing
+Status: ⏳ Waiting for development fix
 ```
 
 #### **Production Workflow** (`ci-cd-prod.yml`)
@@ -69,6 +89,7 @@ Deployment: Requires manual approval
 Health Checks: Comprehensive security audit + load testing
 Approval Required: Production environment protection
 Purpose: Live production deployment with enhanced safety
+Status: ⏳ Waiting for staging validation
 ```
 
 ### **2. Branch Protection Rules**
@@ -106,11 +127,11 @@ Purpose: Live production deployment with enhanced safety
 **Recommendation:** Backend should implement parallel three-tier strategy to ensure environment consistency.
 
 #### **Environment Alignment:**
-| Frontend Environment | Backend Environment | Synchronization |
-|---------------------|-------------------|-----------------|
-| `development` branch | `dev` branch | Automatic deployment |
-| `staging` branch | `staging` branch | Coordinated promotion |
-| `main` branch | `main` branch | Synchronized release |
+| Frontend Environment | Backend Environment | Synchronization | Status |
+|---------------------|-------------------|-----------------|--------|
+| `development` branch | `dev` branch | Automatic deployment | 🔧 **API Routing Issue** |
+| `staging` branch | `staging` branch | Coordinated promotion | ⏳ **Pending** |
+| `main` branch | `main` branch | Synchronized release | ⏳ **Pending** |
 
 #### **Release Coordination:**
 1. **Development Phase:** Independent development on respective `development`/`dev` branches
@@ -126,10 +147,10 @@ backend/dev → backend/staging → backend/main
    Dev API     Staging API    Production API
 ```
 
-#### **Environment URLs (Current):**
-- **Development:** `https://nna-registry-service-dev-297923701246.us-central1.run.app`
-- **Staging:** `https://nna-registry-service-staging-297923701246.us-central1.run.app`  
-- **Production:** `https://nna-registry-service-297923701246.us-central1.run.app`
+#### **Environment URLs (Current - CORRECTED):**
+- **Development:** `https://registry.dev.reviz.dev` ✅
+- **Staging:** `https://registry.stg.reviz.dev` ⏳
+- **Production:** `https://registry.reviz.dev` ⏳
 
 #### **CI/CD Workflow Recommendations:**
 1. **Development CI/CD:** Automatic deployment on push to `dev` branch
@@ -142,18 +163,21 @@ backend/dev → backend/staging → backend/main
 1. **Frontend & Backend:** Independent development on `development`/`dev` branches
 2. **Automatic Deployment:** Both systems deploy automatically to development environment
 3. **Integration Testing:** Continuous testing between frontend-dev and backend-dev
+4. **Current Issue:** API routing preventing integration testing
 
 ### **Weekly Staging Promotion**
 1. **Coordination Meeting:** Frontend and backend teams align on promotion readiness
 2. **Synchronized PR Creation:** Both teams create PRs: `development`/`dev` → `staging`
 3. **Integration Testing:** Full frontend-backend integration testing on staging environment
 4. **QA Validation:** User acceptance testing on staging environment
+5. **Current Status:** Blocked by API routing issue
 
 ### **Release Production Deployment**
 1. **Release Planning:** Joint planning for production release
 2. **Pre-deployment Checklist:** Synchronized verification of staging environment health
 3. **Coordinated Promotion:** Simultaneous PRs: `staging` → `main` (both repositories)
 4. **Production Validation:** Joint health checks and rollback procedures if needed
+5. **Current Status:** Blocked by staging issues
 
 ## Security & Compliance
 
@@ -165,10 +189,10 @@ backend/dev → backend/staging → backend/main
 - ✅ Input validation and error sanitization
 
 ### **Backend Security Coordination Required**
-- ⏳ JWT token validation across environments
-- ⏳ CORS configuration for frontend environment URLs
+- ✅ JWT token validation across environments
+- ✅ CORS configuration for frontend environment URLs
 - ⏳ Rate limiting and abuse protection
-- ⏳ Environment-specific database isolation
+- ✅ Environment-specific database isolation
 - ⏳ Audit logging for deployment and access tracking
 
 ## Monitoring & Alerting
@@ -181,8 +205,8 @@ backend/dev → backend/staging → backend/main
 - ✅ User experience monitoring
 
 ### **Backend Monitoring Coordination**
-- ⏳ API endpoint health monitoring
-- ⏳ Database connection status tracking
+- ✅ API endpoint health monitoring
+- ✅ Database connection status tracking
 - ⏳ Performance metrics and alerting
 - ⏳ Error rate monitoring and alerting
 - ⏳ Joint frontend-backend health dashboard
@@ -209,24 +233,25 @@ backend/dev → backend/staging → backend/main
 
 ### **Release 1.2.0 Coordination**
 
-#### **Frontend Readiness:** ✅ **COMPLETE**
+#### **Frontend Readiness:** 🔧 **CRITICAL ISSUE**
 - Three-tier workflow implemented and tested
 - Async taxonomy sync ready for backend integration
 - Sort functionality fixes deployed and validated
 - Video thumbnail system production-ready
 - Settings system and UI improvements complete
+- **CRITICAL**: API routing configuration needs immediate fix
 
 #### **Backend Coordination Required:**
-- ⏳ Three-tier branch structure implementation
+- ✅ Three-tier branch structure implementation
 - ⏳ Async taxonomy sync endpoint implementation
 - ⏳ Coordinated staging and production promotion testing
 - ⏳ Joint release validation and health monitoring
 
 #### **Release Timeline Recommendation:**
-1. **Week 1:** Backend three-tier implementation
-2. **Week 2:** Async taxonomy sync backend endpoints
-3. **Week 3:** Coordinated staging testing and validation
-4. **Week 4:** Synchronized production release (Release 1.2.0)
+1. **Today:** Frontend API routing fix
+2. **Tomorrow:** Integration testing and staging deployment
+3. **Next Day:** Production deployment and validation
+4. **Next Week:** Phase 2B comprehensive testing
 
 ## Success Metrics
 
@@ -244,37 +269,54 @@ backend/dev → backend/staging → backend/main
 
 ## Immediate Actions Required
 
-### **Frontend Actions Complete:**
+### **Frontend Actions Required:**
+- 🔧 **URGENT**: Fix API service configuration to use `getBackendUrl()`
+- 🔧 **URGENT**: Update `authService.ts` and `assetService.ts`
+- 🔧 **URGENT**: Deploy fix to development environment
+- 🔧 **URGENT**: Test integration with backend
+- ⏳ **NEXT**: Deploy fix to staging environment
+- ⏳ **NEXT**: Deploy fix to production environment
+
+### **Backend Actions Complete:**
 - ✅ Three-tier CI/CD workflows implemented
-- ✅ Branch protection rules configured
-- ✅ Environment health monitoring active
-- ✅ Documentation and coordination materials created
+- ✅ Environment-specific configurations active
+- ✅ Health monitoring and logging operational
+- ✅ Database and storage isolation working
+- ✅ CORS configuration properly set up
 
-### **Backend Actions Required:**
-1. **Implement Three-Tier Branch Structure:**
-   - Create `dev` and `staging` branches
-   - Set up branch protection rules
-   - Configure CI/CD workflows for each environment
+### **Joint Actions Required:**
+- 🔧 **URGENT**: Frontend-backend integration testing
+- ⏳ **NEXT**: Staging environment validation
+- ⏳ **NEXT**: Production environment validation
+- ⏳ **NEXT**: Phase 2B feature testing
 
-2. **Environment Coordination:**
-   - Verify backend environment URLs are properly configured
-   - Ensure database isolation between environments
-   - Configure CORS for frontend environment URLs
+## Recovery Plan
 
-3. **Testing & Validation:**
-   - Set up integration testing between environments
-   - Implement health check endpoints for monitoring
-   - Coordinate joint testing procedures
+### **Phase 1: Critical Fix** (Today)
+1. **Frontend Team**: Fix API routing configuration
+2. **Frontend Team**: Deploy fix to development
+3. **Both Teams**: Test integration with provided credentials
+4. **Both Teams**: Verify API requests in browser dev tools
 
-## Contact & Next Steps
+### **Phase 2: Staging Deployment** (Tomorrow)
+1. **Frontend Team**: Deploy fix to staging
+2. **Both Teams**: Test staging integration
+3. **Both Teams**: Validate cross-environment functionality
 
-**Frontend Status:** ✅ **THREE-TIER WORKFLOW IMPLEMENTED**  
-**Backend Coordination:** ⏳ **REQUIRED FOR RELEASE 1.2.0**
+### **Phase 3: Production Deployment** (Next Day)
+1. **Frontend Team**: Deploy fix to production
+2. **Both Teams**: Test production integration
+3. **Both Teams**: Verify full system functionality
 
-**For Coordination:**
-- **Technical Details:** Review `/docs/architecture/THREE_ENVIRONMENT_PROMOTION_FLOW.md`
-- **Implementation Status:** See `THREE_TIER_WORKFLOW_IMPLEMENTATION.md`
-- **Joint Planning:** Schedule coordination meeting for Release 1.2.0
-- **Testing Coordination:** Plan joint frontend-backend validation procedures
+### **Phase 4: Feature Testing** (Next Week)
+1. **Both Teams**: Test Phase 2B features
+2. **Both Teams**: Test Songs layer asset creation
+3. **Both Teams**: Test creator description preservation
+4. **Both Teams**: Test album art and AI metadata
 
-**Ready for backend team alignment and synchronized Release 1.2.0 deployment.**
+---
+
+**Document Version**: 2.0  
+**Last Updated**: July 18, 2025  
+**Status**: 🔧 Critical integration recovery required  
+**Priority**: URGENT - Frontend API routing fix needed

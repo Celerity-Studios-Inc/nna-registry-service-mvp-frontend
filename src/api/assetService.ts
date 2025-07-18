@@ -236,40 +236,12 @@ class AssetService {
       }
 
 
-      // Get auth token
-      const authToken = localStorage.getItem('accessToken') || '';
+      // Make the API request using the configured axios instance
+      const response = await api.get(`/assets?${queryParams.toString()}`);
 
-      // Make the API request - use proxy for GET requests (no CORS issues)
-      const response = await fetch(`/api/assets?${queryParams.toString()}`, {
-        headers: {
-          Authorization: `Bearer ${authToken}`,
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        // Check if this is a 500 error that might indicate unsupported parameters
-        if (response.status === 500) {
-          const errorText = await response.text();
-          
-          // Return empty result to trigger fallback in calling code
-          return {
-            data: [],
-            pagination: {
-              total: 0,
-              page: 1,
-              limit: 10,
-              pages: 1,
-            },
-            error: '500_UNSUPPORTED_PARAMS'
-          } as PaginatedResponse<Asset> & { error: string };
-        }
-        
-        throw new Error(`Failed to fetch assets: ${response.statusText}`);
-      }
-
-      // Parse the response
-      const responseData = await response.json();
+      // With axios, successful responses are in response.data
+      // Axios will throw an error for failed requests, so we don't need to check response.ok
+      const responseData = response.data;
 
       let assets: Asset[] = [];
       let pagination = {
@@ -340,16 +312,28 @@ class AssetService {
       };
     } catch (error) {
       console.error('Error fetching assets:', error);
-      // Return empty result set rather than mock data
-      return {
-        data: [],
-        pagination: {
-          total: 0,
-          page: 1,
-          limit: 10,
-          pages: 0,
-        },
-      };
+      
+      // Handle axios errors more specifically
+      if (error && typeof error === 'object' && 'response' in error) {
+        const axiosError = error as any;
+        if (axiosError.response?.status === 401) {
+          throw new Error('Authentication required');
+        } else if (axiosError.response?.status === 500) {
+          // Return empty result for 500 errors to trigger fallback
+          return {
+            data: [],
+            pagination: {
+              total: 0,
+              page: 1,
+              limit: 10,
+              pages: 0,
+            },
+          };
+        }
+      }
+      
+      // For other errors, throw to be caught by calling code
+      throw new Error('Failed to fetch assets: ' + (error instanceof Error ? error.message : 'Unknown error'));
     }
   }
 
