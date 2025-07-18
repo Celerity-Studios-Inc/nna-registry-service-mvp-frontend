@@ -256,19 +256,12 @@ export function getUploadEndpoint(fileSize: number, environment?: EnvironmentCon
   const threshold = parseFloat(process.env.REACT_APP_SMART_ROUTING_THRESHOLD || '4194304'); // 4MB default
   const useDirect = fileSize > threshold;
   
-  if (useDirect) {
-    return {
-      url: `${config.backendUrl}/api/assets`,
-      useDirect: true,
-      reason: `Large file (${(fileSize / 1024 / 1024).toFixed(2)}MB) routed directly to backend`,
-    };
-  } else {
-    return {
-      url: '/api/assets', // Proxy route
-      useDirect: false,
-      reason: `Small file (${(fileSize / 1024 / 1024).toFixed(2)}MB) routed via proxy`,
-    };
-  }
+  // Always use direct backend URL now that integration is working
+  return {
+    url: `${config.backendUrl}/api/assets`,
+    useDirect: true,
+    reason: `File (${(fileSize / 1024 / 1024).toFixed(2)}MB) routed directly to backend`,
+  };
 }
 
 /**
