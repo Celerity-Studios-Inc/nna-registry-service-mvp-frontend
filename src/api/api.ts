@@ -20,16 +20,16 @@ const envConfig = getEnvironmentConfig();
 
 // Configuration for API requests
 export const apiConfig = {
-  // Use the proxy approach to avoid CORS issues
-  // This ensures requests go through Vercel's proxy defined in vercel.json
-  baseURL: '/api',
+  // Use the detected backend URL directly instead of proxy
+  // This ensures requests go directly to the correct backend
+  baseURL: `${envConfig.backendUrl}/api`,
 
   // Explicitly set mock mode to false for production
   useMockApi: false,
 
   // Define debugging information for the API
   debug: {
-    version: '1.4',
+    version: '1.5',
     timestamp: new Date().toISOString(),
     environment: envConfig.name,
     backendUrl: envConfig.backendUrl,
@@ -55,7 +55,7 @@ const api = axios.create({
     'Content-Type': 'application/json',
   },
   // Add withCredentials to handle CORS with credentials properly
-  withCredentials: false,
+  withCredentials: true,
 });
 
 

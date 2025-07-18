@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { apiConfig } from './api';
+import { apiConfig } from '../../api/api';
 import {
   Asset,
   AssetSearchResponse,
@@ -11,7 +11,24 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  withCredentials: true,
 });
+
+// Add request interceptor to include auth token
+api.interceptors.request.use(
+  config => {
+    const accessToken = localStorage.getItem('accessToken');
+    const testToken = localStorage.getItem('testToken');
+    const token = accessToken || testToken;
+    
+    if (token) {
+      const cleanToken = token.replace(/\s+/g, '');
+      config.headers.Authorization = `Bearer ${cleanToken}`;
+    }
+    return config;
+  },
+  error => Promise.reject(error)
+);
 
 export const assetService = {
   async createAsset(asset: Omit<Asset, 'id'>): Promise<Asset> {
