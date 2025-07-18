@@ -4,9 +4,9 @@
 
 This document provides the definitive reference for all environment configurations in the NNA Registry Service. It includes canonical domain mappings, environment-specific variables, and verification procedures to ensure proper isolation between development, staging, and production environments.
 
-**Last Updated**: July 5, 2025  
-**Version**: 1.0  
-**Status**: ✅ **Canonical Configuration Established**
+**Last Updated**: July 18, 2025  
+**Version**: 2.0  
+**Status**: ✅ **Canonical Configuration Established - Frontend Integration Recovery Required**
 
 ---
 
@@ -14,11 +14,27 @@ This document provides the definitive reference for all environment configuratio
 
 ### **Complete Environment Configuration Table**
 
-| Environment | Frontend Domain                              | Backend Domain                | Database Name                  | GCS Bucket Name             | CORS Allowed Origin                        | MongoDB URI                                                                 |
-|-------------|----------------------------------------------|-------------------------------|-------------------------------|-----------------------------|--------------------------------------------|-----------------------------------------------------------------------------|
-| **Development** | `https://nna-registry-frontend-dev.vercel.app`       | `https://registry.dev.reviz.dev`      | `nna-registry-service-dev`    | `nna_registry_assets_dev`   | `https://nna-registry-frontend-dev.vercel.app` | `mongodb+srv://admin:PTtQFc0N9gftuRIX@registryservice.xhmyito.mongodb.net/nna-registry-service-dev?retryWrites=true&w=majority&appName=registryService` |
-| **Staging**     | `https://nna-registry-frontend-stg.vercel.app`       | `https://registry.stg.reviz.dev`      | `nna-registry-service-staging`| `nna_registry_assets_stg`   | `https://nna-registry-frontend-stg.vercel.app` | `mongodb+srv://admin:PTtQFc0N9gftuRIX@registryservice.xhmyito.mongodb.net/nna-registry-service-staging?retryWrites=true&w=majority&appName=registryService` |
-| **Production**  | `https://nna-registry-frontend.vercel.app`           | `https://registry.reviz.dev`          | `nna-registry-service-production`   | `nna_registry_assets_prod`  | `https://nna-registry-frontend.vercel.app`      | `mongodb+srv://admin:PTtQFc0N9gftuRIX@registryservice.xhmyito.mongodb.net/nna-registry-service-production?retryWrites=true&w=majority&appName=registryService` |
+| Environment     | Frontend Domain                                | Backend Domain                   | Database Name                     | GCS Bucket Name            | CORS Allowed Origin                            | MongoDB URI                                                                                                                                                    |
+| --------------- | ---------------------------------------------- | -------------------------------- | --------------------------------- | -------------------------- | ---------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Development** | `https://nna-registry-frontend-dev.vercel.app` | `https://registry.dev.reviz.dev` | `nna-registry-service-dev`        | `nna_registry_assets_dev`  | `https://nna-registry-frontend-dev.vercel.app` | `mongodb+srv://admin:PTtQFc0N9gftuRIX@registryservice.xhmyito.mongodb.net/nna-registry-service-dev?retryWrites=true&w=majority&appName=registryService`        |
+| **Staging**     | `https://nna-registry-frontend-stg.vercel.app` | `https://registry.stg.reviz.dev` | `nna-registry-service-staging`    | `nna_registry_assets_stg`  | `https://nna-registry-frontend-stg.vercel.app` | `mongodb+srv://admin:PTtQFc0N9gftuRIX@registryservice.xhmyito.mongodb.net/nna-registry-service-staging?retryWrites=true&w=majority&appName=registryService`    |
+| **Production**  | `https://nna-registry-frontend.vercel.app`     | `https://registry.reviz.dev`     | `nna-registry-service-production` | `nna_registry_assets_prod` | `https://nna-registry-frontend.vercel.app`     | `mongodb+srv://admin:PTtQFc0N9gftuRIX@registryservice.xhmyito.mongodb.net/nna-registry-service-production?retryWrites=true&w=majority&appName=registryService` |
+
+### **⚠️ CRITICAL: Frontend Integration Issue**
+
+**Current Problem**: Frontend is making API requests to frontend domains instead of backend domains.
+
+**Incorrect (Current)**:
+```
+❌ API Requests: https://nna-registry-frontend-dev.vercel.app/api/auth/login
+```
+
+**Correct (Required)**:
+```
+✅ API Requests: https://registry.dev.reviz.dev/api/auth/login
+```
+
+**Frontend Team Action Required**: Update API service configuration to use detected backend URLs.
 
 ---
 
@@ -26,20 +42,22 @@ This document provides the definitive reference for all environment configuratio
 
 ### **Service Names and Regions**
 
-| Environment | Cloud Run Service Name | Region | Custom Domain |
-|-------------|----------------------|---------|---------------|
-| **Development** | `nna-registry-service-dev` | `us-central1` | `registry.dev.reviz.dev` |
-| **Staging** | `nna-registry-service-staging` | `us-central1` | `registry.stg.reviz.dev` |
-| **Production** | `nna-registry-service` | `us-central1` | `registry.reviz.dev` |
+| Environment     | Cloud Run Service Name         | Region        | Custom Domain            | Status |
+| --------------- | ------------------------------ | ------------- | ------------------------ | ------ |
+| **Development** | `nna-registry-service-dev`     | `us-central1` | `registry.dev.reviz.dev` | ✅ Active |
+| **Staging**     | `nna-registry-service-staging` | `us-central1` | `registry.stg.reviz.dev` | ⏳ Pending |
+| **Production**  | `nna-registry-service`         | `us-central1` | `registry.reviz.dev`     | ⏳ Pending |
 
 ### **Environment Variable Mappings**
 
 Each Cloud Run service maps environment variables to Google Cloud Secret Manager secrets:
 
 #### **Development Environment Variables**
+
 ```yaml
 Environment Variables:
   NODE_ENV: "development"
+  ENVIRONMENT: "development"
   MONGODB_URI: "mongodb-uri-dev" (secret)
   GCP_BUCKET_NAME: "GCP_BUCKET_NAME_DEV" (secret)
   JWT_SECRET: "JWT_SECRET_DEV" (secret)
@@ -47,9 +65,11 @@ Environment Variables:
 ```
 
 #### **Staging Environment Variables**
+
 ```yaml
 Environment Variables:
   NODE_ENV: "staging"
+  ENVIRONMENT: "staging"
   MONGODB_URI: "mongodb-uri-stg" (secret)
   GCP_BUCKET_NAME: "GCP_BUCKET_NAME_STG" (secret)
   JWT_SECRET: "JWT_SECRET_STG" (secret)
@@ -57,9 +77,11 @@ Environment Variables:
 ```
 
 #### **Production Environment Variables**
+
 ```yaml
 Environment Variables:
   NODE_ENV: "production"
+  ENVIRONMENT: "production"
   MONGODB_URI: "mongodb-uri" (secret)
   GCP_BUCKET_NAME: "GCP_BUCKET_NAME" (secret)
   JWT_SECRET: "JWT_SECRET" (secret)
@@ -73,28 +95,31 @@ Environment Variables:
 ### **Secret Names and Values**
 
 #### **Development Secrets**
-| Secret Name | Secret Value | Purpose |
-|-------------|--------------|---------|
-| `mongodb-uri-dev` | `mongodb+srv://admin:PTtQFc0N9gftuRIX@registryservice.xhmyito.mongodb.net/nna-registry-service-dev?retryWrites=true&w=majority&appName=registryService` | Development database connection |
-| `GCP_BUCKET_NAME_DEV` | `nna_registry_assets_dev` | Development GCS bucket |
-| `JWT_SECRET_DEV` | `dev-jwt-secret-key` | Development JWT signing |
-| `SENTRY_DSN_DEV` | `https://dev-sentry-dsn@sentry.io/project` | Development error tracking |
+
+| Secret Name           | Secret Value                                                                                                                                            | Purpose                         |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------- |
+| `mongodb-uri-dev`     | `mongodb+srv://admin:PTtQFc0N9gftuRIX@registryservice.xhmyito.mongodb.net/nna-registry-service-dev?retryWrites=true&w=majority&appName=registryService` | Development database connection |
+| `GCP_BUCKET_NAME_DEV` | `nna_registry_assets_dev`                                                                                                                               | Development GCS bucket          |
+| `JWT_SECRET_DEV`      | `dev-jwt-secret-key`                                                                                                                                    | Development JWT signing         |
+| `SENTRY_DSN_DEV`      | `https://dev-sentry-dsn@sentry.io/project`                                                                                                              | Development error tracking      |
 
 #### **Staging Secrets**
-| Secret Name | Secret Value | Purpose |
-|-------------|--------------|---------|
-| `mongodb-uri-stg` | `mongodb+srv://admin:PTtQFc0N9gftuRIX@registryservice.xhmyito.mongodb.net/nna-registry-service-staging?retryWrites=true&w=majority&appName=registryService` | Staging database connection |
-| `GCP_BUCKET_NAME_STG` | `nna_registry_assets_stg` | Staging GCS bucket |
-| `JWT_SECRET_STG` | `stg-jwt-secret-key` | Staging JWT signing |
-| `SENTRY_DSN_STG` | `https://stg-sentry-dsn@sentry.io/project` | Staging error tracking |
+
+| Secret Name           | Secret Value                                                                                                                                                | Purpose                     |
+| --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------- |
+| `mongodb-uri-stg`     | `mongodb+srv://admin:PTtQFc0N9gftuRIX@registryservice.xhmyito.mongodb.net/nna-registry-service-staging?retryWrites=true&w=majority&appName=registryService` | Staging database connection |
+| `GCP_BUCKET_NAME_STG` | `nna_registry_assets_stg`                                                                                                                                   | Staging GCS bucket          |
+| `JWT_SECRET_STG`      | `stg-jwt-secret-key`                                                                                                                                        | Staging JWT signing         |
+| `SENTRY_DSN_STG`      | `https://stg-sentry-dsn@sentry.io/project`                                                                                                                  | Staging error tracking      |
 
 #### **Production Secrets**
-| Secret Name | Secret Value | Purpose |
-|-------------|--------------|---------|
-| `mongodb-uri` | `mongodb+srv://admin:PTtQFc0N9gftuRIX@registryservice.xhmyito.mongodb.net/nna-registry-service-production?retryWrites=true&w=majority&appName=registryService` | Production database connection |
-| `GCP_BUCKET_NAME` | `nna_registry_assets_prod` | Production GCS bucket |
-| `JWT_SECRET` | `prod-jwt-secret-key` | Production JWT signing |
-| `SENTRY_DSN` | `https://prod-sentry-dsn@sentry.io/project` | Production error tracking |
+
+| Secret Name       | Secret Value                                                                                                                                                   | Purpose                        |
+| ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------ |
+| `mongodb-uri`     | `mongodb+srv://admin:PTtQFc0N9gftuRIX@registryservice.xhmyito.mongodb.net/nna-registry-service-production?retryWrites=true&w=majority&appName=registryService` | Production database connection |
+| `GCP_BUCKET_NAME` | `nna_registry_assets_prod`                                                                                                                                     | Production GCS bucket          |
+| `JWT_SECRET`      | `prod-jwt-secret-key`                                                                                                                                          | Production JWT signing         |
+| `SENTRY_DSN`      | `https://prod-sentry-dsn@sentry.io/project`                                                                                                                    | Production error tracking      |
 
 ---
 
@@ -103,26 +128,25 @@ Environment Variables:
 ### **Environment-Specific CORS Policies**
 
 #### **Development CORS**
+
 ```typescript
 allowedOrigins: [
   'https://nna-registry-frontend-dev.vercel.app',
-  'http://localhost:3000',  // For local development
-  'http://localhost:3001'   // Alternative local port
-]
+  'http://localhost:3000', // For local development
+  'http://localhost:3001', // Alternative local port
+];
 ```
 
 #### **Staging CORS**
+
 ```typescript
-allowedOrigins: [
-  'https://nna-registry-frontend-stg.vercel.app'
-]
+allowedOrigins: ['https://nna-registry-frontend-stg.vercel.app'];
 ```
 
 #### **Production CORS**
+
 ```typescript
-allowedOrigins: [
-  'https://nna-registry-frontend.vercel.app'
-]
+allowedOrigins: ['https://nna-registry-frontend.vercel.app'];
 ```
 
 ---
@@ -132,14 +156,16 @@ allowedOrigins: [
 ### **GitHub Actions Workflows**
 
 #### **Development Deployment** (`ci-cd-dev.yml`)
+
 ```yaml
-Triggers: Push to `taxonomy-dev` branch
+Triggers: Push to `dev` branch
 Target: `nna-registry-service-dev` Cloud Run service
 Environment: Development
 Secrets: All `-dev` suffixed secrets
 ```
 
 #### **Staging Deployment** (`ci-cd-stg.yml`)
+
 ```yaml
 Triggers: Push to `staging` branch
 Target: `nna-registry-service-staging` Cloud Run service
@@ -148,6 +174,7 @@ Secrets: All `-stg` suffixed secrets
 ```
 
 #### **Production Deployment** (`ci-cd.yml`)
+
 ```yaml
 Triggers: Push to `main` branch (with approval)
 Target: `nna-registry-service` Cloud Run service
@@ -160,6 +187,7 @@ Secrets: All production secrets (no suffix)
 ## 🔍 **Environment Detection Logic**
 
 ### **Backend Environment Detection**
+
 ```typescript
 // Primary: Hostname-based detection
 const hostname = req.hostname;
@@ -185,6 +213,7 @@ return 'production';
 ```
 
 ### **Frontend Environment Detection**
+
 ```typescript
 // Primary: Hostname-based detection
 const hostname = window.location.hostname;
@@ -209,6 +238,24 @@ const nodeEnv = process.env.NODE_ENV;
 return 'production';
 ```
 
+### **Frontend Backend URL Resolution**
+
+```typescript
+// ✅ CORRECT: Use detected environment to get backend URL
+const getBackendUrl = () => {
+  const environment = detectEnvironment();
+  switch (environment) {
+    case 'development': return 'https://registry.dev.reviz.dev';
+    case 'staging': return 'https://registry.stg.reviz.dev';
+    case 'production': return 'https://registry.reviz.dev';
+    default: return 'https://registry.reviz.dev';
+  }
+};
+
+// ❌ INCORRECT: Hardcoded frontend domain
+const API_BASE_URL = 'https://nna-registry-frontend-dev.vercel.app';
+```
+
 ---
 
 ## 📊 **Health Endpoint Responses**
@@ -216,27 +263,35 @@ return 'production';
 ### **Expected Health Endpoint Format**
 
 #### **Development Health Response**
+
 ```json
 {
   "status": "healthy",
-  "timestamp": "2025-07-05T03:27:40.749377Z",
+  "timestamp": "2025-07-18T18:39:21.253Z",
   "version": "1.0.1",
   "environment": "development",
   "detection": {
     "method": "hostname",
-    "hostname": "registry.dev.reviz.dev"
+    "hostname": "registry.dev.reviz.dev",
+    "nodeEnv": "development",
+    "environmentVar": "development",
+    "gcpBucketName": "nna_registry_assets_dev",
+    "mongodbDatabase": "nna-registry-service-dev"
   },
   "config": {
     "database": {
       "connected": true,
-      "name": "nna-registry-service-dev"
+      "name": "nna-registry-development"
     },
     "storage": {
       "provider": "gcp",
-      "bucket": "nna_registry_assets_dev"
+      "bucket": "nna-registry-development-storage"
     },
     "cors": {
-      "allowedOrigins": ["https://nna-registry-frontend-dev.vercel.app"]
+      "allowedOrigins": [
+        "http://localhost:3001",
+        "https://nna-registry-frontend-dev.vercel.app"
+      ]
     },
     "logging": {
       "level": "debug"
@@ -246,10 +301,11 @@ return 'production';
 ```
 
 #### **Staging Health Response**
+
 ```json
 {
   "status": "healthy",
-  "timestamp": "2025-07-05T03:27:40.749377Z",
+  "timestamp": "2025-07-18T18:39:21.253Z",
   "version": "1.0.1",
   "environment": "staging",
   "detection": {
@@ -267,19 +323,17 @@ return 'production';
     },
     "cors": {
       "allowedOrigins": ["https://nna-registry-frontend-stg.vercel.app"]
-    },
-    "logging": {
-      "level": "info"
     }
   }
 }
 ```
 
 #### **Production Health Response**
+
 ```json
 {
   "status": "healthy",
-  "timestamp": "2025-07-05T03:27:40.749377Z",
+  "timestamp": "2025-07-18T18:39:21.253Z",
   "version": "1.0.1",
   "environment": "production",
   "detection": {
@@ -297,9 +351,6 @@ return 'production';
     },
     "cors": {
       "allowedOrigins": ["https://nna-registry-frontend.vercel.app"]
-    },
-    "logging": {
-      "level": "warn"
     }
   }
 }
@@ -307,102 +358,185 @@ return 'production';
 
 ---
 
-## 🛠️ **Verification Procedures**
+## 🔧 **API Endpoints Reference**
 
-### **Automated Verification Script**
+### **Canonical API Endpoints**
 
-Use the provided verification script to check all environments:
+All API endpoints follow the pattern: `{BACKEND_DOMAIN}/api/{endpoint}`
+
+#### **Authentication Endpoints**
+
+| Endpoint | Method | Description | Example URL |
+|----------|--------|-------------|-------------|
+| `/api/auth/register` | POST | User registration | `https://registry.dev.reviz.dev/api/auth/register` |
+| `/api/auth/login` | POST | User login | `https://registry.dev.reviz.dev/api/auth/login` |
+| `/api/auth/profile` | GET | Get user profile | `https://registry.dev.reviz.dev/api/auth/profile` |
+
+#### **Asset Endpoints**
+
+| Endpoint | Method | Description | Example URL |
+|----------|--------|-------------|-------------|
+| `/api/assets` | GET | List assets | `https://registry.dev.reviz.dev/api/assets` |
+| `/api/assets` | POST | Create asset | `https://registry.dev.reviz.dev/api/assets` |
+| `/api/assets/{name}` | GET | Get asset by name | `https://registry.dev.reviz.dev/api/assets/asset-name` |
+| `/api/assets/{name}` | PUT | Update asset | `https://registry.dev.reviz.dev/api/assets/asset-name` |
+| `/api/assets/{name}` | DELETE | Delete asset | `https://registry.dev.reviz.dev/api/assets/asset-name` |
+
+#### **Taxonomy Endpoints**
+
+| Endpoint | Method | Description | Example URL |
+|----------|--------|-------------|-------------|
+| `/api/taxonomy/layers` | GET | List all layers | `https://registry.dev.reviz.dev/api/taxonomy/layers` |
+| `/api/taxonomy/layers/{layer}/categories` | GET | Get layer categories | `https://registry.dev.reviz.dev/api/taxonomy/layers/G/categories` |
+| `/api/taxonomy/layers/{layer}/categories/{category}/subcategories` | GET | Get subcategories | `https://registry.dev.reviz.dev/api/taxonomy/layers/G/Hip_Hop/subcategories` |
+
+#### **Health Endpoints**
+
+| Endpoint | Method | Description | Example URL |
+|----------|--------|-------------|-------------|
+| `/api/health` | GET | Service health | `https://registry.dev.reviz.dev/api/health` |
+| `/api/taxonomy/health` | GET | Taxonomy health | `https://registry.dev.reviz.dev/api/taxonomy/health` |
+
+#### **Documentation Endpoints**
+
+| Endpoint | Method | Description | Example URL |
+|----------|--------|-------------|-------------|
+| `/api/docs` | GET | Swagger documentation | `https://registry.dev.reviz.dev/api/docs` |
+
+---
+
+## 🧪 **Testing and Verification**
+
+### **Environment Health Checks**
+
+#### **Development Environment Test**
 
 ```bash
-# Verify all environments
-./scripts/verify-environments.sh all
+# Health check
+curl https://registry.dev.reviz.dev/api/health
 
-# Verify specific environment
-./scripts/verify-environments.sh dev
-./scripts/verify-environments.sh staging
-./scripts/verify-environments.sh prod
+# Authentication test
+curl -X POST https://registry.dev.reviz.dev/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"ajay@testuser.com","password":"password123"}'
+
+# Taxonomy test
+curl https://registry.dev.reviz.dev/api/taxonomy/layers
 ```
 
-### **Manual Verification Checklist**
+#### **Staging Environment Test**
 
-#### **Pre-Deployment Checks**
-- [ ] Verify Cloud Run service names match expected pattern
-- [ ] Confirm secret mappings are correct for target environment
-- [ ] Validate environment variables are properly set
-- [ ] Check CORS configuration allows correct frontend domain
+```bash
+# Health check
+curl https://registry.stg.reviz.dev/api/health
 
-#### **Post-Deployment Checks**
-- [ ] Health endpoint returns correct environment information
-- [ ] Database connection uses correct database name
-- [ ] GCS bucket name matches expected value
-- [ ] CORS preflight requests succeed from frontend domain
-- [ ] Environment detection logic works correctly
+# Authentication test
+curl -X POST https://registry.stg.reviz.dev/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"test@example.com","password":"password123"}'
 
-#### **Cross-Environment Isolation Checks**
-- [ ] Assets created in dev appear only in dev database/bucket
-- [ ] Assets created in staging appear only in staging database/bucket
-- [ ] Assets created in production appear only in production database/bucket
-- [ ] No cross-environment data leakage occurs
+# Taxonomy test
+curl https://registry.stg.reviz.dev/api/taxonomy/layers
+```
 
----
+#### **Production Environment Test**
 
-## 🚨 **Common Configuration Issues**
+```bash
+# Health check
+curl https://registry.reviz.dev/api/health
 
-### **Issue 1: Wrong GCS Bucket Name**
-**Symptoms**: Assets show production bucket URL in development environment
-**Cause**: `GCP_BUCKET_NAME` secret mapped to wrong value
-**Solution**: Update Cloud Run environment variable mapping to correct secret
+# Authentication test
+curl -X POST https://registry.reviz.dev/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"test@example.com","password":"password123"}'
 
-### **Issue 2: Wrong Database Connection**
-**Symptoms**: Assets appear in wrong database
-**Cause**: `MONGODB_URI` secret mapped to wrong value
-**Solution**: Update Cloud Run environment variable mapping to correct secret
+# Taxonomy test
+curl https://registry.reviz.dev/api/taxonomy/layers
+```
 
-### **Issue 3: CORS Errors**
-**Symptoms**: Frontend cannot communicate with backend
-**Cause**: CORS configuration doesn't allow frontend domain
-**Solution**: Update CORS allowed origins in backend configuration
+### **Frontend Integration Test**
 
-### **Issue 4: Environment Detection Failure**
-**Symptoms**: Health endpoint shows wrong environment
-**Cause**: Hostname detection logic or environment variables incorrect
-**Solution**: Verify hostname configuration and environment variable values
+#### **Environment Detection Test**
 
----
+```javascript
+// Test environment detection
+console.log('Environment:', detectEnvironment());
+console.log('Backend URL:', getBackendUrl());
+```
 
-## 📋 **Maintenance Procedures**
+#### **API Request Test**
 
-### **Adding New Environment**
-1. Create new Cloud Run service with appropriate name
-2. Create new secrets in Secret Manager with environment suffix
-3. Configure environment variables in Cloud Run service
-4. Update CORS configuration for new frontend domain
-5. Add new environment to verification script
-6. Update this documentation
-
-### **Updating Secret Values**
-1. Update secret value in Google Cloud Secret Manager
-2. Redeploy Cloud Run service to pick up new secret value
-3. Verify configuration using health endpoint
-4. Run verification script to confirm changes
-
-### **Troubleshooting Configuration**
-1. Run verification script to identify issues
-2. Check Cloud Run service configuration
-3. Verify secret values in Secret Manager
-4. Test health endpoint for runtime configuration
-5. Check CORS preflight requests
+```javascript
+// Test API request to correct backend
+const response = await fetch(`${getBackendUrl()}/api/health`);
+const data = await response.json();
+console.log('Health check:', data);
+```
 
 ---
 
-## 📚 **Related Documentation**
+## 🚨 **Common Issues and Solutions**
 
-- [CANONICAL_DOMAINS_INTEGRATION.md](../for-backend/CANONICAL_DOMAINS_INTEGRATION.md)
-- [THREE_ENVIRONMENT_STRATEGY.md](../for-backend/THREE_ENVIRONMENT_STRATEGY.md)
-- [CONSOLIDATED_DOMAIN_REQUEST.md](../for-backend/CONSOLIDATED_DOMAIN_REQUEST.md)
-- [THREE_ENVIRONMENT_STRATEGY_ALIGNMENT.md](../for-frontend/THREE_ENVIRONMENT_STRATEGY_ALIGNMENT.md)
-- [BACKEND_ARCHITECTURE_OVERVIEW.md](../for-frontend/BACKEND_ARCHITECTURE_OVERVIEW.md)
+### **Issue 1: Frontend Making Requests to Wrong Domain**
+
+**Problem**: Frontend making API requests to frontend domain instead of backend domain.
+
+**Symptoms**:
+- 401/404 errors in browser console
+- API requests going to `https://nna-registry-frontend-dev.vercel.app/api/...`
+- Login failures
+
+**Solution**: Update API service configuration to use `getBackendUrl()`.
+
+### **Issue 2: CORS Errors**
+
+**Problem**: CORS policy blocking requests from frontend to backend.
+
+**Symptoms**:
+- CORS errors in browser console
+- Preflight request failures
+
+**Solution**: Ensure backend CORS configuration includes correct frontend domain.
+
+### **Issue 3: Environment Detection Issues**
+
+**Problem**: Frontend not detecting correct environment.
+
+**Symptoms**:
+- Wrong backend URL being used
+- Incorrect environment variables
+
+**Solution**: Verify hostname-based detection logic and fallback mechanisms.
 
 ---
 
-**This document serves as the single source of truth for all environment configurations. Any changes to environment setup must be reflected here and verified using the provided verification script.** 
+## 📞 **Support and Troubleshooting**
+
+### **Backend Team Support**
+
+- **Health Monitoring**: All environments monitored via `/api/health`
+- **Logging**: Comprehensive logging with environment detection
+- **Error Tracking**: Sentry integration for error monitoring
+- **Database**: MongoDB Atlas with environment isolation
+
+### **Frontend Team Support**
+
+- **Environment Detection**: Hostname-based with fallback
+- **API Configuration**: Use `getBackendUrl()` for all API calls
+- **Error Handling**: Proper error boundaries and user feedback
+- **Testing**: Comprehensive testing across all environments
+
+### **Escalation Process**
+
+1. **Check Health Endpoints**: Verify backend status
+2. **Review Environment Detection**: Confirm correct environment
+3. **Test API Endpoints**: Verify endpoint accessibility
+4. **Check CORS Configuration**: Ensure proper cross-origin setup
+5. **Review Logs**: Check backend and frontend logs
+6. **Contact Team Lead**: Escalate if issue persists
+
+---
+
+**Last Updated**: July 18, 2025  
+**Version**: 2.0  
+**Status**: ✅ Canonical configuration established, frontend integration recovery in progress

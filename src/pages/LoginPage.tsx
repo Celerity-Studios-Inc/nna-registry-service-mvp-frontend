@@ -85,6 +85,25 @@ const Login: React.FC = () => {
             </Alert>
           )}
 
+          {process.env.NODE_ENV === 'development' && (
+            <Alert severity="info" sx={{ mb: 3 }}>
+              <strong>Development Mode:</strong> Use test credentials - Email: ajay@testuser.com, Password: password123
+              <br />
+              <Button 
+                size="small" 
+                sx={{ mt: 1 }} 
+                onClick={() => {
+                  localStorage.removeItem('accessToken');
+                  localStorage.removeItem('testToken');
+                  setError('');
+                  window.location.reload();
+                }}
+              >
+                Clear Cached Credentials
+              </Button>
+            </Alert>
+          )}
+
           <Box component="form" onSubmit={handleSubmit} noValidate>
             <TextField
               margin="normal"
@@ -95,6 +114,7 @@ const Login: React.FC = () => {
               name="email"
               autoComplete="email"
               autoFocus
+              placeholder="ajay@testuser.com"
               value={email}
               onChange={e => setEmail(e.target.value)}
             />
@@ -107,6 +127,7 @@ const Login: React.FC = () => {
               type="password"
               id="password"
               autoComplete="current-password"
+              placeholder="password123"
               value={password}
               onChange={e => setPassword(e.target.value)}
             />
