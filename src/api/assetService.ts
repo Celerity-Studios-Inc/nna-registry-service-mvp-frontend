@@ -1008,6 +1008,14 @@ class AssetService {
         console.log('📊 Routing reason:', uploadConfig.reason);
       }
 
+      // Debug authentication token
+      console.log('🔐 Auth Debug:', {
+        tokenExists: !!authToken,
+        tokenLength: authToken.length,
+        tokenPreview: authToken.substring(0, 10) + '...',
+        tokenType: authToken.startsWith('MOCK-') ? 'Mock' : 'Real'
+      });
+
       const response = await fetch(uploadConfig.url, {
         method: 'POST',
         headers: {
@@ -1019,6 +1027,12 @@ class AssetService {
 
 
       if (!response.ok) {
+        console.error('🚨 HTTP Response Error:', {
+          status: response.status,
+          statusText: response.statusText,
+          url: response.url
+        });
+        
         const errorText = await response.text();
         console.error('Asset creation failed:', errorText);
 
