@@ -1050,11 +1050,15 @@ class AssetService {
         
         clearTimeout(timeoutId);
         
-        // Log response headers for debugging
+        // Log response headers for debugging (TypeScript compatible)
         console.log('🔍 Response Headers:');
-        for (const [key, value] of response.headers.entries()) {
-          console.log(`  ${key}: ${value}`);
-        }
+        const commonHeaders = ['content-type', 'content-length', 'server', 'date', 'x-powered-by'];
+        commonHeaders.forEach(headerName => {
+          const headerValue = response.headers.get(headerName);
+          if (headerValue) {
+            console.log(`  ${headerName}: ${headerValue}`);
+          }
+        });
       } catch (error) {
         clearTimeout(timeoutId);
         if (error.name === 'AbortError') {
