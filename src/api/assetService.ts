@@ -993,15 +993,21 @@ class AssetService {
         console.log('⚠️ aiMetadata is falsy, not added to FormData');
       }
 
-      // Debug: Log all FormData entries
-      console.log('🔍 FormData Debug - All entries:');
-      for (const [key, value] of formData.entries()) {
-        if (value instanceof File) {
-          console.log(`  ${key}: [File] ${value.name} (${value.size} bytes)`);
-        } else {
-          console.log(`  ${key}: ${typeof value === 'string' ? value.substring(0, 100) + (value.length > 100 ? '...' : '') : value}`);
+      // Debug: Log FormData entries (TypeScript compatible approach)
+      console.log('🔍 FormData Debug - Key entries logged:');
+      const formDataKeys = ['layer', 'category', 'subcategory', 'description', 'tags', 'creatorDescription', 'albumArt', 'aiMetadata', 'file'];
+      formDataKeys.forEach(key => {
+        const value = formData.get(key);
+        if (value) {
+          if (value instanceof File) {
+            console.log(`  ${key}: [File] ${value.name} (${value.size} bytes)`);
+          } else {
+            const stringValue = value.toString();
+            console.log(`  ${key}: ${stringValue.length > 100 ? stringValue.substring(0, 100) + '...' : stringValue}`);
+          }
         }
-      }
+      });
+      console.log('🔍 FormData total estimated size:', JSON.stringify(assetData).length + (assetData.files?.[0]?.size || 0), 'bytes');
 
       // Make the API request using fetch for better FormData handling
       // SMART ROUTING: Use proxy for small files, direct backend for large files
