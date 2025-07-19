@@ -1036,7 +1036,7 @@ class AssetService {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 60000); // 60 second timeout
 
-      let response;
+      let response: Response;
       try {
         response = await fetch(uploadConfig.url, {
           method: 'POST',
@@ -1059,7 +1059,7 @@ class AssetService {
             console.log(`  ${headerName}: ${headerValue}`);
           }
         });
-      } catch (error) {
+      } catch (error: any) {
         clearTimeout(timeoutId);
         if (error.name === 'AbortError') {
           throw new Error('Request timeout - upload took longer than 60 seconds');
