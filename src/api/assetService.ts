@@ -993,6 +993,16 @@ class AssetService {
         console.log('⚠️ aiMetadata is falsy, not added to FormData');
       }
 
+      // Debug: Log all FormData entries
+      console.log('🔍 FormData Debug - All entries:');
+      for (const [key, value] of formData.entries()) {
+        if (value instanceof File) {
+          console.log(`  ${key}: [File] ${value.name} (${value.size} bytes)`);
+        } else {
+          console.log(`  ${key}: ${typeof value === 'string' ? value.substring(0, 100) + (value.length > 100 ? '...' : '') : value}`);
+        }
+      }
+
       // Make the API request using fetch for better FormData handling
       // SMART ROUTING: Use proxy for small files, direct backend for large files
       // Environment-aware routing for staging vs production backends
@@ -1016,15 +1026,36 @@ class AssetService {
         tokenType: authToken.startsWith('MOCK-') ? 'Mock' : 'Real'
       });
 
-      const response = await fetch(uploadConfig.url, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${authToken}`,
-          // Don't set Content-Type - browser will set it with boundary for multipart/form-data
-        },
-        body: formData,
-      });
+      // Create AbortController for timeout handling
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 60000); // 60 second timeout
 
+      let response;
+      try {
+        response = await fetch(uploadConfig.url, {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${authToken}`,
+            // Don't set Content-Type - browser will set it with boundary for multipart/form-data
+          },
+          body: formData,
+          signal: controller.signal,
+        });
+        
+        clearTimeout(timeoutId);
+        
+        // Log response headers for debugging
+        console.log('🔍 Response Headers:');
+        for (const [key, value] of response.headers.entries()) {
+          console.log(`  ${key}: ${value}`);
+        }
+      } catch (error) {
+        clearTimeout(timeoutId);
+        if (error.name === 'AbortError') {
+          throw new Error('Request timeout - upload took longer than 60 seconds');
+        }
+        throw error;
+      }
 
       if (!response.ok) {
         console.error('🚨 HTTP Response Error:', {

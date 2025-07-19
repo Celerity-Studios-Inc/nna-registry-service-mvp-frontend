@@ -1525,6 +1525,30 @@ Respond with only the description paragraph and comma-separated tag list in JSON
       }
     }
     
+    // If no explicit BPM found, estimate based on tempo keywords
+    if (!bpm) {
+      const tempoMapping = {
+        'slow': 70,
+        'moderate': 110,
+        'medium': 110, 
+        'fast': 130,
+        'quick': 140,
+        'rapid': 150,
+        'ballad': 75,
+        'uptempo': 125,
+        'dance': 120,
+        'pop': 115
+      };
+      
+      for (const [tempoWord, estimatedBpm] of Object.entries(tempoMapping)) {
+        if (description.toLowerCase().includes(tempoWord)) {
+          bpm = estimatedBpm;
+          console.log(`[BPM ESTIMATION] Estimated BPM: ${bpm} based on tempo keyword: "${tempoWord}"`);
+          break;
+        }
+      }
+    }
+    
     // Extract energy level
     const energyPatterns = {
       'high-energy': /high[\s-]?energy|energetic|intense|powerful|driving/i,
